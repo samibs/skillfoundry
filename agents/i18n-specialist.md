@@ -483,4 +483,4 @@ NEXT STEP: [specific action]
 **Reference**:
 - ICU Message Format
 - CLDR (Unicode Common Locale Data Repository)
-- `bpsbs.md` - Multi-country payroll context
+- `CLAUDE.md` - Multi-country payroll context

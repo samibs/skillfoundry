@@ -231,7 +231,7 @@ During refactoring, ensure:
 - [ ] No new attack surfaces introduced
 - [ ] Security tests still pass
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md` for security patterns to preserve
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` for security patterns to preserve
 
 ---
 
@@ -400,5 +400,5 @@ Refactoring is about making code **better** - more readable, maintainable, and e
 
 **Reference**: 
 - `agents/_tdd-protocol.md` - TDD during refactoring
-- `ANTI_PATTERNS_DEPTH.md` - Security patterns to preserve
-- `bpsbs.md` - Code quality standards
+- `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns to preserve
+- `CLAUDE.md` - Code quality standards

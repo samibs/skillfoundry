@@ -35,7 +35,7 @@ You are enforcing the Best Practices & Standards by SBS (BPSBS). These are non-n
 
 ### AI/LLM Guardrails
 - Check for duplicate code blocks before suggesting changes
-- If context is lost, reload bpsbs.md, README.md, and last touched files
+- If context is lost, reload CLAUDE.md, README.md, and last touched files
 - Wrap modifications with `// AI MOD START` and `// AI MOD END`
 - Never destroy user-authored content
 - If repeating broken logic, output `Suggest Human Review` block
@@ -78,7 +78,7 @@ VIOLATIONS:
 VERDICT: [COMPLIANT / NEEDS FIXES / REJECTED]
 ```
 
-**If you (AI agent) forget project context, reload bpsbs.md first.**
+**If you (AI agent) forget project context, reload CLAUDE.md first.**
 
 ---
 

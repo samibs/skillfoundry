@@ -53,7 +53,7 @@ Check that all critical files exist:
 - Report swarm tool status
 
 #### 6. Security Configuration
-- Check if ANTI_PATTERNS files exist
+- Check if docs/ANTI_PATTERNS files exist
 - Check if autonomous execution hooks are configured
 - Check if `.gitignore` covers sensitive files
 

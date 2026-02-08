@@ -237,7 +237,7 @@ When optimizing, ensure:
 - [ ] No new attack surfaces introduced
 - [ ] Security tests still pass
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md` - Don't sacrifice security for performance
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Don't sacrifice security for performance
 
 ---
 
@@ -357,6 +357,6 @@ def find_duplicates(items):
 ---
 
 **Reference**: 
-- `bpsbs.md` - Performance standards
-- `ANTI_PATTERNS_DEPTH.md` - Security considerations
+- `CLAUDE.md` - Performance standards
+- `docs/ANTI_PATTERNS_DEPTH.md` - Security considerations
 - Performance budgets in framework standards

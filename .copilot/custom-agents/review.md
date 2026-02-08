@@ -68,7 +68,7 @@ Review in this order:
 - [ ] No package hallucination
 ```
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md` - Top 7 vulnerabilities
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Top 7 vulnerabilities
 
 #### 2. Functionality Review
 ```
@@ -196,39 +196,39 @@ These are suggestions for improvement, not blockers.
 1. **Hardcoded Secrets** 🔴
    - Scan for API keys, passwords, tokens
    - Check config files, environment variables
-   - Reference: `ANTI_PATTERNS_DEPTH.md §1`
+   - Reference: `docs/ANTI_PATTERNS_DEPTH.md §1`
 
 2. **SQL Injection** 🔴
    - Verify parameterized queries
    - Check for string concatenation in SQL
-   - Reference: `ANTI_PATTERNS_DEPTH.md §2`
+   - Reference: `docs/ANTI_PATTERNS_DEPTH.md §2`
    - ⚠️ 53.3% AI failure rate
 
 3. **Cross-Site Scripting (XSS)** 🔴
    - Verify ALL user input is escaped
    - Check for innerHTML, eval(), dangerous DOM manipulation
-   - Reference: `ANTI_PATTERNS_DEPTH.md §3`
+   - Reference: `docs/ANTI_PATTERNS_DEPTH.md §3`
    - ⚠️ **86% AI failure rate** - CRITICAL
 
 4. **Insecure Randomness** 🟡
    - Verify crypto RNG for security tokens
    - Check for Math.random() in security contexts
-   - Reference: `ANTI_PATTERNS_DEPTH.md §4`
+   - Reference: `docs/ANTI_PATTERNS_DEPTH.md §4`
 
 5. **Auth/Authz Flaws** 🔴
    - Verify server-side permission checks
    - Check for client-side-only auth
-   - Reference: `ANTI_PATTERNS_DEPTH.md §5`
+   - Reference: `docs/ANTI_PATTERNS_DEPTH.md §5`
 
 6. **Package Hallucination** 🟡
    - Verify all packages exist
    - Check for typos in package names
-   - Reference: `ANTI_PATTERNS_DEPTH.md §6`
+   - Reference: `docs/ANTI_PATTERNS_DEPTH.md §6`
 
 7. **Command Injection** 🔴
    - Verify no user input in shell commands
    - Check for exec(), system(), eval()
-   - Reference: `ANTI_PATTERNS_DEPTH.md §7`
+   - Reference: `docs/ANTI_PATTERNS_DEPTH.md §7`
 
 **Security failure = IMMEDIATE REJECTION**
 
@@ -246,7 +246,7 @@ Scan for:
 - Empty function bodies
 - `@ts-ignore` without justification
 
-**Reference**: `bpsbs.md` - Zero Tolerance Policy
+**Reference**: `CLAUDE.md` - Zero Tolerance Policy
 
 ### Code Smells
 
@@ -301,7 +301,7 @@ API_KEY = os.getenv("API_KEY")
 **Review Comment**:
 > 🔴 BLOCKER: Hardcoded API key found. This is a security vulnerability.
 > Fix: Move to environment variable and use `os.getenv("API_KEY")`.
-> Reference: `ANTI_PATTERNS_DEPTH.md §1`
+> Reference: `docs/ANTI_PATTERNS_DEPTH.md §1`
 
 ### Example 2: Logic Error (CRITICAL)
 ```python
@@ -366,7 +366,7 @@ Don't focus on:
 ---
 
 **Reference**: 
-- `ANTI_PATTERNS_DEPTH.md` - Security vulnerabilities
-- `bpsbs.md` - Code quality standards
+- `docs/ANTI_PATTERNS_DEPTH.md` - Security vulnerabilities
+- `CLAUDE.md` - Code quality standards
 - `agents/_tdd-protocol.md` - Test requirements
 - `.copilot/custom-agents/pr-review.md` - GitHub PR review (Copilot)

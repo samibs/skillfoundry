@@ -812,28 +812,46 @@ update_project() {
     echo ""
     echo -e "${YELLOW}Updating security anti-patterns...${NC}"
     
-    # Update ANTI_PATTERNS_BREADTH.md
+    # Update ANTI_PATTERNS_BREADTH.md (now in docs/)
     if [ -f "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" ]; then
-        if [ ! -f "$project_dir/ANTI_PATTERNS_BREADTH.md" ]; then
-            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$project_dir/ANTI_PATTERNS_BREADTH.md"
-            echo -e "  ${GREEN}+ Added: ANTI_PATTERNS_BREADTH.md${NC}"
-        elif ! diff -q "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$project_dir/ANTI_PATTERNS_BREADTH.md" > /dev/null 2>&1; then
-            cp "$project_dir/ANTI_PATTERNS_BREADTH.md" "$backup_dir/ANTI_PATTERNS_BREADTH.md"
-            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$project_dir/ANTI_PATTERNS_BREADTH.md"
-            echo -e "  ${CYAN}↑ Updated: ANTI_PATTERNS_BREADTH.md${NC}"
+        mkdir -p "$project_dir/docs"
+        # Migrate from root to docs/ if old location exists
+        if [ -f "$project_dir/ANTI_PATTERNS_BREADTH.md" ] && [ ! -f "$project_dir/docs/ANTI_PATTERNS_BREADTH.md" ]; then
+            mv "$project_dir/ANTI_PATTERNS_BREADTH.md" "$project_dir/docs/ANTI_PATTERNS_BREADTH.md"
+            echo -e "  ${CYAN}↑ Migrated: ANTI_PATTERNS_BREADTH.md → docs/${NC}"
+        fi
+        if [ ! -f "$project_dir/docs/ANTI_PATTERNS_BREADTH.md" ]; then
+            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$project_dir/docs/ANTI_PATTERNS_BREADTH.md"
+            echo -e "  ${GREEN}+ Added: docs/ANTI_PATTERNS_BREADTH.md${NC}"
+        elif ! diff -q "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$project_dir/docs/ANTI_PATTERNS_BREADTH.md" > /dev/null 2>&1; then
+            cp "$project_dir/docs/ANTI_PATTERNS_BREADTH.md" "$backup_dir/ANTI_PATTERNS_BREADTH.md"
+            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$project_dir/docs/ANTI_PATTERNS_BREADTH.md"
+            echo -e "  ${CYAN}↑ Updated: docs/ANTI_PATTERNS_BREADTH.md${NC}"
         fi
     fi
 
-    # Update ANTI_PATTERNS_DEPTH.md
+    # Update ANTI_PATTERNS_DEPTH.md (now in docs/)
     if [ -f "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" ]; then
-        if [ ! -f "$project_dir/ANTI_PATTERNS_DEPTH.md" ]; then
-            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$project_dir/ANTI_PATTERNS_DEPTH.md"
-            echo -e "  ${GREEN}+ Added: ANTI_PATTERNS_DEPTH.md${NC}"
-        elif ! diff -q "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$project_dir/ANTI_PATTERNS_DEPTH.md" > /dev/null 2>&1; then
-            cp "$project_dir/ANTI_PATTERNS_DEPTH.md" "$backup_dir/ANTI_PATTERNS_DEPTH.md"
-            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$project_dir/ANTI_PATTERNS_DEPTH.md"
-            echo -e "  ${CYAN}↑ Updated: ANTI_PATTERNS_DEPTH.md${NC}"
+        mkdir -p "$project_dir/docs"
+        # Migrate from root to docs/ if old location exists
+        if [ -f "$project_dir/ANTI_PATTERNS_DEPTH.md" ] && [ ! -f "$project_dir/docs/ANTI_PATTERNS_DEPTH.md" ]; then
+            mv "$project_dir/ANTI_PATTERNS_DEPTH.md" "$project_dir/docs/ANTI_PATTERNS_DEPTH.md"
+            echo -e "  ${CYAN}↑ Migrated: ANTI_PATTERNS_DEPTH.md → docs/${NC}"
         fi
+        if [ ! -f "$project_dir/docs/ANTI_PATTERNS_DEPTH.md" ]; then
+            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$project_dir/docs/ANTI_PATTERNS_DEPTH.md"
+            echo -e "  ${GREEN}+ Added: docs/ANTI_PATTERNS_DEPTH.md${NC}"
+        elif ! diff -q "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$project_dir/docs/ANTI_PATTERNS_DEPTH.md" > /dev/null 2>&1; then
+            cp "$project_dir/docs/ANTI_PATTERNS_DEPTH.md" "$backup_dir/ANTI_PATTERNS_DEPTH.md"
+            cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$project_dir/docs/ANTI_PATTERNS_DEPTH.md"
+            echo -e "  ${CYAN}↑ Updated: docs/ANTI_PATTERNS_DEPTH.md${NC}"
+        fi
+    fi
+
+    # Migrate bpsbs.md out of root (no longer installed separately)
+    if [ -f "$project_dir/bpsbs.md" ]; then
+        rm "$project_dir/bpsbs.md"
+        echo -e "  ${CYAN}↑ Removed: bpsbs.md (covered by CLAUDE.md + global rules)${NC}"
     fi
 
     # Update Copilot files if platform is copilot

@@ -362,4 +362,4 @@ CONFIDENCE: [HIGH|MEDIUM|LOW] - [why]
 **Reference**:
 - ADR (Architecture Decision Records)
 - RFC process
-- `bpsbs.md` - Development principles
+- `CLAUDE.md` - Development principles

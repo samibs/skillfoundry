@@ -140,4 +140,4 @@ For detailed requirements, load specific sections:
 
 ---
 
-_Full reference: CLAUDE.md (2000+ lines) | This summary: ~400 lines | Framework v1.9.0.7_
+_Full reference: CLAUDE.md (2000+ lines) | This summary: ~400 lines | Framework v1.9.0.8_

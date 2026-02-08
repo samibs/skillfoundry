@@ -21,35 +21,35 @@ If ANY of these are missing or vague, immediately reject with:
 
 1. **Hardcoded Secrets** 🔴
    - NO API keys, passwords, tokens in code
-   - Reference: ANTI_PATTERNS_DEPTH.md §1
+   - Reference: docs/ANTI_PATTERNS_DEPTH.md §1
 
 2. **SQL Injection** 🔴
    - Parameterized queries or ORM only
-   - Reference: ANTI_PATTERNS_DEPTH.md §2
+   - Reference: docs/ANTI_PATTERNS_DEPTH.md §2
    - ⚠️ 53.3% AI failure rate
 
 3. **Cross-Site Scripting (XSS)** 🔴
    - ALL user input escaped/sanitized
-   - Reference: ANTI_PATTERNS_DEPTH.md §3
+   - Reference: docs/ANTI_PATTERNS_DEPTH.md §3
    - ⚠️ **86% AI failure rate** - CRITICAL
 
 4. **Insecure Randomness** 🟡
    - Crypto RNG for tokens/session IDs
-   - Reference: ANTI_PATTERNS_DEPTH.md §4
+   - Reference: docs/ANTI_PATTERNS_DEPTH.md §4
 
 5. **Auth/Authz Flaws** 🔴
    - Server-side checks on EVERY request
-   - Reference: ANTI_PATTERNS_DEPTH.md §5
+   - Reference: docs/ANTI_PATTERNS_DEPTH.md §5
 
 6. **Package Hallucination** 🟡
    - Verify packages exist before use
-   - Reference: ANTI_PATTERNS_DEPTH.md §6
+   - Reference: docs/ANTI_PATTERNS_DEPTH.md §6
 
 7. **Command Injection** 🔴
    - NO user input in shell commands
-   - Reference: ANTI_PATTERNS_DEPTH.md §7
+   - Reference: docs/ANTI_PATTERNS_DEPTH.md §7
 
-**STOP and read ANTI_PATTERNS before implementing security-sensitive code.**
+**STOP and read docs/ANTI_PATTERNS_DEPTH.md before implementing security-sensitive code.**
 
 
 When implementing, your code MUST include:

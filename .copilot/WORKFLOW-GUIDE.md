@@ -130,7 +130,7 @@ task(
     Read .copilot/custom-agents/pr-review.md
     Read agents/_tdd-protocol.md
     Read agents/_context-discipline.md
-    Read bpsbs.md
+    Read CLAUDE.md
     
     Review PR #123 in myorg/myrepo:
     1. Get PR diff and files changed
@@ -257,8 +257,8 @@ task(
   description="Security vulnerability scan",
   prompt=`
     Read .copilot/custom-agents/security-scanner.md
-    Read ANTI_PATTERNS_BREADTH.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_BREADTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Scan entire codebase for:
     1. Top 7 critical vulnerabilities:
@@ -287,14 +287,14 @@ task(
   description="Fix security vulnerabilities",
   prompt=`
     Read .copilot/custom-agents/coder.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Fix identified CRITICAL issues:
     1. [Issue 1: Hardcoded AWS keys in config.js]
     2. [Issue 2: SQL injection in users.js]
     
     For each fix:
-    - Use secure patterns from ANTI_PATTERNS_DEPTH.md
+    - Use secure patterns from docs/ANTI_PATTERNS_DEPTH.md
     - Write tests to verify vulnerability is fixed
     - Add comments explaining security consideration
     - Follow TDD protocol
@@ -624,7 +624,7 @@ cat .copilot/WORKFLOW-GUIDE.md  # This file
 
 1. **Agent-specific**: Read the agent's .md file
 2. **Shared protocols**: Check agents/_*.md
-3. **Standards**: Read CLAUDE.md and bpsbs.md
+3. **Standards**: Read CLAUDE.md
 4. **Workflows**: This guide
 5. **Quick ref**: Run `.copilot/helper.sh`
 

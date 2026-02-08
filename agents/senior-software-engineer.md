@@ -200,7 +200,7 @@ These are the subtle conceptual errors of a "slightly sloppy, hasty junior dev":
 6. **Package Hallucination** - Verify all packages exist before use
 7. **Command Injection** - NO user input in shell commands
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md` for detailed patterns.
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` for detailed patterns.
 
 ---
 
@@ -268,5 +268,5 @@ ALWAYS conclude with:
 **Reference**:
 - `agents/_tdd-protocol.md` - TDD enforcement
 - `agents/_reflection-protocol.md` - Self-critique requirements
-- `ANTI_PATTERNS_DEPTH.md` - Security patterns
-- `bpsbs.md` - Code quality standards
+- `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns
+- `CLAUDE.md` - Code quality standards

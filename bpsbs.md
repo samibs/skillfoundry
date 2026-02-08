@@ -140,8 +140,8 @@ Every repo must include the following folders:
 **CRITICAL**: AI-generated code has **86% XSS failure rate** (vs 31.6% human) and is **2.74x more likely** to contain vulnerabilities. Follow these strict security patterns:
 
 #### 📚 Security Knowledge Base
-- **ANTI_PATTERNS_BREADTH.md** - 15 security anti-patterns (225 KB, all languages)
-- **ANTI_PATTERNS_DEPTH.md** - Top 7 critical vulnerabilities (252 KB, detailed)
+- **docs/ANTI_PATTERNS_BREADTH.md** - 15 security anti-patterns (225 KB, all languages)
+- **docs/ANTI_PATTERNS_DEPTH.md** - Top 7 critical vulnerabilities (252 KB, detailed)
 
 **ALL CODE MUST BE VALIDATED** against these documents before implementation.
 
@@ -186,31 +186,31 @@ Every repo must include the following folders:
 #### 🛡️ Pre-Implementation Security Checklist
 
 **BEFORE writing ANY code, verify:**
-- [ ] No secrets hardcoded (check ANTI_PATTERNS_DEPTH.md §1)
-- [ ] SQL uses parameterized queries (check ANTI_PATTERNS_DEPTH.md §2)
-- [ ] User input is escaped/sanitized (check ANTI_PATTERNS_DEPTH.md §3)
-- [ ] Crypto RNG for security tokens (check ANTI_PATTERNS_DEPTH.md §4)
-- [ ] Auth checks are server-side (check ANTI_PATTERNS_DEPTH.md §5)
-- [ ] All packages verified to exist (check ANTI_PATTERNS_DEPTH.md §6)
-- [ ] No user input in shell commands (check ANTI_PATTERNS_DEPTH.md §7)
+- [ ] No secrets hardcoded (check docs/ANTI_PATTERNS_DEPTH.md §1)
+- [ ] SQL uses parameterized queries (check docs/ANTI_PATTERNS_DEPTH.md §2)
+- [ ] User input is escaped/sanitized (check docs/ANTI_PATTERNS_DEPTH.md §3)
+- [ ] Crypto RNG for security tokens (check docs/ANTI_PATTERNS_DEPTH.md §4)
+- [ ] Auth checks are server-side (check docs/ANTI_PATTERNS_DEPTH.md §5)
+- [ ] All packages verified to exist (check docs/ANTI_PATTERNS_DEPTH.md §6)
+- [ ] No user input in shell commands (check docs/ANTI_PATTERNS_DEPTH.md §7)
 
 #### 📖 When to Reference Security Docs
 
 **MANDATORY SECURITY CHECKS**:
-- **Before authentication implementation** → Read ANTI_PATTERNS_DEPTH.md §5
-- **Before database queries** → Read ANTI_PATTERNS_DEPTH.md §2
-- **Before user input handling** → Read ANTI_PATTERNS_DEPTH.md §3
-- **Before external API calls** → Read ANTI_PATTERNS_DEPTH.md §1
-- **When generating tokens/IDs** → Read ANTI_PATTERNS_DEPTH.md §4
-- **Before package installation** → Read ANTI_PATTERNS_DEPTH.md §6
-- **Before system commands** → Read ANTI_PATTERNS_DEPTH.md §7
+- **Before authentication implementation** → Read docs/ANTI_PATTERNS_DEPTH.md §5
+- **Before database queries** → Read docs/ANTI_PATTERNS_DEPTH.md §2
+- **Before user input handling** → Read docs/ANTI_PATTERNS_DEPTH.md §3
+- **Before external API calls** → Read docs/ANTI_PATTERNS_DEPTH.md §1
+- **When generating tokens/IDs** → Read docs/ANTI_PATTERNS_DEPTH.md §4
+- **Before package installation** → Read docs/ANTI_PATTERNS_DEPTH.md §6
+- **Before system commands** → Read docs/ANTI_PATTERNS_DEPTH.md §7
 
 #### 🔍 Security Validation Process
 
 ```
 1. Review specification → Identify security-sensitive areas
-2. Check ANTI_PATTERNS_BREADTH.md → Quick pattern reference
-3. Check ANTI_PATTERNS_DEPTH.md → Deep dive on critical areas
+2. Check docs/ANTI_PATTERNS_BREADTH.md → Quick pattern reference
+3. Check docs/ANTI_PATTERNS_DEPTH.md → Deep dive on critical areas
 4. Implement with secure patterns
 5. Run security scanner (Copilot) or evaluator (Claude)
 6. Verify all 7 critical vulnerabilities addressed
@@ -577,7 +577,7 @@ This framework now supports **both Claude Code and GitHub Copilot CLI**:
 
 ### Common Components
 - Shared agent personas in `agents/` directory
-- Security documents: ANTI_PATTERNS_BREADTH.md, ANTI_PATTERNS_DEPTH.md
+- Security documents: docs/ANTI_PATTERNS_BREADTH.md, docs/ANTI_PATTERNS_DEPTH.md
 - bpsbs.md standards (this file)
 - genesis/ folder for PRDs
 

@@ -249,5 +249,5 @@ Testing: [PASSED]
 **Reference**: 
 - WCAG 2.1 Guidelines
 - ARIA Authoring Practices
-- `bpsbs.md` - Accessibility standards
+- `CLAUDE.md` - Accessibility standards
 - WebAIM resources

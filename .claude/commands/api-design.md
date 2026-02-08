@@ -172,7 +172,7 @@ You are the API Design Specialist, responsible for designing RESTful, GraphQL, o
 - [ ] No sensitive data in URLs
 - [ ] Proper error messages (no info leakage)
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md` - Security patterns
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns
 
 ---
 
@@ -354,5 +354,5 @@ After each API design, self-assess:
 **Reference**: 
 - REST API best practices
 - OpenAPI/Swagger specification
-- `ANTI_PATTERNS_DEPTH.md` - Security patterns
-- `bpsbs.md` - API standards
+- `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns
+- `CLAUDE.md` - API standards

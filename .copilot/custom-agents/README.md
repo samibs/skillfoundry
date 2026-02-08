@@ -161,9 +161,9 @@ Critical security documents (root directory):
 
 | Document | Purpose |
 |----------|---------|
-| `../ANTI_PATTERNS_BREADTH.md` | Wide coverage of 15 security anti-patterns |
-| `../ANTI_PATTERNS_DEPTH.md` | Deep dive on top 7 critical vulnerabilities |
-| `../bpsbs.md` | Zero tolerance standards |
+| `../docs/ANTI_PATTERNS_BREADTH.md` | Wide coverage of 15 security anti-patterns |
+| `../docs/ANTI_PATTERNS_DEPTH.md` | Deep dive on top 7 critical vulnerabilities |
+| `../CLAUDE.md` | Zero tolerance standards |
 
 **Key Security Stats**:
 - AI code has **86% XSS failure rate** (vs 31.6% human)
@@ -278,7 +278,7 @@ See `WORKFLOW-GUIDE.md` for complete examples:
 4. **Chain agents** for complex tasks
 5. **Use correct agent type** (task/explore/code-review)
 6. **Monitor CI/CD** after changes
-7. **Follow standards** (CLAUDE.md, bpsbs.md)
+7. **Follow standards** (CLAUDE.md)
 
 ## 🚦 Quality Gates
 
@@ -289,7 +289,7 @@ Framework enforces zero tolerance for:
 - Empty implementations
 - Missing tests
 
-See `../bpsbs.md` for complete list.
+See `../CLAUDE.md` for complete list.
 
 ## 🔍 Quick Reference Commands
 
@@ -314,7 +314,7 @@ cat .framework-version
 
 - **Genesis Workflow**: See `../genesis/TEMPLATE.md`
 - **Framework Standards**: See `../CLAUDE.md`
-- **BPSBS Standards**: See `../bpsbs.md`
+- **BPSBS Standards**: See `../CLAUDE.md`
 - **Shared Protocols**: See `../agents/_*.md`
 
 ## 🆘 Getting Help

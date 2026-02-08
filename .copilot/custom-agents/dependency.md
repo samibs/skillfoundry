@@ -149,7 +149,7 @@ You are the Dependency Specialist, responsible for managing project dependencies
 
 ### AI-Specific Vulnerability: Package Hallucination
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md §6`
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md §6`
 
 **Problem**: AI models may suggest non-existent packages
 **Solution**: 
@@ -317,6 +317,6 @@ git add package-lock.json
 ---
 
 **Reference**: 
-- `ANTI_PATTERNS_DEPTH.md §6` - Package Hallucination vulnerability
-- `bpsbs.md` - Dependency management standards
+- `docs/ANTI_PATTERNS_DEPTH.md §6` - Package Hallucination vulnerability
+- `CLAUDE.md` - Dependency management standards
 - Security scanning tools documentation

@@ -2314,6 +2314,56 @@ test_deliberation_in_architect() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# CLEANUP & DEDUPLICATION TESTS (v1.9.0.8)
+# ═══════════════════════════════════════════════════════════════
+
+test_claudemd_not_bloated() {
+    log_test "Cleanup: CLAUDE.md under 500 lines"
+    local line_count
+    line_count=$(wc -l < "$FRAMEWORK_DIR/CLAUDE.md")
+    if [ "$line_count" -lt 500 ]; then
+        log_success "CLAUDE.md is $line_count lines (under 500)"
+    else
+        log_failure "CLAUDE.md is $line_count lines (should be under 500)"
+        return 1
+    fi
+    return 0
+}
+
+test_enterprise_standards_exists() {
+    log_test "Cleanup: docs/enterprise-standards.md exists"
+    if [ -f "$FRAMEWORK_DIR/docs/enterprise-standards.md" ]; then
+        local line_count
+        line_count=$(wc -l < "$FRAMEWORK_DIR/docs/enterprise-standards.md")
+        if [ "$line_count" -gt 500 ]; then
+            log_success "docs/enterprise-standards.md exists ($line_count lines)"
+        else
+            log_failure "docs/enterprise-standards.md too small ($line_count lines)"
+            return 1
+        fi
+    else
+        log_failure "docs/enterprise-standards.md missing"
+        return 1
+    fi
+    return 0
+}
+
+test_antipatterns_in_docs() {
+    log_test "Cleanup: ANTI_PATTERNS referenced as docs/ path"
+    local bare_refs
+    bare_refs=$(grep -rl '[^/]ANTI_PATTERNS_DEPTH\.md' "$FRAMEWORK_DIR/agents/" "$FRAMEWORK_DIR/.claude/commands/" "$FRAMEWORK_DIR/.cursor/rules/" "$FRAMEWORK_DIR/.copilot/" 2>/dev/null || true)
+    if [ -z "$bare_refs" ]; then
+        log_success "No bare ANTI_PATTERNS references in agent/command files"
+    else
+        local count
+        count=$(echo "$bare_refs" | wc -l)
+        log_failure "$count files still have bare ANTI_PATTERNS references"
+        return 1
+    fi
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════
 # COMPANION PANEL TESTS (v1.9.0.5)
 # ═══════════════════════════════════════════════════════════════
 
@@ -2595,6 +2645,13 @@ run_all_tests() {
         test_deliberation_triggers
         test_deliberation_in_orchestrator
         test_deliberation_in_architect
+    fi
+
+    # Cleanup & Deduplication Tests (v1.9.0.8)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "cleanup" ]; then
+        test_claudemd_not_bloated
+        test_enterprise_standards_exists
+        test_antipatterns_in_docs
     fi
 
     # Developer Experience Tests (v1.8.0.2 - Phase 3)

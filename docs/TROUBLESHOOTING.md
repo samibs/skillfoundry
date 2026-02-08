@@ -231,8 +231,8 @@ cat genesis/TEMPLATE.md
 
 1. **Review ANTI_PATTERNS guides**
    ```bash
-   cat ANTI_PATTERNS_BREADTH.md
-   cat ANTI_PATTERNS_DEPTH.md
+   cat docs/ANTI_PATTERNS_BREADTH.md
+   cat docs/ANTI_PATTERNS_DEPTH.md
    ```
 
 2. **Use security scanner agent** (Copilot)
