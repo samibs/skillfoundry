@@ -1,0 +1,113 @@
+# ═══════════════════════════════════════════════════════════════
+# Claude AS Framework - .gitignore
+# ═══════════════════════════════════════════════════════════════
+
+# ENVIRONMENT & SECRETS - NEVER COMMIT
+.env
+.env.*
+!.env.example
+.env.local
+.env.production
+.env.staging
+
+# Credentials
+config/credentials/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets
+*-credentials
+*-credentials.*
+service-account*.json
+google-credentials.json
+
+# API Keys & Tokens
+.api-keys
+api-keys.json
+tokens.json
+auth-tokens/
+
+# ═══════════════════════════════════════════════════════════════
+# DATABASE
+# ═══════════════════════════════════════════════════════════════
+*.sqlite
+*.sqlite3
+*.db
+database.json
+db-config.json
+
+# ═══════════════════════════════════════════════════════════════
+# LOGS (may contain sensitive data)
+# ═══════════════════════════════════════════════════════════════
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ═══════════════════════════════════════════════════════════════
+# IDE & OS
+# ═══════════════════════════════════════════════════════════════
+.idea/
+.vscode/settings.json
+.vscode/launch.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ═══════════════════════════════════════════════════════════════
+# BUILD & DEPENDENCIES
+# ═══════════════════════════════════════════════════════════════
+node_modules/
+__pycache__/
+*.pyc
+dist/
+build/
+.next/
+.nuxt/
+.cache/
+coverage/
+
+# ═══════════════════════════════════════════════════════════════
+# TEMPORARY & GENERATED
+# ═══════════════════════════════════════════════════════════════
+*.tmp
+*.temp
+*.bak
+*.old
+*.backup
+~*
+.goutputstream-*
+
+# ═══════════════════════════════════════════════════════════════
+# FRAMEWORK-SPECIFIC
+# ═══════════════════════════════════════════════════════════════
+# Project registry (local paths - sensitive)
+.project-registry
+.project-registry-meta.jsonl
+
+# Diagnostic files (may contain sensitive info)
+.claude-as-diagnostics.log
+
+# Memory bank (project-specific, not framework)
+# Use /* (not /) so git still enters the directory and negation patterns work
+memory_bank/*
+# Track central curated knowledge for distribution
+!memory_bank/README.md
+!memory_bank/knowledge/
+memory_bank/knowledge/*
+!memory_bank/knowledge/README.md
+!memory_bank/knowledge/bootstrap.jsonl
+!memory_bank/knowledge/decisions-universal.jsonl
+!memory_bank/knowledge/errors-universal.jsonl
+!memory_bank/knowledge/patterns-universal.jsonl
+
+# Hub config (machine-specific, contains local paths)
+.claude/hub.json
+
+# Test temp directories
+/tmp/claude-as-*

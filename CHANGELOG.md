@@ -1,0 +1,1629 @@
+# Changelog
+
+All notable changes to the Claude AS Framework will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [1.9.0.5] - 2026-02-08
+
+### Added
+
+#### Git-Based Knowledge Hub — Remote Distribution & Cross-Machine Sync
+Framework is now a git repository. Knowledge, scratchpads, and metrics sync across machines via GitHub.
+
+- **`scripts/knowledge-sync.sh`** - Hub sync engine (remote transport layer):
+  - `setup <repo-url> [--machine-id=name]` - Configure hub URL and machine identity
+  - `push [lesson-file]` - Push knowledge (markdown lessons or promoted JSONL) to hub
+  - `pull` - Pull latest from hub with conflict handling (rebase with merge fallback)
+  - `scratchpad push` - Push project scratchpad for cross-machine continuity
+  - `scratchpad pull [machine-id]` - Pull scratchpad from another machine
+  - `metrics push` - Aggregate and push usage metrics
+  - `status` - Show hub configuration, sync state, and knowledge counts
+  - Offline-first: all push commands commit locally, push when online
+
+- **Hub directories**:
+  - `knowledge/promoted/` - Curated markdown lessons
+  - `knowledge/staging/` - Submitted lessons awaiting review
+  - `knowledge/schema.md` - Lesson format specification
+  - `scratchpads/` - Cross-machine session state
+  - `metrics/` - Aggregated usage metrics
+
+- **`.claude/hub.json`** - Per-machine hub configuration (hub_url, machine_id, sync timestamps)
+
+### Changed
+
+- **`.gitignore`** - Selectively un-ignore central knowledge files (bootstrap.jsonl, *-universal.jsonl) for distribution
+- **`update.sh`** - Added `--remote` flag to pull from hub before updating projects
+- **`scripts/install-unified.sh`** - Added GitHub clone option for framework installation
+- **`scripts/harvest.sh`** - Auto-push promoted knowledge to hub after promotion cycle
+- **`scripts/memory.sh`** - Added `hub` command (delegates to knowledge-sync.sh)
+- **`tests/run-tests.sh`** - Added 7 hub test functions under `--test hub` filter
+
+---
+
+## [1.9.0.4] - 2026-02-08
+
+### Changed
+
+#### Persistent Scratchpad — Cross-Platform Session Continuity
+Scratchpad is now a live file on disk (`.claude/scratchpad.md`) instead of an in-memory concept. Agents write it after every major action and read it on session start. When a user hits the context limit in Claude Code and switches to Copilot CLI or Cursor, the next session picks up exactly where the previous one left off — automatically, no manual handoff needed.
+
+- **`agents/_context-discipline.md`** - Scratchpad management rewritten:
+  - Scratchpad persisted to `.claude/scratchpad.md` after every major action
+  - Read on session start with staleness detection (>24h triggers verification)
+  - New scratchpad format: includes timestamp, platform, agent, continuation notes
+  - New "Cross-Platform Continuity" section with platform-specific resume behavior
+  - Persistence rules (write-after-action, overwrite-not-append, 200-400 token target)
+
+- **`agents/_agent-protocol.md`** - Session boot sequence added:
+  - Every agent session reads `.claude/scratchpad.md` on start
+  - Platform switch detection (announces continuation from previous platform)
+  - Cross-references with `.claude/state.json` for `/go` executions
+  - Agent response format extended with `scratchpad_update` field
+
+- **`agents/_state-machine.md`** - Scratchpad integrated into state machine:
+  - `persist_scratchpad` added to transition actions (INITIALIZING, EXECUTING_STORY)
+  - `.claude/scratchpad.md` added to state file locations
+  - Resume protocol updated: scratchpad loaded alongside state.json
+
+---
+
+## [1.9.0.3] - 2026-02-07
+
+### Added
+
+#### Platform Sync Engine
+Generates all 3 platform command files (Claude Code, Copilot, Cursor) from agent source files, eliminating manual triple-file creation when adding new agents.
+
+- **`scripts/sync-platforms.sh`** - Platform Sync Engine:
+  - `sync [--all | agent-name]` - Generate platform files from agent source
+  - `check` - Verify all agents have in-sync platform files
+  - `list` - Show agent-to-command mapping with sync status
+  - `diff [agent-name]` - Show differences between existing and generated files
+  - `--dry-run` flag for preview without writing
+  - Section stripping: removes "Integration with Other Agents" and "Context Discipline" sections
+  - Persona injection: adds persona reference after first paragraph
+  - Claude/Cursor: identical stripped content; Copilot: metadata wrapper + usage boilerplate
+
+- **`command:` YAML frontmatter field** - Added to all 26 public agent files:
+  - Maps agent filename to command name (e.g., `ruthless-coder` → `coder`)
+  - 24 agents mapped to commands, 2 set to `none` (agent-profile, knowledge-curator)
+
+### Changed
+
+- **72 platform files regenerated** - All 24 agent-backed commands across 3 platforms synced from source
+- **`scripts/convert-to-copilot.sh`** - Added deprecation notice (superseded by sync-platforms.sh)
+- **`tests/run-tests.sh`** - Added 5 platform sync test functions
+- **`DOCUMENTATION-INDEX.md`** - Added sync-platforms.sh reference, updated version to 1.9.0.3
+- **`README.md`** - Added sync-platforms.sh to scripts section
+
+---
+
+## [1.9.0.2] - 2026-02-07
+
+### Added
+
+#### Ops Tooling Generator Agent
+Operational tooling generation for completed projects: admin panels, debug overlays, and feedback systems.
+
+- **`agents/ops-tooling-generator.md`** - Ops Tooling Generator agent (46th agent):
+  - `/ops admin` - Admin/monitoring panel: console log viewer, API health monitor, system metrics
+  - `/ops debug` - Debug mode overlay activated via Ctrl+Shift+D: element inspector showing component name, file path, event handlers, API calls; network inspector panel; state diff viewer
+  - `/ops feedback` - End-user feedback system: bug/issue reports, feature requests, screenshot upload (file picker + clipboard paste), automatic context capture
+  - `/ops all` - Generate all three components
+  - Tech stack detection: React/Next.js, Angular, Vue, ASP.NET, FastAPI, vanilla JS
+  - Output directory: `src/ops/` with admin/, debug/, feedback/ subdirectories
+  - Dark-mode-first design, WCAG AA accessibility, responsive
+
+- **`/ops` command** - Available on all 3 platforms:
+  - Modes: admin, debug, feedback, all
+  - `.claude/commands/ops.md`, `.copilot/custom-agents/ops.md`, `.cursor/rules/ops.md`
+
+### Changed
+
+- **`DOCUMENTATION-INDEX.md`** - Added Ops Tooling Generator, updated version to 1.9.0.2, agent count to 46
+- **`docs/AGENTS.md`** - Added Ops Tooling Generator to agent list, updated count to 46
+- **`README.md`** - Updated agent count references (45 -> 46)
+- **`tests/run-tests.sh`** - Added 5 ops-tooling-generator test functions
+
+---
+
+## [1.9.0.1] - 2026-02-07
+
+### Added
+
+#### Project Educator Agent
+End-user learning material generation for completed projects.
+
+- **`agents/project-educator.md`** - Project Educator agent (45th agent):
+  - Quick-start guides ("Get started in 5 minutes")
+  - Comprehensive user guides
+  - Project-specific glossary generation
+  - User journey maps with Mermaid diagrams
+  - Step-by-step tutorials with difficulty levels
+  - FAQ/troubleshooting generation
+  - Multi-level concept explainers (beginner, intermediate, advanced)
+  - Output directory: `docs/guides/`
+  - Runs after or alongside documentation-codifier at project end
+
+- **`/educate` command** - Available on all 3 platforms:
+  - Modes: quick-start, guide, glossary, journey, tutorial, faq, concepts, all
+  - `.claude/commands/educate.md`, `.copilot/custom-agents/educate.md`, `.cursor/rules/educate.md`
+
+### Changed
+
+- **`DOCUMENTATION-INDEX.md`** - Added Project Educator, updated version to 1.9.0.1, agent count to 45
+- **`docs/AGENTS.md`** - Added Project Educator to agent list, updated count to 45
+- **`README.md`** - Updated agent count references (44 -> 45)
+- **`tests/run-tests.sh`** - Added 5 project-educator test functions
+
+---
+
+## [1.9.0.0] - 2026-02-07
+
+### Added
+
+#### Phase 4: Advanced Intelligence
+Semantic knowledge search, agent learning profiles, compliance presets, and monorepo support. This is the fourth and final phase of the Framework Evolution PRD.
+
+- **`scripts/semantic-search.sh`** - TF-IDF Knowledge Search (FR-030):
+  - Natural language query over all JSONL knowledge files
+  - Keyword-weighted ranking: exact phrase (+100), word match (+10), type match (+20), weight bonus
+  - Searches framework and project knowledge bases
+  - Supports `--type` filter, `--limit`, and `--json` output
+  - Not ML-based; uses TF-IDF inspired keyword matching
+
+- **`scripts/monorepo.sh`** - Cross-Package Dependency Resolution (FR-036):
+  - Detects packages across 6 ecosystems: Node.js, Python, Rust, Go, .NET
+  - Commands: detect, deps, order, status
+  - Extracts cross-package workspace dependencies
+  - Topological sort for build order (Kahn's algorithm)
+  - Supports up to 20 packages per monorepo
+  - JSON output mode for tooling integration
+
+- **`agents/agent-profile.md`** - Agent Learning Profile Protocol (FR-031, FR-032):
+  - Style pattern detection: naming, formatting, imports, error handling, tests, comments, architecture
+  - Pattern promotion pipeline: PROJECT_LOCAL (0.3) -> HARVESTED (0.5) -> CANDIDATE (0.7) -> PROMOTED (0.9)
+  - Cross-agent learning: fixer patterns teach gate-keeper prevention, coder adapts proactively
+  - Knowledge categories: error patterns, security fixes, test patterns, performance, style
+
+- **`agents/compliance-profiles/`** - Compliance Presets (FR-033):
+  - **HIPAA.md**: 22 rules across encryption (ENC), audit logging (AUD), access control (ACC), data handling (DAT), BAA requirements. PHI field identifiers and scan patterns.
+  - **SOC2.md**: 28 rules across 5 Trust Service Criteria (Security, Availability, Processing Integrity, Confidentiality, Privacy) plus change management. Monitoring requirements.
+  - **GDPR.md**: 27 rules across consent, data subject rights (DSR), data protection by design (DPD), security, breach notification, international transfers. Cookie compliance and PII field identifiers.
+  - All presets are additive (never weaken existing gate-keeper rules)
+  - Activated via `/go --compliance=hipaa|soc2|gdpr`
+
+### Changed
+
+- **`DOCUMENTATION-INDEX.md`** - Added Advanced Intelligence section, updated version to 1.9.0.0, agent count to 44
+- **`tests/run-tests.sh`** - Added 13 advanced intelligence test functions
+
+---
+
+## [1.8.0.2] - 2026-02-07
+
+### Added
+
+#### Phase 3: Developer Experience & Observability
+New slash commands and tooling for execution visibility, cost tracking, and framework diagnostics. This is the third phase of the Framework Evolution PRD.
+
+- **`scripts/cost-tracker.sh`** - Token Usage Tracker (FR-022):
+  - Record token usage per agent, story, and phase
+  - Generate reports grouped by agent, story, phase, or all
+  - Quick summary with totals and unique counts
+  - Commands: record, report, summary, reset, status
+
+- **`scripts/dashboard.sh`** - Live Execution Dashboard (FR-028):
+  - Terminal UI with auto-refresh (default 2s)
+  - Progress bar visualization with completion percentage
+  - Shows swarm task status, active agents, scratchpad alerts
+  - Displays file conflict warnings and cost summary
+  - Reads state passively (never blocks agent execution)
+  - Supports `--once` for single render and `--refresh=N` for custom interval
+
+- **`.claude/commands/explain.md`** - `/explain` Slash Command (FR-023):
+  - Explains last agent action in plain English
+  - References story/PRD requirements
+  - Shows file changes and next steps
+
+- **`.claude/commands/undo.md`** - `/undo` Slash Command (FR-024):
+  - Reverts last reversible agent action
+  - Checks reversibility before proceeding
+  - Requires confirmation (per CLI confirmation matrix)
+
+- **`.claude/commands/cost.md`** - `/cost` Slash Command (FR-022):
+  - Token usage report via cost-tracker.sh
+  - Supports grouping by agent, story, phase
+
+- **`.claude/commands/health.md`** - `/health` Slash Command (FR-025):
+  - Framework self-diagnostic
+  - Checks version, structure, agents, memory bank, swarm, security, PRDs
+
+### Changed
+
+- **`DOCUMENTATION-INDEX.md`** - Added Developer Experience section
+- **`tests/run-tests.sh`** - Added 10 developer experience test functions
+
+---
+
+## [1.8.0.1] - 2026-02-07
+
+### Added
+
+#### Phase 2: Swarm Agent Coordination
+Self-organizing agent coordination replaces top-down wave dispatch. Agents independently pull tasks from a shared queue, communicate via scratchpad, and detect file conflicts in real-time. This is the second phase of the Framework Evolution PRD.
+
+- **`parallel/swarm-queue.sh`** - Shared Task Queue (FR-010, FR-015, FR-016, FR-017):
+  - SwarmTask CRUD with full state machine enforcement (PRD Section 6.1)
+  - States: QUEUED -> CLAIMED -> IN_PROGRESS -> COMPLETE/FAILED/BLOCKED
+  - Invalid transition guards (COMPLETE is terminal, QUEUED cannot skip to IN_PROGRESS)
+  - File-based locking via flock for concurrent access safety
+  - Max concurrent agent limit (5, configurable)
+  - Dependency checking before task claim
+  - File conflict detection during claim
+  - Retry with exponential backoff (max 3 retries)
+  - Agent availability pool tracking
+  - Commands: init, add, claim, start, complete, fail, block, unblock, list, status, pool, reset
+
+- **`parallel/swarm-scratchpad.sh`** - Inter-agent Communication (FR-012):
+  - Agents write notes about interface changes, decisions, warnings
+  - Project-scoped (never crosses project boundaries per security req)
+  - Priority levels: normal, high (for breaking changes)
+  - Acknowledge mechanism for read tracking
+  - Filter by target agent, task, or unread status
+  - Commands: write, read, list, ack, clear, status
+
+- **`parallel/conflict-detector.sh`** - File Conflict Detection (FR-014):
+  - Register file locks per task before starting work
+  - Real-time conflict detection when multiple agents touch same file
+  - Resolution strategies: serialize (wait) or skip (omit file)
+  - Confirmation required per CLI confirmation matrix
+  - Commands: register, release, check, status, resolve, list
+
+- **`agents/_swarm-coordinator.md`** - Swarm Coordination Protocol Agent:
+  - Defines SwarmTask state machine and valid transitions
+  - Documents dynamic handoffs (FR-011) between agents
+  - Agent availability pool rules and configuration
+  - Swarm vs wave mode decision criteria
+  - Automatic fallback to wave mode on coordination failure (FR-016)
+  - References all shell tools in parallel/
+
+- **`.claude/commands/swarm.md`** - `/swarm` Slash Command:
+  - Unified swarm management interface
+  - Subcommands: status, queue, scratchpad, conflicts, pool, init, fallback
+  - Integrates with swarm-queue.sh, swarm-scratchpad.sh, conflict-detector.sh
+
+### Changed
+
+- **`agents/_parallel-dispatch.md`** - Added swarm tool references to Shell Tool References section
+- **`DOCUMENTATION-INDEX.md`** - Added Swarm Agent Coordination section, updated agent count to 43, updated parallel execution section
+- **`tests/run-tests.sh`** - Added 10 swarm coordination test functions
+
+---
+
+## [1.8.0.0] - 2026-02-07
+
+### Added
+
+#### Phase 1: Bidirectional Knowledge Exchange
+Projects now harvest learned knowledge back to the central framework, making every future installation smarter. This is the first phase of the Framework Evolution PRD.
+
+- **`scripts/harvest.sh`** - Knowledge Harvest Engine (FR-001, FR-003, FR-004, FR-007):
+  - Extracts learned knowledge from project memory_bank to central framework
+  - Security sanitization: blocks secrets, API keys, tokens, PII from harvesting
+  - Deduplication: detects exact-match duplicates, boosts weight on re-encounter
+  - Scope detection: distinguishes project-specific vs universal knowledge
+  - Promotion cycle: HARVESTED -> CANDIDATE (2+ projects) -> PROMOTED (3+ projects OR weight > 0.8)
+  - Promoted entries auto-added to bootstrap.jsonl for future installations
+  - Supports `--all` to harvest from all registered projects
+  - Supports `--promote` to run standalone promotion cycle
+  - Supports `--status` to show harvest statistics
+
+- **`scripts/registry.sh`** - Project Registry Manager:
+  - CRUD operations for project registry with rich metadata (JSONL)
+  - Commands: register, unregister, list, dashboard, status, update-meta
+  - Dashboard shows all projects with version, platform, health, knowledge count
+  - Metadata tracking: last_harvested, health_status, total_go_runs, total_tokens_used
+  - Confirmation prompts for destructive operations (per CLI confirmation matrix)
+
+- **`agents/knowledge-curator.md`** - Knowledge Curator Agent:
+  - Evaluates and promotes harvested knowledge entries
+  - Implements KnowledgeEntry promotion state machine (PRD Section 6.2)
+  - Quality gates: content quality, security, scope, weight thresholds
+  - Knowledge categories: decision, error, fact, pattern, preference
+
+- **Universal Knowledge Files** (central framework knowledge stores):
+  - `memory_bank/knowledge/decisions-universal.jsonl` - Promoted decisions from all projects
+  - `memory_bank/knowledge/errors-universal.jsonl` - Promoted error patterns
+  - `memory_bank/knowledge/patterns-universal.jsonl` - Promoted code patterns
+
+### Changed
+
+- **`scripts/memory.sh`** - Added `harvest` and `sync` subcommands:
+  - `memory.sh harvest` delegates to scripts/harvest.sh
+  - `memory.sh sync` performs bidirectional knowledge exchange (push central -> project, pull project -> central)
+  - Sync requires confirmation prompt (per CLI confirmation matrix)
+
+- **`update.sh`** - Harvest integration (FR-006):
+  - Now runs `harvest.sh` on each project during update cycle
+  - Knowledge automatically flows back to central framework during updates
+
+- **`install.sh`** - Registry integration:
+  - Now registers projects in enhanced registry with metadata via registry.sh
+  - Tracks platform, version, knowledge count at install time
+
+### Tests Added
+
+- 10 new test functions for Knowledge Exchange (knowledge test category):
+  - harvest.sh existence, executability, --help support
+  - registry.sh existence, executability, --help support
+  - knowledge-curator.md agent validation (3 required sections)
+  - Universal knowledge files existence (3 files)
+  - memory.sh harvest/sync command presence
+  - update.sh harvest integration verification
+  - harvest.sh security sanitization (5 sensitive patterns)
+  - harvest.sh deduplication logic presence
+  - harvest.sh scope detection presence
+  - harvest.sh promotion criteria verification (3+ projects OR weight > 0.8)
+
+---
+
+## [1.7.0.2] - 2026-02-07
+
+### Added
+
+#### Autonomous Execution System
+Eliminates Claude Code permission prompts during Dream Team agent execution by pre-approving safe operations at the tool level, while keeping framework guardrails (Gate Keeper, Fixer, Evaluator) as the real safety net.
+
+- **`.claude/settings.json`** - Shared permission profile with comprehensive allowlists:
+  - All file operations (Read, Edit, Write, Glob, Grep) pre-approved
+  - Development tools (npm, python, dotnet, pytest) pre-approved
+  - Git operations (status, diff, commit, branch, merge, rebase) pre-approved
+  - Framework scripts (./parallel/*, ./scripts/*) pre-approved
+  - Docker read + compose operations pre-approved
+  - GitHub CLI operations pre-approved
+  - Task (subagent) dispatch pre-approved
+  - Destructive operations always denied (rm -rf /, force push main, mkfs, etc.)
+
+- **`.claude/hooks/validate-bash.sh`** - PreToolUse safety hook:
+  - Emergency deny patterns for system-destructive commands
+  - Network piped execution detection (curl | bash)
+  - Protected branch force push detection
+  - Environment exfiltration detection
+  - Suspicious pattern warnings (sudo, eval, exec) logged to audit
+  - Fail-open design: only explicitly dangerous patterns blocked
+
+- **`docs/AUTONOMOUS-EXECUTION.md`** - Setup guide:
+  - Two-layer safety architecture explained
+  - Quick setup (automatic via install.sh or manual)
+  - Pre-approved vs denied operations table
+  - Permission customization guide
+  - Framework execution mode combination matrix
+  - Troubleshooting guide
+
+### Changed
+
+#### Installer Updates
+- **`install.sh`** now deploys `.claude/settings.json` and `.claude/hooks/` during Claude platform installation
+- Creates `.claude/hooks/` directory in installation structure
+- Installation summary shows hooks and permission profile
+
+---
+
+## [1.7.0.1] - 2026-02-06
+
+### Added
+
+#### Populated Empty Directories
+
+Three previously empty directory structures now contain practical, high-value content:
+
+##### Project Templates (`templates/`)
+- **`templates/README.md`** - Directory guide and usage instructions
+- **`templates/prd-web-app.md`** - Full-stack web app PRD template (auth, DB, UI, API)
+- **`templates/prd-api.md`** - REST API PRD template (endpoints, rate limiting, OpenAPI)
+- **`templates/prd-cli.md`** - CLI tool PRD template (arg parsing, exit codes, output formats)
+- **`templates/prd-library.md`** - Library/package PRD template (public API, semver, packaging)
+- Templates use `{{VARIABLE}}` substitution, wired into `scripts/wizard.sh`
+
+##### Parallel Execution Tooling (`parallel/`)
+- **`parallel/README.md`** - Architecture overview and usage guide
+- **`parallel/wave-planner.sh`** - Topological sort (Kahn's algorithm) for wave computation from story dependencies
+- **`parallel/dispatch-state.sh`** - CRUD for `.claude/dispatch-state.json` (init, update, query, report)
+- **`parallel/visualize.sh`** - ASCII DAG and Mermaid diagram generation from story dependencies
+- All shell-based (consistent with framework tooling, no Node.js required)
+
+##### Memory Bank Seed Files (`memory_bank/`)
+- **`memory_bank/README.md`** - Architecture overview and schema documentation
+- **`memory_bank/knowledge/README.md`** - JSONL schema documentation with field descriptions
+- **`memory_bank/knowledge/bootstrap.jsonl`** - 15 pre-seeded framework facts, decisions, and error patterns
+- **`memory_bank/relationships/knowledge-graph.json`** - Valid empty graph structure
+- **`memory_bank/relationships/lineage.json`** - Valid empty lineage structure
+- **`memory_bank/retrieval/query-cache.json`** - Valid empty cache structure
+- **`memory_bank/retrieval/weights.json`** - Valid empty weights structure
+
+### Changed
+
+#### Wizard Template Integration
+- **`scripts/wizard.sh`** now copies from `templates/prd-{type}.md` with variable substitution instead of generating inline PRD
+- Fallback to inline generation for custom/unknown project types
+
+#### Memory Manager Improvements
+- **`scripts/memory.sh`** `init_memory_bank()` now writes valid JSON structures (not empty files)
+- Copies `bootstrap.jsonl` to new projects on first init
+- **`scripts/memory.ps1`** updated with same improvements for Windows
+
+#### Parallel Dispatch Agent
+- **`agents/_parallel-dispatch.md`** updated with shell tool references
+
+#### Documentation Updates
+- **`docs/PARALLEL-EXECUTION.md`** updated to reference shell scripts instead of JavaScript
+- **`DOCUMENTATION-INDEX.md`** updated with templates/, parallel/, memory_bank/ entries
+- **`tests/run-tests.sh`** expanded with tests for new directories and files
+
+### Statistics
+- **16 new files** created across 3 directories
+- **8 existing files** updated
+- **Version**: 1.7.0.0 -> 1.7.0.1 (iteration bump)
+
+---
+
+## [1.7.0.0] - 2026-02-05
+
+### Added
+
+#### Auto-Remediation & Autonomous Execution System
+
+**Game-Changing Feature:** Self-healing development pipeline that fixes 90%+ of violations autonomously.
+
+#### Version Management System
+
+**NEW:** Comprehensive versioning system with semantic versioning format `MAJOR.FEATURE.DATABASE.ITERATION`
+
+##### Version Components
+- **MAJOR** (1) - Breaking changes, requires fresh install
+- **FEATURE** (7) - New features, safe update
+- **DATABASE** (0) - Schema changes, requires migration
+- **ITERATION** (0) - Patches and bug fixes, safe update
+
+##### New Tools
+- **Version Check Script** (`scripts/version-check.sh`) - Detects installed version, compares with available, recommends action
+- **Version Command** (`/version`) - Show version information and check for updates
+- **Install/Update Integration** - Automatic version display and comparison during installation/updates
+
+##### Update Decision Logic
+- **UP_TO_DATE** - No action needed
+- **PATCH_UPDATE** (X.X.X.0 → X.X.X.1) - Safe update, run `./update.sh`
+- **FEATURE_UPDATE** (X.X.0.0 → X.Y.0.0) - Safe update, run `./update.sh`
+- **DATABASE_MIGRATION** (X.X.0.0 → X.X.1.0) - Backup first, run `./update.sh --migrate`
+- **MAJOR_UPDATE** (1.X.X.X → 2.X.X.X) - Backup first, run `./install.sh --force`
+
+##### Version Display
+- Version banner in install.sh and update.sh
+- `/version` command for detailed version information
+- `--version` flag in update.sh shows full version breakdown
+- Version comparison when updating existing installations
+
+##### New Agent: Fixer Orchestrator (`/fixer`)
+- Auto-remediation intelligence that routes violations to appropriate specialists
+- Smart retry loops (3 attempts with exponential backoff)
+- Escalation only when necessary (critical decisions requiring user expertise)
+- Parallel remediation (independent violations fixed simultaneously)
+- Full audit trail (`logs/remediations.md`, `logs/escalations.md`)
+
+##### Three Execution Modes
+- **Supervised Mode** (default) - Stop at every violation, user approves all fixes
+- **Semi-Autonomous Mode** (recommended) - Auto-fix routine violations, escalate critical decisions
+- **Autonomous Mode** - Full autonomy, user checkpoint only at phase/project end
+
+##### Auto-Fix Capabilities
+**Routine Violations (No User Interruption):**
+- Missing tests → Tester generates them
+- Security headers missing → Security Specialist adds them
+- Dead code detected → Refactor Agent removes it
+- N+1 query patterns → Data Architect optimizes them
+- Performance bottlenecks → Performance Optimizer fixes them
+- Accessibility violations → Accessibility Specialist corrects them
+- Missing documentation → Documentation Codifier generates them
+
+**Critical Decisions (Escalated to User):**
+- Architectural choices (multiple valid approaches with trade-offs)
+- Business logic ambiguities not specified in PRD
+- Security/compliance policy decisions
+- Breaking API changes affecting external consumers
+- Domain expertise required (tax rules, legal requirements)
+
+##### Enhanced Gate Keeper
+- Added **auto-fix mode** alongside traditional blocking mode
+- Routes violations to Fixer Orchestrator for remediation
+- Re-validates after fixes applied
+- Maintains all existing quality standards while enabling automation
+
+##### New Documentation
+- **Escalation Criteria Matrix** (`docs/ESCALATION-CRITERIA.md`) - Complete guide on when to auto-fix vs. escalate
+- **Remediation Logs** (`logs/remediations.md`) - Audit trail of all auto-fixes
+- **Escalation Logs** (`logs/escalations.md`) - Record of all user decisions
+
+##### Enhanced `/go` Command
+New execution mode flags:
+- `/go --mode=supervised` - Traditional blocking behavior
+- `/go --mode=semi-auto` - Auto-fix routine, escalate critical (recommended)
+- `/go --mode=autonomous` - Full autonomy, minimal interruptions
+
+##### Violation → Agent Routing Table
+Complete mapping of 20+ violation types to appropriate specialist agents:
+- Missing tests → Tester
+- Security issues → Security Specialist
+- Dead code → Refactor Agent
+- Database issues → Data Architect
+- Performance → Performance Optimizer
+- Accessibility → Accessibility Specialist
+- i18n gaps → i18n Specialist
+- Missing observability → SRE Specialist
+- Architectural ambiguity → **ESCALATE**
+- Business logic unclear → **ESCALATE**
+
+### Changed
+
+#### Gate Keeper Enhancements
+- Added operating modes: `--mode=block`, `--mode=auto-fix`, `--mode=report`
+- Generates structured violation reports in JSON format for Fixer Orchestrator
+- Maintains existing validation rigor while enabling auto-remediation
+
+#### Workflow Improvements
+- **90%+ reduction** in user interruptions for routine quality issues
+- **Faster execution** - No waiting for manual test/doc/security fixes
+- **Consistent quality** - Standards automatically enforced
+- **User time focused** on strategic decisions, not routine quality tasks
+
+### Dream Team Audit (Self-Audit - 2026-02-06)
+
+Framework audited itself using 6 specialist agents (81 findings). All remediated:
+
+#### P0 - Critical Security Fixes
+- **Created `.gitignore`** - Framework was missing gitignore entirely; added BPSBS-compliant exclusions
+- **Fixed `rm -rf` safety** in `install.sh` - Added path validation, root/home protection
+- **Fixed injection vulnerabilities** in `scripts/memory.sh` - jq `--arg`, `grep -F --`, type whitelist
+- **Added `set -o pipefail`** to all 11 shell scripts
+- **Fixed symlink race** in `scripts/test-version-system.sh` - Uses `mktemp -d` now
+
+#### P1 - This Release Fixes
+- **Updated version references** from 1.6.0 → 1.7.0.0 across all documentation
+- **Fixed agent counts** 38/39 → 41 across README, AGENTS.md, QUICK-REFERENCE, DOCUMENTATION-INDEX, version files
+- **Deleted temp files** (.goutputstream-SUL1I3, install.sh.backup)
+- **Renamed .mdf → .md** in `.cursor/rules/` (fixer, version)
+
+#### P2 - User-Directed Improvements
+- **Ported security-scanner** to Claude Code + Cursor (new agent, counts 40→41)
+- **Merged reptilian-gate-keeper.md** into gate-keeper.md (removed duplicate)
+- **Moved ANTI_PATTERNS** to `docs/` (updated all installer paths in .sh and .ps1)
+- **Moved scripts** install-unified.sh/ps1, convert-to-copilot.sh → `scripts/`
+- **Moved docs** CLAUDE-SUMMARY, V1.1.0-RELEASE-NOTES, AGENTS-ENHANCEMENT-COMPLETE → `docs/`
+- **Archived 9 historical docs** to `docs/archive/`
+- **Wired 11 shared modules** into 33 platform files (agents/ persona references)
+- **Documented 5 Copilot-only agents** in docs/AGENTS.md (GitHub-specific)
+
+### Statistics
+- **41 agents** (was 38) - Added Fixer Orchestrator, Version, Security Scanner agents
+- **46 Copilot agents** (41 shared + 5 GitHub-specific)
+- **3 execution modes** - Supervised, Semi-Autonomous, Autonomous
+- **20+ auto-fixable** violation types
+- **Target: >90%** auto-fix rate, <10% escalation rate
+- **33 platform files** wired to shared agent modules
+
+---
+
+## [1.6.0] - 2026-02-03
+
+### Added
+
+#### The Dream Team - 8 New Specialist Agents
+
+Completing the full software development lifecycle:
+
+##### Security Specialist (`/security`)
+- STRIDE threat modeling for new features
+- OWASP Top 10 audit checklist
+- Penetration testing mindset
+- Attack vector enumeration
+- Security-focused code review
+- Incident response guidance
+- System hardening recommendations
+
+##### Data Architect (`/data-architect`)
+- Schema design with ERD generation
+- Query optimization with execution plan analysis
+- Normalization analysis and recommendations
+- Safe migration strategy (non-breaking changes)
+- Index decision framework
+- Database health audits
+- Anti-pattern detection (EAV, God tables, N+1)
+
+##### Release Manager (`/release`)
+- Semantic versioning enforcement
+- Keep a Changelog format
+- User-facing release notes generation
+- Pre-release and post-release checklists
+- Rollback plan templates
+- Hotfix process guidance
+- Error budget integration
+
+##### i18n Specialist (`/i18n`)
+- Internationalization infrastructure setup
+- Hardcoded string detection and extraction
+- ICU message format for plurals/gender
+- RTL (right-to-left) support with logical CSS
+- Locale-specific formatting (numbers, dates, currencies)
+- Translation quality review
+- Multi-country context (Luxembourg, Belgium, France)
+
+##### Tech Lead (`/tech-lead`)
+- Technical decision arbitration (RFC process)
+- Cross-team coordination
+- Technical mentorship
+- Project planning with milestones
+- Technical debt management
+- Stakeholder communication
+- Technical health metrics
+
+##### SRE Specialist (`/sre`)
+- Incident response framework (SEV1-4)
+- SLO/SLI/Error budget definition
+- Four Golden Signals monitoring
+- Blameless postmortem templates
+- Operational runbook creation
+- Chaos engineering experiments
+- Alert design principles
+
+##### UX/UI Specialist (`/ux-ui`)
+- UI audit protocol (visual, responsive, a11y, interactions)
+- Design system enforcement (tokens, patterns)
+- Framework migration (Bootstrap→Tailwind, etc.)
+- Component rewrite protocol
+- Anti-pattern detection (magic numbers, !important chains)
+- Dark mode requirements
+- Responsive breakpoint strategy
+
+##### Senior Software Engineer (`/senior-engineer`)
+- Assumption surfacing (explicit ASSUMPTIONS blocks)
+- Confusion management (stop and clarify)
+- Push-back when warranted (not a yes-machine)
+- Simplicity enforcement (1000 lines when 100 suffice = fail)
+- Scope discipline (surgical precision)
+- Dead code hygiene (ask before removing)
+- Inline planning for multi-step tasks
+
+#### Documentation
+- **[docs/AGENTS.md](docs/AGENTS.md)** - Complete agent team reference
+- Updated **[docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)** - All agent modes and commands
+- Updated **[DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)** - New agent listings
+
+#### Platform Support
+- All 8 new agents available on Claude Code, GitHub Copilot CLI, and Cursor
+- 38 shared agent modules in `agents/` directory
+- Consistent behavior across all three platforms
+
+### Changed
+
+#### Statistics
+- Claude Code Skills: 30 → 38 (+8)
+- Copilot CLI Agents: 36 → 44 (+8)
+- Cursor Rules: 30 → 38 (+8)
+- Shared Modules: 28 → 36 (+8)
+- Total: 96 → 120 agents/skills/rules
+
+---
+
+## [1.5.0] - 2026-01-25
+
+### Added
+
+#### Phase 4: Observability & Tracing System
+
+##### Observability Infrastructure
+- **Observability Manager** (`observability/observability-manager.js`):
+  - Unified interface for tracing, metrics, and auditing
+  - Singleton pattern for global access
+  - Automatic metrics collection and saving
+
+- **Trace Logger** (`observability/trace-logger.js`):
+  - Structured logging to JSONL files
+  - Session-based trace organization
+  - Span-based distributed tracing
+  - Automatic trace ID and span ID generation
+  - Decision logging support
+
+- **Metrics Collector** (`observability/metrics-collector.js`):
+  - Token usage tracking (total, by agent, by action)
+  - Latency measurement (average, by agent, by action)
+  - Error rate calculation
+  - Action counting and status tracking
+  - Session tracking
+  - Metrics persistence to JSON file
+
+- **Audit Logger** (`observability/audit-logger.js`):
+  - Story completion tracking
+  - Security event logging
+  - Decision logging
+  - File operation logging
+  - Agent action logging
+  - Audit trail search functionality
+
+##### Trace Viewer
+- **Trace Viewer Server** (`observability/trace-viewer-server.js`):
+  - Express.js server for trace visualization
+  - RESTful API endpoints for traces, metrics, and audit trails
+  - Session listing and trace retrieval
+
+- **Trace Viewer Client** (`logs/dashboards/trace-viewer.html`):
+  - Web-based trace visualization interface
+  - Timeline view of agent activities
+  - Metrics summary dashboard
+  - Session selection and filtering
+  - Detailed trace entry inspection
+
+##### Start Scripts
+- `scripts/start-trace-viewer.sh` (Linux/Mac)
+- `scripts/start-trace-viewer.ps1` (Windows)
+
+##### Documentation
+- `docs/OBSERVABILITY-TRACING.md` - Complete implementation guide
+
+### Enhanced
+- **Log Directory Structure**: Organized logs into traces/, audit/, and dashboards/ subdirectories
+- **Package Management**: Added `observability/package.json` with uuid dependency
+
+---
+
+## [1.4.1] - 2026-01-25
+
+### Added
+
+#### Full Node.js Implementation for Phase 3 Features
+
+##### MCP Servers - Complete Implementation
+- **Filesystem Server** (`mcp-servers/filesystem/server.js`):
+  - Full Node.js implementation with all 6 tools (read_file, write_file, list_directory, create_directory, delete_file, search_files)
+  - Permission model with confirmation requirements
+  - File size limits and safety checks
+  - Package.json with MCP SDK dependency
+
+- **Database Server** (`mcp-servers/database/server.js`):
+  - Full Node.js implementation with PostgreSQL support
+  - Schema inspection (tables, columns, constraints)
+  - Read-only query execution (SELECT only)
+  - Migration file generation and management
+  - Migration status checking
+  - Package.json with pg dependency
+
+- **Testing Server** (`mcp-servers/testing/server.js`):
+  - Full Node.js implementation with test framework detection
+  - Support for Jest, Mocha, Vitest, pytest
+  - Test execution, coverage, and listing
+  - Watch mode support
+  - Package.json with MCP SDK dependency
+
+- **Security Server** (`mcp-servers/security/server.js`):
+  - Full Node.js implementation for security scanning
+  - Dependency vulnerability scanning (npm, yarn, pip, maven, gradle)
+  - Code scanning for hardcoded secrets
+  - Permission auditing
+  - Comprehensive security report generation
+  - Package.json with MCP SDK dependency
+
+##### Dashboard - Complete Implementation
+- **Dashboard Server** (`dashboard/server/index.js`):
+  - Full Express.js server implementation
+  - RESTful API endpoints for PRDs, stories, agents, and metrics
+  - In-memory data storage (JSON files)
+  - Health check endpoint
+  - Package.json with Express dependency
+
+- **Dashboard Client** (`dashboard/client/`):
+  - Complete HTML/CSS/JS frontend
+  - Tabbed interface (Overview, PRDs, Stories, Agents, Metrics)
+  - Real-time data loading and rendering
+  - Summary cards with statistics
+  - List views for PRDs, stories, and agent activity
+  - Filtering and search capabilities
+  - Modern dark theme UI
+
+### Enhanced
+- **MCP Server READMEs**: Updated with installation and usage instructions
+- **Dashboard Start Scripts**: Ready to use with `npm start`
+
+---
+
+## [1.4.0] - 2026-01-25
+
+### Added
+
+#### Phase 3: Advanced Features
+
+##### Persistent Memory System
+- **Memory Bank Structure**: `memory_bank/` directory with knowledge, relationships, and retrieval subdirectories
+- **CLI Tools**: `scripts/memory.sh` (Linux/Mac) and `scripts/memory.ps1` (Windows)
+- **Commands**: `/remember`, `/recall`, `/correct` for knowledge management
+- **Storage Format**: JSONL-based append-only storage with weight management
+- **Weight Algorithm**: Automatic weight calculation based on recency, validation, usage, and reality anchors
+- **Documentation**: `docs/PERSISTENT-MEMORY-IMPLEMENTATION.md` with full technical details
+- **Integration**: Updated memory agents across all platforms (Claude Code, Copilot CLI, Cursor)
+
+##### MCP (Model Context Protocol) Integration
+- **MCP Server Framework**: `mcp-servers/` directory structure
+- **Four MCP Servers**:
+  - `mcp-claude-as-filesystem` - Safe file operations with permission model
+  - `mcp-claude-as-database` - Database schema inspection and migration management
+  - `mcp-claude-as-testing` - Test runner integration
+  - `mcp-claude-as-security` - Security scanning and vulnerability detection
+- **Documentation**: `docs/MCP-INTEGRATION.md` with server specifications and usage
+- **Server READMEs**: Individual README files for each MCP server
+
+##### Visual Dashboard
+- **Dashboard Structure**: `dashboard/` directory with server and client components
+- **Features**: PRD management, story tracking, agent activity log, metrics dashboard, project health
+- **Tech Stack**: Node.js + Express backend, vanilla HTML/CSS/JS frontend
+- **Start Scripts**: `scripts/start-dashboard.sh` and `scripts/start-dashboard.ps1`
+- **API Endpoints**: RESTful API for PRDs, stories, agents, and metrics
+- **Documentation**: `docs/VISUAL-DASHBOARD.md` with architecture and implementation details
+
+##### Parallel Execution
+- **DAG-Based Execution**: `parallel/` directory with DAG builder and executor
+- **Dependency Resolution**: Automatic dependency analysis and batch creation
+- **Parallel Batches**: Execute independent tasks concurrently
+- **Error Handling**: Circular dependency detection, task failure handling, resource conflict resolution
+- **Documentation**: `docs/PARALLEL-EXECUTION.md` with usage examples and architecture
+
+### Enhanced
+- **Memory Agents**: Updated to reference CLI tools and implementation documentation
+- **Documentation Index**: Added entries for all Phase 3 features
+
+---
+
+## [1.3.5] - 2026-01-25
+
+### Added
+
+#### Phase 2 Polish - Reflection Protocol Expansion
+- **Reflection Protocol** added to 8 specialized agents:
+  - Refactor Agent
+  - Performance Optimizer
+  - Dependency Manager
+  - Code Review Agent
+  - Migration Specialist
+  - API Design Specialist
+  - DevOps Specialist
+  - Accessibility Specialist
+- All agents now include pre/post reflection, self-scoring, and contradiction detection
+
+#### Enhanced Integration Tests
+- **Wizard Workflow Test**: Validates quick start wizard end-to-end
+- **Update Workflow Test**: Validates update preserves custom files
+- **Multi-Platform Test**: Validates multiple platforms can coexist
+- Total integration tests: 19 → 22+ tests
+
+#### Windows PowerShell Error Handling
+- **Comprehensive error handling** in `install.ps1` and `update.ps1`
+- Automatic rollback on failed installations
+- Restore from backup on failed updates
+- Enhanced error messages with actionable solutions
+- Diagnostic mode (`--Debug` flag)
+- Error codes (0-8) matching bash scripts
+
+#### Enhanced Diagnostic Collection
+- **Additional system information**: Computer name, platform selection, debug mode
+- **Better permission details**: AccessToString for PowerShell, detailed ls output for bash
+- **Update status tracking**: Projects processed, failures
+- **Recent operations log**: Last 20 operations (bash)
+
+### Enhanced
+- **Install Scripts**: Better error handling, rollback, diagnostics
+- **Update Scripts**: Better error handling, diagnostics, backup restore
+- **Test Suite**: More comprehensive integration test coverage
+
+### Changed
+- Error messages now include actionable solutions across all platforms
+- Diagnostic information more comprehensive
+- All specialized agents now engage in structured self-reflection
+
+---
+
+## [1.3.4] - 2026-01-25
+
+### Added
+
+#### Phase 2: Core Enhancements
+
+- **Agent Reflection Protocol** (`agents/_reflection-protocol.md`)
+  - Pre-action reflection (risks, assumptions, patterns, simplicity)
+  - Post-action reflection (goal achievement, edge cases, quality, learning)
+  - Contradiction detection protocol
+  - Self-scoring system (0-10 on 4 dimensions: Completeness, Quality, Security, Confidence)
+  - Reflection output format
+  - Integrated into Coder, Tester, and Architect agents
+
+- **Enhanced Test Suite**
+  - **Agent Protocol Tests** (2 tests): Reflection protocol validation
+  - **Integration Tests** (2 tests): Install/update workflows, all platforms
+  - **Performance Tests** (2 tests): Install speed, file count validation
+  - **Security Tests** (2 tests): Security pattern detection, agent security references
+  - **Cross-Platform Tests** (2 tests): Script existence, unified installer validation
+  - Total: 19+ tests across 8 categories (up from 9 tests)
+
+- **Error Handling & Recovery Protocol** (`agents/_error-handling-protocol.md`)
+  - Actionable error messages (what, why, where, how)
+  - Error categories (FATAL, ERROR, WARNING, INFO)
+  - Automatic recovery mechanisms
+  - Rollback on failure
+  - Diagnostic mode (`--debug` flag)
+  - Error codes (0-8)
+  - Retry with exponential backoff
+  - Graceful degradation
+
+### Enhanced
+
+- **Install Script** (`install.sh`)
+  - Added comprehensive error handling
+  - Automatic rollback on failure
+  - Diagnostic information collection
+  - Debug mode (`--debug` flag)
+  - Enhanced error messages with solutions
+  - Better error codes
+
+- **Test Suite** (`tests/run-tests.sh`)
+  - Expanded from 9 to 19+ tests
+  - Added 5 new test categories
+  - Improved test documentation
+
+### Changed
+- Error messages now include actionable solutions
+- Test suite provides comprehensive coverage
+- Agents now engage in structured self-reflection
+
+---
+
+## [1.3.3] - 2026-01-25
+
+### Added
+
+#### Quick Wins - Enhanced Onboarding
+- **One-Click Installation Scripts** (`install-unified.sh`, `install-unified.ps1`)
+  - Auto-detects platform (Claude Code, Copilot CLI, Cursor)
+  - Auto-detects OS (Linux, Mac, Windows)
+  - Interactive mode with smart defaults
+  - Single command installation: `curl ... | bash` or `iwr ... | iex`
+
+- **Quick Start Wizard** (`scripts/wizard.sh`, `scripts/wizard.ps1`)
+  - Interactive project setup wizard
+  - Platform selection
+  - Project type selection (Web App, API, CLI, Library)
+  - Tech stack selection
+  - Auto-generates starter PRD template
+
+- **Enhanced Documentation with Examples**
+  - `docs/EXAMPLES/example-web-app.md` - Complete web app walkthrough
+  - `docs/EXAMPLES/example-api.md` - REST API implementation guide
+  - Real-world examples with step-by-step instructions
+  - Common issues and solutions
+
+- **Strategic Improvement Plan**
+  - `docs/IMPROVEMENT-PLAN.md` - Comprehensive roadmap
+  - `docs/MARKET-COMPARISON.md` - Competitive analysis
+  - Prioritized enhancement list
+
+### Changed
+- Updated installation documentation to include one-click installer
+- Enhanced README with quick start wizard instructions
+
+### Fixed
+- Installation scripts now handle edge cases better
+- Improved error messages for better user experience
+
+---
+
+## [1.3.2] - 2026-01-25
+
+### Added
+
+#### New Specialized Agents (8 Agents)
+- **Refactor Agent** (`refactor.md`) - Code quality improvement with TDD safety net
+  - Common code smells identification
+  - Refactoring techniques (Extract Method, Extract Class, Rename, etc.)
+  - Safety-first approach with test verification
+  - Integration with Tester agent
+
+- **Performance Optimizer** (`performance.md`) - Performance bottleneck identification
+  - Measurement-first approach (never optimize without metrics)
+  - Performance profiling and analysis
+  - Common performance issues (N+1 queries, missing indexes, etc.)
+  - Performance budgets (frontend and backend)
+
+- **Dependency Manager** (`dependency.md`) - Secure dependency management
+  - Vulnerability scanning and assessment
+  - Update strategy (patch/minor/major)
+  - Dependency optimization (remove unused, consolidate)
+  - Package hallucination detection (AI-specific vulnerability)
+
+- **Code Review Agent** (`review.md`) - Merciless code review
+  - High signal-to-noise ratio (only real issues)
+  - Security review (Top 7 vulnerabilities)
+  - Test coverage review
+  - Code quality and architecture review
+
+- **Migration Specialist** (`migration.md`) - Database schema changes
+  - Safety-first migrations (never lose data)
+  - Reversibility (every migration has rollback)
+  - Migration types and risk assessment
+  - Data migration patterns
+
+- **API Design Specialist** (`api-design.md`) - API interface design
+  - RESTful design principles
+  - HTTP status codes and URL design
+  - Request/response design
+  - API versioning strategies
+  - OpenAPI/Swagger documentation
+
+- **DevOps Specialist** (`devops.md`) - CI/CD and infrastructure
+  - CI/CD pipeline design
+  - Infrastructure as code
+  - Deployment strategies (Blue-Green, Canary, etc.)
+  - Monitoring and observability
+
+- **Accessibility Specialist** (`accessibility.md`) - WCAG compliance
+  - WCAG 2.1 Level AA compliance
+  - Accessibility audit and testing
+  - Common accessibility issues
+  - Keyboard navigation and screen reader support
+
+#### Platform Expansion
+- **Claude Code**: 22 → 30 skills (+8)
+- **Copilot CLI**: 28 → 36 agents (+8)
+- **Cursor**: 22 → 30 rules (+8)
+- **Total**: 72 → 96 agents/skills/rules (+24)
+
+### Enhanced
+
+#### Existing Agents Enhanced
+- **Coder Agent**: Added references to refactor and performance agents
+- **Tester Agent**: Added references to performance testing
+- **Architect Agent**: Added Performance, Accessibility, and DevOps personas
+- **Go Agent**: Enhanced workflow with optional specialized agents (Refactor → Performance → Review → Migration)
+
+### Changed
+
+- All new agents available on all platforms (Claude Code, Copilot CLI, Cursor)
+- Enhanced agent integration across workflow
+- Improved documentation and examples
+
+---
+
+## [1.3.1] - 2026-01-20
+
+### Added
+
+#### TDD Enforcement Protocol
+Adopted from SkillsMP Superpowers collection.
+
+- **`agents/_tdd-protocol.md`** - Complete TDD enforcement specification
+  - RED-GREEN-REFACTOR cycle enforcement
+  - Test-first requirement before implementation
+  - Enforcement levels: STRICT (block), WARN (log), OFF (track)
+- **TDD state tracking** - `.claude/tdd-state.json` for cycle metrics
+- **TDD anti-patterns** - Detection and blocking of test-after development
+- **Framework patterns** - Jest/Vitest, pytest, xUnit examples
+- **Integration with /coder** - Automatic TDD mode activation
+
+#### Parallel Agent Dispatching
+Adopted from SkillsMP Superpowers collection.
+
+- **`agents/_parallel-dispatch.md`** - Concurrent subagent execution
+  - Wave execution mode (groups of independent tasks)
+  - Eager execution mode (start as dependencies complete)
+  - Conservative mode (limit concurrent agents)
+- **Dispatch state tracking** - `.claude/dispatch-state.json`
+- **Conflict detection** - File overlap and resource conflicts
+- **Speedup calculation** - Parallel vs sequential comparison
+- **Integration with /go** - `--parallel` flag for story execution
+- **Integration with /delegate** - Enhanced orchestration with waves
+
+#### Git Worktree Isolation
+Based on git worktree best practices.
+
+- **`agents/_git-worktrees.md`** - Isolated branch development
+  - PRD-level worktree creation
+  - Safe experimentation without affecting main
+  - Easy rollback (delete worktree folder)
+  - Parallel PRD development support
+- **Worktree state tracking** - `.claude/worktree-state.json`
+- **Post-create hooks** - Automatic environment setup
+- **Conflict resolution** - Rebase/merge strategies
+- **Integration with /go** - `--worktree` flag for isolated execution
+
+#### Systematic Debugging Protocol
+Adopted from SkillsMP Superpowers collection.
+
+- **`agents/_systematic-debugging.md`** - Four-phase debugging
+  - Phase 1: OBSERVE - Gather facts without assumptions
+  - Phase 2: HYPOTHESIZE - Form testable explanations
+  - Phase 3: TEST - Validate/invalidate hypotheses
+  - Phase 4: VERIFY - Confirm fix, add regression tests
+- **Five Whys technique** - Trace to root cause
+- **Debug session tracking** - `.claude/debug-state.json`
+- **Defense in depth** - Add guards after every fix
+- **Integration with /debugger** - Enhanced debugging workflow
+
+### Changed
+
+- `/coder` skill updated with mandatory TDD enforcement
+- `/debugger` skill updated with four-phase protocol
+- `/delegate` skill updated with parallel dispatch capabilities
+- `/go` skill updated with worktree and parallel flags
+- Framework version bumped to 1.3.1
+
+### New /go Flags
+
+```
+/go --parallel           Enable parallel story execution
+/go --parallel=EAGER     Use eager execution mode
+/go --parallel=2         Limit concurrent agents
+/go --no-parallel        Force sequential execution
+/go --worktree           Execute PRD in isolated worktree
+/go --no-worktree        Force inline execution
+/go --tdd                Enforce TDD mode (STRICT)
+/go --tdd=WARN           TDD in warning mode
+```
+
+---
+
+## [1.3.0] - 2026-01-20
+
+### Added
+
+#### Execution State Machine
+Based on crash recovery and rollback requirements.
+
+- **`agents/_state-machine.md`** - Complete state machine specification
+  - States: IDLE → INITIALIZING → LOADING_PRD → VALIDATING → GENERATING_STORIES → EXECUTING_STORY → VALIDATING_LAYERS → SECURITY_AUDIT → DOCUMENTING → COMPLETED
+  - Error state with recovery options
+  - Rolling back state for undo operations
+- **`.claude/state.json`** - Persistent execution state
+- **State transitions** - Deterministic flow with action triggers
+- **Recovery protocol** - Automatic detection of interrupted executions
+
+#### Rollback Protocol
+- **`agents/_rollback-protocol.md`** - Complete rollback specification
+- **Automatic backups** - Files backed up before modification to `.claude/backups/`
+- **Rollback manifest** - Tracks all changes for reversal
+- **Database rollback** - Migration down scripts executed
+- **Package rollback** - Installed packages tracked and removed
+- **Partial rollback** - Rollback to specific story point with `--rollback STORY-XXX`
+
+#### Story Dependency Graph
+- **`agents/_story-dependency-graph.md`** - Dependency management specification
+- **Dependency types** - Hard (blocks) and soft (prefers) dependencies
+- **INDEX.md template** - Automatic generation of story index with Mermaid graph
+- **Parallel execution** - Independent stories can run simultaneously
+- **Critical path calculation** - Identifies bottleneck sequence
+- **Cycle detection** - Fatal error on circular dependencies
+
+#### Inter-PRD Dependencies
+- **`agents/_prd-dependencies.md`** - PRD coordination specification
+- **Dependency metadata** - `requires`, `recommends`, `blocks`, `shared_with` fields
+- **PRD validation** - Checks dependencies before execution
+- **Execution waves** - PRDs grouped by dependency level
+- **Impact analysis** - Shows downstream effects of PRD changes
+
+#### Metrics & Analytics System
+- **`agents/_metrics-system.md`** - Complete metrics specification
+- **`.claude/commands/metrics.md`** - New `/metrics` skill
+  - `/metrics` - Dashboard view
+  - `/metrics agents` - Agent performance breakdown
+  - `/metrics stories` - Story completion analysis
+  - `/metrics errors` - Error analysis and patterns
+  - `/metrics trends` - Trend analysis over time
+  - `/metrics export [format]` - Export to JSON/CSV/Markdown
+- **Automatic collection** - Metrics gathered during `/go` execution
+- **Agent tracking** - Success rates, token usage, response times
+- **Story tracking** - By complexity, by layer, completion rates
+- **Error categorization** - By type, by agent, recovery rates
+- **Trend analysis** - Weekly/monthly comparisons
+
+#### Agent Communication Protocol
+- **`agents/_agent-protocol.md`** - Inter-agent messaging standard
+- **Request/Response format** - Structured JSON messages
+- **Status codes** - SUCCESS, PARTIAL, FAILED, BLOCKED
+- **Handoff protocol** - Clean agent-to-agent transitions
+- **Error propagation** - Standardized error codes and handling
+- **Chain execution** - Sequential, parallel, and conditional flows
+- **Traceability** - Correlation IDs and audit trail
+
+#### Test Execution Integration
+- **`agents/_test-execution.md`** - Cross-framework test running
+- **Auto-detection** - Detects Jest, Vitest, pytest, dotnet test, cargo test, go test
+- **Unified result format** - Normalized test output across frameworks
+- **Failure categorization** - assertion, timeout, type_error, network, database, etc.
+- **Coverage analysis** - Line, branch, function coverage with thresholds
+- **Integration with gate-keeper** - Test evidence for capability gates
+
+#### Gate Verification Commands
+- **`agents/_gate-verification.md`** - Automated capability checks
+- **Verification commands**:
+  - `/verify tests` - Run tests and verify all pass
+  - `/verify build` - Verify clean build with no warnings
+  - `/verify coverage [--threshold X]` - Check coverage meets threshold
+  - `/verify lint` - Verify code passes all linting
+  - `/verify security` - Run security scans
+  - `/verify api` - Check API health and smoke tests
+  - `/verify migration` - Test database migrations and rollback
+  - `/verify docs` - Check documentation completeness
+  - `/verify patterns` - Scan for banned patterns
+- **Composite gates** - `/verify production` runs all checks
+- **Custom gates** - Define in `.claude/gates.json`
+
+#### PRD Schema Validation
+- **`genesis/.schema.json`** - JSON Schema for PRD validation
+- **Required fields** - prd_id, title, status, problem_statement, user_stories, security_requirements, out_of_scope
+- **Dependency metadata** - requires, recommends, blocks, shared_with
+- **Validation rules** - Critical checks that block implementation
+
+#### Enhanced /go Command
+- **`--resume`** - Resume interrupted execution from saved state
+- **`--rollback`** - Rollback all changes from last execution
+- **`--rollback STORY-X`** - Rollback to before specific story
+- **`--skip STORY-XXX`** - Skip specific story during execution
+- **`--from STORY-XXX`** - Start from specific story
+- **`--state`** - Show raw state file
+- **`--clean`** - Clear state file and start fresh
+- **`--deps`** - Show PRD dependency graph
+- **`--metrics`** - Show execution metrics dashboard
+
+#### Update Script Enhancements
+- **`--sync PATH`** - Validate/regenerate CLAUDE-SUMMARY.md
+- **Summary sync validation** - Checks CLAUDE.md and CLAUDE-SUMMARY.md are aligned
+- **PRD schema installation** - Auto-copies genesis/.schema.json
+
+### Changed
+- Framework version bumped to 1.3.0
+- PRD template updated with dependency metadata section
+- `/go` skill updated with state machine, rollback, and metrics integration
+- `update.sh` enhanced with sync validation and schema copying
+
+### Technical Details
+- State machine provides deterministic execution flow
+- Rollback uses manifest-based file tracking
+- Dependency graphs use topological sort for ordering
+- Metrics stored in JSON for easy export and analysis
+- All new shared modules follow `_` prefix convention
+
+---
+
+## [1.2.0] - 2026-01-18
+
+### Added
+
+#### Context Engineering
+Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/2512.24601) and [Anthropic's Context Engineering Guide](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents).
+
+- **CLAUDE-SUMMARY.md** - Condensed standards (~2K tokens) for active context loading
+- **`/context` skill** - New context management command
+  - `/context` - Show status and budget
+  - `/context compact` - Force context compaction
+  - `/context budget` - Detailed token breakdown
+  - `/context load <level>` - Load specific context level
+  - `/context clear` - Clear non-essential context
+  - `/context scratchpad` - View/update session tracking
+- **Hierarchical Context Loading** - Level 1/2/3 strategy for token efficiency
+- **Token Budget Thresholds** - GREEN (<50K), YELLOW (50-100K), RED (>100K)
+- **Auto-compaction** - Triggers at 100K tokens or every 5 stories
+
+#### Recursive Task Decomposition
+- **`agents/_recursive-decomposition.md`** - Shared protocol for task breakdown
+- **Decision function** - When to decompose (complexity, budget, parallelization)
+- **Isolated context execution** - Each subtask gets minimal, focused context
+- **Maximum recursion depth** - 3 levels enforced
+- **Result aggregation** - Combine subtask outcomes with conflict detection
+
+#### Shared Agent Modules
+- **`agents/_context-discipline.md`** - Token-aware behavior protocol for all agents
+- **`agents/_subagent-response-format.md`** - Standardized <500 token response format
+- **Scratchpad pattern** - Persistent notes across turns for all agents
+
+#### Enhanced /go Command
+- **Phase 0: Context Preparation** - Mandatory context budget check
+- **Context-aware story execution** - Budget check before each story
+- **Sub-agent delegation rules** - Enforces response format
+- **Story complexity estimation** - Simple/Medium/Complex classification
+- **Emergency compaction protocol** - Handles approaching context limits
+- **Session summary format** - Structured end-of-session reporting
+
+### Changed
+- All 13 agent personas updated with Context Discipline section
+- Agent Orchestrator enhanced with recursive decomposition workflow
+- Project Orchestrator enhanced with sub-phase isolation
+
+### Technical Details
+- Estimated token counts using ~4 chars per token heuristic
+- Level 1 context: ~5-10K tokens (essential only)
+- Level 2 context: ~20-40K tokens (working set)
+- Level 3 context: ~50-80K tokens (extended, reference only)
+
+---
+
+## [1.1.0] - 2026-01-18
+
+### Added
+
+#### Security
+- `.gitignore Security (MANDATORY)` - Comprehensive .gitignore template with all sensitive patterns
+- Pre-commit hook template for secret detection
+- Emergency recovery steps for accidentally committed secrets
+- Sensitive data verification checklist
+
+#### LoggerService
+- Full LoggerService implementation pattern with sanitization
+- ESLint `no-console` rule enforcement
+- Verification commands to confirm all console.* replaced
+- Sign-off template for LoggerService compliance
+
+#### Production Readiness
+- **Database Migration Strategy** - Migration workflow, naming conventions, rollback testing
+- **Observability/APM** - Required stack, RED metrics, log schema, alert thresholds
+- **Incident Response Protocol** - P0-P4 severity levels, runbooks, postmortem template
+- **Graceful Shutdown** - SIGTERM handling, connection draining, PM2 config
+- **API Versioning Strategy** - URL path versioning, deprecation headers, changelog requirements
+- **Concurrency/Locking** - Optimistic locking pattern, deadlock prevention
+- **Error Resilience Patterns** - Circuit breaker, exponential backoff, bulkhead pattern
+- **Dependency Management** - Security scanning, CVE response times, license compliance
+- **Feature Flags** - Flag types, lifecycle management, cleanup requirements
+- **Caching Strategy** - Cache layers, TTL guidelines, invalidation patterns
+- **Performance Budgets** - Core Web Vitals targets, API latency budgets
+- **Soft Delete/Retention** - Data retention policies, GDPR compliance
+- **Load Testing** - k6/Artillery tools, test scenarios, capacity planning
+
+#### Framework Management
+- `update.sh` - Push latest framework version to existing projects
+- Project registry for tracking installations
+- Version markers in projects
+- Diff preview before updates
+- Backup system for updates
+
+### Changed
+- Enhanced Zero Tolerance banned patterns table with 6 additional patterns
+- Philosophy section updated with "ONLY REAL LOGIC" and "Three-Layer Completeness" principles
+- PM2 scripts now include graceful shutdown configuration
+
+---
+
+## [1.0.0] - 2026-01-17
+
+### Added
+- Initial release of Claude AS Framework
+- Genesis-first development workflow
+- PRD and Story templates
+- Three-layer enforcement (Database, Backend, Frontend)
+- Zero tolerance policy for placeholders/TODOs
+- Skills system with `/go`, `/prd`, `/layer-check` commands
+- CLAUDE.md with BPSBS standards
+- `install.sh` for framework installation
+- Authentication & token management security standards
+- Admin password security requirements
+- PM2 production deployment scripts
+- SEO implementation checklist
+
+---
+
+## Version History Summary
+
+| Version | Date | Focus |
+|---------|------|-------|
+| 1.9.0.5 | 2026-02-08 | Knowledge Hub: git-based distribution, cross-machine scratchpad/knowledge sync |
+| 1.9.0.4 | 2026-02-08 | Persistent scratchpad: cross-platform session continuity (Claude/Copilot/Cursor) |
+| 1.9.0.3 | 2026-02-07 | Platform Sync Engine: generate platform files from agent source, command: field |
+| 1.7.0.2 | 2026-02-07 | Autonomous execution: permission profiles, safety hooks, zero-prompt workflow |
+| 1.7.0.1 | 2026-02-06 | Populated templates/, parallel/, memory_bank/ with practical content |
+| 1.7.0.0 | 2026-02-05 | Auto-remediation, fixer orchestrator, 3 execution modes, security scanner, dream team audit |
+| 1.6.0 | 2026-02-03 | Dream Team (8 specialist agents), full SDLC coverage |
+| 1.5.0 | 2026-01-25 | Observability & tracing system |
+| 1.4.1 | 2026-01-25 | Full Node.js MCP/dashboard implementation |
+| 1.4.0 | 2026-01-25 | Persistent memory, MCP integration, dashboard, parallel execution |
+| 1.3.5 | 2026-01-25 | Reflection protocol expansion, Windows error handling |
+| 1.3.4 | 2026-01-25 | Agent reflection protocol, enhanced test suite |
+| 1.3.3 | 2026-01-25 | Quick start wizard, one-click installers |
+| 1.3.2 | 2026-01-25 | 8 new specialized agents (refactor, performance, dependency, etc.) |
+| 1.3.1 | 2026-01-20 | TDD enforcement, parallel dispatch, git worktrees, systematic debugging |
+| 1.3.0 | 2026-01-20 | State machine, rollback, metrics, dependency graphs, gate verification |
+| 1.2.0 | 2026-01-18 | Context engineering, recursive decomposition, token optimization |
+| 1.1.0 | 2026-01-18 | Production readiness, security enhancements, update system |
+| 1.0.0 | 2026-01-17 | Initial release |
+
+---
+
+## Upgrade Guide
+
+### From 1.6.0 to 1.7.0.0
+
+1. Run the update script:
+   ```bash
+   /path/to/claude_as/update.sh /path/to/your/project
+   ```
+
+2. New files added:
+   - `.claude/commands/fixer.md` - Fixer Orchestrator (auto-remediation)
+   - `.claude/commands/version.md` - Version management
+   - `.claude/commands/security-scanner.md` - AI vulnerability scanner
+   - `docs/ESCALATION-CRITERIA.md` - Auto-fix vs escalation matrix
+   - `.gitignore` - BPSBS-compliant security exclusions
+
+3. Moved files (paths updated automatically):
+   - `ANTI_PATTERNS_BREADTH.md` → `docs/ANTI_PATTERNS_BREADTH.md`
+   - `ANTI_PATTERNS_DEPTH.md` → `docs/ANTI_PATTERNS_DEPTH.md`
+   - `CLAUDE-SUMMARY.md` → `docs/CLAUDE-SUMMARY.md`
+   - `install-unified.sh` → `scripts/install-unified.sh`
+
+4. Deleted files:
+   - `agents/reptilian-gate-keeper.md` (merged into `agents/gate-keeper.md`)
+
+5. Updated files:
+   - All `.claude/commands/*.md` - Added persona references to shared modules
+   - All `.cursor/rules/*.md` - Added persona references to shared modules
+   - `agents/gate-keeper.md` - Added auto-fix mode, regression detection
+   - All shell scripts - Added `set -o pipefail`
+
+6. Using new features:
+   ```
+   /go --mode=semi-auto       # Auto-fix routine violations
+   /fixer                     # View auto-remediation stats
+   /security-scanner          # AI-specific vulnerability scan
+   /version                   # Check version and updates
+   ```
+
+---
+
+### From 1.3.0 to 1.3.1
+
+1. Run the update script:
+   ```bash
+   /path/to/claude_as/update.sh /path/to/your/project
+   ```
+
+2. New files added:
+   - `agents/_tdd-protocol.md` - TDD enforcement
+   - `agents/_parallel-dispatch.md` - Parallel agent execution
+   - `agents/_git-worktrees.md` - Git worktree isolation
+   - `agents/_systematic-debugging.md` - Four-phase debugging
+
+3. Updated files:
+   - `.claude/commands/coder.md` - TDD enforcement added
+   - `.claude/commands/debugger.md` - Four-phase protocol added
+   - `.claude/commands/delegate.md` - Parallel dispatch added
+   - `.claude/commands/go.md` - New flags (--parallel, --worktree, --tdd)
+
+4. Using new features:
+   ```
+   # TDD enforcement (default: STRICT)
+   /go --tdd              # Enforce TDD mode
+   /go --tdd=WARN         # Warning mode
+
+   # Parallel execution
+   /go --parallel         # Enable wave-based parallel
+   /go --parallel=EAGER   # Eager mode
+   /go --parallel=2       # Limit to 2 concurrent
+
+   # Git worktree isolation
+   /go --worktree         # Execute in isolated worktree
+   ```
+
+5. The /coder agent now requires tests FIRST:
+   - RED phase: Write failing test
+   - GREEN phase: Minimal implementation
+   - REFACTOR phase: Improve quality
+
+6. The /debugger agent now uses four phases:
+   - OBSERVE: Gather facts
+   - HYPOTHESIZE: Form explanations
+   - TEST: Validate hypotheses
+   - VERIFY: Confirm fix
+
+---
+
+### From 1.2.0 to 1.3.0
+
+1. Run the update script:
+   ```bash
+   /path/to/claude_as/update.sh /path/to/your/project
+   ```
+
+2. New files added:
+   - `agents/_state-machine.md` - Execution state machine
+   - `agents/_rollback-protocol.md` - Rollback protocol
+   - `agents/_story-dependency-graph.md` - Story dependencies
+   - `agents/_prd-dependencies.md` - PRD dependencies
+   - `agents/_metrics-system.md` - Metrics system
+   - `agents/_agent-protocol.md` - Agent communication
+   - `agents/_test-execution.md` - Test integration
+   - `agents/_gate-verification.md` - Gate verification
+   - `.claude/commands/metrics.md` - New `/metrics` skill
+   - `genesis/.schema.json` - PRD validation schema
+
+3. Updated files:
+   - `genesis/TEMPLATE.md` - Now includes dependency metadata
+   - `.claude/commands/go.md` - New flags and features
+   - `update.sh` - New `--sync` command
+
+4. Using new features:
+   ```
+   /go --status        # Check current state
+   /go --resume        # Resume interrupted execution
+   /go --rollback      # Undo last execution
+   /go --metrics       # View execution metrics
+   /metrics            # Dedicated metrics dashboard
+   ```
+
+5. PRD dependencies:
+   - Add dependency metadata to PRDs:
+     ```yaml
+     dependencies:
+       requires: [other-prd]
+       blocks: [dependent-prd]
+     ```
+
+6. Story dependencies:
+   - Stories now support `depends_on` and `blocks` fields
+   - INDEX.md generated with dependency graph
+
+7. Validate sync:
+   ```bash
+   /path/to/claude_as/update.sh --sync /path/to/your/project
+   ```
+
+### From 1.1.0 to 1.2.0
+
+1. Run the update script:
+   ```bash
+   /path/to/claude_as/update.sh /path/to/your/project
+   ```
+
+2. New files added:
+   - `CLAUDE-SUMMARY.md` - Use this for active context instead of full CLAUDE.md
+   - `.claude/commands/context.md` - New context management skill
+   - `agents/_context-discipline.md` - Shared agent module
+   - `agents/_subagent-response-format.md` - Sub-agent format standard
+   - `agents/_recursive-decomposition.md` - Task decomposition protocol
+
+3. Using context engineering:
+   ```
+   /context           # Check current token budget
+   /context compact   # Force compaction when needed
+   /go                # Now includes Phase 0 context prep
+   ```
+
+4. All agents now include:
+   - Scratchpad pattern for session tracking
+   - Token-aware behavior
+   - Structured output format
+
+### From 1.0.0 to 1.1.0
+
+1. Run the update script:
+   ```bash
+   /path/to/claude_as/update.sh /path/to/your/project
+   ```
+
+2. Review the diff first (optional):
+   ```bash
+   /path/to/claude_as/update.sh --diff /path/to/your/project
+   ```
+
+3. Choose how to handle CLAUDE.md:
+   - **Overwrite**: Get all new sections (backup saved)
+   - **Keep**: Preserve your customizations
+   - **Merge**: Save new version as `.new` file for manual merge
+
+4. Verify new requirements:
+   - [ ] .gitignore updated with security patterns
+   - [ ] LoggerService implemented (if frontend exists)
+   - [ ] Pre-commit hooks configured (optional but recommended)

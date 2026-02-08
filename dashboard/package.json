@@ -1,0 +1,15 @@
+{
+  "name": "@claude-as/dashboard",
+  "version": "1.0.0",
+  "description": "Claude AS Visual Dashboard - Web UI for project management",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["dashboard", "claude-as"],
+  "author": "Claude AS Framework",
+  "license": "MIT"
+}

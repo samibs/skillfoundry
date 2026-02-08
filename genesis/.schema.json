@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prd-schema-v1.0",
+  "title": "PRD Schema",
+  "description": "Validation schema for Product Requirements Documents in the Claude AS framework",
+  "type": "object",
+
+  "required": [
+    "prd_id",
+    "title",
+    "status",
+    "created",
+    "problem_statement",
+    "user_stories",
+    "functional_requirements",
+    "security_requirements",
+    "out_of_scope"
+  ],
+
+  "properties": {
+    "prd_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Unique identifier in kebab-case format"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 100,
+      "description": "Human-readable feature name"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$",
+      "default": "1.0"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["DRAFT", "REVIEW", "APPROVED", "IN_PROGRESS", "COMPLETED", "DEPRECATED"],
+      "description": "Current PRD lifecycle status"
+    },
+    "created": {
+      "type": "string",
+      "format": "date",
+      "description": "Creation date in YYYY-MM-DD format"
+    },
+    "author": {
+      "type": "string",
+      "description": "PRD author name"
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date"
+    },
+
+    "dependencies": {
+      "type": "object",
+      "properties": {
+        "requires": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$" },
+          "description": "PRD IDs that must complete before this one"
+        },
+        "recommends": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PRD IDs that should complete first (soft dependency)"
+        },
+        "blocks": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PRD IDs that depend on this one"
+        },
+        "shared_with": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "PRD IDs sharing components"
+        }
+      },
+      "default": {
+        "requires": [],
+        "recommends": [],
+        "blocks": [],
+        "shared_with": []
+      }
+    },
+
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Categorization tags"
+    },
+
+    "priority": {
+      "type": "string",
+      "enum": ["high", "medium", "low"],
+      "default": "medium"
+    },
+
+    "layers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["database", "backend", "frontend", "infrastructure", "documentation"]
+      },
+      "description": "Affected system layers"
+    },
+
+    "problem_statement": {
+      "type": "object",
+      "required": ["description", "impact"],
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 50,
+          "description": "Clear description of the problem"
+        },
+        "impact": {
+          "type": "string",
+          "description": "Who is affected and how"
+        },
+        "current_state": {
+          "type": "string",
+          "description": "How things work today"
+        }
+      }
+    },
+
+    "success_metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["metric", "target"],
+        "properties": {
+          "metric": { "type": "string" },
+          "current": { "type": "string" },
+          "target": { "type": "string" },
+          "measurement": { "type": "string" }
+        }
+      }
+    },
+
+    "user_stories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "role", "action", "benefit", "priority"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^US-\\d{3}$"
+          },
+          "role": { "type": "string" },
+          "action": { "type": "string" },
+          "benefit": { "type": "string" },
+          "priority": {
+            "type": "string",
+            "enum": ["MUST", "SHOULD", "COULD", "WONT"]
+          },
+          "acceptance_criteria": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Gherkin-format acceptance criteria"
+          }
+        }
+      }
+    },
+
+    "functional_requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^FR-\\d{3}$"
+          },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "acceptance_criteria": { "type": "string" }
+        }
+      }
+    },
+
+    "api_requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["endpoint", "method", "purpose"],
+        "properties": {
+          "endpoint": { "type": "string" },
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+          },
+          "purpose": { "type": "string" },
+          "auth": { "type": "string" },
+          "request_body": { "type": "object" },
+          "response": { "type": "object" }
+        }
+      }
+    },
+
+    "security_requirements": {
+      "type": "object",
+      "required": ["authentication", "authorization"],
+      "properties": {
+        "authentication": {
+          "type": "string",
+          "description": "Auth method (JWT, OAuth, Session, None)"
+        },
+        "authorization": {
+          "type": "string",
+          "description": "Authorization model (RBAC, ABAC, etc.)"
+        },
+        "data_protection": { "type": "string" },
+        "input_validation": { "type": "string" },
+        "additional": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "data_model": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["entity", "fields"],
+        "properties": {
+          "entity": { "type": "string" },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "type"],
+              "properties": {
+                "name": { "type": "string" },
+                "type": { "type": "string" },
+                "constraints": { "type": "string" },
+                "description": { "type": "string" }
+              }
+            }
+          },
+          "relationships": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "out_of_scope": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Explicitly excluded features/capabilities"
+    },
+
+    "risks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "description", "likelihood", "impact", "mitigation"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^R-\\d{3}$" },
+          "description": { "type": "string" },
+          "likelihood": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+          "impact": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+          "mitigation": { "type": "string" }
+        }
+      }
+    },
+
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["number", "name", "scope"],
+        "properties": {
+          "number": { "type": "integer" },
+          "name": { "type": "string" },
+          "scope": { "type": "string" },
+          "prerequisites": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+
+    "definition_of_done": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Checklist for feature completion"
+    }
+  },
+
+  "validation_rules": {
+    "critical_checks": [
+      "problem_statement.description must be specific (>50 chars)",
+      "At least one MUST-priority user story required",
+      "security_requirements.authentication must be defined",
+      "out_of_scope must have at least one item"
+    ],
+    "warning_checks": [
+      "All user stories should have acceptance_criteria",
+      "api_requirements should be defined if layers includes backend",
+      "data_model should be defined if layers includes database",
+      "risks should be identified"
+    ]
+  }
+}
