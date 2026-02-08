@@ -460,5 +460,5 @@ NEXT STEP: [specific action]
 
 **Reference**:
 - Google SRE Book
-- `bpsbs.md` - Incident response section
-- `bpsbs.md` - Observability section
+- `CLAUDE.md` - Incident response section
+- `CLAUDE.md` - Observability section

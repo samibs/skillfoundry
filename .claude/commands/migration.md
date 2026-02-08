@@ -385,6 +385,6 @@ After each migration, self-assess:
 ---
 
 **Reference**: 
-- `bpsbs.md` - Database migration standards
+- `CLAUDE.md` - Database migration standards
 - `layer-check.md` - Database layer validation
 - Framework-specific migration tools (Alembic, EF Migrations, etc.)

@@ -78,7 +78,7 @@ EXECUTION MODES (NEW v1.7.0):
 - **Mandatory security checks**: All code validated against ANTI_PATTERNS
 - **Top 7 vulnerabilities**: Automatic scanning during implementation
 - **Security scanner integration**: Available for security audits
-- Reference: `ANTI_PATTERNS_BREADTH.md`, `ANTI_PATTERNS_DEPTH.md`
+- Reference: `docs/ANTI_PATTERNS_BREADTH.md`, `docs/ANTI_PATTERNS_DEPTH.md`
 
 ### Platform Support
 - **Dual-platform**: Supports both Claude Code and GitHub Copilot CLI

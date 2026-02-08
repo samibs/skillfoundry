@@ -74,7 +74,7 @@ your-project/
 │   └── stories/            # Generated stories go here
 ├── CLAUDE.md               # Full standards reference
 ├── CLAUDE-SUMMARY.md       # Condensed for active context
-└── bpsbs.md                # Standards reference
+└── CLAUDE.md               # Standards reference
 ```
 
 ---

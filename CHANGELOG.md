@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.8] - 2026-02-08
+
+### Changed — Documentation Deduplication & Cleanup
+
+- **CLAUDE.md** — Slimmed from 2023 lines to 267 lines (framework-specific only)
+  - Removed sections duplicating global `~/.claude/CLAUDE.md` (path safety, security heuristics, LLM failures, test coverage, module skeleton, etc.)
+  - Relocated enterprise production patterns to `docs/enterprise-standards.md`
+  - Added header referencing global rules, enterprise standards, and ANTI_PATTERNS
+- **docs/enterprise-standards.md** (NEW, ~1352 lines) — Relocated production operations reference:
+  - .gitignore security, auth/token management, admin credentials, LoggerService
+  - PM2 deployment, SEO, DB migrations, observability, incident response
+  - Graceful shutdown, API versioning, concurrency, error resilience
+  - Dependency management, feature flags, caching, performance budgets
+  - Soft delete/data retention, load testing
+- **ANTI_PATTERNS install path** — Files now install to `docs/` instead of project root
+  - Updated `install.sh`, `update.sh`, `install.ps1`, `update.ps1`
+  - `update.sh` auto-migrates existing root files to `docs/`
+  - Updated 68+ file references across agents, commands, cursor rules, and copilot agents
+- **bpsbs.md** — No longer copied to target projects (covered by CLAUDE.md + global rules)
+  - All references across 51 files updated from `bpsbs.md` to `CLAUDE.md`
+- **Token savings** — ~13,000 tokens/session reduced by eliminating triple-injection of same rules
+
+---
+
 ## [1.9.0.7] - 2026-02-08
 
 ### Added - Deliberation Protocol

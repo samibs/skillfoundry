@@ -17,13 +17,13 @@ AI-generated code has distinct security weaknesses:
 Before scanning, read:
 1. `docs/ANTI_PATTERNS_BREADTH.md` - Wide coverage of all patterns
 2. `docs/ANTI_PATTERNS_DEPTH.md` - Deep dive on top 7 critical issues
-3. `bpsbs.md` - Zero tolerance standards
+3. `CLAUDE.md` - Zero tolerance standards
 
 ## Scan Modes
 
 ### Quick Scan (Top 7 Only)
 
-Focus on ANTI_PATTERNS_DEPTH.md critical issues:
+Focus on docs/ANTI_PATTERNS_DEPTH.md critical issues:
 1. Hardcoded secrets
 2. SQL injection
 3. XSS
@@ -36,7 +36,7 @@ Focus on ANTI_PATTERNS_DEPTH.md critical issues:
 
 ### Comprehensive Scan (All 15 Patterns)
 
-Use both ANTI_PATTERNS_BREADTH.md and DEPTH.md:
+Use both docs/ANTI_PATTERNS_BREADTH.md and docs/ANTI_PATTERNS_DEPTH.md:
 - All 15 security patterns
 - Edge cases
 - Context-specific variations
@@ -58,7 +58,7 @@ Deep dive on single vulnerability type:
 
 Scan code in priority order (frequency x severity):
 
-**Priority 1 - Critical (from ANTI_PATTERNS_DEPTH.md):**
+**Priority 1 - Critical (from docs/ANTI_PATTERNS_DEPTH.md):**
 1. Hardcoded Secrets - API keys, passwords, tokens in code
 2. SQL Injection - String concatenation in queries
 3. Cross-Site Scripting (XSS) - Unescaped user input in HTML
@@ -67,7 +67,7 @@ Scan code in priority order (frequency x severity):
 6. Package Hallucination - Non-existent imports
 7. Command Injection - Unsanitized shell execution
 
-**Priority 2 - Additional (from ANTI_PATTERNS_BREADTH.md):**
+**Priority 2 - Additional (from docs/ANTI_PATTERNS_BREADTH.md):**
 8. Path Traversal
 9. XML External Entities (XXE)
 10. Server-Side Request Forgery (SSRF)
@@ -100,7 +100,7 @@ Report must include:
 - Files scanned count
 - Issues by severity (CRITICAL/HIGH/MEDIUM/LOW)
 - For each issue: file:line, anti-pattern reference, vulnerable code, risk, attack scenario, secure fix
-- References to ANTI_PATTERNS_DEPTH.md and ANTI_PATTERNS_BREADTH.md sections
+- References to docs/ANTI_PATTERNS_DEPTH.md and docs/ANTI_PATTERNS_BREADTH.md sections
 - Recommendations (immediate, short-term, medium-term, process improvements)
 
 ## Integration

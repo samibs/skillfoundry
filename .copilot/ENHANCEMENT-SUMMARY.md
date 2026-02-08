@@ -196,7 +196,7 @@ All agents enforce:
 - **TDD Protocol** (`agents/_tdd-protocol.md`)
 - **Context Discipline** (`agents/_context-discipline.md`)
 - **Systematic Debugging** (`agents/_systematic-debugging.md`)
-- **Zero Tolerance** (`bpsbs.md`)
+- **Zero Tolerance** (`CLAUDE.md`)
 
 No TODOs, no mocks, no placeholders, no hardcoded secrets.
 
@@ -229,7 +229,7 @@ task(
   description="Review PR comprehensively",
   prompt=`
     Read .copilot/custom-agents/pr-review.md
-    Read bpsbs.md
+    Read CLAUDE.md
     
     Review PR #123 in myorg/myrepo:
     - Check code quality and standards
@@ -326,7 +326,7 @@ your-project/
 │   └── TEMPLATE.md
 ├── docs/stories/               # Story output
 ├── CLAUDE.md                   # Framework standards
-└── bpsbs.md                    # Zero tolerance standards
+└── CLAUDE.md                    # Zero tolerance standards
 ```
 
 ## Quick Start

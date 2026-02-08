@@ -5,7 +5,7 @@
 
 ## Agent Description
 
-Security scanner specialized in detecting AI-generated code vulnerabilities using comprehensive anti-pattern databases. References ANTI_PATTERNS_BREADTH.md and ANTI_PATTERNS_DEPTH.md.
+Security scanner specialized in detecting AI-generated code vulnerabilities using comprehensive anti-pattern databases. References docs/ANTI_PATTERNS_BREADTH.md and docs/ANTI_PATTERNS_DEPTH.md.
 
 ## Instructions
 
@@ -27,16 +27,16 @@ AI-generated code has distinct security weaknesses:
 
 ```javascript
 // Read comprehensive anti-pattern guides
-1. Read ANTI_PATTERNS_BREADTH.md   // Wide coverage of all patterns
-2. Read ANTI_PATTERNS_DEPTH.md     // Deep dive on top 7 critical issues
-3. Read bpsbs.md                   // Zero tolerance standards
+1. Read docs/ANTI_PATTERNS_BREADTH.md   // Wide coverage of all patterns
+2. Read docs/ANTI_PATTERNS_DEPTH.md     // Deep dive on top 7 critical issues
+3. Read CLAUDE.md                   // Zero tolerance standards
 ```
 
 ### Phase 2: Systematic Scan
 
 Scan code in this priority order (based on frequency × severity):
 
-#### Priority 1: Top 7 Critical Issues (from ANTI_PATTERNS_DEPTH.md)
+#### Priority 1: Top 7 Critical Issues (from docs/ANTI_PATTERNS_DEPTH.md)
 
 1. **Hardcoded Secrets**
    - API keys, passwords, tokens in code
@@ -73,7 +73,7 @@ Scan code in this priority order (based on frequency × severity):
    - Unescaped user input in system calls
    - Missing input validation
 
-#### Priority 2: Additional Patterns (from ANTI_PATTERNS_BREADTH.md)
+#### Priority 2: Additional Patterns (from docs/ANTI_PATTERNS_BREADTH.md)
 
 8. Path Traversal
 9. XML External Entities (XXE)
@@ -143,7 +143,7 @@ For each file/function:
 
 #### 1. Hardcoded AWS Credentials
 **File**: `src/config/aws.js:15-17`
-**Anti-Pattern**: Hardcoded Secrets (ANTI_PATTERNS_DEPTH.md #1)
+**Anti-Pattern**: Hardcoded Secrets (docs/ANTI_PATTERNS_DEPTH.md #1)
 
 **Vulnerable Code**:
 ```javascript
@@ -175,14 +175,14 @@ if (!AWS_ACCESS_KEY || !AWS_SECRET_KEY) {
 ```
 
 **References**: 
-- ANTI_PATTERNS_DEPTH.md: Hardcoded Secrets section
-- ANTI_PATTERNS_BREADTH.md: Secret Management pattern
+- docs/ANTI_PATTERNS_DEPTH.md: Hardcoded Secrets section
+- docs/ANTI_PATTERNS_BREADTH.md: Secret Management pattern
 
 ---
 
 #### 2. SQL Injection in User Search
 **File**: `src/api/users.js:42`
-**Anti-Pattern**: SQL Injection (ANTI_PATTERNS_DEPTH.md #2)
+**Anti-Pattern**: SQL Injection (docs/ANTI_PATTERNS_DEPTH.md #2)
 
 **Vulnerable Code**:
 ```javascript
@@ -210,8 +210,8 @@ db.execute(query, [userInput]);
 ```
 
 **References**:
-- ANTI_PATTERNS_DEPTH.md: SQL Injection section
-- ANTI_PATTERNS_BREADTH.md: Database Security pattern
+- docs/ANTI_PATTERNS_DEPTH.md: SQL Injection section
+- docs/ANTI_PATTERNS_BREADTH.md: Database Security pattern
 
 ---
 
@@ -265,9 +265,9 @@ db.execute(query, [userInput]);
 **Issues Found**: 0
 
 All scanned code follows secure coding practices from:
-- ✅ ANTI_PATTERNS_BREADTH.md (all 15 patterns checked)
-- ✅ ANTI_PATTERNS_DEPTH.md (top 7 critical issues verified)
-- ✅ bpsbs.md (zero tolerance standards met)
+- ✅ docs/ANTI_PATTERNS_BREADTH.md (all 15 patterns checked)
+- ✅ docs/ANTI_PATTERNS_DEPTH.md (top 7 critical issues verified)
+- ✅ CLAUDE.md (zero tolerance standards met)
 
 **Verified Security Controls**:
 - All secrets in environment variables
@@ -304,7 +304,7 @@ task(
   description="Fix security issues",
   prompt=`
     Read coder.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     Fix issues: [list from scanner]
     Use secure patterns from anti-pattern guides
   `
@@ -327,7 +327,7 @@ task(
   prompt=`
     Read pr-review.md
     Read security-scanner.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Review PR #${prNumber} with focus on:
     - Top 7 critical vulnerabilities
@@ -341,7 +341,7 @@ task(
 
 ### Quick Scan (Top 7 Only)
 
-Focus on ANTI_PATTERNS_DEPTH.md critical issues:
+Focus on docs/ANTI_PATTERNS_DEPTH.md critical issues:
 1. Hardcoded secrets
 2. SQL injection
 3. XSS
@@ -354,7 +354,7 @@ Focus on ANTI_PATTERNS_DEPTH.md critical issues:
 
 ### Comprehensive Scan (All 15 Patterns)
 
-Use both ANTI_PATTERNS_BREADTH.md and DEPTH.md:
+Use both docs/ANTI_PATTERNS_BREADTH.md and DEPTH.md:
 - All 15 security patterns
 - Edge cases
 - Context-specific variations
@@ -415,7 +415,7 @@ Before implementing, ensure:
 6. **Commands**: Never pass unsanitized input to shell
 7. **Auth**: Check permissions on every protected endpoint
 
-Reference: ANTI_PATTERNS_DEPTH.md for secure patterns
+Reference: docs/ANTI_PATTERNS_DEPTH.md for secure patterns
 ```
 
 ---
@@ -430,8 +430,8 @@ task(
   description="Security scan",
   prompt=`
     Read .copilot/custom-agents/security-scanner.md
-    Read ANTI_PATTERNS_BREADTH.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_BREADTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Scan all code in src/ for:
     - Top 7 critical vulnerabilities
@@ -451,7 +451,7 @@ task(
   description="Security scan PR",
   prompt=`
     Read security-scanner.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Scan PR #${prNumber} changes:
     1. Get PR diff
@@ -472,7 +472,7 @@ task(
   prompt=`
     Verify fix for SQL injection in users.js:42
     
-    1. Read ANTI_PATTERNS_DEPTH.md SQL injection section
+    1. Read docs/ANTI_PATTERNS_DEPTH.md SQL injection section
     2. Check parameterized queries used
     3. Verify no string concatenation
     4. Test edge cases

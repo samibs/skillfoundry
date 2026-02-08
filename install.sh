@@ -432,21 +432,15 @@ fi
 cp "$SCRIPT_DIR/genesis/TEMPLATE.md" "$TARGET_DIR/genesis/"
 echo -e "${GREEN}  ✓ PRD template installed to genesis/${NC}"
 
-# Copy bpsbs.md and security anti-patterns for reference
-if [ ! -f "$TARGET_DIR/bpsbs.md" ]; then
-    cp "$SCRIPT_DIR/bpsbs.md" "$TARGET_DIR/"
-    echo -e "${GREEN}  ✓ bpsbs.md installed${NC}"
+# Copy security anti-pattern documents to docs/
+if [ ! -f "$TARGET_DIR/docs/ANTI_PATTERNS_BREADTH.md" ]; then
+    cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$TARGET_DIR/docs/"
+    echo -e "${GREEN}  ✓ docs/ANTI_PATTERNS_BREADTH.md installed${NC}"
 fi
 
-# Copy security anti-pattern documents
-if [ ! -f "$TARGET_DIR/ANTI_PATTERNS_BREADTH.md" ]; then
-    cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_BREADTH.md" "$TARGET_DIR/"
-    echo -e "${GREEN}  ✓ ANTI_PATTERNS_BREADTH.md installed${NC}"
-fi
-
-if [ ! -f "$TARGET_DIR/ANTI_PATTERNS_DEPTH.md" ]; then
-    cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$TARGET_DIR/"
-    echo -e "${GREEN}  ✓ ANTI_PATTERNS_DEPTH.md installed${NC}"
+if [ ! -f "$TARGET_DIR/docs/ANTI_PATTERNS_DEPTH.md" ]; then
+    cp "$SCRIPT_DIR/docs/ANTI_PATTERNS_DEPTH.md" "$TARGET_DIR/docs/"
+    echo -e "${GREEN}  ✓ docs/ANTI_PATTERNS_DEPTH.md installed${NC}"
 fi
 
 # Write framework version marker to target
@@ -510,9 +504,8 @@ echo "  ├── genesis/              (PRD folder)"
 echo "  │   └── TEMPLATE.md"
 echo "  ├── docs/stories/         (story output)"
 echo "  ├── CLAUDE.md"
-echo "  ├── bpsbs.md"
-echo "  ├── ANTI_PATTERNS_BREADTH.md  (Security - wide coverage)"
-echo "  └── ANTI_PATTERNS_DEPTH.md    (Security - top 7 critical)"
+echo "  ├── docs/ANTI_PATTERNS_BREADTH.md  (Security - wide coverage)"
+echo "  └── docs/ANTI_PATTERNS_DEPTH.md    (Security - top 7 critical)"
 echo ""
 echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
 echo -e "${CYAN}                   THE GENESIS WORKFLOW                    ${NC}"

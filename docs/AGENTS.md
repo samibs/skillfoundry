@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.7** | **46 Agents** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
+**Version 1.9.0.8** | **46 Agents** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
 
 ---
 
@@ -142,7 +142,7 @@ Your complete AI development team, covering the full software development lifecy
 **When to use Security Specialist**: Before releases, when handling sensitive data, auth implementations, any user input handling.
 
 **Security Scanner Modes**:
-- Quick scan (top 7 critical patterns from ANTI_PATTERNS_DEPTH.md)
+- Quick scan (top 7 critical patterns from docs/ANTI_PATTERNS_DEPTH.md)
 - Comprehensive scan (all 15 patterns from both ANTI_PATTERNS files)
 - Targeted scan (deep dive on specific vulnerability type)
 
@@ -505,4 +505,4 @@ These agents are not ported to Claude Code or Cursor because they depend on GitH
 
 ---
 
-*Claude AS Framework v1.9.0.7 - February 2026*
+*Claude AS Framework v1.9.0.8 - February 2026*

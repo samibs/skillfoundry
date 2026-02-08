@@ -8,13 +8,13 @@ Added comprehensive AI-specific security anti-pattern detection to the framework
 
 ### Security Reference Documents
 
-1. **ANTI_PATTERNS_BREADTH.md** (225 KB)
+1. **docs/ANTI_PATTERNS_BREADTH.md** (225 KB)
    - Wide coverage of 15 security anti-patterns
    - Pseudocode examples for all languages
    - Quick reference for common vulnerabilities
    - Focus: Breadth over depth
 
-2. **ANTI_PATTERNS_DEPTH.md** (252 KB)
+2. **docs/ANTI_PATTERNS_DEPTH.md** (252 KB)
    - Deep dive on top 7 critical vulnerabilities
    - Multiple examples per pattern
    - Attack scenarios and exploitation techniques
@@ -71,7 +71,7 @@ Comprehensive security scanning agent that:
 
 ### coder.md
 - Added security validation in Pre-Implementation phase
-- References ANTI_PATTERNS_DEPTH.md
+- References docs/ANTI_PATTERNS_DEPTH.md
 - Mandatory checks for top 7 vulnerabilities
 - Proactive security guidance
 
@@ -84,8 +84,8 @@ Comprehensive security scanning agent that:
 ## Installation Updates
 
 ### install.sh
-- Copies ANTI_PATTERNS_BREADTH.md to projects
-- Copies ANTI_PATTERNS_DEPTH.md to projects
+- Copies docs/ANTI_PATTERNS_BREADTH.md to projects
+- Copies docs/ANTI_PATTERNS_DEPTH.md to projects
 - Updated installation summary
 - Both files now part of standard install
 
@@ -120,8 +120,8 @@ task(
   description="Security scan",
   prompt=`
     Read .copilot/custom-agents/security-scanner.md
-    Read ANTI_PATTERNS_BREADTH.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_BREADTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Scan codebase for top 7 critical vulnerabilities.
     Provide detailed report with fixes.
@@ -137,7 +137,7 @@ task(
   description="Implement with security",
   prompt=`
     Read .copilot/custom-agents/coder.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Implement authentication service:
     - Check security patterns before coding
@@ -155,7 +155,7 @@ task(
   description="Security review",
   prompt=`
     Read .copilot/custom-agents/pr-review.md
-    Read ANTI_PATTERNS_DEPTH.md
+    Read docs/ANTI_PATTERNS_DEPTH.md
     
     Review PR #${prNumber}:
     - Focus on AI-specific vulnerabilities
@@ -186,8 +186,8 @@ task(
 
 ```
 claude_as/
-├── ANTI_PATTERNS_BREADTH.md    ⭐ NEW (225 KB)
-├── ANTI_PATTERNS_DEPTH.md      ⭐ NEW (252 KB)
+├── docs/ANTI_PATTERNS_BREADTH.md    ⭐ NEW (225 KB)
+├── docs/ANTI_PATTERNS_DEPTH.md      ⭐ NEW (252 KB)
 ├── .copilot/
 │   └── custom-agents/
 │       └── security-scanner.md  ⭐ NEW (11 KB)
@@ -195,11 +195,11 @@ claude_as/
 
 Installed to projects:
 project/
-├── ANTI_PATTERNS_BREADTH.md    (Installed)
-├── ANTI_PATTERNS_DEPTH.md      (Installed)
+├── docs/ANTI_PATTERNS_BREADTH.md    (Installed)
+├── docs/ANTI_PATTERNS_DEPTH.md      (Installed)
 ├── .copilot/custom-agents/
 │   └── security-scanner.md     (Installed)
-└── bpsbs.md                    (Existing)
+└── CLAUDE.md                    (Existing)
 ```
 
 ## Benefits

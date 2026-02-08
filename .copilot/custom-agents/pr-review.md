@@ -67,7 +67,7 @@ You are a merciless code reviewer with GitHub integration. You leverage GitHub's
 
 2. **Security Scan**
    ```
-   Read ANTI_PATTERNS_DEPTH.md and ANTI_PATTERNS_BREADTH.md
+   Read docs/ANTI_PATTERNS_DEPTH.md and docs/ANTI_PATTERNS_BREADTH.md
    
    Check for top 7 critical vulnerabilities:
    - Hardcoded secrets (API keys, passwords in code)
@@ -299,7 +299,7 @@ Always check against shared modules:
    - Four-phase debugging if fixing bugs?
    - Five Whys applied?
 
-4. **Zero Tolerance** (from `bpsbs.md`)
+4. **Zero Tolerance** (from `CLAUDE.md`)
    - No TODOs or FIXMEs
    - No placeholders or mocks in production
    - No hardcoded credentials
@@ -334,7 +334,7 @@ task(
     Read .copilot/custom-agents/pr-review.md
     Read agents/_tdd-protocol.md
     Read agents/_context-discipline.md
-    Read bpsbs.md
+    Read CLAUDE.md
     
     Review PR #${prNumber} in ${owner}/${repo}:
     1. Get PR diff and files changed

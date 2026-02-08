@@ -191,7 +191,7 @@ These are the subtle conceptual errors of a "slightly sloppy, hasty junior dev":
 6. **Package Hallucination** - Verify all packages exist before use
 7. **Command Injection** - NO user input in shell commands
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md` for detailed patterns.
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` for detailed patterns.
 
 
 ## 🔍 REFLECTION PROTOCOL (MANDATORY)

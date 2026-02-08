@@ -395,4 +395,4 @@ NEXT STEP: [specific action]
 
 **Reference**:
 - Database-specific documentation
-- `bpsbs.md` - Migration strategy section
+- `CLAUDE.md` - Migration strategy section

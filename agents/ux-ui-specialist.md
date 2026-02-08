@@ -508,5 +508,5 @@ NEXT STEP: [specific action]
 **Reference**:
 - `agents/_tdd-protocol.md` - TDD enforcement
 - `agents/_reflection-protocol.md` - Self-critique requirements
-- `ANTI_PATTERNS_DEPTH.md` - Security patterns (XSS)
-- `bpsbs.md` - UI/Dashboard standards section
+- `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns (XSS)
+- `CLAUDE.md` - UI/Dashboard standards section

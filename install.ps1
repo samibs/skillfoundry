@@ -327,20 +327,15 @@ if (Test-Path (Join-Path $TargetDir "CLAUDE.md")) {
 Copy-Item -Path "$ScriptDir\genesis\TEMPLATE.md" -Destination "$TargetDir\genesis\" -Force
 Write-ColorOutput "  ✓ PRD template installed to genesis/" "Green"
 
-# Copy bpsbs.md and security documents
-if (-not (Test-Path (Join-Path $TargetDir "bpsbs.md"))) {
-    Copy-Item -Path "$ScriptDir\bpsbs.md" -Destination "$TargetDir\" -Force
-    Write-ColorOutput "  ✓ bpsbs.md installed" "Green"
+# Copy security anti-pattern documents to docs/
+if (-not (Test-Path (Join-Path $TargetDir "docs\ANTI_PATTERNS_BREADTH.md"))) {
+    Copy-Item -Path "$ScriptDir\docs\ANTI_PATTERNS_BREADTH.md" -Destination (Join-Path $TargetDir "docs\") -Force
+    Write-ColorOutput "  ✓ docs/ANTI_PATTERNS_BREADTH.md installed" "Green"
 }
 
-if (-not (Test-Path (Join-Path $TargetDir "ANTI_PATTERNS_BREADTH.md"))) {
-    Copy-Item -Path "$ScriptDir\docs\ANTI_PATTERNS_BREADTH.md" -Destination "$TargetDir\" -Force
-    Write-ColorOutput "  ✓ ANTI_PATTERNS_BREADTH.md installed" "Green"
-}
-
-if (-not (Test-Path (Join-Path $TargetDir "ANTI_PATTERNS_DEPTH.md"))) {
-    Copy-Item -Path "$ScriptDir\docs\ANTI_PATTERNS_DEPTH.md" -Destination "$TargetDir\" -Force
-    Write-ColorOutput "  ✓ ANTI_PATTERNS_DEPTH.md installed" "Green"
+if (-not (Test-Path (Join-Path $TargetDir "docs\ANTI_PATTERNS_DEPTH.md"))) {
+    Copy-Item -Path "$ScriptDir\docs\ANTI_PATTERNS_DEPTH.md" -Destination (Join-Path $TargetDir "docs\") -Force
+    Write-ColorOutput "  ✓ docs/ANTI_PATTERNS_DEPTH.md installed" "Green"
 }
 
 # Set framework version marker
@@ -405,9 +400,8 @@ Write-Host "  ├── genesis/              (PRD folder)"
 Write-Host "  │   └── TEMPLATE.md"
 Write-Host "  ├── docs/stories/         (story output)"
 Write-Host "  ├── CLAUDE.md"
-Write-Host "  ├── bpsbs.md"
-Write-Host "  ├── ANTI_PATTERNS_BREADTH.md  (Security - wide coverage)"
-Write-Host "  └── ANTI_PATTERNS_DEPTH.md    (Security - top 7 critical)"
+Write-Host "  ├── docs/ANTI_PATTERNS_BREADTH.md  (Security - wide coverage)"
+Write-Host "  └── docs/ANTI_PATTERNS_DEPTH.md    (Security - top 7 critical)"
 Write-Host ""
 Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
 Write-ColorOutput "                   THE GENESIS WORKFLOW                    " "Cyan"

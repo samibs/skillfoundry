@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.7
+# Documentation Index - Claude AS Framework v1.9.0.8
 
 Complete guide to all documentation in the framework.
 
@@ -178,7 +178,7 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 
 ---
 
-### Deliberation Protocol (v1.9.0.7)
+### Deliberation Protocol (v1.9.0.8)
 - **[agents/_deliberation-protocol.md](agents/_deliberation-protocol.md)** - Multi-perspective design review before implementation
   - Triggers: architectural decisions, security changes, multiple approaches, cross-cutting concerns
   - 3 phases: Proposal → Challenge → Synthesis with decision record
@@ -335,7 +335,7 @@ Starting points for your work:
 | Template | File | Purpose |
 |----------|------|---------|
 | **PRD Template** | [genesis/TEMPLATE.md](genesis/TEMPLATE.md) | Product Requirements Document |
-| **BPSBS Standards** | [bpsbs.md](bpsbs.md) | Code standards enforcement |
+| **BPSBS Standards** | [CLAUDE.md](CLAUDE.md) | Code standards enforcement |
 
 ---
 
@@ -410,7 +410,7 @@ Starting points for your work:
 ✅ **Installation** - README.md  
 ✅ **Quick Start** - README.md, helper.sh  
 ✅ **Workflows** - WORKFLOW-GUIDE.md (5 complete examples)  
-✅ **Security** - ANTI_PATTERNS_BREADTH.md + DEPTH.md  
+✅ **Security** - docs/ANTI_PATTERNS_BREADTH.md + DEPTH.md
 ✅ **Agents** - custom-agents/README.md, agents/*.md  
 ✅ **Protocols** - agents/_*.md (15 files)  
 ✅ **Advanced** - Context engineering, state machines, metrics  
@@ -445,7 +445,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.7
+**Framework Version**: 1.9.0.8
 **Documentation Updated**: February 7, 2026
 **Total Agents**: 46
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

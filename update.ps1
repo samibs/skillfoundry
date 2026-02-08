@@ -562,11 +562,10 @@ function Update-Project {
         }
     }
     
-    # Security documents (ANTI_PATTERNS are in docs/, bpsbs.md is in root)
+    # Security documents (ANTI_PATTERNS installed to docs/)
     $securityDocs = @{
-        "ANTI_PATTERNS_BREADTH.md" = "docs\ANTI_PATTERNS_BREADTH.md"
-        "ANTI_PATTERNS_DEPTH.md" = "docs\ANTI_PATTERNS_DEPTH.md"
-        "bpsbs.md" = "bpsbs.md"
+        "docs\ANTI_PATTERNS_BREADTH.md" = "docs\ANTI_PATTERNS_BREADTH.md"
+        "docs\ANTI_PATTERNS_DEPTH.md" = "docs\ANTI_PATTERNS_DEPTH.md"
     }
     foreach ($doc in $securityDocs.Keys) {
         $sourcePath = Join-Path $ScriptDir $securityDocs[$doc]

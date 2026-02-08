@@ -107,7 +107,7 @@ All 22 rules from Claude Code are available:
 | `auto.md` | Auto-discovery |
 | `learn.md` | Learning mode |
 | `math-check.md` | Mathematical validation |
-| `bpsbs.md` | BPSBS standards |
+| `CLAUDE.md` | BPSBS standards |
 | `stories.md` | Story generation |
 
 ---

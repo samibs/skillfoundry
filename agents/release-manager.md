@@ -452,4 +452,4 @@ READY TO RELEASE: [YES|NO - blockers: ...]
 **Reference**:
 - [Keep a Changelog](https://keepachangelog.com/)
 - [Semantic Versioning](https://semver.org/)
-- `bpsbs.md` - PM2 production deployment section
+- `CLAUDE.md` - PM2 production deployment section

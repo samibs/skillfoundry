@@ -451,7 +451,7 @@ Define in `.claude/gates.json`:
   "line": 15,
   "code": "const API_KEY = 'sk-1234567890';",
   "fix": "Use environment variable: process.env.API_KEY",
-  "reference": "ANTI_PATTERNS_DEPTH.md#pattern-1"
+  "reference": "docs/ANTI_PATTERNS_DEPTH.md#pattern-1"
 }
 ```
 

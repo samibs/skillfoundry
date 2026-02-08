@@ -4,7 +4,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
-### Deliberation Protocol (v1.9.0.7)
+### Deliberation Protocol (v1.9.0.8)
 - **`agents/_deliberation-protocol.md`** - Structured multi-perspective review before implementation
 - **Triggers**: Architectural decisions, security-sensitive changes, multiple valid approaches
 - **3-phase flow**: Proposal (architect) → Challenge (perspectives) → Synthesis (decision record)
@@ -127,7 +127,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.7**
+Current version: **1.9.0.8**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -540,13 +540,13 @@ That's it. The `/go` command will:
 
 ### Security Anti-Patterns (NEW - v1.1.0)
 
-**ANTI_PATTERNS_BREADTH.md** (225 KB):
+**docs/ANTI_PATTERNS_BREADTH.md** (225 KB):
 - Wide coverage of 15 security anti-patterns
 - Pseudocode examples for all languages
 - Quick reference for common vulnerabilities
 - Includes: SQL injection, XSS, hardcoded secrets, command injection, and 11 more
 
-**ANTI_PATTERNS_DEPTH.md** (252 KB):
+**docs/ANTI_PATTERNS_DEPTH.md** (252 KB):
 - Deep dive on **top 7 critical vulnerabilities**
 - Multiple examples with attack scenarios
 - Edge cases and mitigation strategies
@@ -580,8 +580,8 @@ YourProject/
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
 ├── CLAUDE.md               # Project instructions
-├── ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
-├── ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
+├── docs/ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
+├── docs/ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
 └── [your project code]
 ```
 
@@ -604,8 +604,8 @@ YourProject/
 ├── genesis/                # Your PRD repository
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
-├── ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
-├── ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
+├── docs/ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
+├── docs/ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
 └── [your project code]
 ```
 
@@ -624,8 +624,8 @@ YourProject/
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
 ├── CLAUDE.md               # Project instructions
-├── ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
-├── ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
+├── docs/ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
+├── docs/ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
 └── [your project code]
 ```
 
@@ -983,7 +983,7 @@ When the framework is updated, push changes to all your projects.
 | Skills (`.claude/commands/`) | Added/updated automatically |
 | `CLAUDE.md` | Prompts for overwrite/keep/merge |
 | `genesis/TEMPLATE.md` | Updated automatically |
-| `bpsbs.md` | Only added if missing |
+| `CLAUDE.md` | Only added if missing |
 
 ### Backups
 
@@ -1052,7 +1052,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.7** - February 8, 2026
+**v1.9.0.8** - February 8, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
@@ -1064,7 +1064,7 @@ MIT - Use freely, modify as needed.
 ### What's New in v1.7.0.0 - Auto-Remediation & Autonomous Execution
 
 - **Fixer Orchestrator** - Auto-remediation router and retry coordinator
-- **Security Scanner** - AI-generated code vulnerability detection using ANTI_PATTERNS databases
+- **Security Scanner** - AI-generated code vulnerability detection using docs/ANTI_PATTERNS databases
 - **3 Execution Modes** - Supervised, Semi-Autonomous, Autonomous
 - **4-Component Versioning** - MAJOR.FEATURE.DATABASE.ITERATION
 - **Version Detection** - Cross-platform installed version detection and update logic
@@ -1178,8 +1178,8 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 - Enhanced **coder.md** with GitHub pattern search and repository context
 
 **🆕 Security Hardening**:
-- **ANTI_PATTERNS_BREADTH.md** - 15 security anti-patterns (225 KB)
-- **ANTI_PATTERNS_DEPTH.md** - Top 7 critical vulnerabilities (252 KB)
+- **docs/ANTI_PATTERNS_BREADTH.md** - 15 security anti-patterns (225 KB)
+- **docs/ANTI_PATTERNS_DEPTH.md** - Top 7 critical vulnerabilities (252 KB)
 - **security-scanner.md** - Dedicated AI vulnerability scanner
 - Enhanced **coder.md** with mandatory pre-implementation security checks
 - Enhanced **pr-review.md** with AI-specific vulnerability scanning

@@ -139,7 +139,7 @@ You are the DevOps Specialist, responsible for CI/CD pipelines, infrastructure a
 - [ ] Security tests in pipeline
 - [ ] Compliance checks automated
 
-**Reference**: `ANTI_PATTERNS_DEPTH.md` - Security patterns
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns
 
 ---
 
@@ -249,5 +249,5 @@ jobs:
 **Reference**: 
 - CI/CD best practices
 - Infrastructure as code tools
-- `ANTI_PATTERNS_DEPTH.md` - Security patterns
-- `bpsbs.md` - DevOps standards
+- `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns
+- `CLAUDE.md` - DevOps standards
