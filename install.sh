@@ -371,6 +371,7 @@ else
 fi
 mkdir -p "$TARGET_DIR/genesis"
 mkdir -p "$TARGET_DIR/docs/stories"
+mkdir -p "$TARGET_DIR/memory_bank/knowledge"
 
 # Copy skills/agents based on platform
 echo -e "${BLUE}Installing agents and skills...${NC}"
@@ -443,6 +444,12 @@ if [ ! -f "$TARGET_DIR/docs/ANTI_PATTERNS_DEPTH.md" ]; then
     echo -e "${GREEN}  ✓ docs/ANTI_PATTERNS_DEPTH.md installed${NC}"
 fi
 
+# Copy knowledge bootstrap for memory/harvest system
+if [ ! -f "$TARGET_DIR/memory_bank/knowledge/bootstrap.jsonl" ]; then
+    cp "$SCRIPT_DIR/memory_bank/knowledge/bootstrap.jsonl" "$TARGET_DIR/memory_bank/knowledge/"
+    echo -e "${GREEN}  ✓ memory_bank/knowledge/ initialized with bootstrap${NC}"
+fi
+
 # Write framework version marker to target
 if [ "$PLATFORM" = "claude" ]; then
     mkdir -p "$TARGET_DIR/.claude"
@@ -503,6 +510,7 @@ fi
 echo "  ├── genesis/              (PRD folder)"
 echo "  │   └── TEMPLATE.md"
 echo "  ├── docs/stories/         (story output)"
+echo "  ├── memory_bank/knowledge/ (lessons learned)"
 echo "  ├── CLAUDE.md"
 echo "  ├── docs/ANTI_PATTERNS_BREADTH.md  (Security - wide coverage)"
 echo "  └── docs/ANTI_PATTERNS_DEPTH.md    (Security - top 7 critical)"
