@@ -65,16 +65,17 @@ cd ~/DevLab/MyProject
 ```
 your-project/
 ├── .claude/
-│   └── commands/           # 23 skill files
-├── agents/                 # 13 agent personas + 11 shared modules
+│   └── commands/           # 46 skill files
+├── agents/                 # 26 agent personas + 21 shared modules
 ├── genesis/                # PRD folder
 │   ├── TEMPLATE.md
 │   └── .schema.json        # PRD validation schema
 ├── docs/
-│   └── stories/            # Generated stories go here
-├── CLAUDE.md               # Full standards reference
-├── CLAUDE-SUMMARY.md       # Condensed for active context
-└── CLAUDE.md               # Standards reference
+│   ├── stories/            # Generated stories go here
+│   ├── enterprise-standards.md  # Production patterns (on-demand)
+│   ├── ANTI_PATTERNS_BREADTH.md # Security anti-patterns (wide)
+│   └── ANTI_PATTERNS_DEPTH.md   # Security anti-patterns (deep)
+└── CLAUDE.md               # Framework-specific standards
 ```
 
 ---
