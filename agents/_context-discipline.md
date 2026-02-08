@@ -144,9 +144,45 @@ After completing any significant action:
    - Note any new blockers
    - Update continuation notes with context the next session needs
 
-3. **Flag Unneeded Context**
+3. **Hub Sync — Push (if configured, silent, non-blocking)**
+   - If `.claude/hub.json` exists: run `knowledge-sync.sh scratchpad push`
+   - This pushes the scratchpad to the hub so other machines can access it
+   - Failures are silently ignored — offline-first, never gate on hub
+   - Do NOT push on every minor action; push after meaningful progress:
+     - Story completed or phase transition
+     - Key decision made
+     - Session ending (context limit approaching)
+     - Explicit platform switch
+
+4. **Flag Unneeded Context**
    - What information is no longer relevant?
    - What can be archived/compacted?
+
+---
+
+## Session End Protocol
+
+When a session is ending (context limit approaching, user signs off, or task complete):
+
+```
+1. Persist final scratchpad to disk (.claude/scratchpad.md)
+   └── Include detailed continuation notes for next session
+
+2. Hub Sync — Final Push (if .claude/hub.json exists)
+   ├── Push scratchpad:  knowledge-sync.sh scratchpad push
+   ├── Push metrics:     knowledge-sync.sh metrics push
+   └── Both silent, non-blocking — failures logged, not surfaced
+
+3. Announce session state to user:
+   └── "Session saved. Scratchpad persisted. [Hub synced. | Hub not configured.]"
+       "Continue on any platform — scratchpad has full context."
+```
+
+**Detection:** A session is "ending" when:
+- Context compaction has been triggered
+- User says goodbye/done/stop
+- `/go` execution reaches COMPLETED state
+- Agent detects it is approaching token budget limit
 
 ---
 

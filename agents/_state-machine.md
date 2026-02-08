@@ -101,13 +101,14 @@ Initial state. No execution in progress.
 ```
 
 ### INITIALIZING
-Setting up execution context, loading framework.
+Setting up execution context, loading framework, syncing with hub.
 
 ```json
 {
   "state": "INITIALIZING",
   "can_transition_to": ["LOADING_PRD", "ERROR"],
   "actions": [
+    "Hub pull (if configured — silent, non-blocking)",
     "Load CLAUDE-SUMMARY.md",
     "Initialize scratchpad",
     "Check context budget",
@@ -231,7 +232,7 @@ Generating documentation.
 ```
 
 ### COMPLETED
-Successful completion.
+Successful completion. Sync results to hub.
 
 ```json
 {
@@ -241,7 +242,8 @@ Successful completion.
     "Generate completion report",
     "Archive PRD",
     "Update metrics",
-    "Clean up state"
+    "Clean up state",
+    "Hub push: scratchpad + metrics (if configured — silent, non-blocking)"
   ]
 }
 ```
@@ -429,6 +431,9 @@ Each transition can trigger actions:
 
 ```typescript
 const transitionActions = {
+  'IDLE -> INITIALIZING': [
+    'hub_pull_silent'
+  ],
   'INITIALIZING -> LOADING_PRD': [
     'create_state_file',
     'initialize_scratchpad',
@@ -439,6 +444,10 @@ const transitionActions = {
     'update_progress',
     'check_context_budget',
     'persist_scratchpad'
+  ],
+  'DOCUMENTING -> COMPLETED': [
+    'hub_push_scratchpad_silent',
+    'hub_push_metrics_silent'
   ],
   'ERROR -> ROLLING_BACK': [
     'create_rollback_manifest',
