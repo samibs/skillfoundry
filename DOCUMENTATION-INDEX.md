@@ -24,6 +24,20 @@ Start here for installation and basic usage:
 
 ---
 
+## 📐 Standards Documentation
+
+Three-tier documentation structure (v1.9.0.8):
+
+| Document | Size | Purpose |
+|----------|------|---------|
+| **[CLAUDE.md](CLAUDE.md)** | ~8 KB | **Framework-specific** rules (philosophy, genesis workflow, three-layer enforcement) |
+| **[docs/enterprise-standards.md](docs/enterprise-standards.md)** | ~40 KB | **Production patterns** (PM2, caching, APM, migrations, incident response, etc.) |
+| **`~/.claude/CLAUDE.md`** | ~11 KB | **Global agent rules** (security, testing, LLM guardrails, workflow preferences) |
+
+> Agents load enterprise-standards.md **on demand** when building production systems, not every session.
+
+---
+
 ## 🔒 Security Documentation
 
 Critical security knowledge for AI-assisted development:
