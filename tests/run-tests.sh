@@ -2188,6 +2188,85 @@ test_hub_harvest_integration() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# COMPANION PANEL TESTS (v1.9.0.5)
+# ═══════════════════════════════════════════════════════════════
+
+test_companion_script_exists() {
+    log_test "Companion: script exists and is executable"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/companion.sh" ]; then
+        log_failure "scripts/companion.sh not found"
+        return 1
+    fi
+    if [ ! -x "$FRAMEWORK_DIR/scripts/companion.sh" ]; then
+        log_failure "scripts/companion.sh is not executable"
+        return 1
+    fi
+    local output
+    output=$(bash "$FRAMEWORK_DIR/scripts/companion.sh" --help 2>&1)
+    if echo "$output" | grep -q "Companion Panel"; then
+        log_success "companion.sh exists, executable, and --help works"
+    else
+        log_failure "companion.sh --help does not contain 'Companion Panel'"
+        return 1
+    fi
+    return 0
+}
+
+test_companion_renders_without_scratchpad() {
+    log_test "Companion: renders without scratchpad"
+    local output
+    output=$(CLAUDE_AS_PROJECT_DIR="/tmp/nonexistent-$$" bash "$FRAMEWORK_DIR/scripts/companion.sh" --once 2>&1)
+    if echo "$output" | grep -q "no active task" && echo "$output" | grep -q "ALWAYS AVAILABLE"; then
+        log_success "Renders default view when no scratchpad exists"
+    else
+        log_failure "Failed to render without scratchpad"
+        return 1
+    fi
+    return 0
+}
+
+test_companion_phase_aware() {
+    log_test "Companion: phase-aware command display"
+    local tmp_dir="/tmp/claude-as-companion-test-$$"
+    mkdir -p "$tmp_dir/.claude"
+    cat > "$tmp_dir/.claude/scratchpad.md" << 'SCRATCHPAD'
+# Session Scratchpad
+> Last updated: 2026-02-07T00:00:00Z
+> Platform: claude-code
+
+## Current Focus
+- Task: Test task
+- Phase: testing
+- Agent: tester
+SCRATCHPAD
+    local output
+    output=$(CLAUDE_AS_PROJECT_DIR="$tmp_dir" bash "$FRAMEWORK_DIR/scripts/companion.sh" --once 2>&1)
+    if echo "$output" | grep -q "PHASE: Testing" && echo "$output" | grep -q "/tester"; then
+        log_success "Shows testing-phase commands when phase is 'testing'"
+    else
+        log_failure "Did not show phase-aware commands for testing phase"
+        rm -rf "$tmp_dir"
+        return 1
+    fi
+    rm -rf "$tmp_dir"
+    return 0
+}
+
+test_companion_tmux_flag() {
+    log_test "Companion: --tmux flag checks for tmux"
+    local output
+    # Run in a subshell without TMUX env to test the tmux detection path
+    output=$(TMUX="" bash "$FRAMEWORK_DIR/scripts/companion.sh" --help 2>&1)
+    if echo "$output" | grep -q "tmux"; then
+        log_success "--tmux mode documented in help"
+    else
+        log_failure "--tmux not referenced in help"
+        return 1
+    fi
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════
 # TEST RUNNER
 # ═══════════════════════════════════════════════════════════════
 
@@ -2365,6 +2444,14 @@ run_all_tests() {
         test_hub_schema_format
         test_hub_gitignore_knowledge
         test_hub_harvest_integration
+    fi
+
+    # Companion Panel Tests (v1.9.0.5)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "companion" ]; then
+        test_companion_script_exists
+        test_companion_renders_without_scratchpad
+        test_companion_phase_aware
+        test_companion_tmux_flag
     fi
 
     # Developer Experience Tests (v1.8.0.2 - Phase 3)

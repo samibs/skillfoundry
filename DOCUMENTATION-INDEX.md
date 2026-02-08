@@ -184,7 +184,15 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
   - Hub directories: `knowledge/` (lessons), `scratchpads/` (session state), `metrics/` (usage)
   - Offline-first: commits locally, pushes when online
   - Integration: `update.sh --remote`, `harvest.sh` auto-push, `memory.sh hub`
+  - Auto-sync: pull on session start, push scratchpad+metrics on session end
 - **[knowledge/schema.md](knowledge/schema.md)** - Lesson format specification
+
+### Companion Panel (v1.9.0.5)
+- **[scripts/companion.sh](scripts/companion.sh)** - Context-aware tmux command reference panel
+  - Reads scratchpad to show phase-relevant commands (architecture, implementation, testing, etc.)
+  - Displays current task, phase, agent, hub status, and modified files
+  - `--tmux` opens as a 35-column side pane; `--once` renders and exits
+  - Auto-refreshes every 5 seconds; pure bash, zero dependencies beyond tmux
 
 ### Context Engineering & Cross-Platform Continuity
 - **[docs/CONTEXT-ENGINEERING-SPEC.md](docs/CONTEXT-ENGINEERING-SPEC.md)** - Token budget management
