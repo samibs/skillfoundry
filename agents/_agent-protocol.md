@@ -21,6 +21,16 @@ All agents in the Claude AS framework communicate using a standardized message f
 Every agent session MUST begin with:
 
 ```
+0. Hub Sync — Pull (if configured, silent, non-blocking)
+   ├── Check: does .claude/hub.json exist in the framework directory?
+   │   ├── YES: Run `knowledge-sync.sh pull` (silently, in background)
+   │   │        This pulls latest knowledge lessons from the hub.
+   │   │        Failures are ignored — offline-first, never gate on hub.
+   │   └── NO:  Skip. Framework works identically without hub.
+   └── Note: Do NOT pull scratchpads from hub here.
+             Local scratchpad is the authority for this machine.
+             Hub scratchpads are for explicit cross-machine requests only.
+
 1. Check .claude/scratchpad.md exists
    ├── YES: Read it. Orient to current task, phase, progress.
    │        If platform differs from last update → note platform switch.
@@ -37,6 +47,8 @@ Every agent session MUST begin with:
 ```
 
 This boot sequence enables seamless cross-platform continuity. When a user hits the context limit in Claude Code and switches to Copilot CLI, the new session reads the scratchpad and continues without asking "what were you working on?"
+
+The hub pull at step 0 ensures the session starts with the latest knowledge from all machines, without requiring the user to remember to sync.
 
 ---
 
