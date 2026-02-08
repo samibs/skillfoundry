@@ -109,7 +109,7 @@
       "Bash(rm -rf $HOME/*)",
       "Bash(mkfs*)",
       "Bash(dd if=*)",
-      "Bash(:*{ :|:*}*)",
+
       "Bash(> /dev/sda*)",
       "Bash(chmod 777 /)",
       "Bash(chmod -R 777 /)",
