@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Git-Based Knowledge Hub — Remote Distribution & Cross-Machine Sync
 Framework is now a git repository. Knowledge, scratchpads, and metrics sync across machines via GitHub.
 
+- **`scripts/companion.sh`** - Context-aware tmux companion panel:
+  - Reads `.claude/scratchpad.md` to determine current phase, task, and agent
+  - Shows phase-relevant commands (architecture, implementation, testing, validation, docs, ops)
+  - Displays hub sync status and modified files
+  - Auto-refreshes every 5 seconds, press 'q' to quit
+  - `--tmux` flag: auto-creates a tmux side pane (35 columns)
+  - `--once` flag: render once and exit
+  - Pure bash, ANSI colors, zero dependencies beyond tmux
+
 - **`scripts/knowledge-sync.sh`** - Hub sync engine (remote transport layer):
   - `setup <repo-url> [--machine-id=name]` - Configure hub URL and machine identity
   - `push [lesson-file]` - Push knowledge (markdown lessons or promoted JSONL) to hub
@@ -40,7 +49,10 @@ Framework is now a git repository. Knowledge, scratchpads, and metrics sync acro
 - **`scripts/install-unified.sh`** - Added GitHub clone option for framework installation
 - **`scripts/harvest.sh`** - Auto-push promoted knowledge to hub after promotion cycle
 - **`scripts/memory.sh`** - Added `hub` command (delegates to knowledge-sync.sh)
-- **`tests/run-tests.sh`** - Added 7 hub test functions under `--test hub` filter
+- **`tests/run-tests.sh`** - Added 7 hub test functions under `--test hub` filter, 4 companion tests under `--test companion`
+- **`agents/_agent-protocol.md`** - Hub pull added to session boot sequence (step 0, silent, non-blocking)
+- **`agents/_context-discipline.md`** - Hub push added to post-action protocol; new session end protocol
+- **`agents/_state-machine.md`** - Hub sync in INITIALIZING and COMPLETED transition actions
 
 ---
 

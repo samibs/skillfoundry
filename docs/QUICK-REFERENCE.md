@@ -57,6 +57,7 @@ math-check     memory
 | `/undo` | Revert last action |
 | `/cost` | Token usage report |
 | `/health` | Framework self-diagnostic |
+| `companion.sh --tmux` | Open context-aware command panel |
 
 ---
 
