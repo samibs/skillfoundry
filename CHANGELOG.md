@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.7] - 2026-02-08
+
+### Added - Deliberation Protocol
+
+- **Deliberation Protocol** (`agents/_deliberation-protocol.md`) — Structured multi-perspective design review before implementation
+  - Mandatory triggers: architectural decisions, security-sensitive changes, multiple valid approaches, cross-cutting concerns
+  - 3-phase format: Proposal (architect) → Challenge (perspectives) → Synthesis (architect)
+  - 3 depth levels: Quick (low-risk), Standard (moderate), Deep (irreversible/security-critical)
+  - Resolution rules: reality anchors win, security escalates, simplicity breaks ties
+  - Decision records preserved append-only in scratchpad
+
+### Changed
+- `agents/project-orchestrator.md` — Added Deliberation Phase between Architecture and Implementation
+- `agents/cold-blooded-architect.md` — Architect opens and closes deliberation, synthesizes feedback
+
+---
+
 ## [1.9.0.6] - 2026-02-08
 
 ### Added — NASAB Framework Integration

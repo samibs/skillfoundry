@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.6 - Quick Reference Card
+# Claude AS v1.9.0.7 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -58,6 +58,19 @@ math-check     memory
 | `/cost` | Token usage report |
 | `/health` | Framework self-diagnostic |
 | `companion.sh --tmux` | Open context-aware command panel |
+
+---
+
+## New in v1.9.0.7: Deliberation Protocol
+
+### Multi-Perspective Design Review
+```
+Triggers:              Architectural decisions, security changes, multiple approaches
+Flow:                  Architect proposes → Perspectives challenge → Architect synthesizes
+Depth levels:          Quick (2 min) | Standard (5 min) | Deep (10 min)
+Decision records:      Append-only, preserved in scratchpad
+Resolution:            Reality anchors win, security escalates, simplicity breaks ties
+```
 
 ---
 
@@ -366,4 +379,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.6 - February 2026 - 46 Agents*
+*Claude AS Framework v1.9.0.7 - February 2026 - 46 Agents*

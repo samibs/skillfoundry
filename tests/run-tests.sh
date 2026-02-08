@@ -2257,6 +2257,63 @@ test_nasab_pattern_detection() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# DELIBERATION PROTOCOL TESTS (v1.9.0.7)
+# ═══════════════════════════════════════════════════════════════
+
+test_deliberation_protocol_exists() {
+    log_test "Deliberation: protocol file exists"
+    if [ ! -f "$FRAMEWORK_DIR/agents/_deliberation-protocol.md" ]; then
+        log_failure "agents/_deliberation-protocol.md not found"
+        return 1
+    fi
+    if grep -q "Deliberation Protocol" "$FRAMEWORK_DIR/agents/_deliberation-protocol.md" 2>/dev/null && \
+       grep -q "Proposal" "$FRAMEWORK_DIR/agents/_deliberation-protocol.md" 2>/dev/null && \
+       grep -q "Synthesis" "$FRAMEWORK_DIR/agents/_deliberation-protocol.md" 2>/dev/null; then
+        log_success "Deliberation protocol has proposal, challenge, and synthesis phases"
+    else
+        log_failure "Deliberation protocol missing core phases"
+        return 1
+    fi
+    return 0
+}
+
+test_deliberation_triggers() {
+    log_test "Deliberation: trigger conditions defined"
+    if grep -q "Architectural decision" "$FRAMEWORK_DIR/agents/_deliberation-protocol.md" 2>/dev/null && \
+       grep -q "Security-sensitive" "$FRAMEWORK_DIR/agents/_deliberation-protocol.md" 2>/dev/null && \
+       grep -q "Multiple valid approaches" "$FRAMEWORK_DIR/agents/_deliberation-protocol.md" 2>/dev/null; then
+        log_success "Deliberation protocol has mandatory trigger conditions"
+    else
+        log_failure "Deliberation protocol missing trigger conditions"
+        return 1
+    fi
+    return 0
+}
+
+test_deliberation_in_orchestrator() {
+    log_test "Deliberation: referenced in project-orchestrator"
+    if grep -q "Deliberation Phase" "$FRAMEWORK_DIR/agents/project-orchestrator.md" 2>/dev/null && \
+       grep -q "_deliberation-protocol.md" "$FRAMEWORK_DIR/agents/project-orchestrator.md" 2>/dev/null; then
+        log_success "Project orchestrator references deliberation phase"
+    else
+        log_failure "project-orchestrator.md missing deliberation reference"
+        return 1
+    fi
+    return 0
+}
+
+test_deliberation_in_architect() {
+    log_test "Deliberation: referenced in architect"
+    if grep -q "Deliberation Protocol" "$FRAMEWORK_DIR/agents/cold-blooded-architect.md" 2>/dev/null; then
+        log_success "Architect references deliberation protocol"
+    else
+        log_failure "cold-blooded-architect.md missing deliberation reference"
+        return 1
+    fi
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════
 # COMPANION PANEL TESTS (v1.9.0.5)
 # ═══════════════════════════════════════════════════════════════
 
@@ -2530,6 +2587,14 @@ run_all_tests() {
         test_nasab_evidence_gates
         test_nasab_constraint_classification
         test_nasab_pattern_detection
+    fi
+
+    # Deliberation Protocol Tests (v1.9.0.7)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "deliberation" ]; then
+        test_deliberation_protocol_exists
+        test_deliberation_triggers
+        test_deliberation_in_orchestrator
+        test_deliberation_in_architect
     fi
 
     # Developer Experience Tests (v1.8.0.2 - Phase 3)
