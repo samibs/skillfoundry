@@ -360,14 +360,46 @@ run_tmux() {
     fi
 }
 
+run_claude() {
+    # Check if tmux is available
+    if ! command -v tmux &>/dev/null; then
+        echo "Error: tmux is not installed"
+        exit 1
+    fi
+
+    # Check if claude is available
+    if ! command -v claude &>/dev/null; then
+        echo "Error: claude CLI is not installed"
+        echo "Install: https://docs.anthropic.com/en/docs/claude-code"
+        exit 1
+    fi
+
+    local pane_width="${COMPANION_WIDTH:-35}"
+    local script_path
+    script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+    local session_name="claude-as"
+
+    # Kill existing session if present
+    tmux kill-session -t "$session_name" 2>/dev/null || true
+
+    # Create session: main pane runs claude, right pane runs companion
+    tmux new-session -d -s "$session_name" -x "$(tput cols)" -y "$(tput lines)" \
+        "cd '$PROJECT_DIR' && claude"
+    tmux split-window -h -l "$pane_width" -t "$session_name" \
+        "CLAUDE_AS_PROJECT_DIR='$PROJECT_DIR' bash '$script_path'"
+    tmux select-pane -t "$session_name:0.0"
+    tmux attach-session -t "$session_name"
+}
+
 show_help() {
     cat <<'HELP'
 Claude AS Companion Panel
 Context-aware command reference for your terminal.
 
 USAGE:
+  ./scripts/companion.sh --claude     Launch claude + companion side-by-side (recommended)
+  ./scripts/companion.sh --tmux       Open companion as tmux right pane only
   ./scripts/companion.sh              Run in current terminal (auto-refresh loop)
-  ./scripts/companion.sh --tmux       Open as tmux right pane (35 cols)
   ./scripts/companion.sh --once       Render once and exit
   ./scripts/companion.sh --help       Show this help
 
@@ -381,25 +413,41 @@ HOW IT WORKS:
   current phase, task, and agent. Shows commands relevant to that phase.
   Auto-refreshes every 5 seconds. Press 'q' to quit.
 
-TMUX MODE:
-  If already inside tmux: splits the current window and runs in the new pane.
+CLAUDE MODE (--claude):
+  Creates a tmux session with two panes:
+    Left (main):  claude CLI — you type /go --mode=autonomous here
+    Right (35col): companion panel — auto-refreshes as you work
+
+  This is the recommended way to use Claude AS. One command replaces:
+    1. Open terminal
+    2. Type "claude"
+    3. Somehow open companion in another pane
+
+TMUX MODE (--tmux):
+  If already inside tmux: splits the current window and runs companion in the new pane.
   If not in tmux: creates a new tmux session with your shell + companion pane.
 
 EXAMPLES:
-  # Work in terminal with companion side pane
+  # The one-liner: claude + companion side-by-side
+  ./scripts/companion.sh --claude
+
+  # Just the companion as a side pane (if already in tmux)
   ./scripts/companion.sh --tmux
 
   # Quick look at current state
   ./scripts/companion.sh --once
 
-  # Custom refresh rate and pane width
-  COMPANION_REFRESH=10 COMPANION_WIDTH=40 ./scripts/companion.sh --tmux
+  # Custom width
+  COMPANION_WIDTH=40 ./scripts/companion.sh --claude
 HELP
 }
 
 # ─── Main ─────────────────────────────────────────────────────
 
 case "${1:-}" in
+    --claude|-c)
+        run_claude
+        ;;
     --tmux|-t)
         run_tmux
         ;;
