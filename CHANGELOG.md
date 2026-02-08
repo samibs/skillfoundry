@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.9] - 2026-02-08
+
+### Fixed — Memory Bank Install Gap
+
+- **install.sh / install.ps1** — Now create `memory_bank/knowledge/` directory in target projects
+  - Seeds with `bootstrap.jsonl` (framework facts) so agents can write lessons from session one
+  - Previously missing: harvest would fail with "No knowledge directory" on every installed project
+- **Knowledge lifecycle now works end-to-end**:
+  - Install creates `memory_bank/knowledge/` with bootstrap
+  - Agents write lessons during sessions (via `/memory`)
+  - `scripts/memory.sh harvest <project>` collects lessons into framework
+  - `git commit + push` shares lessons across machines
+
+---
+
 ## [1.9.0.8] - 2026-02-08
 
 ### Changed — Documentation Deduplication & Cleanup

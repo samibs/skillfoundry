@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.8 - Quick Reference Card
+# Claude AS v1.9.0.9 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -61,7 +61,7 @@ math-check     memory
 
 ---
 
-## New in v1.9.0.8: Deliberation Protocol
+## New in v1.9.0.9: Deliberation Protocol
 
 ### Multi-Perspective Design Review
 ```
@@ -379,4 +379,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.8 - February 2026 - 46 Agents*
+*Claude AS Framework v1.9.0.9 - February 2026 - 46 Agents*
