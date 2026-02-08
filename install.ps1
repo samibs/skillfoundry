@@ -279,6 +279,7 @@ if ($Platform -eq "claude") {
 }
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "genesis") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "docs\stories") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "memory_bank\knowledge") | Out-Null
 
 # Copy skills/agents/rules based on platform
 Write-ColorOutput "Installing agents and skills..." "Blue"
@@ -336,6 +337,13 @@ if (-not (Test-Path (Join-Path $TargetDir "docs\ANTI_PATTERNS_BREADTH.md"))) {
 if (-not (Test-Path (Join-Path $TargetDir "docs\ANTI_PATTERNS_DEPTH.md"))) {
     Copy-Item -Path "$ScriptDir\docs\ANTI_PATTERNS_DEPTH.md" -Destination (Join-Path $TargetDir "docs\") -Force
     Write-ColorOutput "  ✓ docs/ANTI_PATTERNS_DEPTH.md installed" "Green"
+}
+
+# Copy knowledge bootstrap for memory/harvest system
+$BootstrapTarget = Join-Path $TargetDir "memory_bank\knowledge\bootstrap.jsonl"
+if (-not (Test-Path $BootstrapTarget)) {
+    Copy-Item -Path "$ScriptDir\memory_bank\knowledge\bootstrap.jsonl" -Destination $BootstrapTarget -Force
+    Write-ColorOutput "  ✓ memory_bank/knowledge/ initialized with bootstrap" "Green"
 }
 
 # Set framework version marker
@@ -399,6 +407,7 @@ if ($Platform -eq "claude") {
 Write-Host "  ├── genesis/              (PRD folder)"
 Write-Host "  │   └── TEMPLATE.md"
 Write-Host "  ├── docs/stories/         (story output)"
+Write-Host "  ├── memory_bank/knowledge/ (lessons learned)"
 Write-Host "  ├── CLAUDE.md"
 Write-Host "  ├── docs/ANTI_PATTERNS_BREADTH.md  (Security - wide coverage)"
 Write-Host "  └── docs/ANTI_PATTERNS_DEPTH.md    (Security - top 7 critical)"
