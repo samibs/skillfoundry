@@ -140,4 +140,4 @@ For detailed requirements, load specific sections:
 
 ---
 
-_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.8_
+_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.9_

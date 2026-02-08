@@ -4,7 +4,12 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
-### Documentation Deduplication (v1.9.0.8)
+### Memory Bank Install Fix (v1.9.0.9)
+- **`memory_bank/knowledge/` now created on install** — Previously missing, so harvest and lesson sync never worked
+- **Seeded with `bootstrap.jsonl`** — Agents can write lessons from session one
+- **End-to-end knowledge lifecycle**: Install → Agents learn → Harvest → Git push → Available everywhere
+
+### Documentation Deduplication (v1.9.0.9)
 - **CLAUDE.md slimmed**: 2023 lines → 267 lines (framework-specific only)
 - **New `docs/enterprise-standards.md`** (1352 lines) — Production patterns loaded on demand, not every session
 - **Three-tier documentation**: Global `~/.claude/CLAUDE.md` → Framework `CLAUDE.md` → `docs/enterprise-standards.md`
@@ -587,6 +592,7 @@ YourProject/
 ├── genesis/                # Your PRD repository
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
+├── memory_bank/knowledge/  # Lessons learned (harvestable)
 ├── CLAUDE.md               # Framework-specific standards (~270 lines)
 ├── docs/
 │   ├── enterprise-standards.md      # Production patterns (on-demand, ~1350 lines)
@@ -614,6 +620,7 @@ YourProject/
 ├── genesis/                # Your PRD repository
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
+├── memory_bank/knowledge/  # Lessons learned (harvestable)
 ├── docs/
 │   ├── enterprise-standards.md      # Production patterns (on-demand)
 │   ├── ANTI_PATTERNS_BREADTH.md     # 15 security patterns
@@ -635,6 +642,7 @@ YourProject/
 ├── genesis/                # Your PRD repository
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
+├── memory_bank/knowledge/  # Lessons learned (harvestable)
 ├── CLAUDE.md               # Framework-specific standards (~270 lines)
 ├── docs/
 │   ├── enterprise-standards.md      # Production patterns (on-demand)
@@ -1042,7 +1050,7 @@ Should show `go.md`, `prd.md`, etc. If not, run the installer.
 
 ## Configuration
 
-### Three-Tier Documentation (v1.9.0.8)
+### Three-Tier Documentation (v1.9.0.9)
 
 Documentation is organized to minimize token usage per session:
 
@@ -1071,7 +1079,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.8** - February 8, 2026
+**v1.9.0.9** - February 8, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
@@ -1295,7 +1303,7 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 **Enhanced for Cursor** (v1.3.1 - 2026-01-25)
 **Windows PowerShell Support** (v1.3.1 - 2026-01-25)
 **Framework Evolution** (v1.9.0.0 - 2026-02-07) - Knowledge exchange, swarm coordination, DX tooling, advanced intelligence
-**Documentation Deduplication** (v1.9.0.8 - 2026-02-08) - Three-tier docs, 13K tokens/session saved
+**Documentation Deduplication** (v1.9.0.9 - 2026-02-08) - Three-tier docs, 13K tokens/session saved
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 

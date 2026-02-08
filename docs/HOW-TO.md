@@ -70,6 +70,7 @@ your-project/
 ├── genesis/                # PRD folder
 │   ├── TEMPLATE.md
 │   └── .schema.json        # PRD validation schema
+├── memory_bank/knowledge/  # Lessons learned (harvestable)
 ├── docs/
 │   ├── stories/            # Generated stories go here
 │   ├── enterprise-standards.md  # Production patterns (on-demand)
