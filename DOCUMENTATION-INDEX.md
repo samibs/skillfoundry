@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.6
+# Documentation Index - Claude AS Framework v1.9.0.7
 
 Complete guide to all documentation in the framework.
 
@@ -177,6 +177,13 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **Access**: `http://localhost:3001`
 
 ---
+
+### Deliberation Protocol (v1.9.0.7)
+- **[agents/_deliberation-protocol.md](agents/_deliberation-protocol.md)** - Multi-perspective design review before implementation
+  - Triggers: architectural decisions, security changes, multiple approaches, cross-cutting concerns
+  - 3 phases: Proposal → Challenge → Synthesis with decision record
+  - 3 depth levels: Quick, Standard, Deep
+  - Integrated into project-orchestrator phase structure and architect workflow
 
 ### NASAB Framework Integration (v1.9.0.6)
 - **[agents/_bidirectional-iteration.md](agents/_bidirectional-iteration.md)** - Track fix-break oscillation cycles, detect convergence
@@ -438,7 +445,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.6
+**Framework Version**: 1.9.0.7
 **Documentation Updated**: February 7, 2026
 **Total Agents**: 46
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
