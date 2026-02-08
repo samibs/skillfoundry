@@ -252,6 +252,51 @@ Required Actions Before Use:
 Do not proceed until mathematical ground is established.
 ```
 
+## Context-Aware Usage Validation
+
+> When a formula is used in code, validate that the current context meets its assumptions.
+
+### Workflow
+
+```
+1. IDENTIFY formula being used in code
+2. LOAD its assumptions from the formula database
+3. SCAN the current context for assumption violations
+4. WARN if any assumption is unmet
+5. REPORT unmet assumptions in the math-check output
+```
+
+### Example
+
+```
+Formula: Black-Scholes
+Context: Market stress / high-volatility period
+
+Assumption Check:
+  [x] No transaction costs           — MET (simulation environment)
+  [ ] Constant volatility             — VIOLATED (VIX > 30, crisis conditions)
+  [ ] Continuous trading              — VIOLATED (market halts possible)
+  [x] Normal distribution of returns  — MET (assumed for model)
+
+WARNING: 2 of 4 assumptions violated in current context.
+Black-Scholes results may be unreliable under market stress.
+Consider: Heston model (stochastic volatility) or Monte Carlo simulation.
+```
+
+### Output Addition
+
+Add to every math-check report:
+
+```
+Unmet Assumptions: [N of M]
+- [assumption]: [why violated in current context]
+Context Risk: LOW | MEDIUM | HIGH | CRITICAL
+```
+
+If `Unmet Assumptions > 0`, the formula is still usable but the report must carry the warning. If `Unmet Assumptions > 50%`, flag as `CRITICAL` and recommend alternatives.
+
+---
+
 ## Special Cases
 
 **Fermat's Last Theorem**:

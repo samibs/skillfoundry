@@ -2188,6 +2188,75 @@ test_hub_harvest_integration() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# NASAB INTEGRATION TESTS (v1.9.0.6)
+# ═══════════════════════════════════════════════════════════════
+
+test_nasab_bidirectional_exists() {
+    log_test "NASAB: bidirectional iteration protocol exists"
+    local f="$FRAMEWORK_DIR/agents/_bidirectional-iteration.md"
+    if [ ! -f "$f" ]; then
+        log_failure "_bidirectional-iteration.md not found"
+        return 1
+    fi
+    if grep -q "convergence" "$f" && grep -q "oscillation" "$f"; then
+        log_success "Bidirectional iteration protocol has convergence and oscillation rules"
+    else
+        log_failure "Missing convergence or oscillation content"
+        return 1
+    fi
+    return 0
+}
+
+test_nasab_dissent_exists() {
+    log_test "NASAB: dissent resolution protocol exists"
+    local f="$FRAMEWORK_DIR/agents/_dissent-resolution.md"
+    if [ ! -f "$f" ]; then
+        log_failure "_dissent-resolution.md not found"
+        return 1
+    fi
+    if grep -q "reality anchor" "$f" && grep -qi "escalat" "$f"; then
+        log_success "Dissent resolution protocol has reality anchor and escalation rules"
+    else
+        log_failure "Missing reality anchor or escalation content"
+        return 1
+    fi
+    return 0
+}
+
+test_nasab_evidence_gates() {
+    log_test "NASAB: evidence-based gates in gate-keeper"
+    if grep -q "Evidence-Based Capability Gates" "$FRAMEWORK_DIR/agents/gate-keeper.md" 2>/dev/null; then
+        log_success "Gate-keeper has evidence-based capability gates section"
+    else
+        log_failure "gate-keeper.md missing Evidence-Based Capability Gates"
+        return 1
+    fi
+    return 0
+}
+
+test_nasab_constraint_classification() {
+    log_test "NASAB: constraint classification in architect"
+    if grep -q "Constraint Classification" "$FRAMEWORK_DIR/agents/cold-blooded-architect.md" 2>/dev/null; then
+        log_success "Architect has constraint classification section"
+    else
+        log_failure "cold-blooded-architect.md missing Constraint Classification"
+        return 1
+    fi
+    return 0
+}
+
+test_nasab_pattern_detection() {
+    log_test "NASAB: pattern detection in memory-curator"
+    if grep -q "Pattern Detection" "$FRAMEWORK_DIR/agents/memory-curator.md" 2>/dev/null; then
+        log_success "Memory curator has pattern detection section"
+    else
+        log_failure "memory-curator.md missing Pattern Detection"
+        return 1
+    fi
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════
 # COMPANION PANEL TESTS (v1.9.0.5)
 # ═══════════════════════════════════════════════════════════════
 
@@ -2452,6 +2521,15 @@ run_all_tests() {
         test_companion_renders_without_scratchpad
         test_companion_phase_aware
         test_companion_tmux_flag
+    fi
+
+    # NASAB Framework Integration Tests (v1.9.0.6)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "nasab" ]; then
+        test_nasab_bidirectional_exists
+        test_nasab_dissent_exists
+        test_nasab_evidence_gates
+        test_nasab_constraint_classification
+        test_nasab_pattern_detection
     fi
 
     # Developer Experience Tests (v1.8.0.2 - Phase 3)

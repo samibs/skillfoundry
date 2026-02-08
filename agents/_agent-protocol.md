@@ -312,6 +312,22 @@ If not retryable: Escalate to human
 
 ---
 
+## Disagreement Resolution
+
+> Adapted from NASAB Pillar 4 (Collective Validation). See: `agents/_dissent-resolution.md`
+
+When multiple agents return **conflicting statuses** on the same artifact:
+
+1. **Never silently pick one side** — disagreements contain signal
+2. Apply the dissent resolution protocol:
+   - Reality anchor (passing tests) overrides opinion
+   - Thin consensus (near 50/50) → escalate to user
+   - Security objections → always escalate
+   - Persistent dissent (2+ stories) → investigate root cause
+3. Surface the disagreement in the handoff or gate-check output
+
+---
+
 ## Chain Execution
 
 ### Sequential Chain
