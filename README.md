@@ -4,7 +4,15 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
-### Deliberation Protocol (v1.9.0.8)
+### Documentation Deduplication (v1.9.0.8)
+- **CLAUDE.md slimmed**: 2023 lines → 267 lines (framework-specific only)
+- **New `docs/enterprise-standards.md`** (1352 lines) — Production patterns loaded on demand, not every session
+- **Three-tier documentation**: Global `~/.claude/CLAUDE.md` → Framework `CLAUDE.md` → `docs/enterprise-standards.md`
+- **ANTI_PATTERNS moved**: Install to `docs/` instead of project root; `update.sh` auto-migrates existing projects
+- **bpsbs.md retired**: No longer copied to projects (covered by CLAUDE.md + global rules)
+- **~13K tokens/session saved** by eliminating triple-injection of same rules
+
+### Deliberation Protocol (v1.9.0.7)
 - **`agents/_deliberation-protocol.md`** - Structured multi-perspective review before implementation
 - **Triggers**: Architectural decisions, security-sensitive changes, multiple valid approaches
 - **3-phase flow**: Proposal (architect) → Challenge (perspectives) → Synthesis (decision record)
@@ -579,9 +587,11 @@ YourProject/
 ├── genesis/                # Your PRD repository
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
-├── CLAUDE.md               # Project instructions
-├── docs/ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
-├── docs/ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
+├── CLAUDE.md               # Framework-specific standards (~270 lines)
+├── docs/
+│   ├── enterprise-standards.md      # Production patterns (on-demand, ~1350 lines)
+│   ├── ANTI_PATTERNS_BREADTH.md     # 15 security patterns
+│   └── ANTI_PATTERNS_DEPTH.md       # Top 7 critical vulnerabilities
 └── [your project code]
 ```
 
@@ -592,29 +602,31 @@ YourProject/
 ├── .copilot/
 │   ├── custom-agents/      # 46 agents for Copilot
 │   │   ├── coder.md
-│   │   ├── github-orchestrator.md    # 🆕 GitHub integration
-│   │   ├── pr-review.md              # 🆕 PR reviews
-│   │   ├── github-actions.md         # 🆕 CI/CD debugging
-│   │   ├── security-scanner.md       # 🆕 Security scanning
+│   │   ├── github-orchestrator.md    # GitHub integration
+│   │   ├── pr-review.md              # PR reviews
+│   │   ├── github-actions.md         # CI/CD debugging
+│   │   ├── security-scanner.md       # Security scanning
 │   │   └── ...
-│   ├── helper.sh           # 🆕 Quick reference guide
-│   ├── WORKFLOW-GUIDE.md   # 🆕 Complete workflow examples
-│   └── SECURITY-INTEGRATION.md  # 🆕 Security usage guide
+│   ├── helper.sh           # Quick reference guide
+│   ├── WORKFLOW-GUIDE.md   # Complete workflow examples
+│   └── SECURITY-INTEGRATION.md  # Security usage guide
 ├── agents/                 # Shared agent personas
 ├── genesis/                # Your PRD repository
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
-├── docs/ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
-├── docs/ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
+├── docs/
+│   ├── enterprise-standards.md      # Production patterns (on-demand)
+│   ├── ANTI_PATTERNS_BREADTH.md     # 15 security patterns
+│   └── ANTI_PATTERNS_DEPTH.md       # Top 7 critical vulnerabilities
 └── [your project code]
 ```
 
-### Cursor Installation (NEW)
+### Cursor Installation
 
 ```
 YourProject/
 ├── .cursor/
-│   └── rules/              # 41 rules for Cursor
+│   └── rules/              # 46 rules for Cursor
 │       ├── go.md
 │       ├── prd.md
 │       ├── coder.md
@@ -623,9 +635,11 @@ YourProject/
 ├── genesis/                # Your PRD repository
 │   ├── TEMPLATE.md
 │   └── [your-feature].md
-├── CLAUDE.md               # Project instructions
-├── docs/ANTI_PATTERNS_BREADTH.md    # 🆕 15 security patterns
-├── docs/ANTI_PATTERNS_DEPTH.md      # 🆕 Top 7 critical vulnerabilities
+├── CLAUDE.md               # Framework-specific standards (~270 lines)
+├── docs/
+│   ├── enterprise-standards.md      # Production patterns (on-demand)
+│   ├── ANTI_PATTERNS_BREADTH.md     # 15 security patterns
+│   └── ANTI_PATTERNS_DEPTH.md       # Top 7 critical vulnerabilities
 └── [your project code]
 ```
 
@@ -785,8 +799,10 @@ cd C:\dev_tools_20260120_latest\claude_as
 
 **For All Projects**:
 - ✅ Security anti-patterns (`docs/ANTI_PATTERNS_BREADTH.md`, `docs/ANTI_PATTERNS_DEPTH.md`)
+- ✅ Enterprise standards (`docs/enterprise-standards.md`)
 - ✅ Agent personas and shared modules (`agents/`)
 - ✅ Platform-specific skills/agents/rules (`.claude/`, `.copilot/`, or `.cursor/`)
+- ✅ Auto-migration: moves root ANTI_PATTERNS to `docs/`, removes obsolete `bpsbs.md`
 
 **For Copilot Projects Only** (platform-aware):
 - ✅ GitHub-integrated agents (orchestrator, pr-review, github-actions)
@@ -983,7 +999,8 @@ When the framework is updated, push changes to all your projects.
 | Skills (`.claude/commands/`) | Added/updated automatically |
 | `CLAUDE.md` | Prompts for overwrite/keep/merge |
 | `genesis/TEMPLATE.md` | Updated automatically |
-| `CLAUDE.md` | Only added if missing |
+| `docs/enterprise-standards.md` | Added/updated automatically |
+| `docs/ANTI_PATTERNS_*.md` | Migrated from root to `docs/` if needed |
 
 ### Backups
 
@@ -1025,21 +1042,23 @@ Should show `go.md`, `prd.md`, etc. If not, run the installer.
 
 ## Configuration
 
-### CLAUDE.md
+### Three-Tier Documentation (v1.9.0.8)
 
-The main instruction file. Customize for your project:
+Documentation is organized to minimize token usage per session:
 
-1. Keep core philosophy and enforcement sections
-2. Update stack preferences
-3. Add project-specific conventions
+| Tier | File | Purpose | Loaded |
+|------|------|---------|--------|
+| **Global** | `~/.claude/CLAUDE.md` | Universal agent rules (security, testing, workflow) | Every session |
+| **Framework** | `CLAUDE.md` | Framework-specific (philosophy, genesis, three-layer) | Every session |
+| **Enterprise** | `docs/enterprise-standards.md` | Production patterns (PM2, caching, APM, migrations) | On demand |
 
 ### Per-Project Customization
 
 After installation:
 
-1. Update `CLAUDE.md` with your tech stack
+1. Update `CLAUDE.md` with project-specific conventions
 2. Add project-specific banned patterns
-3. Configure security requirements
+3. Reference `docs/enterprise-standards.md` when building production systems
 4. Add custom skills if needed
 
 ---
@@ -1240,9 +1259,10 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 | Document | Purpose |
 |----------|---------|
 | [README.md](README.md) | This file - overview and quick start |
+| [CLAUDE.md](CLAUDE.md) | Framework-specific standards (~270 lines) |
+| [docs/enterprise-standards.md](docs/enterprise-standards.md) | Production patterns (on-demand, ~1350 lines) |
 | [HOW-TO.md](docs/HOW-TO.md) | Comprehensive usage guide (Claude Code) |
 | [CHANGELOG.md](CHANGELOG.md) | Version history |
-| [CLAUDE.md](CLAUDE.md) | Full standards reference (Claude Code) |
 
 ### Platform-Specific Documentation
 
@@ -1270,11 +1290,12 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 
 ## License & Credits
 
-**Created by SBS with Claude Code** (Original framework)  
-**Enhanced for GitHub Copilot CLI** (v1.1.0 - 2026-01-22)  
+**Created by SBS with Claude Code** (Original framework)
+**Enhanced for GitHub Copilot CLI** (v1.1.0 - 2026-01-22)
 **Enhanced for Cursor** (v1.3.1 - 2026-01-25)
 **Windows PowerShell Support** (v1.3.1 - 2026-01-25)
 **Framework Evolution** (v1.9.0.0 - 2026-02-07) - Knowledge exchange, swarm coordination, DX tooling, advanced intelligence
+**Documentation Deduplication** (v1.9.0.8 - 2026-02-08) - Three-tier docs, 13K tokens/session saved
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 
