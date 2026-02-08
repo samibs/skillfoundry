@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.6] - 2026-02-08
+
+### Added — NASAB Framework Integration
+
+7 concepts from the NASAB framework (Pillars 3, 4, 7, 8, 9, 10) absorbed into existing agents:
+
+- **`agents/_bidirectional-iteration.md`** — Track fix-break oscillation cycles, detect convergence, recommend refactoring over patching (Pillar 9)
+- **`agents/_dissent-resolution.md`** — Protocol for resolving conflicting agent recommendations: reality anchor wins, thin consensus escalates, security always escalates (Pillar 4)
+- **`agents/gate-keeper.md`** — Evidence-based capability gates: 5 levels (syntax → execution → domain → ambiguity → financial) with evidence accumulation thresholds (Pillar 3)
+- **`agents/cold-blooded-architect.md`** — Constraint classification: Physical/Conventional/Regulatory/BestPractice. Explore alternatives for non-physical constraints (Pillar 10)
+- **`agents/memory-curator.md`** — Pattern detection (parental inheritance): 6 pattern types, unconscious pattern surfacing, conscious marking (Pillar 8)
+- **`agents/mathematical-ground-checker.md`** — Context-aware usage validation: check formula assumptions against current context, warn when violated (Pillar 7)
+- **`agents/fixer-orchestrator.md`** — Oscillation detection: stop retrying when fix-break cycles detected, escalate with refactoring recommendation (Pillar 9)
+
+### Changed
+
+- **`agents/_agent-protocol.md`** — Added disagreement resolution section referencing dissent protocol
+
+---
+
 ## [1.9.0.5] - 2026-02-08
 
 ### Added

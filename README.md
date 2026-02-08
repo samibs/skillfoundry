@@ -4,6 +4,15 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### NASAB Framework Integration (v1.9.0.6)
+- **Evidence-Based Gates** — 5 capability levels with evidence accumulation in gate-keeper
+- **Constraint Classification** — 4 constraint types (Physical/Conventional/Regulatory/BestPractice) in architect
+- **Bidirectional Iteration** (`agents/_bidirectional-iteration.md`) — Track fix-break cycles, detect oscillation
+- **Dissent Resolution** (`agents/_dissent-resolution.md`) — Protocol for conflicting agent recommendations
+- **Pattern Detection** — Parental inheritance: detect and surface unconscious coding patterns in memory-curator
+- **Context-Aware Math Validation** — Check formula assumptions against current context
+- **Oscillation Detection** — Stop retrying when fix-break cycles detected in fixer-orchestrator
+
 ### Knowledge Hub — Remote Distribution (v1.9.0.5)
 - **`scripts/knowledge-sync.sh`** - Git-based sync for knowledge, scratchpads, and metrics
 - **Commands**: `setup`, `push`, `pull`, `scratchpad push/pull`, `metrics push`, `status`
@@ -112,7 +121,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.5**
+Current version: **1.9.0.6**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -1037,7 +1046,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.5** - February 8, 2026
+**v1.9.0.6** - February 8, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 

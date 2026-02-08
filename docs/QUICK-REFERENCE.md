@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.5 - Quick Reference Card
+# Claude AS v1.9.0.6 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -58,6 +58,21 @@ math-check     memory
 | `/cost` | Token usage report |
 | `/health` | Framework self-diagnostic |
 | `companion.sh --tmux` | Open context-aware command panel |
+
+---
+
+## New in v1.9.0.6: NASAB Framework Integration
+
+### Agent Enrichments
+```
+Evidence-Based Gates     gate-keeper tracks evidence toward capability levels
+Constraint Classification architect classifies Physical/Conventional/Regulatory/BestPractice
+Pattern Detection        memory-curator detects unconscious coding patterns
+Context-Aware Math       math-checker validates formula assumptions against context
+Oscillation Detection    fixer stops retrying when fix→break cycles detected
+Dissent Resolution       agents/_dissent-resolution.md — conflicting recommendations
+Bidirectional Iteration  agents/_bidirectional-iteration.md — convergence tracking
+```
 
 ---
 
@@ -351,4 +366,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.5 - February 2026 - 46 Agents*
+*Claude AS Framework v1.9.0.6 - February 2026 - 46 Agents*

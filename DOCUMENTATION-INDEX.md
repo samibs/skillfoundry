@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.5
+# Documentation Index - Claude AS Framework v1.9.0.6
 
 Complete guide to all documentation in the framework.
 
@@ -177,6 +177,15 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **Access**: `http://localhost:3001`
 
 ---
+
+### NASAB Framework Integration (v1.9.0.6)
+- **[agents/_bidirectional-iteration.md](agents/_bidirectional-iteration.md)** - Track fix-break oscillation cycles, detect convergence
+- **[agents/_dissent-resolution.md](agents/_dissent-resolution.md)** - Resolve conflicting agent recommendations (reality anchor wins, thin consensus escalates)
+- **Evidence-Based Gates** in gate-keeper — 5 capability levels with evidence accumulation
+- **Constraint Classification** in architect — Physical, Conventional, Regulatory, BestPractice
+- **Pattern Detection** in memory-curator — Detect unconscious coding patterns (parental inheritance)
+- **Context-Aware Validation** in math-checker — Check formula assumptions against runtime context
+- **Oscillation Detection** in fixer — Stop retrying when fix-break cycles detected
 
 ### Knowledge Hub — Remote Sync (v1.9.0.5)
 - **[scripts/knowledge-sync.sh](scripts/knowledge-sync.sh)** - Git-based remote transport layer
@@ -429,7 +438,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.5
+**Framework Version**: 1.9.0.6
 **Documentation Updated**: February 7, 2026
 **Total Agents**: 46
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

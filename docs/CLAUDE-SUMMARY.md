@@ -136,7 +136,8 @@ For detailed requirements, load specific sections:
 - **DX Tooling**: `/explain`, `/undo`, `/cost`, `/health` commands
 - **Advanced Intelligence**: Semantic search, monorepo support, compliance presets (HIPAA/SOC2/GDPR)
 - **46 Agents** across triple platform (Claude Code, Copilot CLI, Cursor)
+- **NASAB Integration**: Evidence-based gates, constraint classification, pattern detection, bidirectional iteration, dissent resolution
 
 ---
 
-_Full reference: CLAUDE.md (2000+ lines) | This summary: ~400 lines | Framework v1.9.0.5_
+_Full reference: CLAUDE.md (2000+ lines) | This summary: ~400 lines | Framework v1.9.0.6_
