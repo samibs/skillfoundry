@@ -1,0 +1,500 @@
+# PRD: [Feature Name]
+
+---
+prd_id: [kebab-case-identifier]
+title: [Feature Name]
+version: 1.0
+status: DRAFT
+created: [YYYY-MM-DD]
+author: [Your Name]
+last_updated: [YYYY-MM-DD]
+
+# DEPENDENCIES (for inter-PRD coordination)
+dependencies:
+  requires: []        # PRD IDs that MUST complete before this one
+  recommends: []      # PRD IDs that SHOULD complete first (soft dependency)
+  blocks: []          # PRD IDs that are waiting for this one
+  shared_with: []     # PRD IDs that share components with this one
+
+tags: []              # Categorization: [auth, security, core, feature, etc.]
+priority: medium      # high | medium | low
+layers: []            # Affected layers: [database, backend, frontend]
+---
+
+---
+
+## 1. Overview
+
+### 1.1 Problem Statement
+<!-- What problem exists? Why does it matter? Who is affected? Be specific. -->
+
+[Describe the problem in 2-3 sentences. Include who experiences this problem and what impact it has.]
+
+### 1.2 Proposed Solution
+<!-- High-level description of what we're building -->
+
+[Describe the solution approach in 2-3 sentences. Focus on WHAT, not HOW.]
+
+### 1.3 Success Metrics
+<!-- How do we measure if this worked? -->
+
+| Metric | Current | Target | How to Measure |
+|--------|---------|--------|----------------|
+| [Metric 1] | [baseline] | [goal] | [measurement method] |
+| [Metric 2] | [baseline] | [goal] | [measurement method] |
+
+---
+
+## 2. User Stories
+
+### Primary User: [Role Name]
+
+| ID | As a... | I want to... | So that... | Priority |
+|----|---------|--------------|------------|----------|
+| US-001 | [role] | [action] | [benefit] | MUST |
+| US-002 | [role] | [action] | [benefit] | SHOULD |
+| US-003 | [role] | [action] | [benefit] | COULD |
+
+### Secondary Users (if applicable)
+
+| ID | As a... | I want to... | So that... | Priority |
+|----|---------|--------------|------------|----------|
+| US-010 | [role] | [action] | [benefit] | [priority] |
+
+---
+
+## 3. Functional Requirements
+
+### 3.1 Core Features
+
+| ID | Requirement | Description | Acceptance Criteria |
+|----|-------------|-------------|---------------------|
+| FR-001 | [Name] | [What it does] | Given [context], When [action], Then [result] |
+| FR-002 | [Name] | [What it does] | Given [context], When [action], Then [result] |
+
+### 3.2 User Interface Requirements
+
+<!-- Describe key screens, flows, and interactions -->
+
+**Screen: [Screen Name]**
+- Purpose: [why this screen exists]
+- Key elements: [list main UI components]
+- User flow: [how user navigates to/from this screen]
+
+### 3.3 API Requirements (if applicable)
+
+| Endpoint | Method | Purpose | Auth | Request Body | Response |
+|----------|--------|---------|------|--------------|----------|
+| `/api/v1/[resource]` | GET | [purpose] | [JWT/None] | N/A | `{ data: [...] }` |
+| `/api/v1/[resource]` | POST | [purpose] | [JWT/None] | `{ field: value }` | `{ id: ... }` |
+
+---
+
+## 4. Non-Functional Requirements
+
+### 4.1 Performance
+
+| Metric | Requirement |
+|--------|-------------|
+| API Response Time | < [X]ms (95th percentile) |
+| Page Load Time | < [X]s |
+| Concurrent Users | Support [X] simultaneous users |
+
+### 4.2 Security
+
+| Aspect | Requirement |
+|--------|-------------|
+| Authentication | [method: JWT, OAuth, Session] |
+| Authorization | [RBAC roles: Admin, User, etc.] |
+| Data Protection | [encryption at rest/transit, PII handling] |
+| Input Validation | [sanitization requirements] |
+
+### 4.3 Scalability
+
+<!-- How should this scale? Horizontal/vertical? Auto-scaling triggers? -->
+
+[Describe scaling expectations]
+
+### 4.4 Reliability
+
+| Metric | Target |
+|--------|--------|
+| Uptime | [99.x%] |
+| Recovery Time Objective (RTO) | [X minutes/hours] |
+| Recovery Point Objective (RPO) | [X minutes/hours] |
+| Backup Strategy | [daily/hourly, retention period] |
+
+---
+
+## 5. Technical Specifications
+
+### 5.1 Architecture
+
+<!-- Component diagram or text description -->
+
+```mermaid
+graph TD
+    A[Client] --> B[API Gateway]
+    B --> C[Service]
+    C --> D[Database]
+```
+
+### 5.2 Data Model
+
+<!-- Entity descriptions and relationships -->
+
+**Entity: [EntityName]**
+| Field | Type | Constraints | Description |
+|-------|------|-------------|-------------|
+| id | UUID | PK | Unique identifier |
+| [field] | [type] | [constraints] | [description] |
+
+### 5.3 Dependencies
+
+| Dependency | Version | Purpose | Risk if Unavailable |
+|------------|---------|---------|---------------------|
+| [library/service] | [version] | [why needed] | [impact] |
+
+### 5.4 Integration Points
+
+<!-- External systems, APIs, services this feature connects to -->
+
+| System | Integration Type | Purpose | Owner |
+|--------|------------------|---------|-------|
+| [system] | [API/Event/File] | [why] | [team/person] |
+
+---
+
+## 6. Contract Specification (Required for API Features)
+
+<!-- This section MUST be completed and FROZEN before backend implementation begins -->
+<!-- Contract freeze = no changes without explicit approval and version bump -->
+
+### 6.1 Entity Cards
+
+<!-- One card per domain entity. This is the single source of truth for entity structure. -->
+
+**Entity: [EntityName]**
+| Attribute | Value |
+|-----------|-------|
+| **Name** | [Exact name as used in code - no synonyms allowed] |
+| **Purpose** | [Single sentence: why this entity exists] |
+| **Owner** | [Team/service responsible] |
+| **Key Fields** | [List primary fields with exact names] |
+| **Derived Fields** | [Computed/calculated fields] |
+| **Sensitive Fields** | [PII, credentials, financial - requires encryption/masking] |
+| **Retention** | [How long data is kept, deletion policy] |
+| **Audit** | [yes/no - whether changes are logged] |
+
+### 6.2 State Transitions
+
+<!-- Required for any entity with a status/state field -->
+<!-- Backend MUST enforce these transitions - UI cannot bypass -->
+
+**Entity: [EntityName]**
+
+```
+[Draft] → [Submitted] → [Approved] → [Archived]
+              ↓
+         [Rejected]
+```
+
+| Current State | Action | Next State | Who Can Trigger | Validations | Side Effects |
+|---------------|--------|------------|-----------------|-------------|--------------|
+| Draft | Submit | Submitted | Author, Admin | Has required fields | Notify reviewers |
+| Submitted | Approve | Approved | Reviewer, Admin | Review completed | Notify author |
+| Submitted | Reject | Rejected | Reviewer, Admin | Reason provided | Notify author |
+| Approved | Archive | Archived | Admin | None | None |
+| Rejected | Resubmit | Submitted | Author | Issues addressed | Reset review |
+
+**Invalid Transitions (must fail explicitly):**
+- Draft → Approved (cannot skip review)
+- Archived → any state (terminal state)
+- Rejected → Approved (must go through Submitted)
+
+### 6.3 Permissions Matrix
+
+<!-- Who can do what. Backend MUST enforce - UI only hides/disables. -->
+
+| Action | Admin | Manager | User | Guest | Notes |
+|--------|-------|---------|------|-------|-------|
+| Create | ✅ | ✅ | ✅ | ❌ | |
+| Read (own) | ✅ | ✅ | ✅ | ❌ | |
+| Read (all) | ✅ | ✅ | ❌ | ❌ | |
+| Update (own) | ✅ | ✅ | ✅ | ❌ | Only in Draft state |
+| Update (any) | ✅ | ✅ | ❌ | ❌ | |
+| Delete | ✅ | ❌ | ❌ | ❌ | Soft delete only |
+| Approve | ✅ | ✅ | ❌ | ❌ | Cannot approve own |
+
+### 6.4 API Contract
+
+<!-- This is the FROZEN contract. Implementation must match EXACTLY. -->
+<!-- Generate clients/types from this - single source of truth. -->
+
+#### Standard Response Wrapper
+```json
+{
+  "data": { ... },
+  "meta": {
+    "page": 1,
+    "pageSize": 20,
+    "total": 100
+  },
+  "correlationId": "uuid-here"
+}
+```
+
+#### Standard Error Response
+```json
+{
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Human readable message",
+    "details": [
+      { "field": "email", "message": "Invalid email format" }
+    ]
+  },
+  "correlationId": "uuid-here"
+}
+```
+
+#### Endpoints
+
+**`GET /api/v1/[resource]`** - List resources
+| Aspect | Specification |
+|--------|---------------|
+| Auth | JWT required |
+| Query Params | `page`, `pageSize`, `sort`, `filter` |
+| Success | `200` with wrapped array |
+| Errors | `401` Unauthorized, `403` Forbidden |
+
+**Request Example:**
+```http
+GET /api/v1/resource?page=1&pageSize=20&sort=-createdAt
+Authorization: Bearer <token>
+```
+
+**Response Example (Success):**
+```json
+{
+  "data": [
+    { "id": "uuid-1", "name": "Example", "status": "active" }
+  ],
+  "meta": { "page": 1, "pageSize": 20, "total": 1 },
+  "correlationId": "abc-123"
+}
+```
+
+**`POST /api/v1/[resource]`** - Create resource
+| Aspect | Specification |
+|--------|---------------|
+| Auth | JWT required |
+| Headers | `Idempotency-Key` (optional) |
+| Body | See request example |
+| Success | `201` with created resource |
+| Errors | `400` Validation, `401` Unauthorized, `409` Conflict |
+
+**Request Example:**
+```json
+{
+  "name": "New Resource",
+  "description": "Optional description"
+}
+```
+
+**Response Example (Success):**
+```json
+{
+  "data": { "id": "uuid-new", "name": "New Resource", "status": "draft" },
+  "correlationId": "abc-124"
+}
+```
+
+**Response Example (Validation Error):**
+```json
+{
+  "error": {
+    "code": "VALIDATION_FAILED",
+    "message": "Request validation failed",
+    "details": [
+      { "field": "name", "message": "Name is required" }
+    ]
+  },
+  "correlationId": "abc-125"
+}
+```
+
+### 6.5 Error Codes
+
+<!-- Stable error codes. Do not change once shipped. -->
+
+| Code | HTTP Status | Meaning | When Used |
+|------|-------------|---------|-----------|
+| `VALIDATION_FAILED` | 400 | Request body invalid | Missing/invalid fields |
+| `UNAUTHORIZED` | 401 | No valid auth token | Missing/expired JWT |
+| `FORBIDDEN` | 403 | Valid token, no permission | RBAC check failed |
+| `NOT_FOUND` | 404 | Resource doesn't exist | Invalid ID |
+| `CONFLICT` | 409 | Duplicate or state conflict | Unique constraint, invalid transition |
+| `INVALID_STATE_TRANSITION` | 422 | State change not allowed | Violates state machine |
+| `RATE_LIMITED` | 429 | Too many requests | Rate limit exceeded |
+| `INTERNAL_ERROR` | 500 | Unexpected server error | Unhandled exception |
+
+### 6.6 UI States Specification
+
+<!-- Every screen must handle all these states. No exceptions. -->
+
+| State | When | UI Behavior |
+|-------|------|-------------|
+| Loading | Data being fetched | Skeleton/spinner, no interaction |
+| Empty | No data exists | Empty state message + CTA |
+| Error | Request failed | Error message + retry button |
+| No Permission | User can't access | Permission denied message |
+| Success | Data loaded | Display data |
+| Submitting | Form being submitted | Disable inputs, show spinner |
+| Confirmation | Destructive action | Modal with confirm/cancel |
+
+---
+
+## 7. Constraints & Assumptions
+
+### 7.1 Constraints
+
+<!-- Hard limits that cannot be negotiated -->
+
+- **Technical:** [e.g., must use existing database, no new infrastructure]
+- **Business:** [e.g., must comply with GDPR, must work with existing auth]
+- **Resource:** [e.g., single developer, limited budget]
+
+### 7.2 Assumptions
+
+<!-- Things we believe to be true but haven't verified -->
+
+| Assumption | Risk if Wrong | Mitigation |
+|------------|---------------|------------|
+| [assumption] | [impact] | [how to reduce risk] |
+
+### 7.3 Out of Scope
+
+<!-- Explicitly excluded from this PRD - prevents scope creep -->
+
+- [ ] [Feature/capability explicitly NOT included]
+- [ ] [Another exclusion]
+- [ ] [Another exclusion]
+
+---
+
+## 8. Risks & Mitigations
+
+| ID | Risk | Likelihood | Impact | Mitigation Strategy |
+|----|------|------------|--------|---------------------|
+| R-001 | [risk description] | H/M/L | H/M/L | [how to prevent/handle] |
+| R-002 | [risk description] | H/M/L | H/M/L | [how to prevent/handle] |
+
+---
+
+## 9. Implementation Plan
+
+### 9.1 Phases
+
+| Phase | Name | Scope | Prerequisites |
+|-------|------|-------|---------------|
+| 1 | MVP | [minimal viable scope] | None |
+| 2 | Enhancement | [additional features] | Phase 1 complete |
+| 3 | Polish | [refinements, edge cases] | Phase 2 complete |
+
+### 9.2 Effort Estimate
+
+<!-- T-shirt sizing only - NO time estimates -->
+
+| Phase | Effort | Complexity | Risk |
+|-------|--------|------------|------|
+| 1 | S/M/L/XL | Low/Med/High | Low/Med/High |
+| 2 | S/M/L/XL | Low/Med/High | Low/Med/High |
+
+---
+
+## 10. Acceptance Criteria
+
+### 10.1 Definition of Done
+
+- [ ] All MUST-priority user stories implemented
+- [ ] All functional requirements pass acceptance criteria
+- [ ] Unit test coverage >= 80% for business logic
+- [ ] Integration tests for all API endpoints
+- [ ] Security review completed (if applicable)
+- [ ] Documentation updated
+- [ ] Code reviewed and approved
+- [ ] No critical/high severity bugs open
+
+### 10.2 Sign-off Required
+
+| Role | Name | Status | Date |
+|------|------|--------|------|
+| Technical Lead | [name] | Pending | |
+| Product Owner | [name] | Pending | |
+| Security | [name] | Pending | |
+
+---
+
+## 11. Appendix
+
+### 11.1 Glossary
+
+<!-- CRITICAL: This is the naming authority. Field names in code MUST match exactly. -->
+<!-- No synonyms allowed. If glossary says "userId", never use "user_id" or "uid". -->
+
+| Term | Definition | Code Name |
+|------|------------|-----------|
+| [term] | [definition] | [exact_field_name] |
+
+### 11.2 References
+
+- [Link to related documentation]
+- [Link to design mockups]
+- [Link to technical specs]
+
+### 11.3 Change Log
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0 | [date] | [author] | Initial draft |
+
+---
+
+<!--
+PRD CHECKLIST (remove before finalizing):
+
+COMPLETENESS:
+[ ] Problem clearly stated with measurable impact
+[ ] All user stories have acceptance criteria
+[ ] Security requirements defined
+[ ] Out of scope explicitly listed
+[ ] Risks identified with mitigations
+
+CLARITY:
+[ ] No TBD or TODO markers remain
+[ ] No vague language ("might", "maybe", "possibly")
+[ ] All acronyms defined in glossary
+[ ] Examples provided for complex requirements
+
+CONTRACT SPECIFICATION (Required for API features):
+[ ] Entity cards completed for all domain entities
+[ ] State transitions documented (if entity has status field)
+[ ] Permissions matrix completed
+[ ] API endpoints with request/response examples
+[ ] Error codes defined and stable
+[ ] UI states specified (loading, empty, error, success)
+[ ] Glossary includes all field names with exact code names
+
+CONTRACT FREEZE GATE:
+[ ] Contract section reviewed and approved
+[ ] No TBD in contract specification
+[ ] Examples are concrete (not placeholders)
+[ ] Ready to generate clients/types from contract
+
+READY FOR IMPLEMENTATION:
+[ ] Technical dependencies identified
+[ ] Data model defined
+[ ] API contracts specified and FROZEN
+[ ] Phases broken down appropriately
+-->

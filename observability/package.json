@@ -1,0 +1,13 @@
+{
+  "name": "@claude-as/observability",
+  "version": "1.0.0",
+  "description": "Claude AS Observability & Tracing System",
+  "type": "module",
+  "main": "observability-manager.js",
+  "dependencies": {
+    "uuid": "^9.0.1"
+  },
+  "keywords": ["observability", "tracing", "metrics", "claude-as"],
+  "author": "Claude AS Framework",
+  "license": "MIT"
+}

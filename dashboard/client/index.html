@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude AS Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Claude AS Dashboard</h1>
+            <div class="header-actions">
+                <button id="refreshBtn" class="btn btn-primary">Refresh</button>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab active" data-tab="overview">Overview</button>
+            <button class="tab" data-tab="prds">PRDs</button>
+            <button class="tab" data-tab="stories">Stories</button>
+            <button class="tab" data-tab="agents">Agents</button>
+            <button class="tab" data-tab="metrics">Metrics</button>
+        </nav>
+
+        <main>
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <div class="summary-cards">
+                    <div class="card">
+                        <h3>PRDs</h3>
+                        <div class="stat" id="prd-total">-</div>
+                        <div class="stat-details">
+                            <span id="prd-draft">-</span> Draft |
+                            <span id="prd-in-progress">-</span> In Progress |
+                            <span id="prd-complete">-</span> Complete
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Stories</h3>
+                        <div class="stat" id="story-total">-</div>
+                        <div class="stat-details">
+                            <span id="story-pending">-</span> Pending |
+                            <span id="story-in-progress">-</span> In Progress |
+                            <span id="story-complete">-</span> Complete
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Agents</h3>
+                        <div class="stat" id="agent-total">-</div>
+                        <div class="stat-details">
+                            <span id="agent-unique">-</span> Unique Agents
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3>Completion Rate</h3>
+                        <div class="stat" id="completion-rate">-</div>
+                        <div class="stat-details">Stories Completed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PRDs Tab -->
+            <div id="prds" class="tab-content">
+                <div class="section-header">
+                    <h2>Product Requirements Documents</h2>
+                    <button id="createPRDBtn" class="btn btn-primary">Create PRD</button>
+                </div>
+                <div id="prds-list" class="list-container"></div>
+            </div>
+
+            <!-- Stories Tab -->
+            <div id="stories" class="tab-content">
+                <div class="section-header">
+                    <h2>Stories</h2>
+                    <div class="filters">
+                        <select id="story-filter-status">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="complete">Complete</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="stories-list" class="list-container"></div>
+            </div>
+
+            <!-- Agents Tab -->
+            <div id="agents" class="tab-content">
+                <div class="section-header">
+                    <h2>Agent Activity</h2>
+                </div>
+                <div id="agents-list" class="list-container"></div>
+            </div>
+
+            <!-- Metrics Tab -->
+            <div id="metrics" class="tab-content">
+                <div class="section-header">
+                    <h2>Metrics</h2>
+                </div>
+                <div class="metrics-container">
+                    <div class="metric-chart">
+                        <h3>Token Usage Over Time</h3>
+                        <canvas id="tokens-chart"></canvas>
+                    </div>
+                    <div class="metric-chart">
+                        <h3>Completion Rate</h3>
+                        <div id="completion-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
