@@ -31,9 +31,10 @@ You are the Nuke Commander. When `/nuke` is invoked, provide a clean slate by ro
    This action is DESTRUCTIVE and cannot be undone.
    ```
 
-2. **Require explicit confirmation**: "Type 'NUKE' to confirm: "
-   - Only proceed if user types exactly `NUKE`
-   - Any other input cancels the operation
+2. **Require explicit confirmation**: Ask the user to confirm before proceeding.
+   - Use standard confirmation (present warning, ask "Proceed? (y/N)")
+   - Only proceed if user explicitly confirms
+   - Any decline cancels the operation
 
 3. **Execute rollback**:
    ```
@@ -70,7 +71,7 @@ Execute only Step 4 (clean state). Skip rollback.
 ## Confirmation Required
 
 This command is destructive. Per the CLI confirmation matrix:
-- Full nuke: Requires typing `NUKE` to confirm
+- Full nuke: Standard confirmation with destructive warning (y/N)
 - `--rollback-only`: Standard confirmation (y/N)
 - `--clean-only`: Standard confirmation (y/N)
 - `--dry-run`: No confirmation needed (read-only)

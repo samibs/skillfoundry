@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.11** | **The Forge: 46 Agents + 7 Shortcuts** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
+**Version 1.9.0.12** | **The Forge: 46 Agents + 11 Shortcuts** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
 
 ---
 
@@ -10,7 +10,7 @@ Your complete AI development team, covering the full software development lifecy
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       THE FORGE (46 Agents + 7 Shortcuts)                  │
+│                       THE FORGE (46 Agents + 11 Shortcuts)                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  LEADERSHIP        ARCHITECTURE         IMPLEMENTATION       QUALITY       │
@@ -491,19 +491,23 @@ These agents are not ported to Claude Code or Cursor because they depend on GitH
 
 ---
 
-## Shortcut Commands (7)
+## Shortcut Commands (11)
 
 Quick-access shortcuts for common workflows. Available on all 3 platforms.
 
 | Shortcut | Name | What it does |
 |----------|------|--------------|
-| `/forge` | **Summon The Forge** | Full pipeline: validate + implement (semi-auto+parallel) + layer-check + security audit + harvest memory |
+| `/forge` | **Summon The Forge** | Full pipeline: validate + implement + test + audit + harvest + debrief |
 | `/gosm` | Go Semi-Auto | `/go --mode=semi-auto` — recommended default |
 | `/goma` | Go Autonomous | `/go --mode=autonomous` — full autonomy |
 | `/blitz` | Blitz Mode | `/go --mode=semi-auto --parallel --tdd` — max speed with safety |
-| `/gohm` | Harvest Memory | Extract lessons to `memory_bank/knowledge/` |
+| `/gohm` | Harvest Memory | Extract lessons to `memory_bank/knowledge/` (`--push` to auto-commit) |
 | `/ship` | Ship It | Layer-check + security audit + release prepare |
 | `/nuke` | Nuke & Rebuild | Rollback all changes + clear state (requires confirmation) |
+| `/status` | Status Dashboard | PRDs, stories, layers, memory, execution state |
+| `/profile` | Session Profiles | Load/create workflow presets (default, blitz, cautious, autonomous) |
+| `/replay` | Replay Execution | Re-run last `/go` or `/forge` with same params |
+| `/analytics` | Agent Analytics | Invocation stats, success rates, performance trends |
 
 ---
 
@@ -512,14 +516,16 @@ Quick-access shortcuts for common workflows. Available on all 3 platforms.
 | Category | Count |
 |----------|-------|
 | **Total Agents** | 46 |
-| **Shortcut Commands** | 7 |
-| **Claude Code Skills** | 53 (46 + 7) |
-| **Copilot CLI Agents** | 58 (46 + 7 + 5 GitHub-specific) |
-| **Cursor Rules** | 48 (41 + 7) |
+| **Shortcut Commands** | 11 |
+| **Claude Code Skills** | 57 (46 + 11) |
+| **Copilot CLI Agents** | 62 (46 + 11 + 5 GitHub-specific) |
+| **Cursor Rules** | 52 (41 + 11) |
 | **Shared Modules** | 46 |
+| **Session Profiles** | 4 (default, blitz, cautious, autonomous) |
+| **PRD Templates** | 4 (api-service, cli-tool, fullstack-feature, dashboard) |
 | **Compliance Presets** | 3 (HIPAA, SOC2, GDPR) |
 | **Platforms Supported** | 3 |
 
 ---
 
-*Claude AS Framework v1.9.0.11 - February 2026 - The Forge*
+*Claude AS Framework v1.9.0.12 - February 2026 - The Forge*

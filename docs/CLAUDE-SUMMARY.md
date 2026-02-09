@@ -86,9 +86,13 @@ scripts/
 | `/gosm` | Go semi-auto (recommended shortcut) |
 | `/goma` | Go autonomous mode |
 | `/blitz` | Lightning mode (parallel+TDD+semi-auto) |
-| `/gohm` | Harvest memory from project |
+| `/gohm` | Harvest memory from project (`--push` to auto-commit) |
 | `/ship` | Pre-release pipeline (layer-check+security+release) |
 | `/nuke` | Clean slate (rollback+clean state) |
+| `/status` | Project status dashboard |
+| `/profile` | Session profile manager (default, blitz, cautious, autonomous) |
+| `/replay` | Re-run last execution |
+| `/analytics` | Agent usage analytics |
 
 ---
 
@@ -147,4 +151,4 @@ For detailed requirements, load specific sections:
 
 ---
 
-_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.11_
+_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.12_

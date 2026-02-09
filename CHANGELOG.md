@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.12] - 2026-02-09
+
+### Added — Enhanced DX + Templates + Analytics
+
+- **4 new commands** across all 3 platforms: `/status`, `/profile`, `/replay`, `/analytics`
+  - `/status` — Project status dashboard (PRDs, stories, layers, memory, execution state)
+  - `/profile` — Session profile manager (load/create workflow presets: default, blitz, cautious, autonomous)
+  - `/replay` — Re-run last execution (with `--failed`, `--from=<phase>`, `--dry-run`)
+  - `/analytics` — Agent usage analytics dashboard (invocations, success rates, trends)
+- **Session profiles** — 4 built-in profiles in `.claude/profiles/` (default, blitz, cautious, autonomous)
+- **PRD templates library** — `genesis/TEMPLATES/` with 4 quick-start templates:
+  - `api-service.md` — REST APIs and backend services
+  - `cli-tool.md` — Command-line tools and automation
+  - `fullstack-feature.md` — Full-stack features (DB + Backend + Frontend)
+  - `dashboard.md` — Analytics and data visualization dashboards
+- **Agent usage analytics** — `memory_bank/knowledge/agent-stats.jsonl` for tracking invocations
+- **Forge Phase 6: Debrief** — Auto-writes scratchpad summary to `.claude/scratchpad.md` after `/forge`
+
+### Fixed
+
+- **Reflection protocol tests** — Added reflection protocol sections to coder, tester, and architect across all 3 platforms (9 files)
+- **DX command sync** — Synced cost, explain, undo, health, swarm to Cursor and Copilot (10 files)
+- **`/gohm --push`** — Added auto-commit + push flag across all 3 platforms
+- **`/nuke` confirmation** — Replaced typed "NUKE" confirmation with standard (y/N) pattern
+
+---
+
 ## [1.9.0.11] - 2026-02-09
 
 ### Added — Shortcut Commands + The Forge

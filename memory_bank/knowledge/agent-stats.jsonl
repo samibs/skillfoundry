@@ -1,0 +1,1 @@
+{"schema_version":"1.0","description":"Agent usage analytics — tracks which agents are invoked, frequency, and outcomes","fields":["agent","invocations","successes","failures","avg_duration_ms","last_invoked"],"created_at":"2026-02-09T00:00:00Z","created_by":"framework"}

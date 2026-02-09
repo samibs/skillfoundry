@@ -90,6 +90,14 @@ Be thorough, be ruthless, be the last line of defense against production failure
 
 ---
 
+## Reflection Protocol
+
+Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:
+- **Pre-action**: Am I testing the right thing? Have I covered all edge cases?
+- **Post-action**: Are all tests deterministic? Did I avoid testing implementation details?
+
+---
+
 ## Usage in GitHub Copilot CLI
 
 To use this agent, invoke it via the task tool:

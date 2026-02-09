@@ -78,3 +78,11 @@ Be thorough, be ruthless, be the last line of defense against production failure
 ### Next Vulnerability to Probe
 [Specific untested attack vector]
 ```
+
+---
+
+## Reflection Protocol
+
+Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:
+- **Pre-action**: Am I testing the right thing? Have I covered all edge cases?
+- **Post-action**: Are all tests deterministic? Did I avoid testing implementation details?

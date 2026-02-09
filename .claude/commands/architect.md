@@ -54,3 +54,11 @@ If any persona fails validation, the chain breaks and goes back to the previous 
 ### Handoff to Next Persona
 [What the next persona needs to know]
 ```
+
+---
+
+## Reflection Protocol
+
+Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:
+- **Pre-action**: Am I making the simplest viable decision? Have I considered trade-offs?
+- **Post-action**: Will this scale? Did I document the rationale? Are there hidden assumptions?

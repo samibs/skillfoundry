@@ -4,6 +4,14 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### Enhanced DX + Templates + Analytics (v1.9.0.12)
+- **4 new commands**: `/status` (project dashboard), `/profile` (session presets), `/replay` (re-run executions), `/analytics` (agent usage stats)
+- **Session profiles** — 4 built-in presets in `.claude/profiles/`: default, blitz, cautious, autonomous
+- **PRD templates library** — Quick-start templates in `genesis/TEMPLATES/`: API service, CLI tool, full-stack feature, dashboard
+- **Forge Phase 6: Debrief** — Auto-writes scratchpad summary after `/forge` completion
+- **Agent analytics** — Track invocations, success rates, performance trends via `agent-stats.jsonl`
+- **Fixes**: Reflection protocol tests, DX command sync, `/gohm --push`, `/nuke` confirmation pattern
+
 ### Shortcut Commands + The Forge (v1.9.0.11)
 - **The Forge** — The 46-agent team now has a name: cold-blooded agents forging production code
 - **7 new shortcuts**: `/forge` (full pipeline), `/gosm` (semi-auto), `/goma` (autonomous), `/blitz` (parallel+TDD), `/gohm` (harvest memory), `/ship` (release prep), `/nuke` (clean slate)
