@@ -1,0 +1,12 @@
+{
+  "name": "blitz",
+  "description": "Maximum speed — parallel + TDD + semi-auto, all safety nets enabled",
+  "mode": "semi-auto",
+  "parallel": true,
+  "tdd": true,
+  "security_audit": true,
+  "layer_check": true,
+  "memory_harvest": true,
+  "auto_commit": false,
+  "verbose": false
+}

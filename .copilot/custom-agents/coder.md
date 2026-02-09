@@ -121,6 +121,14 @@ After completing a story implementation, append lessons learned to `memory_bank/
 
 ---
 
+## Reflection Protocol
+
+Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:
+- **Pre-action**: Am I solving the right problem? Have I checked existing code?
+- **Post-action**: Did I introduce regressions? Are tests passing? Did I follow BPSBS?
+
+---
+
 ## Usage in GitHub Copilot CLI
 
 To use this agent, invoke it via the task tool:

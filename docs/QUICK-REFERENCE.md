@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.11 - Quick Reference Card
+# Claude AS v1.9.0.12 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -67,13 +67,33 @@ math-check     memory
 
 | Shortcut | Name | What it does |
 |----------|------|--------------|
-| `/forge` | **Summon The Forge** | Full pipeline: validate + implement + test + audit + harvest |
+| `/forge` | **Summon The Forge** | Full pipeline: validate + implement + test + audit + harvest + debrief |
 | `/gosm` | Go Semi-Auto | `/go --mode=semi-auto` (recommended) |
 | `/goma` | Go Autonomous | `/go --mode=autonomous` |
 | `/blitz` | Blitz Mode | Parallel + TDD + semi-auto for max speed |
-| `/gohm` | Harvest Memory | Extract lessons to memory bank |
+| `/gohm` | Harvest Memory | Extract lessons to memory bank (`--push` to auto-commit) |
 | `/ship` | Ship It | Layer-check + security audit + release prep |
 | `/nuke` | Nuke & Rebuild | Rollback + clean state (requires confirmation) |
+| `/status` | Status Dashboard | PRDs, stories, layers, memory, execution state |
+| `/profile` | Session Profiles | Load/create workflow presets |
+| `/replay` | Replay Execution | Re-run last /go or /forge with same params |
+| `/analytics` | Agent Analytics | Invocation stats, success rates, trends |
+
+---
+
+## New in v1.9.0.12: Enhanced DX + Templates + Analytics
+
+### New Commands
+4 new commands: `/status` (project dashboard), `/profile` (session presets), `/replay` (re-run executions), `/analytics` (agent usage stats).
+
+### Session Profiles
+4 built-in profiles in `.claude/profiles/`: `default` (balanced), `blitz` (speed+TDD), `cautious` (max oversight), `autonomous` (full auto).
+
+### PRD Templates Library
+Quick-start templates in `genesis/TEMPLATES/`: API service, CLI tool, full-stack feature, dashboard.
+
+### Forge Phase 6: Debrief
+`/forge` now auto-writes a scratchpad summary after completion.
 
 ---
 

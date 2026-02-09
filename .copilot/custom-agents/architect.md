@@ -66,6 +66,14 @@ If any persona fails validation, the chain breaks and goes back to the previous 
 
 ---
 
+## Reflection Protocol
+
+Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:
+- **Pre-action**: Am I making the simplest viable decision? Have I considered trade-offs?
+- **Post-action**: Will this scale? Did I document the rationale? Are there hidden assumptions?
+
+---
+
 ## Usage in GitHub Copilot CLI
 
 To use this agent, invoke it via the task tool:

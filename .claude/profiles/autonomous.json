@@ -1,0 +1,12 @@
+{
+  "name": "autonomous",
+  "description": "Full autonomy — autonomous mode, parallel, auto-commit enabled",
+  "mode": "autonomous",
+  "parallel": true,
+  "tdd": false,
+  "security_audit": true,
+  "layer_check": true,
+  "memory_harvest": true,
+  "auto_commit": true,
+  "verbose": false
+}

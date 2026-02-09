@@ -60,6 +60,19 @@ Execute these phases in order:
 - Extract lessons learned to memory bank
 - Decisions, corrections, patterns recorded
 
+**PHASE 6: DEBRIEF** — Write session summary
+- Auto-write a scratchpad summary to `.claude/scratchpad.md`
+- Include: PRDs processed, stories completed, issues found, time estimate
+- Format:
+  ```markdown
+  ## Forge Session — <date>
+  - PRDs: <count> processed
+  - Stories: <completed>/<total>
+  - Issues: <count> found, <count> auto-fixed
+  - Security: <pass/fail>
+  - Knowledge: <count> entries harvested
+  ```
+
 ### Output Format:
 
 ```
@@ -71,6 +84,7 @@ The Forge — Complete
   Phase 3 (Temper):    ✓ All layers passing
   Phase 4 (Inspect):   ✓ Security audit clean
   Phase 5 (Remember):  ✓ Knowledge harvested
+  Phase 6 (Debrief):   ✓ Scratchpad updated
 
   Status: FORGED — Ready for deployment
 ```

@@ -1,0 +1,12 @@
+{
+  "name": "cautious",
+  "description": "Maximum oversight — manual mode, no parallel, all checks enforced",
+  "mode": "manual",
+  "parallel": false,
+  "tdd": true,
+  "security_audit": true,
+  "layer_check": true,
+  "memory_harvest": true,
+  "auto_commit": false,
+  "verbose": true
+}

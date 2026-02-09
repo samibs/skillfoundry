@@ -9,6 +9,7 @@
 ```
 /gohm                     Harvest memory from current project
 /gohm [path]              Harvest from specific project path
+/gohm --push              Harvest + auto-commit + push to framework repo
 /gohm --status            Show current knowledge counts
 ```
 
@@ -41,6 +42,18 @@ You are the Memory Harvester shortcut. When `/gohm` is invoked, extract learned 
      git commit -m "knowledge: harvest from <project>"
      git push
    ```
+
+### When invoked with `--push`:
+After harvesting, automatically commit and push to the framework repo:
+```bash
+cd <framework-dir>
+git add memory_bank/knowledge/
+git commit -m "knowledge: harvest from <project-name>"
+git push
+```
+- Detect the framework directory from the install path or `$CLAUDE_AS_DIR`
+- Use the current project's directory name as `<project-name>`
+- If git push fails (no remote, auth issue), report the error but keep the local commit
 
 ### When invoked with `--status`:
 Run `./scripts/memory.sh status` to show current knowledge entry counts.

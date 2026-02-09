@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.11
+# Documentation Index - Claude AS Framework v1.9.0.12
 
 Complete guide to all documentation in the framework.
 
@@ -26,7 +26,7 @@ Start here for installation and basic usage:
 
 ## 📐 Standards Documentation
 
-Three-tier documentation structure (v1.9.0.11):
+Three-tier documentation structure (v1.9.0.12):
 
 | Document | Size | Purpose |
 |----------|------|---------|
@@ -459,7 +459,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.11
+**Framework Version**: 1.9.0.12
 **Documentation Updated**: February 9, 2026
 **Total Agents**: 46 + 7 shortcuts (The Forge)
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

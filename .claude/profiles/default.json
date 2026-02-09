@@ -1,0 +1,12 @@
+{
+  "name": "default",
+  "description": "Balanced defaults — semi-auto mode, parallel execution, standard safety checks",
+  "mode": "semi-auto",
+  "parallel": true,
+  "tdd": false,
+  "security_audit": true,
+  "layer_check": true,
+  "memory_harvest": true,
+  "auto_commit": false,
+  "verbose": false
+}
