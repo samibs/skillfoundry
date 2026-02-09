@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.13] - 2026-02-09
+
+### Added — The Anvil (6-Tier Quality Gate System)
+
+LLMs generate code optimistically (forward, single-pass) but debug analytically (backwards from evidence). **The Anvil** inserts 6 tiers of validation between every agent phase to catch issues early before they cascade through the pipeline.
+
+- **The Anvil** — 6-tier quality gate system running between every agent handoff:
+  - **T1: Shell Pre-Flight** (`scripts/anvil.sh`) — Pure bash, no LLM. Syntax validation, banned pattern scan, import resolution, scope check. Runs between EVERY agent handoff.
+  - **T2: Canary Smoke Test** (`agents/_canary-smoke-test.md`) — Quick single test after Coder: can the module import? Does it compile? FAIL skips Tester entirely → routes to Fixer.
+  - **T3: Self-Adversarial Review** (`agents/_self-adversarial-review.md`) — Forces Coder to list 3+ failure modes with mitigations before handoff. Verdict: RESILIENT or VULNERABLE.
+  - **T4: Scope Validation** (`agents/_scope-validation.md`) — Compares story's `Expected Changes` against `git diff --name-only`. Missing files → BLOCK, unexpected files → WARN.
+  - **T5: Contract Enforcement** (`agents/_contract-enforcement.md`) — Validates API implementation matches story's declared API Contract table. Missing endpoint → BLOCK.
+  - **T6: Shadow Tester** (`agents/_shadow-tester.md`) — Read-only parallel agent generating prioritized risk list for Tester. HIGH/MEDIUM/LOW severity.
+- **`scripts/anvil.sh`** — T1 shell validation script (~340 lines). Commands: `check`, `syntax`, `patterns`, `imports`, `scope`, `--help`. Exit codes: 0=pass, 1=warn, 2=block.
+- **`agents/_anvil-protocol.md`** — Master protocol defining all 6 tiers, pipeline integration, severity levels (BLOCK/WARN/INFO), output format.
+- **`/anvil` command** — Manual Anvil invocation across all 3 platforms (Claude Code, Cursor, Copilot). Run specific tiers or full report.
+- **Pipeline integration** — `go.md` updated: `Architect → ANVIL T1 → Coder (+T6 Shadow) → ANVIL T1+T2+T3 → Tester → ANVIL T1 → Gate-Keeper (T4+T5)`
+- **Fast-fail behavior** — T1/T2 failures skip downstream agents to avoid wasting tokens
+- **`--no-anvil` flag** — Disable Anvil checks in `/go` for debugging
+- **Story template** — `stories.md` now includes `Expected Changes` section for T4 scope validation
+
+### Changed
+
+- **`coder.md`** — Added mandatory Self-Adversarial Review (T3) section across all 3 platforms
+- **`tester.md`** — Added Canary Smoke Test pre-condition (T2) and Shadow Tester risk input (T6) across all 3 platforms
+- **`gate-keeper.md`** — Added Scope Validation (T4) and Contract Enforcement (T5) integration across all 3 platforms
+- **`go.md`** — Added ANVIL INTEGRATION section with checkpoint details, fast-fail, and `--no-anvil` flag
+- **`forge.md`** — Added Anvil reference in Phase 2 (FORGE) description
+
+---
+
 ## [1.9.0.12] - 2026-02-09
 
 ### Added — Enhanced DX + Templates + Analytics
@@ -1567,6 +1598,7 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 
 | Version | Date | Focus |
 |---------|------|-------|
+| 1.9.0.13 | 2026-02-09 | The Anvil: 6-tier quality gate (shell pre-flight, canary, self-adversarial, scope, contract, shadow) |
 | 1.9.0.5 | 2026-02-08 | Knowledge Hub: git-based distribution, cross-machine scratchpad/knowledge sync |
 | 1.9.0.4 | 2026-02-08 | Persistent scratchpad: cross-platform session continuity (Claude/Copilot/Cursor) |
 | 1.9.0.3 | 2026-02-07 | Platform Sync Engine: generate platform files from agent source, command: field |

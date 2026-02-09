@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.12 - Quick Reference Card
+# Claude AS v1.9.0.13 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -78,6 +78,48 @@ math-check     memory
 | `/profile` | Session Profiles | Load/create workflow presets |
 | `/replay` | Replay Execution | Re-run last /go or /forge with same params |
 | `/analytics` | Agent Analytics | Invocation stats, success rates, trends |
+| `/anvil` | **Anvil Quality Gate** | Run 6-tier validation on changed files or specific tiers |
+
+---
+
+## New in v1.9.0.13: The Anvil (6-Tier Quality Gate)
+
+### 6 Validation Tiers
+```
+T1  Shell Pre-Flight     scripts/anvil.sh    Between EVERY handoff   Syntax, patterns, imports
+T2  Canary Smoke Test    LLM (quick)         After Coder             Module imports? Compiles?
+T3  Self-Adversarial     LLM (Coder)         After Coder writes      3+ failure modes + mitigations
+T4  Scope Validation     Diff-based           In Gate-Keeper          Expected vs actual files
+T5  Contract Enforcement LLM (Gate-Keeper)   In Gate-Keeper          API contract vs implementation
+T6  Shadow Tester        LLM (parallel)       Concurrent with Coder   Risk list for Tester
+```
+
+### Commands
+```
+/anvil                Run all tiers on changed files
+/anvil t1             Shell pre-flight only
+/anvil t1 <file>      T1 on specific file
+/anvil t2             Canary smoke test
+/anvil t3             Self-adversarial review
+/anvil t4             Scope validation
+/anvil t5             Contract enforcement
+/anvil t6             Shadow tester risk list
+/anvil --report       Full Anvil report
+scripts/anvil.sh check <file>    Direct shell validation
+```
+
+### Fast-Fail Pipeline
+```
+Architect → T1 → Coder (+T6) → T1+T2+T3 → Tester → T1 → Gate-Keeper (T4+T5)
+                                    ↓ FAIL → skip Tester → Fixer
+```
+
+### /go Integration
+```
+/go                    Anvil enabled (default)
+/go --no-anvil         Disable Anvil for debugging
+/go --anvil=t1,t2      Run specific tiers only
+```
 
 ---
 
@@ -425,4 +467,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.11 - February 2026 - The Forge (46 Agents + 7 Shortcuts)*
+*Claude AS Framework v1.9.0.13 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*

@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.12** | **The Forge: 46 Agents + 11 Shortcuts** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
+**Version 1.9.0.13** | **The Forge: 46 Agents + 12 Shortcuts** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
 
 ---
 
@@ -10,7 +10,7 @@ Your complete AI development team, covering the full software development lifecy
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       THE FORGE (46 Agents + 11 Shortcuts)                  │
+│                       THE FORGE (46 Agents + 12 Shortcuts)                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  LEADERSHIP        ARCHITECTURE         IMPLEMENTATION       QUALITY       │
@@ -491,7 +491,7 @@ These agents are not ported to Claude Code or Cursor because they depend on GitH
 
 ---
 
-## Shortcut Commands (11)
+## Shortcut Commands (12)
 
 Quick-access shortcuts for common workflows. Available on all 3 platforms.
 
@@ -508,6 +508,7 @@ Quick-access shortcuts for common workflows. Available on all 3 platforms.
 | `/profile` | Session Profiles | Load/create workflow presets (default, blitz, cautious, autonomous) |
 | `/replay` | Replay Execution | Re-run last `/go` or `/forge` with same params |
 | `/analytics` | Agent Analytics | Invocation stats, success rates, performance trends |
+| `/anvil` | **Anvil Quality Gate** | Run 6-tier validation (T1-T6) on changed files or specific tiers |
 
 ---
 
@@ -516,10 +517,10 @@ Quick-access shortcuts for common workflows. Available on all 3 platforms.
 | Category | Count |
 |----------|-------|
 | **Total Agents** | 46 |
-| **Shortcut Commands** | 11 |
-| **Claude Code Skills** | 57 (46 + 11) |
-| **Copilot CLI Agents** | 62 (46 + 11 + 5 GitHub-specific) |
-| **Cursor Rules** | 52 (41 + 11) |
+| **Shortcut Commands** | 12 |
+| **Claude Code Skills** | 58 (46 + 12) |
+| **Copilot CLI Agents** | 63 (46 + 12 + 5 GitHub-specific) |
+| **Cursor Rules** | 53 (41 + 12) |
 | **Shared Modules** | 46 |
 | **Session Profiles** | 4 (default, blitz, cautious, autonomous) |
 | **PRD Templates** | 4 (api-service, cli-tool, fullstack-feature, dashboard) |
@@ -528,4 +529,4 @@ Quick-access shortcuts for common workflows. Available on all 3 platforms.
 
 ---
 
-*Claude AS Framework v1.9.0.12 - February 2026 - The Forge*
+*Claude AS Framework v1.9.0.13 - February 2026 - The Forge*

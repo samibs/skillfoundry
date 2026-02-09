@@ -416,6 +416,27 @@ Track gate effectiveness:
 - Minimum friction, requires high trust
 
 
+## Anvil Integration: Scope Validation (T4) & Contract Enforcement (T5)
+
+### Scope Validation (T4)
+
+During validation, check if the story declares `Expected Changes`. If present, compare against actual changes. See: `agents/_scope-validation.md`
+
+1. Read story's "Expected Changes" section (Create/Modify lists)
+2. Run: git diff --name-only (or scripts/anvil.sh scope <story-file>)
+3. Compare expected vs actual: missing = BLOCK, unexpected = WARN
+
+### Contract Enforcement (T5)
+
+If the story includes an "API Contract" section, validate implementation matches. See: `agents/_contract-enforcement.md`
+
+1. Read story's "API Contract" table (endpoints, methods, models)
+2. Read route/controller files
+3. Verify each declared endpoint exists with correct method
+4. Missing endpoint = BLOCK, wrong status code = WARN
+
+These checks run alongside existing three-layer enforcement and banned pattern scanning.
+
 ## Commands
 
 ```bash

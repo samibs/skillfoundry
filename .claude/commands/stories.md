@@ -149,6 +149,14 @@ Each story follows this exact format:
 
 ---
 
+## Expected Changes (Anvil T4)
+
+Files this story should create or modify (used by Anvil Scope Validation):
+- **Create**: [`path/to/new_file.py`, `path/to/new_test.py`]
+- **Modify**: [`path/to/existing_file.py`]
+
+---
+
 ## Acceptance Criteria
 
 <!-- Gherkin format - these become your tests -->

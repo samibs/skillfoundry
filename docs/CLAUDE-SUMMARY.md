@@ -93,6 +93,7 @@ scripts/
 | `/profile` | Session profile manager (default, blitz, cautious, autonomous) |
 | `/replay` | Re-run last execution |
 | `/analytics` | Agent usage analytics |
+| `/anvil` | **The Anvil** — 6-tier quality gate (T1-T6) |
 
 ---
 
@@ -146,9 +147,10 @@ For detailed requirements, load specific sections:
 - **Swarm Mode**: Self-organizing agent coordination (alternative to wave dispatch)
 - **DX Tooling**: `/explain`, `/undo`, `/cost`, `/health` commands
 - **Advanced Intelligence**: Semantic search, monorepo support, compliance presets (HIPAA/SOC2/GDPR)
-- **The Forge (46 Agents + 7 Shortcuts)** across triple platform (Claude Code, Copilot CLI, Cursor)
+- **The Forge (46 Agents + 12 Shortcuts)** across triple platform (Claude Code, Copilot CLI, Cursor)
+- **The Anvil (v1.9.0.13)**: 6-tier quality gate (shell pre-flight, canary, self-adversarial, scope, contract, shadow tester)
 - **NASAB Integration**: Evidence-based gates, constraint classification, pattern detection, bidirectional iteration, dissent resolution
 
 ---
 
-_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.12_
+_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.13_
