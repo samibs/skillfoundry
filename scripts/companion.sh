@@ -174,6 +174,7 @@ render_phase_commands() {
             cmd "/tech-lead" "Tech decisions"
             cmd "/security" "Threat model"
             cmd "/prd" "Create PRD"
+            cmd "/anvil t1" "Pre-flight check"
             ;;
         *implement*|*coding*|*development*)
             section "PHASE: Implementation"
@@ -182,6 +183,8 @@ render_phase_commands() {
             cmd "/tester" "Run tests"
             cmd "/debugger" "Debug issues"
             cmd "/refactor" "Clean up code"
+            cmd "/fixer" "Auto-remediation"
+            cmd "/anvil" "Quality gate"
             cmd "/layer-check" "Validate layers"
             ;;
         *test*|*quality*)
@@ -189,14 +192,17 @@ render_phase_commands() {
             cmd "/tester" "Run tests"
             cmd "/review" "Code review"
             cmd "/evaluator" "BPSBS check"
+            cmd "/anvil" "Quality gate"
             cmd "/layer-check" "Validate layers"
             cmd "/security" "Security audit"
+            cmd "/security-scanner" "Vuln scan"
             cmd "/gate-keeper" "Gate check"
             ;;
         *valid*|*gate*)
             section "PHASE: Validation"
             cmd "/layer-check" "Three layers"
             cmd "/gate-keeper" "Gate check"
+            cmd "/anvil" "6-tier gate"
             cmd "/evaluator" "Standards"
             cmd "/security-scanner" "Vuln scan"
             cmd "/review" "Code review"
@@ -211,6 +217,7 @@ render_phase_commands() {
         *deploy*|*release*|*ops*)
             section "PHASE: Release/Ops"
             cmd "/release" "Release prep"
+            cmd "/ship" "Ship pipeline"
             cmd "/sre" "SRE ops"
             cmd "/devops" "CI/CD"
             cmd "/ops" "Generate tooling"
@@ -219,10 +226,12 @@ render_phase_commands() {
         *)
             section "COMMANDS (by task)"
             cmd "/go" "Execute PRDs"
+            cmd "/forge" "Full pipeline"
             cmd "/prd" "Create PRD"
             cmd "/coder" "TDD implement"
             cmd "/tester" "Run tests"
             cmd "/review" "Code review"
+            cmd "/anvil" "Quality gate"
             cmd "/layer-check" "Validate layers"
             ;;
     esac
@@ -278,6 +287,8 @@ render() {
     # Always-available commands
     section "ALWAYS AVAILABLE"
     cmd "/go" "Main orchestrator"
+    cmd "/forge" "Full pipeline"
+    cmd "/anvil" "Quality gate"
     cmd "/context" "Token budget"
     cmd "/memory" "Knowledge base"
     cmd "/explain" "Last action"
@@ -286,6 +297,22 @@ render() {
     cmd "/health" "Diagnostics"
     cmd "/swarm" "Swarm coord"
     echo ""
+
+    # Shortcut commands (compact display if space allows)
+    if [ "$h" -gt 35 ]; then
+        section "SHORTCUTS"
+        cmd "/gosm" "Semi-auto mode"
+        cmd "/goma" "Autonomous mode"
+        cmd "/blitz" "Speed + TDD"
+        cmd "/ship" "Release pipeline"
+        cmd "/status" "Project dashboard"
+        cmd "/profile" "Session presets"
+        cmd "/replay" "Re-run last exec"
+        cmd "/analytics" "Agent stats"
+        cmd "/gohm" "Harvest memory"
+        cmd "/nuke" "Clean slate"
+        echo ""
+    fi
 
     # Modified files (if any, and if space permits)
     if [ -n "$MODIFIED_FILES" ] && [ "$h" -gt 30 ]; then
