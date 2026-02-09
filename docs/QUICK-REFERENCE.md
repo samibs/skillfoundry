@@ -1,8 +1,8 @@
-# Claude AS v1.9.0.10 - Quick Reference Card
+# Claude AS v1.9.0.11 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-## The Dream Team (46 Agents)
+## The Forge (46 Agents)
 
 ```
 LEADERSHIP     ARCHITECTURE    IMPLEMENTATION   QUALITY         SECURITY
@@ -58,6 +58,32 @@ math-check     memory
 | `/cost` | Token usage report |
 | `/health` | Framework self-diagnostic |
 | `companion.sh --tmux` | Open context-aware command panel |
+
+---
+
+## Shortcut Commands (The Forge)
+
+> Quick-access shortcuts for common workflows. Type less, forge more.
+
+| Shortcut | Name | What it does |
+|----------|------|--------------|
+| `/forge` | **Summon The Forge** | Full pipeline: validate + implement + test + audit + harvest |
+| `/gosm` | Go Semi-Auto | `/go --mode=semi-auto` (recommended) |
+| `/goma` | Go Autonomous | `/go --mode=autonomous` |
+| `/blitz` | Blitz Mode | Parallel + TDD + semi-auto for max speed |
+| `/gohm` | Harvest Memory | Extract lessons to memory bank |
+| `/ship` | Ship It | Layer-check + security audit + release prep |
+| `/nuke` | Nuke & Rebuild | Rollback + clean state (requires confirmation) |
+
+---
+
+## New in v1.9.0.11: Shortcut Commands + The Forge
+
+### The Forge
+The 46-agent team is now called **The Forge** — cold-blooded agents forging production code. `/forge` invokes the full pipeline: validate PRDs, implement stories (semi-auto + parallel), layer-check, security audit, and harvest memory.
+
+### Quick-Access Shortcuts
+7 new shortcut commands eliminate common flag combinations. `/gosm` replaces `/go --mode=semi-auto`, `/blitz` combines parallel + TDD + semi-auto, and `/ship` chains layer-check + security + release.
 
 ---
 
@@ -347,7 +373,7 @@ Hardcoded credentials
 
 ```
 your-project/
-├── .claude/commands/      # 46 skills
+├── .claude/commands/      # 46 agents + 7 shortcuts
 ├── agents/                # Shared modules
 ├── genesis/               # PRDs go here
 ├── docs/stories/          # Generated stories
@@ -365,7 +391,7 @@ your-project/
 | Skills not recognized | Check `.claude/commands/` |
 | State stuck | `/go --clean` |
 | Context overflow | `/context compact` |
-| Need rollback | `/go --rollback` |
+| Need rollback | `/go --rollback` or `/nuke` |
 
 ---
 
@@ -379,4 +405,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.10 - February 2026 - 46 Agents*
+*Claude AS Framework v1.9.0.11 - February 2026 - The Forge (46 Agents + 7 Shortcuts)*

@@ -82,6 +82,13 @@ scripts/
 | `/cost` | Token usage report |
 | `/health` | Framework self-diagnostic |
 | `/go --compliance=hipaa` | Enable HIPAA compliance rules |
+| `/forge` | **The Forge** - Full pipeline (validate+implement+test+audit+harvest) |
+| `/gosm` | Go semi-auto (recommended shortcut) |
+| `/goma` | Go autonomous mode |
+| `/blitz` | Lightning mode (parallel+TDD+semi-auto) |
+| `/gohm` | Harvest memory from project |
+| `/ship` | Pre-release pipeline (layer-check+security+release) |
+| `/nuke` | Clean slate (rollback+clean state) |
 
 ---
 
@@ -135,9 +142,9 @@ For detailed requirements, load specific sections:
 - **Swarm Mode**: Self-organizing agent coordination (alternative to wave dispatch)
 - **DX Tooling**: `/explain`, `/undo`, `/cost`, `/health` commands
 - **Advanced Intelligence**: Semantic search, monorepo support, compliance presets (HIPAA/SOC2/GDPR)
-- **46 Agents** across triple platform (Claude Code, Copilot CLI, Cursor)
+- **The Forge (46 Agents + 7 Shortcuts)** across triple platform (Claude Code, Copilot CLI, Cursor)
 - **NASAB Integration**: Evidence-based gates, constraint classification, pattern detection, bidirectional iteration, dissent resolution
 
 ---
 
-_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.10_
+_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.11_
