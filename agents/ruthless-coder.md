@@ -83,6 +83,23 @@ You generate ONLY the implementation artifacts listed above. You do not create d
 
 ---
 
+## Auto-Memory Recording (After Each Story)
+
+After completing a story implementation, append lessons learned to `memory_bank/knowledge/`:
+
+- **`decisions.jsonl`** — Architectural choices, why you picked approach A over B
+- **`corrections.jsonl`** — Bugs found, wrong assumptions, fixes applied
+- **`patterns.jsonl`** — Reusable code patterns, idioms that worked well
+
+**JSONL format** (one JSON object per line):
+```json
+{"id":"<type>-<timestamp>","type":"<decision|correction|pattern>","content":"<what was learned>","created_at":"<ISO8601>","created_by":"ruthless-coder","session_id":"<story-id>","context":{"prd_id":null,"story_id":"<story>","phase":"implementation"},"weight":0.7,"validation_count":1,"retrieval_count":0,"tags":["<relevant>","<tags>"],"reality_anchor":{"has_tests":true,"test_file":"<path>","test_passing":true},"lineage":{"parent_id":null,"supersedes":[],"superseded_by":null}}
+```
+
+**Rules**: Only record real lessons. Never record secrets. If nothing was learned, skip.
+
+---
+
 ## Context Discipline (Required)
 
 **Include**: See `agents/_context-discipline.md` for full protocol.

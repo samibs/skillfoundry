@@ -210,6 +210,36 @@ Each sub-phase executes with isolated context:
 
 ---
 
+## Auto-Memory Recording (After Each Story)
+
+**MANDATORY**: After each story or significant task completes and passes its quality gate, record lessons learned to `memory_bank/knowledge/`. This makes knowledge harvestable across projects.
+
+### What to Record
+
+After completing work, assess what was learned and append entries to the appropriate file:
+
+| File | Record When |
+|------|------------|
+| `memory_bank/knowledge/decisions.jsonl` | Architectural choices, technology selections, trade-offs made |
+| `memory_bank/knowledge/corrections.jsonl` | Bugs found, fixes applied, wrong assumptions corrected |
+| `memory_bank/knowledge/patterns.jsonl` | Reusable patterns discovered, code idioms that worked well |
+
+### JSONL Entry Format
+
+Each line is a standalone JSON object:
+```json
+{"id":"<type>-<timestamp>","type":"<decision|correction|pattern>","content":"<what was learned>","created_at":"<ISO8601>","created_by":"<agent-name>","session_id":"<story-id or session>","context":{"prd_id":"<if applicable>","story_id":"<if applicable>","phase":"<phase>"},"weight":0.7,"validation_count":1,"retrieval_count":0,"tags":["<relevant>","<tags>"],"reality_anchor":{"has_tests":true,"test_file":"<path>","test_passing":true},"lineage":{"parent_id":null,"supersedes":[],"superseded_by":null}}
+```
+
+### Rules
+- Only record **real lessons** — not boilerplate or obvious facts
+- Include reality anchors (test file, passing status) when applicable
+- Keep content concise (1-2 sentences)
+- Never record secrets, credentials, or PII
+- If nothing was learned, skip — don't write empty lessons
+
+---
+
 ## Context Discipline (Required)
 
 **Include**: See `agents/_context-discipline.md` for full protocol.
