@@ -211,6 +211,28 @@ Each sub-phase executes with isolated context:
 - Aggregated at parent level
 
 
+---
+
+## Auto-Memory Recording (After Each Story)
+
+**MANDATORY**: After each story or significant task completes and passes its quality gate, record lessons learned to `memory_bank/knowledge/`. This makes knowledge harvestable across projects.
+
+After completing work, append entries to the appropriate file:
+
+| File | Record When |
+|------|------------|
+| `memory_bank/knowledge/decisions.jsonl` | Architectural choices, technology selections, trade-offs made |
+| `memory_bank/knowledge/corrections.jsonl` | Bugs found, fixes applied, wrong assumptions corrected |
+| `memory_bank/knowledge/patterns.jsonl` | Reusable patterns discovered, code idioms that worked well |
+
+**JSONL format** (one JSON object per line):
+```json
+{"id":"<type>-<timestamp>","type":"<decision|correction|pattern>","content":"<what was learned>","created_at":"<ISO8601>","created_by":"<agent-name>","session_id":"<story-id>","context":{"prd_id":null,"story_id":null,"phase":"<phase>"},"weight":0.7,"validation_count":1,"retrieval_count":0,"tags":["<relevant>","<tags>"],"reality_anchor":{"has_tests":true,"test_file":"<path>","test_passing":true},"lineage":{"parent_id":null,"supersedes":[],"superseded_by":null}}
+```
+
+**Rules**: Only record real lessons. Never record secrets. If nothing was learned, skip.
+
+
 ## Orchestration Status
 
 ### Current State
