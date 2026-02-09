@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.10] - 2026-02-09
+
+### Added — Auto-Memory Recording
+
+- **Orchestrator & Coder agents** now automatically record lessons learned after each story
+  - `memory_bank/knowledge/decisions.jsonl` — Architectural choices, trade-offs
+  - `memory_bank/knowledge/corrections.jsonl` — Bugs found, wrong assumptions fixed
+  - `memory_bank/knowledge/patterns.jsonl` — Reusable code patterns discovered
+- **Updated across all 3 platforms** — 8 files (2 shared agents + 6 platform copies: Claude Code, Cursor, Copilot)
+- **End-to-end knowledge lifecycle**: Install → Agents learn automatically → Harvest → Git push → Available everywhere
+- JSONL format with reality anchors, tags, and lineage tracking
+
+---
+
 ## [1.9.0.9] - 2026-02-08
 
 ### Fixed — Memory Bank Install Gap

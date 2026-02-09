@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.9
+# Documentation Index - Claude AS Framework v1.9.0.10
 
 Complete guide to all documentation in the framework.
 
@@ -26,7 +26,7 @@ Start here for installation and basic usage:
 
 ## 📐 Standards Documentation
 
-Three-tier documentation structure (v1.9.0.9):
+Three-tier documentation structure (v1.9.0.10):
 
 | Document | Size | Purpose |
 |----------|------|---------|
@@ -192,7 +192,7 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 
 ---
 
-### Deliberation Protocol (v1.9.0.9)
+### Deliberation Protocol (v1.9.0.10)
 - **[agents/_deliberation-protocol.md](agents/_deliberation-protocol.md)** - Multi-perspective design review before implementation
   - Triggers: architectural decisions, security changes, multiple approaches, cross-cutting concerns
   - 3 phases: Proposal → Challenge → Synthesis with decision record
@@ -459,7 +459,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.9
+**Framework Version**: 1.9.0.10
 **Documentation Updated**: February 7, 2026
 **Total Agents**: 46
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
