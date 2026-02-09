@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.9** | **46 Agents** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
+**Version 1.9.0.10** | **46 Agents** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
 
 ---
 
@@ -505,4 +505,4 @@ These agents are not ported to Claude Code or Cursor because they depend on GitH
 
 ---
 
-*Claude AS Framework v1.9.0.9 - February 2026*
+*Claude AS Framework v1.9.0.10 - February 2026*
