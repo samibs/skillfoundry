@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.11] - 2026-02-09
+
+### Added — Shortcut Commands + The Forge
+
+- **The Forge** — The 46-agent team now has an official name: "The Forge" (cold-blooded agents forging production code)
+- **7 new shortcut commands** across all 3 platforms (Claude Code, Cursor, Copilot):
+  - `/forge` — Full pipeline: validate PRDs + implement (semi-auto+parallel) + layer-check + security audit + harvest memory
+  - `/gosm` — Go Semi-Auto (`/go --mode=semi-auto`) — recommended default
+  - `/goma` — Go Autonomous (`/go --mode=autonomous`)
+  - `/blitz` — Lightning mode: parallel + TDD + semi-auto
+  - `/gohm` — Harvest memory from current project
+  - `/ship` — Pre-release pipeline: layer-check + security audit + release prepare
+  - `/nuke` — Clean slate: rollback + clean state (requires confirmation)
+- **21 new files** — 7 per platform (.claude/commands, .cursor/rules, .copilot/custom-agents)
+- **No install script changes needed** — existing wildcard copy picks up new files automatically
+
+---
+
 ## [1.9.0.10] - 2026-02-09
 
 ### Added — Auto-Memory Recording

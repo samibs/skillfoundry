@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.10** | **46 Agents** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
+**Version 1.9.0.11** | **The Forge: 46 Agents + 7 Shortcuts** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
 
 ---
 
@@ -10,7 +10,7 @@ Your complete AI development team, covering the full software development lifecy
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                        THE DREAM TEAM (46 Agents)                          │
+│                       THE FORGE (46 Agents + 7 Shortcuts)                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  LEADERSHIP        ARCHITECTURE         IMPLEMENTATION       QUALITY       │
@@ -491,18 +491,35 @@ These agents are not ported to Claude Code or Cursor because they depend on GitH
 
 ---
 
+## Shortcut Commands (7)
+
+Quick-access shortcuts for common workflows. Available on all 3 platforms.
+
+| Shortcut | Name | What it does |
+|----------|------|--------------|
+| `/forge` | **Summon The Forge** | Full pipeline: validate + implement (semi-auto+parallel) + layer-check + security audit + harvest memory |
+| `/gosm` | Go Semi-Auto | `/go --mode=semi-auto` — recommended default |
+| `/goma` | Go Autonomous | `/go --mode=autonomous` — full autonomy |
+| `/blitz` | Blitz Mode | `/go --mode=semi-auto --parallel --tdd` — max speed with safety |
+| `/gohm` | Harvest Memory | Extract lessons to `memory_bank/knowledge/` |
+| `/ship` | Ship It | Layer-check + security audit + release prepare |
+| `/nuke` | Nuke & Rebuild | Rollback all changes + clear state (requires confirmation) |
+
+---
+
 ## Statistics
 
 | Category | Count |
 |----------|-------|
 | **Total Agents** | 46 |
-| **Claude Code Skills** | 46 |
-| **Copilot CLI Agents** | 51 (46 + 5 GitHub-specific) |
-| **Cursor Rules** | 41 |
+| **Shortcut Commands** | 7 |
+| **Claude Code Skills** | 53 (46 + 7) |
+| **Copilot CLI Agents** | 58 (46 + 7 + 5 GitHub-specific) |
+| **Cursor Rules** | 48 (41 + 7) |
 | **Shared Modules** | 46 |
 | **Compliance Presets** | 3 (HIPAA, SOC2, GDPR) |
 | **Platforms Supported** | 3 |
 
 ---
 
-*Claude AS Framework v1.9.0.10 - February 2026*
+*Claude AS Framework v1.9.0.11 - February 2026 - The Forge*

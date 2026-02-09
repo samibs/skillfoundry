@@ -4,6 +4,12 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### Shortcut Commands + The Forge (v1.9.0.11)
+- **The Forge** — The 46-agent team now has a name: cold-blooded agents forging production code
+- **7 new shortcuts**: `/forge` (full pipeline), `/gosm` (semi-auto), `/goma` (autonomous), `/blitz` (parallel+TDD), `/gohm` (harvest memory), `/ship` (release prep), `/nuke` (clean slate)
+- **All 3 platforms** — Shortcuts available on Claude Code, Cursor, and Copilot
+- **Type less, forge more** — Common flag combinations replaced with memorable commands
+
 ### Auto-Memory Recording (v1.9.0.10)
 - **Agents now write lessons automatically** — Orchestrator and Coder record to `memory_bank/knowledge/` after each story
 - **Three knowledge types**: `decisions.jsonl` (architectural choices), `corrections.jsonl` (bugs/fixes), `patterns.jsonl` (reusable patterns)
@@ -265,7 +271,7 @@ scripts/version-check.sh    # Detailed version comparison
 - **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
 - **Windows Support** (PowerShell scripts)
 
-### New in v1.6.0 - The Dream Team
+### New in v1.6.0 - The Forge (formerly The Dream Team)
 - **Security Specialist** (`/security`) - STRIDE, OWASP, vulnerability hunting
 - **Data Architect** (`/data-architect`) - Schema design, query optimization
 - **Release Manager** (`/release`) - Versioning, changelogs, rollback plans
@@ -451,7 +457,7 @@ That's it. The `/go` command will:
 
 #### Claude Code Skills (`.claude/commands/`)
 
-46 skills for Claude Code with `/command` syntax:
+46 agents + 7 shortcuts for Claude Code with `/command` syntax:
 
 | Skill | Command | Purpose |
 |-------|---------|---------|
@@ -490,7 +496,7 @@ That's it. The `/go` command will:
 
 #### GitHub Copilot CLI Agents (`.copilot/custom-agents/`)
 
-46 agents for GitHub Copilot CLI with `task()` tool:
+46 agents + 7 shortcuts for GitHub Copilot CLI with `task()` tool:
 
 **Core Development Agents**:
 | Agent | File | Purpose |
@@ -588,7 +594,7 @@ That's it. The `/go` command will:
 ```
 YourProject/
 ├── .claude/
-│   └── commands/           # 46 skills for Claude Code
+│   └── commands/           # 46 agents + 7 shortcuts for Claude Code
 │       ├── go.md
 │       ├── prd.md
 │       ├── coder.md
@@ -611,7 +617,7 @@ YourProject/
 ```
 YourProject/
 ├── .copilot/
-│   ├── custom-agents/      # 46 agents for Copilot
+│   ├── custom-agents/      # 46 agents + 7 shortcuts for Copilot
 │   │   ├── coder.md
 │   │   ├── github-orchestrator.md    # GitHub integration
 │   │   ├── pr-review.md              # PR reviews
@@ -1101,7 +1107,7 @@ MIT - Use freely, modify as needed.
 - **4-Component Versioning** - MAJOR.FEATURE.DATABASE.ITERATION
 - **Version Detection** - Cross-platform installed version detection and update logic
 
-### What's New in v1.6.0 - The Dream Team
+### What's New in v1.6.0 - The Forge (formerly The Dream Team)
 
 8 new specialist agents completing the full software development lifecycle:
 
@@ -1116,7 +1122,7 @@ MIT - Use freely, modify as needed.
 | **UX/UI Specialist** | `/ux-ui` | UI audit, design, migration, rewrite, design system enforcement |
 | **Senior Engineer** | `/senior-engineer` | Assumption surfacing, push-back, simplicity enforcement |
 
-See [docs/AGENTS.md](docs/AGENTS.md) for complete documentation of all 46 agents.
+See [docs/AGENTS.md](docs/AGENTS.md) for complete documentation of all 46 agents and 7 shortcuts.
 
 ### What's New in v1.3.2
 
