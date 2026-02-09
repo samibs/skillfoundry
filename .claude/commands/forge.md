@@ -36,6 +36,8 @@ Execute these phases in order:
 - Semi-auto mode: auto-fix routine, escalate critical
 - Parallel execution for independent stories
 - Full story pipeline: Architect → Coder → Tester → Gate-Keeper
+- **The Anvil** runs between every handoff (T1-T6 quality checks)
+- See `agents/_anvil-protocol.md` for Anvil tier details
 
 **PHASE 3: TEMPER** — Validate all layers
 ```

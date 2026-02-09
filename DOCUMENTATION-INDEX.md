@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.12
+# Documentation Index - Claude AS Framework v1.9.0.13
 
 Complete guide to all documentation in the framework.
 
@@ -26,7 +26,7 @@ Start here for installation and basic usage:
 
 ## 📐 Standards Documentation
 
-Three-tier documentation structure (v1.9.0.12):
+Three-tier documentation structure (v1.9.0.13):
 
 | Document | Size | Purpose |
 |----------|------|---------|
@@ -191,6 +191,18 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **Access**: `http://localhost:3001`
 
 ---
+
+### The Anvil — 6-Tier Quality Gate (v1.9.0.13)
+- **[agents/_anvil-protocol.md](agents/_anvil-protocol.md)** — Master protocol defining all 6 tiers, pipeline integration, output format
+- **[scripts/anvil.sh](scripts/anvil.sh)** — T1 shell validation: syntax, banned patterns, imports, scope check
+- **[agents/_canary-smoke-test.md](agents/_canary-smoke-test.md)** — T2: Quick module import/compile test after Coder
+- **[agents/_self-adversarial-review.md](agents/_self-adversarial-review.md)** — T3: Coder lists 3+ failure modes before handoff
+- **[agents/_scope-validation.md](agents/_scope-validation.md)** — T4: Expected vs actual file changes (git diff)
+- **[agents/_contract-enforcement.md](agents/_contract-enforcement.md)** — T5: API contract validation
+- **[agents/_shadow-tester.md](agents/_shadow-tester.md)** — T6: Read-only parallel risk assessment for Tester
+- **Command**: `/anvil` — Manual invocation across all 3 platforms
+- **Integration**: Checkpoints inserted into `/go` pipeline between every agent phase
+- **Fast-fail**: T1/T2 failures skip downstream agents
 
 ### Deliberation Protocol (v1.9.0.7)
 - **[agents/_deliberation-protocol.md](agents/_deliberation-protocol.md)** - Multi-perspective design review before implementation
@@ -459,9 +471,9 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.12
+**Framework Version**: 1.9.0.13
 **Documentation Updated**: February 9, 2026
-**Total Agents**: 46 + 7 shortcuts (The Forge)
+**Total Agents**: 46 + 12 shortcuts (The Forge)
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
 **Total Documentation Size**: ~700 KB
 **Documentation Files**: 60+ files

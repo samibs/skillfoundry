@@ -112,6 +112,35 @@ After completing a story implementation, append lessons learned to `memory_bank/
 
 ---
 
+## MANDATORY: Self-Adversarial Review (The Anvil T3)
+
+Before completing ANY story, you MUST perform a self-adversarial review. See: `agents/_self-adversarial-review.md`
+
+**After writing your implementation:**
+1. Switch from builder to breaker mode
+2. List 3+ ways your code could fail in production
+3. For EACH failure mode, specify the mitigation (test, guard clause, or validation) with file:line
+4. Declare verdict: RESILIENT or VULNERABLE
+
+**If VULNERABLE**: Fix unmitigated failure modes before declaring the story complete. Do not hand off broken code.
+
+Include the adversarial review in your output after the implementation summary:
+
+```markdown
+## Self-Adversarial Review
+
+### Failure Mode 1: [what could go wrong]
+- Trigger: [how it happens]
+- Impact: [what breaks]
+- Mitigation: [test/guard/validation]
+- Location: [file:line]
+
+### Failure Mode 2: ...
+### Failure Mode 3: ...
+
+### Verdict: RESILIENT / VULNERABLE
+```
+
 ## Reflection Protocol
 
 Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:

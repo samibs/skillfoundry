@@ -4,6 +4,18 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### The Anvil — 6-Tier Quality Gate (v1.9.0.13)
+- **The Anvil** — 6 validation tiers running between every agent handoff to catch issues at the source
+- **T1: Shell Pre-Flight** (`scripts/anvil.sh`) — Syntax, banned patterns, imports. Pure bash, no LLM. Runs between EVERY handoff.
+- **T2: Canary Smoke Test** — Can the module import? FAIL → skip Tester, route to Fixer.
+- **T3: Self-Adversarial Review** — Coder lists 3+ failure modes before handoff. VULNERABLE → block.
+- **T4: Scope Validation** — Expected vs actual file changes. Missing → BLOCK, unexpected → WARN.
+- **T5: Contract Enforcement** — API implementation matches story contract. Missing endpoint → BLOCK.
+- **T6: Shadow Tester** — Read-only parallel risk assessment prioritizes Tester's work.
+- **`/anvil` command** — Manual invocation on all 3 platforms. Run specific tiers or full report.
+- **Fast-fail** — T1/T2 failures skip downstream agents to save tokens.
+- **`--no-anvil`** — Disable Anvil in `/go` for debugging.
+
 ### Enhanced DX + Templates + Analytics (v1.9.0.12)
 - **4 new commands**: `/status` (project dashboard), `/profile` (session presets), `/replay` (re-run executions), `/analytics` (agent usage stats)
 - **Session profiles** — 4 built-in presets in `.claude/profiles/`: default, blitz, cautious, autonomous
@@ -159,7 +171,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.8**
+Current version: **1.9.0.13**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -1098,7 +1110,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.10** - February 8, 2026
+**v1.9.0.13** - February 9, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
@@ -1323,6 +1335,7 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 **Windows PowerShell Support** (v1.3.1 - 2026-01-25)
 **Framework Evolution** (v1.9.0.0 - 2026-02-07) - Knowledge exchange, swarm coordination, DX tooling, advanced intelligence
 **Documentation Deduplication** (v1.9.0.10 - 2026-02-08) - Three-tier docs, 13K tokens/session saved
+**The Anvil** (v1.9.0.13 - 2026-02-09) - 6-tier quality gate between every agent handoff
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 

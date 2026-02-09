@@ -31,6 +31,9 @@ The user drops PRDs in the project. You make them real.
 /go --no-worktree       → Force inline execution (no worktree)
 /go --tdd               → Enforce TDD mode for /coder
 /go --tdd=WARN          → TDD in warning mode (log violations)
+/go --no-anvil          → Disable all Anvil quality checks
+/go --anvil=t1          → Run only Anvil Tier 1 (shell checks)
+/go --anvil=t1,t2       → Run specific Anvil tiers only
 
 EXECUTION MODES (NEW v1.7.0):
 /go --mode=supervised      → Stop at every violation, user approves all fixes (default)
@@ -563,10 +566,11 @@ FOR EACH validated PRD:
            ├── Mark story IN_PROGRESS
            ├── Update scratchpad: Current Story = STORY-XXX
            │
-           ├── Execute: Architect → Coder → Tester → Gate-Keeper
+           ├── Execute: Architect → ANVIL → Coder (+Shadow) → ANVIL → Tester → ANVIL → Gate-Keeper
            │   └── Each agent MUST return sub-agent format response
            │   └── See: agents/_subagent-response-format.md
            │   └── Max 500 tokens per agent response
+           │   └── ANVIL checkpoints between each handoff (see ANVIL INTEGRATION below)
            │   └── Optional: Refactor → Performance → Review → Migration
            │       └── Use /refactor for code quality improvements
            │       └── Use /performance for performance optimization
@@ -779,6 +783,57 @@ Proceed with this order? (Y/n)
 ```
 
 If PRDs have no dependencies, offer parallel or sequential execution.
+
+---
+
+## ANVIL INTEGRATION (v1.9.0.13)
+
+The Anvil is a 6-tier quality gate system that runs between every agent handoff. See `agents/_anvil-protocol.md` for full protocol.
+
+### Anvil Checkpoints in Story Execution
+
+```
+FOR EACH story:
+
+  1. Architect designs solution
+     └── ANVIL T1: Run scripts/anvil.sh (validate file references)
+         └── FAIL? → Route to Fixer, don't start Coder
+
+  2. Coder implements (+ T6 Shadow Tester in parallel if --parallel)
+     └── ANVIL T1: Run scripts/anvil.sh on ALL changed files
+         └── FAIL? → Route to Fixer, don't start Tester
+     └── ANVIL T2: Canary smoke test (can module import/compile?)
+         └── FAIL? → Skip Tester, route directly to Fixer
+     └── ANVIL T3: Self-adversarial review (3+ failure modes)
+         └── VULNERABLE? → Route to Fixer
+
+  3. Tester writes tests (receives T6 risk list as input)
+     └── ANVIL T1: Run scripts/anvil.sh on test files
+         └── FAIL? → Route to Fixer
+
+  4. Gate-Keeper validates (integrates T4 + T5)
+     └── T4: Scope validation (expected vs actual files)
+     └── T5: Contract enforcement (API spec vs implementation)
+```
+
+### Fast-Fail Behavior
+
+The Anvil uses fast-fail: if an early tier fails, downstream agents are skipped.
+- T1 syntax error after Coder → skip Tester entirely
+- T2 canary failure → skip Tester, route to Fixer
+- T3 VULNERABLE → route to Fixer before Tester
+
+This prevents wasting tokens on testing broken code.
+
+### Disabling Anvil
+
+```
+/go --no-anvil          Disable all Anvil checks
+/go --anvil=t1          Only run Tier 1 (shell checks)
+/go --anvil=t1,t2       Run specific tiers
+```
+
+Default: All tiers enabled. In supervised mode, T1 always runs.
 
 ---
 
