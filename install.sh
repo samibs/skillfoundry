@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Claude AS - Agents & Skills Installer
-# Installs the Claude Code, GitHub Copilot CLI, or Cursor framework to a target project
+# Installs the Claude Code, GitHub Copilot CLI, Cursor, or OpenAI Codex framework to a target project
 #
 # USAGE:
 #   From your project directory:
@@ -9,6 +9,7 @@
 #   ~/DevLab/IDEA/claude_as/install.sh --platform copilot
 #   ~/DevLab/IDEA/claude_as/install.sh --platform claude
 #   ~/DevLab/IDEA/claude_as/install.sh --platform cursor
+#   ~/DevLab/IDEA/claude_as/install.sh --platform codex
 #
 # DO NOT copy the claude_as folder into your project!
 # Keep it in one central location and run the installer from there.
@@ -32,7 +33,7 @@ handle_error() {
     
     # Rollback if partial installation
     if [ -n "$TARGET_DIR" ] && [ -d "$TARGET_DIR" ]; then
-        if [ -d "$TARGET_DIR/.claude" ] || [ -d "$TARGET_DIR/.copilot" ] || [ -d "$TARGET_DIR/.cursor" ]; then
+        if [ -d "$TARGET_DIR/.claude" ] || [ -d "$TARGET_DIR/.copilot" ] || [ -d "$TARGET_DIR/.cursor" ] || [ -d "$TARGET_DIR/.agents" ]; then
             echo -e "${YELLOW}Rolling back partial installation...${NC}"
             rollback_installation
         fi
@@ -59,6 +60,7 @@ rollback_installation() {
     [ -d "$TARGET_DIR/.claude" ] && rm -rf "$TARGET_DIR/.claude" && echo "  Removed .claude/"
     [ -d "$TARGET_DIR/.copilot" ] && rm -rf "$TARGET_DIR/.copilot" && echo "  Removed .copilot/"
     [ -d "$TARGET_DIR/.cursor" ] && rm -rf "$TARGET_DIR/.cursor" && echo "  Removed .cursor/"
+    [ -d "$TARGET_DIR/.agents" ] && rm -rf "$TARGET_DIR/.agents" && echo "  Removed .agents/"
     [ -d "$TARGET_DIR/genesis" ] && rm -rf "$TARGET_DIR/genesis" && echo "  Removed genesis/"
     
     # Remove created files
@@ -178,7 +180,7 @@ echo "╔═══════════════════════�
 echo "║      Agents & Skills Installer (Multi-Platform)          ║"
 echo "║                                                           ║"
 echo "║   Genesis-First Development Framework                     ║"
-echo "║   Supports: Claude Code, GitHub Copilot CLI & Cursor      ║"
+echo "║   Supports: Claude Code, Copilot CLI, Cursor & Codex       ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -188,8 +190,9 @@ if [ -z "$PLATFORM" ]; then
     echo "  1) Claude Code"
     echo "  2) GitHub Copilot CLI"
     echo "  3) Cursor"
+    echo "  4) OpenAI Codex"
     echo ""
-    read -p "Enter choice (1, 2, or 3): " -n 1 -r
+    read -p "Enter choice (1-4): " -n 1 -r
     echo ""
     case $REPLY in
         1)
@@ -201,6 +204,9 @@ if [ -z "$PLATFORM" ]; then
         3)
             PLATFORM="cursor"
             ;;
+        4)
+            PLATFORM="codex"
+            ;;
         *)
             echo -e "${RED}Invalid choice. Exiting.${NC}"
             exit 1
@@ -210,8 +216,8 @@ fi
 
 # Normalize platform name
 PLATFORM=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]')
-if [[ ! "$PLATFORM" =~ ^(claude|copilot|cursor)$ ]]; then
-    log_error "Invalid platform specified" "Platform must be 'claude', 'copilot', or 'cursor'" "install.sh line $LINENO" "Use --platform=claude, --platform=copilot, or --platform=cursor"
+if [[ ! "$PLATFORM" =~ ^(claude|copilot|cursor|codex)$ ]]; then
+    log_error "Invalid platform specified" "Platform must be 'claude', 'copilot', 'cursor', or 'codex'" "install.sh line $LINENO" "Use --platform=claude, --platform=copilot, --platform=cursor, or --platform=codex"
     exit 2  # Invalid arguments
 fi
 
@@ -303,6 +309,14 @@ elif [ "$PLATFORM" = "cursor" ] && [ -d "$TARGET_DIR/.cursor" ]; then
         echo -e "${RED}Installation cancelled.${NC}"
         exit 1
     fi
+elif [ "$PLATFORM" = "codex" ] && [ -d "$TARGET_DIR/.agents/skills" ]; then
+    echo -e "${YELLOW}Warning: .agents/skills directory already exists.${NC}"
+    read -p "Overwrite existing skills? (y/N): " -n 1 -r
+    echo ""
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${RED}Installation cancelled.${NC}"
+        exit 1
+    fi
 fi
 
 # ═══════════════════════════════════════════════════════════════
@@ -365,6 +379,9 @@ if [ "$PLATFORM" = "claude" ]; then
 elif [ "$PLATFORM" = "copilot" ]; then
     mkdir -p "$TARGET_DIR/.copilot/custom-agents"
     mkdir -p "$TARGET_DIR/agents"
+elif [ "$PLATFORM" = "codex" ]; then
+    mkdir -p "$TARGET_DIR/.agents/skills"
+    mkdir -p "$TARGET_DIR/agents"
 else
     mkdir -p "$TARGET_DIR/.cursor/rules"
     mkdir -p "$TARGET_DIR/agents"
@@ -402,6 +419,12 @@ elif [ "$PLATFORM" = "copilot" ]; then
     AGENT_COUNT=$(ls -1 "$TARGET_DIR/.copilot/custom-agents/"*.md 2>/dev/null | wc -l)
     echo -e "${GREEN}  ✓ Copilot custom agents installed ($AGENT_COUNT agents)${NC}"
     echo -e "${GREEN}  ✓ Copilot helper and workflow guide installed${NC}"
+elif [ "$PLATFORM" = "codex" ]; then
+    cp -r "$SCRIPT_DIR/.agents/skills/"* "$TARGET_DIR/.agents/skills/"
+    # Copy AGENTS.md to target
+    [ -f "$SCRIPT_DIR/AGENTS.md" ] && cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"
+    SKILL_COUNT=$(find "$TARGET_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l)
+    echo -e "${GREEN}  ✓ Codex skills installed ($SKILL_COUNT skills)${NC}"
 else
     cp -r "$SCRIPT_DIR/.cursor/rules/"* "$TARGET_DIR/.cursor/rules/"
     RULE_COUNT=$(ls -1 "$TARGET_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l)
@@ -461,6 +484,11 @@ elif [ "$PLATFORM" = "copilot" ]; then
     echo "$FRAMEWORK_VERSION" > "$TARGET_DIR/.copilot/.framework-version"
     echo "$FRAMEWORK_DATE" > "$TARGET_DIR/.copilot/.framework-updated"
     echo "$PLATFORM" > "$TARGET_DIR/.copilot/.framework-platform"
+elif [ "$PLATFORM" = "codex" ]; then
+    mkdir -p "$TARGET_DIR/.agents"
+    echo "$FRAMEWORK_VERSION" > "$TARGET_DIR/.agents/.framework-version"
+    echo "$FRAMEWORK_DATE" > "$TARGET_DIR/.agents/.framework-updated"
+    echo "$PLATFORM" > "$TARGET_DIR/.agents/.framework-platform"
 else
     mkdir -p "$TARGET_DIR/.cursor"
     echo "$FRAMEWORK_VERSION" > "$TARGET_DIR/.cursor/.framework-version"
@@ -503,6 +531,10 @@ if [ "$PLATFORM" = "claude" ]; then
 elif [ "$PLATFORM" = "copilot" ]; then
     echo "  ├── .copilot/custom-agents/ ($AGENT_COUNT agents)"
     echo "  ├── agents/                 ($SHARED_COUNT shared modules)"
+elif [ "$PLATFORM" = "codex" ]; then
+    echo "  ├── .agents/skills/       ($SKILL_COUNT skills)"
+    echo "  ├── agents/               ($SHARED_COUNT shared modules)"
+    echo "  ├── AGENTS.md"
 else
     echo "  ├── .cursor/rules/        ($RULE_COUNT rules)"
     echo "  ├── agents/               ($SHARED_COUNT shared modules)"
@@ -574,6 +606,32 @@ elif [ "$PLATFORM" = "cursor" ]; then
     echo "  4. Rules provide structured workflows and commands"
     echo ""
     echo -e "${GREEN}Rules are automatically loaded by Cursor from .cursor/rules/${NC}"
+elif [ "$PLATFORM" = "codex" ]; then
+    echo -e "${YELLOW}Step 1: Create PRDs${NC}"
+    echo "  \$go \"your feature idea\"        → Saved to genesis/"
+    echo "  Or manually create in genesis/"
+    echo ""
+    echo -e "${YELLOW}Step 2: Implement${NC}"
+    echo "  \$go                              → Full implementation"
+    echo ""
+    echo -e "${GREEN}That's it. PRDs in genesis/ → \$go → Production code.${NC}"
+    echo ""
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+    echo ""
+    echo -e "${YELLOW}Key Commands:${NC}"
+    echo "  \$go              - Implement all PRDs from genesis/"
+    echo "  \$go --validate   - Check PRDs are complete"
+    echo "  \$prd             - Create new PRD"
+    echo "  \$layer-check     - Validate three layers"
+    echo "  \$coder           - Ruthless implementation"
+    echo "  \$tester          - Brutal testing"
+    echo "  \$architect       - Architecture review"
+    echo ""
+    echo -e "${GREEN}Start now:${NC}"
+    echo "  cd $TARGET_DIR"
+    echo "  codex"
+    echo "  > \$prd \"Your feature idea\""
+    echo "  > \$go"
 else
     echo -e "${YELLOW}Step 1: Create PRDs${NC}"
     echo "  Manually create in genesis/ folder"

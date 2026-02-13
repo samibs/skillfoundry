@@ -57,7 +57,7 @@ print_header() {
 is_valid_project() {
     local project_dir="$1"
     # A valid Claude AS project has at least one platform folder
-    if [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ]; then
+    if [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ]; then
         return 0
     fi
     return 1
@@ -73,6 +73,8 @@ get_project_version() {
         version_file="$project_dir/.copilot/.framework-version"
     elif [ -f "$project_dir/.cursor/.framework-version" ]; then
         version_file="$project_dir/.cursor/.framework-version"
+    elif [ -f "$project_dir/.agents/.framework-version" ]; then
+        version_file="$project_dir/.agents/.framework-version"
     fi
     
     if [ -n "$version_file" ] && [ -f "$version_file" ]; then
@@ -97,6 +99,10 @@ set_project_version() {
         mkdir -p "$project_dir/.cursor"
         echo "$FRAMEWORK_VERSION" > "$project_dir/.cursor/.framework-version"
         echo "$FRAMEWORK_DATE" > "$project_dir/.cursor/.framework-updated"
+    elif [ -d "$project_dir/.agents" ]; then
+        mkdir -p "$project_dir/.agents"
+        echo "$FRAMEWORK_VERSION" > "$project_dir/.agents/.framework-version"
+        echo "$FRAMEWORK_DATE" > "$project_dir/.agents/.framework-updated"
     else
         # Default to .claude if no platform detected
         mkdir -p "$project_dir/.claude"
@@ -114,6 +120,8 @@ detect_platform() {
         echo "copilot"
     elif [ -d "$project_dir/.cursor" ]; then
         echo "cursor"
+    elif [ -d "$project_dir/.agents/skills" ]; then
+        echo "codex"
     else
         echo "unknown"
     fi
@@ -457,13 +465,32 @@ show_diff() {
         for rule in "$SCRIPT_DIR/.cursor/rules/"*.md; do
             local rule_name=$(basename "$rule")
             local project_rule="$project_dir/.cursor/rules/$rule_name"
-            
+
             if [ ! -f "$project_rule" ]; then
                 echo -e "  ${GREEN}+ $rule_name${NC} (new)"
                 has_changes=true
             elif ! diff -q "$rule" "$project_rule" > /dev/null 2>&1; then
                 echo -e "  ${YELLOW}~ $rule_name${NC} (modified)"
                 has_changes=true
+            fi
+        done
+    elif [ "$platform" = "codex" ]; then
+        echo -e "${BLUE}Codex skills comparison:${NC}"
+        for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
+            if [ -d "$skill_dir" ]; then
+                local skill_name=$(basename "$skill_dir")
+                local source_skill="$skill_dir/SKILL.md"
+                local project_skill="$project_dir/.agents/skills/$skill_name/SKILL.md"
+
+                if [ -f "$source_skill" ]; then
+                    if [ ! -f "$project_skill" ]; then
+                        echo -e "  ${GREEN}+ $skill_name/SKILL.md${NC} (new)"
+                        has_changes=true
+                    elif ! diff -q "$source_skill" "$project_skill" > /dev/null 2>&1; then
+                        echo -e "  ${YELLOW}~ $skill_name/SKILL.md${NC} (modified)"
+                        has_changes=true
+                    fi
+                fi
             fi
         done
     fi
@@ -649,6 +676,53 @@ update_project() {
             echo -e "  ${GREEN}All rules up to date${NC}"
         else
             echo -e "  ${GREEN}$rules_added added, $rules_updated updated${NC}"
+        fi
+    elif [ "$platform" = "codex" ]; then
+        echo -e "${YELLOW}Updating Codex skills...${NC}"
+        mkdir -p "$project_dir/.agents/skills"
+
+        local skills_added=0
+        local skills_updated=0
+
+        for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
+            if [ -d "$skill_dir" ]; then
+                local skill_name=$(basename "$skill_dir")
+                local source_skill="$skill_dir/SKILL.md"
+                local target_dir="$project_dir/.agents/skills/$skill_name"
+                local target="$target_dir/SKILL.md"
+
+                if [ -f "$source_skill" ]; then
+                    mkdir -p "$target_dir"
+                    if [ ! -f "$target" ]; then
+                        cp "$source_skill" "$target"
+                        echo -e "  ${GREEN}+ Added: $skill_name/SKILL.md${NC}"
+                        skills_added=$((skills_added + 1))
+                    elif ! diff -q "$source_skill" "$target" > /dev/null 2>&1; then
+                        cp "$target" "$backup_dir/${skill_name}_SKILL.md"
+                        cp "$source_skill" "$target"
+                        echo -e "  ${CYAN}↑ Updated: $skill_name/SKILL.md${NC}"
+                        skills_updated=$((skills_updated + 1))
+                    fi
+                fi
+            fi
+        done
+
+        # Copy/update AGENTS.md to project root
+        if [ -f "$SCRIPT_DIR/AGENTS.md" ]; then
+            if [ ! -f "$project_dir/AGENTS.md" ]; then
+                cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
+                echo -e "  ${GREEN}+ Added: AGENTS.md${NC}"
+            elif ! diff -q "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md" > /dev/null 2>&1; then
+                cp "$project_dir/AGENTS.md" "$backup_dir/AGENTS.md"
+                cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
+                echo -e "  ${CYAN}↑ Updated: AGENTS.md${NC}"
+            fi
+        fi
+
+        if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
+            echo -e "  ${GREEN}All skills up to date${NC}"
+        else
+            echo -e "  ${GREEN}$skills_added added, $skills_updated updated${NC}"
         fi
     fi
 
