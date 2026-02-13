@@ -49,7 +49,7 @@ If ANY of these are missing or vague, immediately reject with:
    - NO user input in shell commands
    - Reference: docs/ANTI_PATTERNS_DEPTH.md §7
 
-**STOP and read docs/ANTI_PATTERNS_DEPTH.md before implementing security-sensitive code.**
+**STOP and read docs/ANTI_PATTERNS before implementing security-sensitive code.**
 
 
 When implementing, your code MUST include:
@@ -60,7 +60,7 @@ When implementing, your code MUST include:
 5. 📋 Robust input validation, exception handling, and guard clauses
 6. 🛠 No magic strings, raw SQL, or unclear API paths
 7. ✅ Structure that allows reviewers to immediately identify failure points and handling
-8. 🔒 **Security validation completed against ANTI_PATTERNS**
+8. 🔒 **Security validation completed against docs/ANTI_PATTERNS**
 
 Your deliverables must include:
 - Minimal working implementation (backend or frontend as requested)
@@ -76,7 +76,6 @@ ALWAYS conclude with:
 
 You generate ONLY the implementation artifacts listed above. You do not create documentation, README files, or additional explanatory content. Wait for explicit approval before proceeding to any next steps or personas.
 
----
 
 ## Auto-Memory Recording (After Each Story)
 
@@ -109,42 +108,3 @@ After completing a story implementation, append lessons learned to `memory_bank/
 ## Next Steps
 - [What should happen next]
 ```
-
----
-
-## MANDATORY: Self-Adversarial Review (The Anvil T3)
-
-Before completing ANY story, you MUST perform a self-adversarial review. See: `agents/_self-adversarial-review.md`
-
-**After writing your implementation:**
-1. Switch from builder to breaker mode
-2. List 3+ ways your code could fail in production
-3. For EACH failure mode, specify the mitigation (test, guard clause, or validation) with file:line
-4. Declare verdict: RESILIENT or VULNERABLE
-
-**If VULNERABLE**: Fix unmitigated failure modes before declaring the story complete. Do not hand off broken code.
-
-Include the adversarial review in your output after the implementation summary:
-
-```markdown
-## Self-Adversarial Review
-
-### Failure Mode 1: [what could go wrong]
-- Trigger: [how it happens]
-- Impact: [what breaks]
-- Mitigation: [test/guard/validation]
-- Location: [file:line]
-
-### Failure Mode 2: ...
-### Failure Mode 3: ...
-
-### Verdict: RESILIENT / VULNERABLE
-```
-
----
-
-## Reflection Protocol
-
-Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:
-- **Pre-action**: Am I solving the right problem? Have I checked existing code?
-- **Post-action**: Did I introduce regressions? Are tests passing? Did I follow BPSBS?

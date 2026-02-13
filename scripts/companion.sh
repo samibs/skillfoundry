@@ -123,7 +123,16 @@ read_scratchpad() {
     TASK=$(grep -m1 '^\- Task:' "$sp" 2>/dev/null | sed 's/^- Task: *//' || echo "(unknown)")
     PHASE=$(grep -m1 '^\- Phase:' "$sp" 2>/dev/null | sed 's/^- Phase: *//' | tr '[:upper:]' '[:lower:]' || echo "unknown")
     AGENT=$(grep -m1 '^\- Agent:' "$sp" 2>/dev/null | sed 's/^- Agent: *//' || echo "none")
-    PLATFORM=$(grep -m1 '^> Platform:' "$sp" 2>/dev/null | sed 's/^> Platform: *//' || echo "")
+    local raw_platform
+    raw_platform=$(grep -m1 '^> Platform:' "$sp" 2>/dev/null | sed 's/^> Platform: *//' || echo "")
+    # Normalize platform display names
+    case "$raw_platform" in
+        claude-code|claude) PLATFORM="Claude Code" ;;
+        copilot-cli|copilot) PLATFORM="Copilot CLI" ;;
+        cursor) PLATFORM="Cursor" ;;
+        codex|openai-codex) PLATFORM="OpenAI Codex" ;;
+        *) PLATFORM="$raw_platform" ;;
+    esac
     LAST_UPDATED=$(grep -m1 '^> Last updated:' "$sp" 2>/dev/null | sed 's/^> Last updated: *//' || echo "")
     MODIFIED_FILES=$(grep '^\- .*\..*:' "$sp" 2>/dev/null | head -5 | sed 's/^- //' || echo "")
 }

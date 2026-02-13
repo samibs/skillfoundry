@@ -70,7 +70,17 @@ detect_platform() {
             echo -e "${YELLOW}⚠${NC} Also detected: Cursor"
         fi
     fi
-    
+
+    # Check for OpenAI Codex CLI
+    if command -v codex &> /dev/null; then
+        if [ -z "$platform" ]; then
+            platform="codex"
+            echo -e "${GREEN}✓${NC} Detected: OpenAI Codex"
+        else
+            echo -e "${YELLOW}⚠${NC} Also detected: OpenAI Codex"
+        fi
+    fi
+
     echo "$platform"
 }
 
@@ -164,12 +174,14 @@ main() {
         echo "  1) Claude Code"
         echo "  2) GitHub Copilot CLI"
         echo "  3) Cursor"
-        read -p "Choice (1-3): " -n 1 -r
+        echo "  4) OpenAI Codex"
+        read -p "Choice (1-4): " -n 1 -r
         echo ""
         case $REPLY in
             1) PLATFORM="claude" ;;
             2) PLATFORM="copilot" ;;
             3) PLATFORM="cursor" ;;
+            4) PLATFORM="codex" ;;
             *)
                 echo -e "${RED}Invalid choice. Exiting.${NC}"
                 exit 1
@@ -186,12 +198,14 @@ main() {
             echo "  1) Claude Code"
             echo "  2) GitHub Copilot CLI"
             echo "  3) Cursor"
-            read -p "Choice (1-3): " -n 1 -r
+            echo "  4) OpenAI Codex"
+            read -p "Choice (1-4): " -n 1 -r
             echo ""
             case $REPLY in
                 1) PLATFORM="claude" ;;
                 2) PLATFORM="copilot" ;;
                 3) PLATFORM="cursor" ;;
+                4) PLATFORM="codex" ;;
                 *)
                     echo -e "${RED}Invalid choice. Exiting.${NC}"
                     exit 1
@@ -252,6 +266,13 @@ main() {
             echo "  1. Open Cursor IDE"
             echo "  2. Rules are automatically loaded from .cursor/rules/"
             echo "  3. Use in chat: \"use go rule\" or \"follow coder rule\""
+            ;;
+        codex)
+            echo "  1. Run: codex"
+            echo "  2. Skills auto-loaded from .agents/skills/"
+            echo "  3. Invoke skills: \$go, \$coder, \$tester, etc."
+            echo "  4. Or let Codex auto-select based on your prompt"
+            echo "  5. See AGENTS.md for framework overview"
             ;;
     esac
     echo ""

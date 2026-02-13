@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.13** | **The Forge: 46 Agents + 12 Shortcuts** | **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
+**Version 1.9.0.14** | **The Forge: 46 Agents + 12 Shortcuts** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex)
 
 ---
 
@@ -321,6 +321,11 @@ Your complete AI development team, covering the full software development lifecy
 | **Claude Code** | `/command` | `/security audit src/` |
 | **GitHub Copilot CLI** | `task(agent)` | `task("security", "audit src/")` |
 | **Cursor** | Rule reference | "use security rule to audit src/" |
+| **OpenAI Codex** | `$skill-name` | `$security audit src/` |
+
+### OpenAI Codex
+
+Skills are stored in `.agents/skills/*/SKILL.md` and invoked via `$skill-name` syntax. Codex supports auto-discovery: skills are implicitly activated based on their description fields, so explicit invocation is not always required. The agent will match a relevant skill when the user's prompt aligns with the skill's declared purpose.
 
 ---
 
@@ -493,7 +498,7 @@ These agents are not ported to Claude Code or Cursor because they depend on GitH
 
 ## Shortcut Commands (12)
 
-Quick-access shortcuts for common workflows. Available on all 3 platforms.
+Quick-access shortcuts for common workflows. Available on all 4 platforms.
 
 | Shortcut | Name | What it does |
 |----------|------|--------------|
@@ -521,12 +526,13 @@ Quick-access shortcuts for common workflows. Available on all 3 platforms.
 | **Claude Code Skills** | 58 (46 + 12) |
 | **Copilot CLI Agents** | 63 (46 + 12 + 5 GitHub-specific) |
 | **Cursor Rules** | 53 (41 + 12) |
+| **Codex Skills** | 58 (46 + 12) |
 | **Shared Modules** | 46 |
 | **Session Profiles** | 4 (default, blitz, cautious, autonomous) |
 | **PRD Templates** | 4 (api-service, cli-tool, fullstack-feature, dashboard) |
 | **Compliance Presets** | 3 (HIPAA, SOC2, GDPR) |
-| **Platforms Supported** | 3 |
+| **Platforms Supported** | 4 |
 
 ---
 
-*Claude AS Framework v1.9.0.13 - February 2026 - The Forge*
+*Claude AS Framework v1.9.0.14 - February 2026 - The Forge*
