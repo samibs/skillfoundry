@@ -28,34 +28,30 @@ Write-ColorOutput "║     Multi-Platform AI Agent & Skills Framework           
 Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Cyan"
 Write-Host ""
 
-# Detect platform (Claude Code, Copilot CLI, Cursor)
+# Detect platforms (Claude Code, Copilot CLI, Cursor, Codex)
 function Detect-Platform {
-    $platform = ""
-    
+    $platforms = @()
+
     # Check for Claude Code
     if (Get-Command claude -ErrorAction SilentlyContinue) {
-        $platform = "claude"
+        $platforms += "claude"
         Write-ColorOutput "✓ Detected: Claude Code" "Green"
     }
-    
+
     # Check for GitHub Copilot CLI
-    if ((Get-Command github-copilot-cli -ErrorAction SilentlyContinue) -or 
+    if ((Get-Command github-copilot-cli -ErrorAction SilentlyContinue) -or
         (Get-Command copilot -ErrorAction SilentlyContinue)) {
-        if ([string]::IsNullOrWhiteSpace($platform)) {
-            $platform = "copilot"
-            Write-ColorOutput "✓ Detected: GitHub Copilot CLI" "Green"
-        } else {
-            Write-ColorOutput "⚠ Also detected: GitHub Copilot CLI" "Yellow"
-        }
+        $platforms += "copilot"
+        Write-ColorOutput "✓ Detected: GitHub Copilot CLI" "Green"
     }
-    
+
     # Check for Cursor
     $cursorPaths = @(
         "$env:USERPROFILE\.cursor",
         "$env:APPDATA\Cursor",
         "$env:LOCALAPPDATA\Programs\cursor"
     )
-    
+
     $cursorFound = $false
     foreach ($path in $cursorPaths) {
         if (Test-Path $path) {
@@ -63,27 +59,19 @@ function Detect-Platform {
             break
         }
     }
-    
+
     if ($cursorFound -or (Get-Command cursor -ErrorAction SilentlyContinue)) {
-        if ([string]::IsNullOrWhiteSpace($platform)) {
-            $platform = "cursor"
-            Write-ColorOutput "✓ Detected: Cursor" "Green"
-        } else {
-            Write-ColorOutput "⚠ Also detected: Cursor" "Yellow"
-        }
+        $platforms += "cursor"
+        Write-ColorOutput "✓ Detected: Cursor" "Green"
     }
 
     # Check for OpenAI Codex CLI
     if (Get-Command codex -ErrorAction SilentlyContinue) {
-        if ([string]::IsNullOrWhiteSpace($platform)) {
-            $platform = "codex"
-            Write-ColorOutput "✓ Detected: OpenAI Codex" "Green"
-        } else {
-            Write-ColorOutput "⚠ Also detected: OpenAI Codex" "Yellow"
-        }
+        $platforms += "codex"
+        Write-ColorOutput "✓ Detected: OpenAI Codex" "Green"
     }
 
-    return $platform
+    return ,$platforms
 }
 
 # Get framework location
@@ -145,78 +133,93 @@ function Get-TargetDirectory {
     return $target
 }
 
+# Helper: Parse comma-separated platform choices into platform name array
+function Select-PlatformsFromMenu {
+    Write-Host ""
+    Write-Host "Select platforms (comma-separated, e.g. 1,3,4):"
+    Write-Host "  1) Claude Code"
+    Write-Host "  2) GitHub Copilot CLI"
+    Write-Host "  3) Cursor"
+    Write-Host "  4) OpenAI Codex"
+    Write-Host ""
+    $input = Read-Host "Platforms"
+
+    $platformMap = @{
+        "1" = "claude"
+        "2" = "copilot"
+        "3" = "cursor"
+        "4" = "codex"
+    }
+
+    $selected = @()
+    $choices = $input -split "," | ForEach-Object { $_.Trim() }
+
+    foreach ($c in $choices) {
+        if ($platformMap.ContainsKey($c)) {
+            $selected += $platformMap[$c]
+        } else {
+            Write-ColorOutput "Invalid choice: $c (skipping)" "Yellow"
+        }
+    }
+
+    if ($selected.Count -eq 0) {
+        Write-ColorOutput "No valid platforms selected. Exiting." "Red"
+        exit 1
+    }
+
+    return ,$selected
+}
+
 # Main installation flow
 function Main {
     Write-ColorOutput "Step 1: Detecting environment..." "Blue"
     Write-ColorOutput "✓ OS: Windows" "Green"
-    
-    $platform = Detect-Platform
-    
-    if ([string]::IsNullOrWhiteSpace($platform)) {
+
+    $detected = Detect-Platform
+
+    if ($detected.Count -eq 0) {
         Write-ColorOutput "⚠ No AI platform detected automatically." "Yellow"
+        $platforms = Select-PlatformsFromMenu
+    } else {
+        $detectedList = $detected -join ", "
         Write-Host ""
-        Write-Host "Please select your platform:"
-        Write-Host "  1) Claude Code"
-        Write-Host "  2) GitHub Copilot CLI"
-        Write-Host "  3) Cursor"
-        Write-Host "  4) OpenAI Codex"
-        $choice = Read-Host "Choice (1-4)"
+        Write-ColorOutput "Detected platforms: $detectedList" "Green"
+        Write-Host ""
+        Write-Host "Install for which platforms?"
+        Write-Host "  1) All detected ($detectedList) [Recommended]"
+        Write-Host "  2) Choose specific platforms"
+        Write-Host ""
+        $choice = Read-Host "Choice (1-2)"
 
         switch ($choice) {
-            "1" { $platform = "claude" }
-            "2" { $platform = "copilot" }
-            "3" { $platform = "cursor" }
-            "4" { $platform = "codex" }
-            default {
-                Write-ColorOutput "Invalid choice. Exiting." "Red"
-                exit 1
-            }
-        }
-    } else {
-        Write-ColorOutput "✓ Platform: $platform" "Green"
-        Write-Host ""
-        Write-Host "Use detected platform '$platform'? (Y/n)"
-        $response = Read-Host "Press Enter to continue or 'n' to choose manually"
-        if ($response -match "^[Nn]$") {
-            Write-Host "Select platform:"
-            Write-Host "  1) Claude Code"
-            Write-Host "  2) GitHub Copilot CLI"
-            Write-Host "  3) Cursor"
-            Write-Host "  4) OpenAI Codex"
-            $choice = Read-Host "Choice (1-4)"
-
-            switch ($choice) {
-                "1" { $platform = "claude" }
-                "2" { $platform = "copilot" }
-                "3" { $platform = "cursor" }
-                "4" { $platform = "codex" }
-                default {
-                    Write-ColorOutput "Invalid choice. Exiting." "Red"
-                    exit 1
-                }
-            }
+            "1" { $platforms = $detected }
+            "2" { $platforms = Select-PlatformsFromMenu }
+            default { $platforms = $detected }
         }
     }
-    
+
+    $platformsList = $platforms -join ", "
+    Write-ColorOutput "✓ Platforms: $platformsList" "Green"
+
     Write-Host ""
     Write-ColorOutput "Step 2: Locating framework..." "Blue"
     $frameworkDir = Get-FrameworkLocation
     Write-ColorOutput "✓ Framework: $frameworkDir" "Green"
-    
+
     Write-Host ""
     Write-ColorOutput "Step 3: Selecting target project..." "Blue"
     $targetDir = Get-TargetDirectory
     Write-ColorOutput "✓ Target: $targetDir" "Green"
-    
+
     Write-Host ""
     Write-ColorOutput "Installation Summary:" "Cyan"
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    Write-Host "  Platform: $platform"
+    Write-Host "  Platforms: $platformsList"
     Write-Host "  Framework: $frameworkDir"
     Write-Host "  Target: $targetDir"
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     Write-Host ""
-    
+
     if (-not $Silent) {
         $response = Read-Host "Proceed with installation? (Y/n)"
         if ($response -match "^[Nn]$") {
@@ -224,47 +227,56 @@ function Main {
             exit 0
         }
     }
-    
+
     Write-Host ""
     Write-ColorOutput "Step 4: Installing framework..." "Blue"
-    
-    # Change to target directory and run installer
+
     Push-Location $targetDir
     try {
-        & "$frameworkDir\install.ps1" -Platform $platform
+        foreach ($plat in $platforms) {
+            Write-Host ""
+            Write-ColorOutput "Installing for platform: $plat" "Cyan"
+            & "$frameworkDir\install.ps1" -Platform $plat
+        }
     } finally {
         Pop-Location
     }
-    
+
     Write-Host ""
     Write-ColorOutput "✓ Installation Complete!" "Green"
     Write-Host ""
     Write-Host "Next steps:"
-    switch ($platform) {
-        "claude" {
-            Write-Host "  1. Run: claude"
-            Write-Host "  2. Create PRD: /prd `"your feature`""
-            Write-Host "  3. Implement: /go"
+    foreach ($plat in $platforms) {
+        switch ($plat) {
+            "claude" {
+                Write-Host "  [$plat]"
+                Write-Host "  1. Run: claude"
+                Write-Host "  2. Create PRD: /prd `"your feature`""
+                Write-Host "  3. Implement: /go"
+            }
+            "copilot" {
+                Write-Host "  [$plat]"
+                Write-Host "  1. View agents: ls .copilot/custom-agents/"
+                Write-Host "  2. Run helper: .copilot/helper.sh"
+                Write-Host "  3. Read guide: cat .copilot/WORKFLOW-GUIDE.md"
+            }
+            "cursor" {
+                Write-Host "  [$plat]"
+                Write-Host "  1. Open Cursor IDE"
+                Write-Host "  2. Rules are automatically loaded from .cursor/rules/"
+                Write-Host "  3. Use in chat: `"use go rule`" or `"follow coder rule`""
+            }
+            "codex" {
+                Write-Host "  [$plat]"
+                Write-Host "  1. Run: codex"
+                Write-Host "  2. Skills auto-loaded from .agents/skills/"
+                Write-Host "  3. Invoke skills: `$go, `$coder, `$tester, etc."
+                Write-Host "  4. Or let Codex auto-select based on your prompt"
+                Write-Host "  5. See AGENTS.md for framework overview"
+            }
         }
-        "copilot" {
-            Write-Host "  1. View agents: ls .copilot/custom-agents/"
-            Write-Host "  2. Run helper: .copilot/helper.sh"
-            Write-Host "  3. Read guide: cat .copilot/WORKFLOW-GUIDE.md"
-        }
-        "cursor" {
-            Write-Host "  1. Open Cursor IDE"
-            Write-Host "  2. Rules are automatically loaded from .cursor/rules/"
-            Write-Host "  3. Use in chat: `"use go rule`" or `"follow coder rule`""
-        }
-        "codex" {
-            Write-Host "  1. Run: codex"
-            Write-Host "  2. Skills auto-loaded from .agents/skills/"
-            Write-Host "  3. Invoke skills: `$go, `$coder, `$tester, etc."
-            Write-Host "  4. Or let Codex auto-select based on your prompt"
-            Write-Host "  5. See AGENTS.md for framework overview"
-        }
+        Write-Host ""
     }
-    Write-Host ""
 }
 
 # Run main function

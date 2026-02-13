@@ -41,47 +41,37 @@ detect_os() {
     fi
 }
 
-# Detect platform (Claude Code, Copilot CLI, Cursor)
+# Detect platform(s) (Claude Code, Copilot CLI, Cursor, Codex)
+# Returns space-separated list of all detected platforms on stdout.
+# Display messages are sent to stderr so they don't pollute the return value.
 detect_platform() {
-    local platform=""
-    
+    local platforms=""
+
     # Check for Claude Code
     if command -v claude &> /dev/null; then
-        platform="claude"
-        echo -e "${GREEN}✓${NC} Detected: Claude Code"
+        platforms="claude"
+        echo -e "${GREEN}✓${NC} Detected: Claude Code" >&2
     fi
-    
+
     # Check for GitHub Copilot CLI
     if command -v github-copilot-cli &> /dev/null || command -v copilot &> /dev/null; then
-        if [ -z "$platform" ]; then
-            platform="copilot"
-            echo -e "${GREEN}✓${NC} Detected: GitHub Copilot CLI"
-        else
-            echo -e "${YELLOW}⚠${NC} Also detected: GitHub Copilot CLI"
-        fi
+        platforms="${platforms:+$platforms }copilot"
+        echo -e "${GREEN}✓${NC} Detected: GitHub Copilot CLI" >&2
     fi
-    
+
     # Check for Cursor (check if .cursor directory exists or cursor command)
     if command -v cursor &> /dev/null || [ -d "$HOME/.cursor" ] || [ -d "$HOME/.config/cursor" ]; then
-        if [ -z "$platform" ]; then
-            platform="cursor"
-            echo -e "${GREEN}✓${NC} Detected: Cursor"
-        else
-            echo -e "${YELLOW}⚠${NC} Also detected: Cursor"
-        fi
+        platforms="${platforms:+$platforms }cursor"
+        echo -e "${GREEN}✓${NC} Detected: Cursor" >&2
     fi
 
     # Check for OpenAI Codex CLI
     if command -v codex &> /dev/null; then
-        if [ -z "$platform" ]; then
-            platform="codex"
-            echo -e "${GREEN}✓${NC} Detected: OpenAI Codex"
-        else
-            echo -e "${YELLOW}⚠${NC} Also detected: OpenAI Codex"
-        fi
+        platforms="${platforms:+$platforms }codex"
+        echo -e "${GREEN}✓${NC} Detected: OpenAI Codex" >&2
     fi
 
-    echo "$platform"
+    echo "$platforms"
 }
 
 # Get framework location
@@ -159,123 +149,153 @@ get_target_directory() {
     echo "$target"
 }
 
+# Helper: present multi-select menu and return chosen platforms
+# Outputs space-separated platform names on stdout
+select_platforms_menu() {
+    echo "" >&2
+    echo "Select platforms (comma-separated, e.g. 1,3,4):" >&2
+    echo "  1) Claude Code" >&2
+    echo "  2) GitHub Copilot CLI" >&2
+    echo "  3) Cursor" >&2
+    echo "  4) OpenAI Codex" >&2
+    echo "" >&2
+    read -p "Platforms: " selection </dev/tty
+    local chosen=""
+    # Split comma-separated input and map numbers to platform names
+    IFS=',' read -ra nums <<< "$selection"
+    for num in "${nums[@]}"; do
+        # Trim whitespace
+        num="$(echo "$num" | tr -d '[:space:]')"
+        case "$num" in
+            1) chosen="${chosen:+$chosen }claude" ;;
+            2) chosen="${chosen:+$chosen }copilot" ;;
+            3) chosen="${chosen:+$chosen }cursor" ;;
+            4) chosen="${chosen:+$chosen }codex" ;;
+            *)
+                echo -e "${YELLOW}⚠${NC} Ignoring invalid selection: $num" >&2
+                ;;
+        esac
+    done
+    if [ -z "$chosen" ]; then
+        echo -e "${RED}No valid platforms selected. Exiting.${NC}" >&2
+        exit 1
+    fi
+    echo "$chosen"
+}
+
 # Main installation flow
 main() {
     echo -e "${BLUE}Step 1: Detecting environment...${NC}"
     OS=$(detect_os)
     echo -e "${GREEN}✓${NC} OS: $OS"
-    
-    PLATFORM=$(detect_platform)
-    
-    if [ -z "$PLATFORM" ]; then
+
+    DETECTED=$(detect_platform)
+
+    if [ -z "$DETECTED" ]; then
+        # Nothing detected — show full multi-select menu
         echo -e "${YELLOW}⚠${NC} No AI platform detected automatically."
+        PLATFORMS=$(select_platforms_menu)
+    else
+        # Show what was detected and let user choose
+        # Build comma-separated display string
+        local detected_display
+        detected_display="$(echo "$DETECTED" | tr ' ' ',')"
         echo ""
-        echo "Please select your platform:"
-        echo "  1) Claude Code"
-        echo "  2) GitHub Copilot CLI"
-        echo "  3) Cursor"
-        echo "  4) OpenAI Codex"
-        read -p "Choice (1-4): " -n 1 -r
+        echo -e "${GREEN}Detected platforms:${NC} ${BOLD}${detected_display}${NC}"
         echo ""
-        case $REPLY in
-            1) PLATFORM="claude" ;;
-            2) PLATFORM="copilot" ;;
-            3) PLATFORM="cursor" ;;
-            4) PLATFORM="codex" ;;
+        echo "Install for which platforms?"
+        echo "  1) All detected (${detected_display}) ${CYAN}[Recommended]${NC}"
+        echo "  2) Choose specific platforms"
+        echo ""
+        read -p "Choice (1-2): " -n 1 -r
+        echo ""
+        case "$REPLY" in
+            2)
+                PLATFORMS=$(select_platforms_menu)
+                ;;
             *)
-                echo -e "${RED}Invalid choice. Exiting.${NC}"
-                exit 1
+                PLATFORMS="$DETECTED"
                 ;;
         esac
-    else
-        echo -e "${GREEN}✓${NC} Platform: $PLATFORM"
-        echo ""
-        echo "Use detected platform '$PLATFORM'? (Y/n)"
-        read -p "Press Enter to continue or 'n' to choose manually: " -n 1 -r
-        echo ""
-        if [[ $REPLY =~ ^[Nn]$ ]]; then
-            echo "Select platform:"
-            echo "  1) Claude Code"
-            echo "  2) GitHub Copilot CLI"
-            echo "  3) Cursor"
-            echo "  4) OpenAI Codex"
-            read -p "Choice (1-4): " -n 1 -r
-            echo ""
-            case $REPLY in
-                1) PLATFORM="claude" ;;
-                2) PLATFORM="copilot" ;;
-                3) PLATFORM="cursor" ;;
-                4) PLATFORM="codex" ;;
-                *)
-                    echo -e "${RED}Invalid choice. Exiting.${NC}"
-                    exit 1
-                    ;;
-            esac
-        fi
     fi
-    
+
+    # Build comma-separated display string for selected platforms
+    local platforms_display
+    platforms_display="$(echo "$PLATFORMS" | tr ' ' ',')"
+    echo -e "${GREEN}✓${NC} Selected platforms: ${BOLD}${platforms_display}${NC}"
+
     echo ""
     echo -e "${BLUE}Step 2: Locating framework...${NC}"
     FRAMEWORK_DIR=$(get_framework_location)
     echo -e "${GREEN}✓${NC} Framework: $FRAMEWORK_DIR"
-    
+
     echo ""
     echo -e "${BLUE}Step 3: Selecting target project...${NC}"
     TARGET_DIR=$(get_target_directory)
     echo -e "${GREEN}✓${NC} Target: $TARGET_DIR"
-    
+
     echo ""
     echo -e "${CYAN}${BOLD}Installation Summary:${NC}${BOLD}"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  Platform: $PLATFORM"
+    echo "  Platforms: ${platforms_display}"
     echo "  Framework: $FRAMEWORK_DIR"
     echo "  Target: $TARGET_DIR"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo -e "${NC}"
     echo ""
-    
+
     read -p "Proceed with installation? (Y/n): " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Nn]$ ]]; then
         echo -e "${YELLOW}Installation cancelled.${NC}"
         exit 0
     fi
-    
+
     echo ""
     echo -e "${BLUE}Step 4: Installing framework...${NC}"
-    
-    # Change to target directory and run installer
+
     cd "$TARGET_DIR"
-    "$FRAMEWORK_DIR/install.sh" --platform="$PLATFORM"
-    
+    for plat in $PLATFORMS; do
+        echo ""
+        echo -e "${CYAN}Installing for platform: ${BOLD}${plat}${NC}"
+        "$FRAMEWORK_DIR/install.sh" --platform="$plat"
+    done
+
     echo ""
     echo -e "${GREEN}${BOLD}✓ Installation Complete!${NC}${BOLD}"
     echo ""
     echo "Next steps:"
-    case $PLATFORM in
-        claude)
-            echo "  1. Run: claude"
-            echo "  2. Create PRD: /prd \"your feature\""
-            echo "  3. Implement: /go"
-            ;;
-        copilot)
-            echo "  1. View agents: ls .copilot/custom-agents/"
-            echo "  2. Run helper: .copilot/helper.sh"
-            echo "  3. Read guide: cat .copilot/WORKFLOW-GUIDE.md"
-            ;;
-        cursor)
-            echo "  1. Open Cursor IDE"
-            echo "  2. Rules are automatically loaded from .cursor/rules/"
-            echo "  3. Use in chat: \"use go rule\" or \"follow coder rule\""
-            ;;
-        codex)
-            echo "  1. Run: codex"
-            echo "  2. Skills auto-loaded from .agents/skills/"
-            echo "  3. Invoke skills: \$go, \$coder, \$tester, etc."
-            echo "  4. Or let Codex auto-select based on your prompt"
-            echo "  5. See AGENTS.md for framework overview"
-            ;;
-    esac
-    echo ""
+    for plat in $PLATFORMS; do
+        case $plat in
+            claude)
+                echo -e "  ${CYAN}[Claude Code]${NC}"
+                echo "    1. Run: claude"
+                echo "    2. Create PRD: /prd \"your feature\""
+                echo "    3. Implement: /go"
+                ;;
+            copilot)
+                echo -e "  ${CYAN}[GitHub Copilot CLI]${NC}"
+                echo "    1. View agents: ls .copilot/custom-agents/"
+                echo "    2. Run helper: .copilot/helper.sh"
+                echo "    3. Read guide: cat .copilot/WORKFLOW-GUIDE.md"
+                ;;
+            cursor)
+                echo -e "  ${CYAN}[Cursor]${NC}"
+                echo "    1. Open Cursor IDE"
+                echo "    2. Rules are automatically loaded from .cursor/rules/"
+                echo "    3. Use in chat: \"use go rule\" or \"follow coder rule\""
+                ;;
+            codex)
+                echo -e "  ${CYAN}[OpenAI Codex]${NC}"
+                echo "    1. Run: codex"
+                echo "    2. Skills auto-loaded from .agents/skills/"
+                echo "    3. Invoke skills: \$go, \$coder, \$tester, etc."
+                echo "    4. Or let Codex auto-select based on your prompt"
+                echo "    5. See AGENTS.md for framework overview"
+                ;;
+        esac
+        echo ""
+    done
 }
 
 # Run main function

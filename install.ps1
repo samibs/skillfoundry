@@ -1,13 +1,16 @@
 # Claude AS - Agents & Skills Installer (PowerShell)
 # Installs the Claude Code, GitHub Copilot CLI, Cursor, or OpenAI Codex framework to a target project
+# Supports installing MULTIPLE platforms in a single run via comma-separated values.
 #
 # USAGE:
 #   From your project directory:
 #   C:\DevLab\IDEA\claude_as\install.ps1
-#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform copilot
 #   C:\DevLab\IDEA\claude_as\install.ps1 -Platform claude
+#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform copilot
 #   C:\DevLab\IDEA\claude_as\install.ps1 -Platform cursor
 #   C:\DevLab\IDEA\claude_as\install.ps1 -Platform codex
+#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform "copilot,codex"
+#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform "claude,copilot,cursor,codex"
 #
 # DO NOT copy the claude_as folder into your project!
 # Keep it in one central location and run the installer from there.
@@ -163,34 +166,58 @@ Write-Host ""
 
 # Platform selection if not specified
 if ([string]::IsNullOrWhiteSpace($Platform)) {
-    Write-ColorOutput "Select your AI platform:" "Yellow"
+    Write-ColorOutput "Select platforms (comma-separated, e.g. 1,4):" "Yellow"
     Write-Host "  1) Claude Code"
     Write-Host "  2) GitHub Copilot CLI"
     Write-Host "  3) Cursor"
     Write-Host "  4) OpenAI Codex"
+    Write-Host "  a) All platforms"
     Write-Host ""
-    $choice = Read-Host "Enter choice (1-4)"
+    $choice = Read-Host "Choice"
 
-    switch ($choice) {
-        "1" { $Platform = "claude" }
-        "2" { $Platform = "copilot" }
-        "3" { $Platform = "cursor" }
-        "4" { $Platform = "codex" }
-        default {
-            Write-ColorOutput "Invalid choice. Exiting." "Red"
+    # Map for number-to-name lookup
+    $choiceMap = @{ "1" = "claude"; "2" = "copilot"; "3" = "cursor"; "4" = "codex" }
+
+    if ($choice -eq "a" -or $choice -eq "A") {
+        $Platforms = @("claude", "copilot", "cursor", "codex")
+    } else {
+        $selections = $choice -split ',' | ForEach-Object { $_.Trim() }
+        $Platforms = @()
+        foreach ($sel in $selections) {
+            if ($choiceMap.ContainsKey($sel)) {
+                $Platforms += $choiceMap[$sel]
+            } else {
+                Write-ColorOutput "Invalid choice '$sel'. Must be 1-4 or 'a'." "Red"
+                exit 1
+            }
+        }
+        if ($Platforms.Count -eq 0) {
+            Write-ColorOutput "No platforms selected. Exiting." "Red"
             exit 1
         }
     }
+} else {
+    # Parse comma-separated platforms into array
+    if ($Platform -match ',') {
+        $Platforms = $Platform -split ',' | ForEach-Object { $_.Trim().ToLower() }
+    } else {
+        $Platforms = @($Platform.ToLower())
+    }
 }
 
-# Normalize platform name
-$Platform = $Platform.ToLower()
-if ($Platform -notmatch "^(claude|copilot|cursor|codex)$") {
-    Write-Error-Enhanced "Invalid platform specified" "Platform must be 'claude', 'copilot', 'cursor', or 'codex'" "install.ps1" "Use -Platform claude, -Platform copilot, -Platform cursor, or -Platform codex"
-    exit 2  # Invalid arguments
+# Validate each platform
+foreach ($p in $Platforms) {
+    if ($p -notmatch '^(claude|copilot|cursor|codex)$') {
+        Write-Error-Enhanced "Invalid platform '$p'" "Must be claude, copilot, cursor, or codex" "install.ps1" "Use -Platform 'claude,codex' (comma-separated for multiple)"
+        exit 2  # Invalid arguments
+    }
 }
 
-Write-ColorOutput "Platform: $Platform" "Green"
+# Remove duplicates
+$Platforms = $Platforms | Select-Object -Unique
+
+$PlatformDisplay = ($Platforms -join ", ")
+Write-ColorOutput "Platform(s): $PlatformDisplay" "Green"
 Write-Host ""
 
 # Check if user accidentally copied claude_as into their project
@@ -245,86 +272,90 @@ Write-ColorOutput "Installing to: $TargetDir" "Yellow"
 Write-ColorOutput "Source: $ScriptDir" "Blue"
 Write-Host ""
 
-# Check if platform directory already exists
-if ($Platform -eq "claude" -and (Test-Path (Join-Path $TargetDir ".claude"))) {
-    Write-ColorOutput "Warning: .claude directory already exists." "Yellow"
-    $response = Read-Host "Overwrite existing skills? (y/N)"
-    if ($response -notmatch "^[Yy]$") {
-        Write-ColorOutput "Installation cancelled." "Red"
-        exit 1
+# Check if platform directories already exist (per platform)
+foreach ($plat in $Platforms) {
+    $existingDir = $null
+    $existingLabel = $null
+    if ($plat -eq "claude" -and (Test-Path (Join-Path $TargetDir ".claude"))) {
+        $existingDir = ".claude"; $existingLabel = "skills"
+    } elseif ($plat -eq "copilot" -and (Test-Path (Join-Path $TargetDir ".copilot"))) {
+        $existingDir = ".copilot"; $existingLabel = "agents"
+    } elseif ($plat -eq "cursor" -and (Test-Path (Join-Path $TargetDir ".cursor"))) {
+        $existingDir = ".cursor"; $existingLabel = "rules"
+    } elseif ($plat -eq "codex" -and (Test-Path (Join-Path $TargetDir ".agents\skills"))) {
+        $existingDir = ".agents/skills"; $existingLabel = "skills"
     }
-} elseif ($Platform -eq "copilot" -and (Test-Path (Join-Path $TargetDir ".copilot"))) {
-    Write-ColorOutput "Warning: .copilot directory already exists." "Yellow"
-    $response = Read-Host "Overwrite existing agents? (y/N)"
-    if ($response -notmatch "^[Yy]$") {
-        Write-ColorOutput "Installation cancelled." "Red"
-        exit 1
-    }
-} elseif ($Platform -eq "cursor" -and (Test-Path (Join-Path $TargetDir ".cursor"))) {
-    Write-ColorOutput "Warning: .cursor directory already exists." "Yellow"
-    $response = Read-Host "Overwrite existing rules? (y/N)"
-    if ($response -notmatch "^[Yy]$") {
-        Write-ColorOutput "Installation cancelled." "Red"
-        exit 1
-    }
-} elseif ($Platform -eq "codex" -and (Test-Path (Join-Path $TargetDir ".agents\skills"))) {
-    Write-ColorOutput "Warning: .agents/skills directory already exists." "Yellow"
-    $response = Read-Host "Overwrite existing skills? (y/N)"
-    if ($response -notmatch "^[Yy]$") {
-        Write-ColorOutput "Installation cancelled." "Red"
-        exit 1
+
+    if ($existingDir) {
+        Write-ColorOutput "Warning: $existingDir directory already exists (platform: $plat)." "Yellow"
+        $response = Read-Host "Overwrite existing $($existingLabel)? (y/N)"
+        if ($response -notmatch "^[Yy]$") {
+            Write-ColorOutput "Installation cancelled for platform '$plat'." "Red"
+            exit 1
+        }
     }
 }
 
-# Create directory structure based on platform
+# Create directory structure — shared directories (once)
 Write-ColorOutput "Creating directory structure..." "Blue"
-if ($Platform -eq "claude") {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".claude\commands") | Out-Null
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "agents") | Out-Null
-} elseif ($Platform -eq "copilot") {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".copilot\custom-agents") | Out-Null
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "agents") | Out-Null
-} elseif ($Platform -eq "codex") {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".agents\skills") | Out-Null
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "agents") | Out-Null
-} else {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".cursor\rules") | Out-Null
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "agents") | Out-Null
-}
+New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "agents") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "genesis") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "docs\stories") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "memory_bank\knowledge") | Out-Null
 
-# Copy skills/agents/rules based on platform
-Write-ColorOutput "Installing agents and skills..." "Blue"
-if ($Platform -eq "claude") {
-    Copy-Item -Path "$ScriptDir\.claude\commands\*" -Destination "$TargetDir\.claude\commands\" -Recurse -Force
-    $SkillCount = (Get-ChildItem -Path "$TargetDir\.claude\commands\*.md" -ErrorAction SilentlyContinue).Count
-    Write-ColorOutput "  ✓ Claude skills installed ($SkillCount skills)" "Green"
-} elseif ($Platform -eq "copilot") {
-    Copy-Item -Path "$ScriptDir\.copilot\custom-agents\*" -Destination "$TargetDir\.copilot\custom-agents\" -Recurse -Force
-    if (Test-Path "$ScriptDir\.copilot\helper.sh") {
-        Copy-Item -Path "$ScriptDir\.copilot\helper.sh" -Destination "$TargetDir\.copilot\" -Force
+# Create platform-specific directories
+foreach ($plat in $Platforms) {
+    if ($plat -eq "claude") {
+        New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".claude\commands") | Out-Null
+    } elseif ($plat -eq "copilot") {
+        New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".copilot\custom-agents") | Out-Null
+    } elseif ($plat -eq "codex") {
+        New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".agents\skills") | Out-Null
+    } elseif ($plat -eq "cursor") {
+        New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".cursor\rules") | Out-Null
     }
-    if (Test-Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md") {
-        Copy-Item -Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md" -Destination "$TargetDir\.copilot\" -Force
-    }
-    $AgentCount = (Get-ChildItem -Path "$TargetDir\.copilot\custom-agents\*.md" -ErrorAction SilentlyContinue).Count
-    Write-ColorOutput "  ✓ Copilot custom agents installed ($AgentCount agents)" "Green"
-    Write-ColorOutput "  ✓ Copilot helper and workflow guide installed" "Green"
-} elseif ($Platform -eq "codex") {
-    Copy-Item -Path "$ScriptDir\.agents\skills\*" -Destination "$TargetDir\.agents\skills\" -Recurse -Force
-    Copy-Item -Path "$ScriptDir\AGENTS.md" -Destination "$TargetDir\AGENTS.md" -Force
-    $SkillCount = (Get-ChildItem -Path "$TargetDir\.agents\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
-    Write-ColorOutput "  ✓ Codex skills installed ($SkillCount skills)" "Green"
-    Write-ColorOutput "  ✓ AGENTS.md installed" "Green"
-} else {
-    Copy-Item -Path "$ScriptDir\.cursor\rules\*" -Destination "$TargetDir\.cursor\rules\" -Recurse -Force
-    $RuleCount = (Get-ChildItem -Path "$TargetDir\.cursor\rules\*.md" -ErrorAction SilentlyContinue).Count
-    Write-ColorOutput "  ✓ Cursor rules installed ($RuleCount rules)" "Green"
 }
 
-# Copy shared agent modules
+# Copy skills/agents/rules for each platform
+Write-ColorOutput "Installing agents and skills..." "Blue"
+
+# Track counts per platform for summary
+$PlatformCounts = @{}
+
+foreach ($plat in $Platforms) {
+    if ($plat -eq "claude") {
+        Copy-Item -Path "$ScriptDir\.claude\commands\*" -Destination "$TargetDir\.claude\commands\" -Recurse -Force
+        $count = (Get-ChildItem -Path "$TargetDir\.claude\commands\*.md" -ErrorAction SilentlyContinue).Count
+        $PlatformCounts["claude"] = $count
+        Write-ColorOutput "  ✓ Claude skills installed ($count skills)" "Green"
+    } elseif ($plat -eq "copilot") {
+        Copy-Item -Path "$ScriptDir\.copilot\custom-agents\*" -Destination "$TargetDir\.copilot\custom-agents\" -Recurse -Force
+        if (Test-Path "$ScriptDir\.copilot\helper.sh") {
+            Copy-Item -Path "$ScriptDir\.copilot\helper.sh" -Destination "$TargetDir\.copilot\" -Force
+        }
+        if (Test-Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md") {
+            Copy-Item -Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md" -Destination "$TargetDir\.copilot\" -Force
+        }
+        $count = (Get-ChildItem -Path "$TargetDir\.copilot\custom-agents\*.md" -ErrorAction SilentlyContinue).Count
+        $PlatformCounts["copilot"] = $count
+        Write-ColorOutput "  ✓ Copilot custom agents installed ($count agents)" "Green"
+        Write-ColorOutput "  ✓ Copilot helper and workflow guide installed" "Green"
+    } elseif ($plat -eq "codex") {
+        Copy-Item -Path "$ScriptDir\.agents\skills\*" -Destination "$TargetDir\.agents\skills\" -Recurse -Force
+        Copy-Item -Path "$ScriptDir\AGENTS.md" -Destination "$TargetDir\AGENTS.md" -Force
+        $count = (Get-ChildItem -Path "$TargetDir\.agents\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
+        $PlatformCounts["codex"] = $count
+        Write-ColorOutput "  ✓ Codex skills installed ($count skills)" "Green"
+        Write-ColorOutput "  ✓ AGENTS.md installed" "Green"
+    } elseif ($plat -eq "cursor") {
+        Copy-Item -Path "$ScriptDir\.cursor\rules\*" -Destination "$TargetDir\.cursor\rules\" -Recurse -Force
+        $count = (Get-ChildItem -Path "$TargetDir\.cursor\rules\*.md" -ErrorAction SilentlyContinue).Count
+        $PlatformCounts["cursor"] = $count
+        Write-ColorOutput "  ✓ Cursor rules installed ($count rules)" "Green"
+    }
+}
+
+# Copy shared agent modules (once, not per platform)
 Copy-Item -Path "$ScriptDir\agents\*" -Destination "$TargetDir\agents\" -Recurse -Force
 $SharedCount = (Get-ChildItem -Path "$TargetDir\agents\*.md" -ErrorAction SilentlyContinue).Count
 Write-ColorOutput "  ✓ Shared agent modules installed ($SharedCount modules)" "Green"
@@ -375,28 +406,19 @@ if (-not (Test-Path $VersionFile)) {
 $FrameworkVersion = (Get-Content $VersionFile -Raw).Trim()
 $FrameworkDate = "2026-01-20"
 
-if ($Platform -eq "claude") {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".claude") | Out-Null
-    $FrameworkVersion | Out-File -FilePath (Join-Path $TargetDir ".claude\.framework-version") -Encoding utf8 -NoNewline
-    $FrameworkDate | Out-File -FilePath (Join-Path $TargetDir ".claude\.framework-updated") -Encoding utf8 -NoNewline
-    $Platform | Out-File -FilePath (Join-Path $TargetDir ".claude\.framework-platform") -Encoding utf8 -NoNewline
-} elseif ($Platform -eq "copilot") {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".copilot") | Out-Null
-    $FrameworkVersion | Out-File -FilePath (Join-Path $TargetDir ".copilot\.framework-version") -Encoding utf8 -NoNewline
-    $FrameworkDate | Out-File -FilePath (Join-Path $TargetDir ".copilot\.framework-updated") -Encoding utf8 -NoNewline
-    $Platform | Out-File -FilePath (Join-Path $TargetDir ".copilot\.framework-platform") -Encoding utf8 -NoNewline
-} elseif ($Platform -eq "codex") {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".agents") | Out-Null
-    $FrameworkVersion | Out-File -FilePath (Join-Path $TargetDir ".agents\.framework-version") -Encoding utf8 -NoNewline
-    $FrameworkDate | Out-File -FilePath (Join-Path $TargetDir ".agents\.framework-updated") -Encoding utf8 -NoNewline
-    $Platform | Out-File -FilePath (Join-Path $TargetDir ".agents\.framework-platform") -Encoding utf8 -NoNewline
-} else {
-    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".cursor") | Out-Null
-    $FrameworkVersion | Out-File -FilePath (Join-Path $TargetDir ".cursor\.framework-version") -Encoding utf8 -NoNewline
-    $FrameworkDate | Out-File -FilePath (Join-Path $TargetDir ".cursor\.framework-updated") -Encoding utf8 -NoNewline
-    $Platform | Out-File -FilePath (Join-Path $TargetDir ".cursor\.framework-platform") -Encoding utf8 -NoNewline
+foreach ($plat in $Platforms) {
+    $platDir = $null
+    if ($plat -eq "claude") { $platDir = ".claude" }
+    elseif ($plat -eq "copilot") { $platDir = ".copilot" }
+    elseif ($plat -eq "codex") { $platDir = ".agents" }
+    elseif ($plat -eq "cursor") { $platDir = ".cursor" }
+
+    New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir $platDir) | Out-Null
+    $FrameworkVersion | Out-File -FilePath (Join-Path $TargetDir "$platDir\.framework-version") -Encoding utf8 -NoNewline
+    $FrameworkDate | Out-File -FilePath (Join-Path $TargetDir "$platDir\.framework-updated") -Encoding utf8 -NoNewline
+    $plat | Out-File -FilePath (Join-Path $TargetDir "$platDir\.framework-platform") -Encoding utf8 -NoNewline
 }
-Write-ColorOutput "  ✓ Framework version: v$FrameworkVersion (Platform: $Platform)" "Green"
+Write-ColorOutput "  ✓ Framework version: v$FrameworkVersion (Platform(s): $PlatformDisplay)" "Green"
 
 # Auto-register project for updates
 $RegistryFile = Join-Path $ScriptDir ".project-registry"
@@ -416,23 +438,22 @@ Write-ColorOutput "║                  Installation Complete!                  
 Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Green"
 Write-Host ""
 Write-ColorOutput "Project: $TargetDir" "Blue"
-Write-ColorOutput "Platform: $Platform" "Blue"
+Write-ColorOutput "Platform(s): $PlatformDisplay" "Blue"
 Write-Host ""
 Write-Host "Installed:"
-if ($Platform -eq "claude") {
-    Write-Host "  ├── .claude/commands/     ($SkillCount skills)"
-    Write-Host "  ├── agents/               ($SharedCount shared modules)"
-} elseif ($Platform -eq "copilot") {
-    Write-Host "  ├── .copilot/custom-agents/ ($AgentCount agents)"
-    Write-Host "  ├── agents/                 ($SharedCount shared modules)"
-} elseif ($Platform -eq "codex") {
-    Write-Host "  ├── .agents/skills/       ($SkillCount skills)"
-    Write-Host "  ├── agents/               ($SharedCount shared modules)"
-    Write-Host "  ├── AGENTS.md"
-} else {
-    Write-Host "  ├── .cursor/rules/        ($RuleCount rules)"
-    Write-Host "  ├── agents/               ($SharedCount shared modules)"
+foreach ($plat in $Platforms) {
+    if ($plat -eq "claude") {
+        Write-Host "  ├── .claude/commands/       ($($PlatformCounts['claude']) skills)"
+    } elseif ($plat -eq "copilot") {
+        Write-Host "  ├── .copilot/custom-agents/ ($($PlatformCounts['copilot']) agents)"
+    } elseif ($plat -eq "codex") {
+        Write-Host "  ├── .agents/skills/         ($($PlatformCounts['codex']) skills)"
+        Write-Host "  ├── AGENTS.md"
+    } elseif ($plat -eq "cursor") {
+        Write-Host "  ├── .cursor/rules/          ($($PlatformCounts['cursor']) rules)"
+    }
 }
+Write-Host "  ├── agents/               ($SharedCount shared modules)"
 Write-Host "  ├── genesis/              (PRD folder)"
 Write-Host "  │   └── TEMPLATE.md"
 Write-Host "  ├── docs/stories/         (story output)"
@@ -446,117 +467,117 @@ Write-ColorOutput "                   THE GENESIS WORKFLOW                    " 
 Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
 Write-Host ""
 
-if ($Platform -eq "claude") {
-    Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-    Write-Host "  /prd `"your feature idea`"     → Saved to genesis/"
-    Write-Host "  Or manually create in genesis/"
-    Write-Host ""
-    Write-ColorOutput "Step 2: Implement" "Yellow"
-    Write-Host "  /go                           → Full implementation"
-    Write-Host ""
-    Write-ColorOutput "That's it. PRDs in genesis/ → /go → Production code." "Green"
-    Write-Host ""
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
-    Write-Host ""
-    Write-ColorOutput "Key Commands:" "Yellow"
-    Write-Host "  /go              - Implement all PRDs from genesis/"
-    Write-Host "  /go --validate   - Check PRDs are complete"
-    Write-Host "  /prd             - Create new PRD"
-    Write-Host "  /layer-check     - Validate three layers"
-    Write-Host "  /coder           - Ruthless implementation"
-    Write-Host "  /tester          - Brutal testing"
-    Write-Host "  /architect       - Architecture review"
-    Write-Host ""
-    Write-ColorOutput "Start now:" "Green"
-    Write-Host "  cd $TargetDir"
-    Write-Host "  claude"
-    Write-Host "  > /prd `"Your feature idea`""
-    Write-Host "  > /go"
-} elseif ($Platform -eq "cursor") {
-    Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-    Write-Host "  Manually create in genesis/ folder"
-    Write-Host "  Use genesis/TEMPLATE.md as guide"
-    Write-Host ""
-    Write-ColorOutput "Step 2: Implement" "Yellow"
-    Write-Host "  Use rules via Cursor AI chat"
-    Write-Host "  Rules are automatically loaded from .cursor/rules/"
-    Write-Host ""
-    Write-ColorOutput "PRDs in genesis/ → use rules in Cursor → Production code." "Green"
-    Write-Host ""
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
-    Write-Host ""
-    Write-ColorOutput "Available Rules:" "Yellow"
-    Write-Host "  go.md            - Project kickstart orchestrator"
-    Write-Host "  prd.md           - PRD creation"
-    Write-Host "  coder.md         - Ruthless implementation with TDD"
-    Write-Host "  tester.md        - Brutal testing"
-    Write-Host "  architect.md      - Architecture review"
-    Write-Host "  layer-check.md   - Three-layer validation"
-    Write-Host "  + 16 more in .cursor/rules/"
-    Write-Host ""
-    Write-ColorOutput "Usage in Cursor:" "Yellow"
-    Write-Host "  1. Open Cursor in this project"
-    Write-Host "  2. Rules are automatically available in chat"
-    Write-Host "  3. Reference rules by name: 'use go rule' or 'follow coder rule'"
-    Write-Host "  4. Rules provide structured workflows and commands"
-    Write-Host ""
-    Write-ColorOutput "Rules are automatically loaded by Cursor from .cursor/rules/" "Green"
-} elseif ($Platform -eq "codex") {
-    Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-    Write-Host "  Manually create in genesis/ folder"
-    Write-Host "  Use genesis/TEMPLATE.md as guide"
-    Write-Host ""
-    Write-ColorOutput "Step 2: Implement" "Yellow"
-    Write-Host "  Use skills via Codex CLI"
-    Write-Host "  Skills are loaded from .agents/skills/"
-    Write-Host ""
-    Write-ColorOutput "PRDs in genesis/ → use skills in Codex → Production code." "Green"
-    Write-Host ""
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
-    Write-Host ""
-    Write-ColorOutput "Available Skills:" "Yellow"
-    Write-Host "  `$go              - Project kickstart orchestrator"
-    Write-Host "  `$coder           - Ruthless implementation with TDD"
-    Write-Host "  `$tester          - Brutal testing"
-    Write-Host "  `$architect       - Architecture review"
-    Write-Host "  `$evaluator       - BPSBS compliance"
-    Write-Host "  `$debugger        - Systematic debugging"
-    Write-Host "  `$docs            - Documentation"
-    Write-Host "  + more in .agents/skills/"
-    Write-Host ""
-    Write-ColorOutput "Start now:" "Green"
-    Write-Host "  cd $TargetDir"
-    Write-Host "  codex"
-    Write-Host "  > `$go"
-} else {
-    Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-    Write-Host "  Manually create in genesis/ folder"
-    Write-Host "  Use genesis/TEMPLATE.md as guide"
-    Write-Host ""
-    Write-ColorOutput "Step 2: Implement" "Yellow"
-    Write-Host "  Use agents via task tool in Copilot CLI"
-    Write-Host ""
-    Write-ColorOutput "PRDs in genesis/ → invoke agents → Production code." "Green"
-    Write-Host ""
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
-    Write-Host ""
-    Write-ColorOutput "Available Agents:" "Yellow"
-    Write-Host "  coder            - Ruthless implementation with TDD"
-    Write-Host "  tester           - Brutal testing"
-    Write-Host "  architect        - Architecture review"
-    Write-Host "  evaluator        - BPSBS compliance"
-    Write-Host "  debugger         - Systematic debugging"
-    Write-Host "  docs             - Documentation"
-    Write-Host "  + 16 more in .copilot/custom-agents/"
-    Write-Host ""
-    Write-ColorOutput "Example Usage:" "Yellow"
-    Write-Host '  task('
-    Write-Host '    agent_type="task",'
-    Write-Host '    description="Implement auth service",'
-    Write-Host '    prompt="Read .copilot/custom-agents/coder.md and genesis/auth.md, then implement"'
-    Write-Host '  )'
-    Write-Host ""
-    Write-ColorOutput "See .copilot/custom-agents/README.md for details" "Green"
+foreach ($plat in $Platforms) {
+    if ($Platforms.Count -gt 1) {
+        Write-Host ""
+        Write-ColorOutput "── $($plat.Substring(0,1).ToUpper() + $plat.Substring(1)) ──" "Cyan"
+        Write-Host ""
+    }
+
+    if ($plat -eq "claude") {
+        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
+        Write-Host "  /prd `"your feature idea`"     → Saved to genesis/"
+        Write-Host "  Or manually create in genesis/"
+        Write-Host ""
+        Write-ColorOutput "Step 2: Implement" "Yellow"
+        Write-Host "  /go                           → Full implementation"
+        Write-Host ""
+        Write-ColorOutput "That's it. PRDs in genesis/ → /go → Production code." "Green"
+        Write-Host ""
+        Write-ColorOutput "Key Commands:" "Yellow"
+        Write-Host "  /go              - Implement all PRDs from genesis/"
+        Write-Host "  /go --validate   - Check PRDs are complete"
+        Write-Host "  /prd             - Create new PRD"
+        Write-Host "  /layer-check     - Validate three layers"
+        Write-Host "  /coder           - Ruthless implementation"
+        Write-Host "  /tester          - Brutal testing"
+        Write-Host "  /architect       - Architecture review"
+        Write-Host ""
+        Write-ColorOutput "Start now:" "Green"
+        Write-Host "  cd $TargetDir"
+        Write-Host "  claude"
+        Write-Host "  > /prd `"Your feature idea`""
+        Write-Host "  > /go"
+    } elseif ($plat -eq "cursor") {
+        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
+        Write-Host "  Manually create in genesis/ folder"
+        Write-Host "  Use genesis/TEMPLATE.md as guide"
+        Write-Host ""
+        Write-ColorOutput "Step 2: Implement" "Yellow"
+        Write-Host "  Use rules via Cursor AI chat"
+        Write-Host "  Rules are automatically loaded from .cursor/rules/"
+        Write-Host ""
+        Write-ColorOutput "PRDs in genesis/ → use rules in Cursor → Production code." "Green"
+        Write-Host ""
+        Write-ColorOutput "Available Rules:" "Yellow"
+        Write-Host "  go.md            - Project kickstart orchestrator"
+        Write-Host "  prd.md           - PRD creation"
+        Write-Host "  coder.md         - Ruthless implementation with TDD"
+        Write-Host "  tester.md        - Brutal testing"
+        Write-Host "  architect.md      - Architecture review"
+        Write-Host "  layer-check.md   - Three-layer validation"
+        Write-Host "  + 16 more in .cursor/rules/"
+        Write-Host ""
+        Write-ColorOutput "Usage in Cursor:" "Yellow"
+        Write-Host "  1. Open Cursor in this project"
+        Write-Host "  2. Rules are automatically available in chat"
+        Write-Host "  3. Reference rules by name: 'use go rule' or 'follow coder rule'"
+        Write-Host "  4. Rules provide structured workflows and commands"
+        Write-Host ""
+        Write-ColorOutput "Rules are automatically loaded by Cursor from .cursor/rules/" "Green"
+    } elseif ($plat -eq "codex") {
+        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
+        Write-Host "  Manually create in genesis/ folder"
+        Write-Host "  Use genesis/TEMPLATE.md as guide"
+        Write-Host ""
+        Write-ColorOutput "Step 2: Implement" "Yellow"
+        Write-Host "  Use skills via Codex CLI"
+        Write-Host "  Skills are loaded from .agents/skills/"
+        Write-Host ""
+        Write-ColorOutput "PRDs in genesis/ → use skills in Codex → Production code." "Green"
+        Write-Host ""
+        Write-ColorOutput "Available Skills:" "Yellow"
+        Write-Host "  `$go              - Project kickstart orchestrator"
+        Write-Host "  `$coder           - Ruthless implementation with TDD"
+        Write-Host "  `$tester          - Brutal testing"
+        Write-Host "  `$architect       - Architecture review"
+        Write-Host "  `$evaluator       - BPSBS compliance"
+        Write-Host "  `$debugger        - Systematic debugging"
+        Write-Host "  `$docs            - Documentation"
+        Write-Host "  + more in .agents/skills/"
+        Write-Host ""
+        Write-ColorOutput "Start now:" "Green"
+        Write-Host "  cd $TargetDir"
+        Write-Host "  codex"
+        Write-Host "  > `$go"
+    } elseif ($plat -eq "copilot") {
+        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
+        Write-Host "  Manually create in genesis/ folder"
+        Write-Host "  Use genesis/TEMPLATE.md as guide"
+        Write-Host ""
+        Write-ColorOutput "Step 2: Implement" "Yellow"
+        Write-Host "  Use agents via task tool in Copilot CLI"
+        Write-Host ""
+        Write-ColorOutput "PRDs in genesis/ → invoke agents → Production code." "Green"
+        Write-Host ""
+        Write-ColorOutput "Available Agents:" "Yellow"
+        Write-Host "  coder            - Ruthless implementation with TDD"
+        Write-Host "  tester           - Brutal testing"
+        Write-Host "  architect        - Architecture review"
+        Write-Host "  evaluator        - BPSBS compliance"
+        Write-Host "  debugger         - Systematic debugging"
+        Write-Host "  docs             - Documentation"
+        Write-Host "  + 16 more in .copilot/custom-agents/"
+        Write-Host ""
+        Write-ColorOutput "Example Usage:" "Yellow"
+        Write-Host '  task('
+        Write-Host '    agent_type="task",'
+        Write-Host '    description="Implement auth service",'
+        Write-Host '    prompt="Read .copilot/custom-agents/coder.md and genesis/auth.md, then implement"'
+        Write-Host '  )'
+        Write-Host ""
+        Write-ColorOutput "See .copilot/custom-agents/README.md for details" "Green"
+    }
 }
 
 Write-Host ""

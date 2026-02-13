@@ -185,45 +185,54 @@ function Get-ProjectVersion {
 
 function Set-ProjectVersion {
     param([string]$ProjectDir)
-    
-    $platform = Detect-Platform $ProjectDir
-    if ($platform -eq "claude") {
+
+    $platforms = Detect-Platform $ProjectDir
+
+    # Map platform names to their directory names
+    $platformDirMap = @{
+        "claude"  = ".claude"
+        "copilot" = ".copilot"
+        "cursor"  = ".cursor"
+        "codex"   = ".agents"
+    }
+
+    if ($platforms.Count -eq 0) {
+        # Default to .claude if no platform detected
         New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".claude") | Out-Null
         $FrameworkVersion | Out-File -FilePath (Join-Path $ProjectDir ".claude\.framework-version") -Encoding utf8 -NoNewline
         $FrameworkDate | Out-File -FilePath (Join-Path $ProjectDir ".claude\.framework-updated") -Encoding utf8 -NoNewline
-    } elseif ($platform -eq "copilot") {
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".copilot") | Out-Null
-        $FrameworkVersion | Out-File -FilePath (Join-Path $ProjectDir ".copilot\.framework-version") -Encoding utf8 -NoNewline
-        $FrameworkDate | Out-File -FilePath (Join-Path $ProjectDir ".copilot\.framework-updated") -Encoding utf8 -NoNewline
-    } elseif ($platform -eq "cursor") {
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".cursor") | Out-Null
-        $FrameworkVersion | Out-File -FilePath (Join-Path $ProjectDir ".cursor\.framework-version") -Encoding utf8 -NoNewline
-        $FrameworkDate | Out-File -FilePath (Join-Path $ProjectDir ".cursor\.framework-updated") -Encoding utf8 -NoNewline
-    } elseif ($platform -eq "codex") {
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".agents") | Out-Null
-        $FrameworkVersion | Out-File -FilePath (Join-Path $ProjectDir ".agents\.framework-version") -Encoding utf8 -NoNewline
-        $FrameworkDate | Out-File -FilePath (Join-Path $ProjectDir ".agents\.framework-updated") -Encoding utf8 -NoNewline
-    } else {
-        # Default to .claude
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".claude") | Out-Null
-        $FrameworkVersion | Out-File -FilePath (Join-Path $ProjectDir ".claude\.framework-version") -Encoding utf8 -NoNewline
-        $FrameworkDate | Out-File -FilePath (Join-Path $ProjectDir ".claude\.framework-updated") -Encoding utf8 -NoNewline
+        return
+    }
+
+    foreach ($plat in $platforms) {
+        $dirName = $platformDirMap[$plat]
+        if ($dirName) {
+            New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir $dirName) | Out-Null
+            $FrameworkVersion | Out-File -FilePath (Join-Path $ProjectDir "$dirName\.framework-version") -Encoding utf8 -NoNewline
+            $FrameworkDate | Out-File -FilePath (Join-Path $ProjectDir "$dirName\.framework-updated") -Encoding utf8 -NoNewline
+        }
     }
 }
 
 function Detect-Platform {
     param([string]$ProjectDir)
-    
-    if (Test-Path (Join-Path $ProjectDir ".claude")) {
-        return "claude"
-    } elseif (Test-Path (Join-Path $ProjectDir ".copilot")) {
-        return "copilot"
-    } elseif (Test-Path (Join-Path $ProjectDir ".cursor")) {
-        return "cursor"
-    } elseif (Test-Path (Join-Path $ProjectDir ".agents\skills")) {
-        return "codex"
+
+    $platforms = @()
+
+    if (Test-Path (Join-Path $ProjectDir ".claude\commands")) {
+        $platforms += "claude"
     }
-    return "unknown"
+    if (Test-Path (Join-Path $ProjectDir ".copilot\custom-agents")) {
+        $platforms += "copilot"
+    }
+    if (Test-Path (Join-Path $ProjectDir ".cursor\rules")) {
+        $platforms += "cursor"
+    }
+    if (Test-Path (Join-Path $ProjectDir ".agents\skills")) {
+        $platforms += "codex"
+    }
+
+    return ,$platforms
 }
 
 function Test-ValidProject {
@@ -308,16 +317,24 @@ function Show-ProjectList {
         $count++
         $version = Get-ProjectVersion $projectDir
         $status = ""
-        
+
         if (-not (Test-Path $projectDir)) {
             $status = "[NOT FOUND]"
             Write-ColorOutput "  $count. $projectDir $status" "Red"
         } elseif ($version -eq $FrameworkVersion) {
             $status = "[UP TO DATE]"
             Write-ColorOutput "  $count. $projectDir $status" "Green"
+            $detectedPlatforms = Detect-Platform $projectDir
+            if ($detectedPlatforms.Count -gt 0) {
+                Write-ColorOutput "     Platforms: $($detectedPlatforms -join ', ')" "Blue"
+            }
         } else {
-            $status = "[v$version → v$FrameworkVersion]"
+            $status = "[v$version -> v$FrameworkVersion]"
             Write-ColorOutput "  $count. $projectDir $status" "Yellow"
+            $detectedPlatforms = Detect-Platform $projectDir
+            if ($detectedPlatforms.Count -gt 0) {
+                Write-ColorOutput "     Platforms: $($detectedPlatforms -join ', ')" "Blue"
+            }
         }
     }
     
@@ -364,165 +381,184 @@ function Update-Project {
     $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
     $backupDir = Join-Path $ProjectDir ".claude\backups\$timestamp"
     New-Item -ItemType Directory -Force -Path $backupDir | Out-Null
-    
-    # Detect platform
-    $platform = Detect-Platform $ProjectDir
-    
-    # Update platform-specific files
-    Write-ColorOutput "Updating platform files..." "Yellow"
-    
-    if ($platform -eq "claude") {
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".claude\commands") | Out-Null
-        $skillsAdded = 0
-        $skillsUpdated = 0
-        
-        foreach ($skill in Get-ChildItem -Path "$ScriptDir\.claude\commands\*.md") {
-            $skillName = $skill.Name
-            $target = Join-Path $ProjectDir ".claude\commands\$skillName"
-            
-            if (-not (Test-Path $target)) {
-                Copy-Item -Path $skill.FullName -Destination $target -Force
-                Write-ColorOutput "  + Added: $skillName" "Green"
-                $skillsAdded++
-            } else {
-                $sourceContent = Get-FileHash $skill.FullName -Algorithm MD5
-                $targetContent = Get-FileHash $target -Algorithm MD5
-                if ($sourceContent.Hash -ne $targetContent.Hash) {
-                    Backup-File $target | Out-Null
-                    Copy-Item -Path $skill.FullName -Destination $target -Force
-                    Write-ColorOutput "  ↑ Updated: $skillName" "Cyan"
-                    $skillsUpdated++
-                }
-            }
-        }
-        
-        if ($skillsAdded -eq 0 -and $skillsUpdated -eq 0) {
-            Write-ColorOutput "  All skills up to date" "Green"
-        } else {
-            Write-ColorOutput "  $skillsAdded added, $skillsUpdated updated" "Green"
-        }
-    } elseif ($platform -eq "copilot") {
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".copilot\custom-agents") | Out-Null
-        $agentsAdded = 0
-        $agentsUpdated = 0
-        
-        foreach ($agent in Get-ChildItem -Path "$ScriptDir\.copilot\custom-agents\*.md") {
-            $agentName = $agent.Name
-            $target = Join-Path $ProjectDir ".copilot\custom-agents\$agentName"
-            
-            if (-not (Test-Path $target)) {
-                Copy-Item -Path $agent.FullName -Destination $target -Force
-                Write-ColorOutput "  + Added: $agentName" "Green"
-                $agentsAdded++
-            } else {
-                $sourceContent = Get-FileHash $agent.FullName -Algorithm MD5
-                $targetContent = Get-FileHash $target -Algorithm MD5
-                if ($sourceContent.Hash -ne $targetContent.Hash) {
-                    Backup-File $target | Out-Null
-                    Copy-Item -Path $agent.FullName -Destination $target -Force
-                    Write-ColorOutput "  ↑ Updated: $agentName" "Cyan"
-                    $agentsUpdated++
-                }
-            }
-        }
-        
-        # Update helper and guides
-        if (Test-Path "$ScriptDir\.copilot\helper.sh") {
-            Copy-Item -Path "$ScriptDir\.copilot\helper.sh" -Destination "$ProjectDir\.copilot\" -Force
-        }
-        if (Test-Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md") {
-            Copy-Item -Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md" -Destination "$ProjectDir\.copilot\" -Force
-        }
-        
-        if ($agentsAdded -eq 0 -and $agentsUpdated -eq 0) {
-            Write-ColorOutput "  All agents up to date" "Green"
-        } else {
-            Write-ColorOutput "  $agentsAdded added, $agentsUpdated updated" "Green"
-        }
-    } elseif ($platform -eq "cursor") {
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".cursor\rules") | Out-Null
-        $rulesAdded = 0
-        $rulesUpdated = 0
-        
-        foreach ($rule in Get-ChildItem -Path "$ScriptDir\.cursor\rules\*.md") {
-            $ruleName = $rule.Name
-            $target = Join-Path $ProjectDir ".cursor\rules\$ruleName"
-            
-            if (-not (Test-Path $target)) {
-                Copy-Item -Path $rule.FullName -Destination $target -Force
-                Write-ColorOutput "  + Added: $ruleName" "Green"
-                $rulesAdded++
-            } else {
-                $sourceContent = Get-FileHash $rule.FullName -Algorithm MD5
-                $targetContent = Get-FileHash $target -Algorithm MD5
-                if ($sourceContent.Hash -ne $targetContent.Hash) {
-                    Backup-File $target | Out-Null
-                    Copy-Item -Path $rule.FullName -Destination $target -Force
-                    Write-ColorOutput "  ↑ Updated: $ruleName" "Cyan"
-                    $rulesUpdated++
-                }
-            }
-        }
-        
-        if ($rulesAdded -eq 0 -and $rulesUpdated -eq 0) {
-            Write-ColorOutput "  All rules up to date" "Green"
-        } else {
-            Write-ColorOutput "  $rulesAdded added, $rulesUpdated updated" "Green"
-        }
-    } elseif ($platform -eq "codex") {
-        New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".agents\skills") | Out-Null
-        $skillsAdded = 0
-        $skillsUpdated = 0
 
-        foreach ($skillDir in Get-ChildItem -Path "$ScriptDir\.agents\skills\*" -Directory) {
-            $skillName = $skillDir.Name
-            $targetDir = Join-Path $ProjectDir ".agents\skills\$skillName"
-            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+    # Detect all platforms present in this project
+    $platforms = Detect-Platform $ProjectDir
 
-            $skillFile = Join-Path $skillDir.FullName "SKILL.md"
-            if (Test-Path $skillFile) {
-                $target = Join-Path $targetDir "SKILL.md"
+    if ($platforms.Count -eq 0) {
+        Write-ColorOutput "No platform detected in $ProjectDir" "Yellow"
+        return $false
+    }
 
-                if (-not (Test-Path $target)) {
-                    Copy-Item -Path $skillFile -Destination $target -Force
-                    Write-ColorOutput "  + Added: $skillName/SKILL.md" "Green"
-                    $skillsAdded++
-                } else {
-                    $sourceContent = Get-FileHash $skillFile -Algorithm MD5
-                    $targetContent = Get-FileHash $target -Algorithm MD5
-                    if ($sourceContent.Hash -ne $targetContent.Hash) {
-                        Backup-File $target | Out-Null
-                        Copy-Item -Path $skillFile -Destination $target -Force
-                        Write-ColorOutput "  ↑ Updated: $skillName/SKILL.md" "Cyan"
-                        $skillsUpdated++
+    Write-ColorOutput "Detected platforms: $($platforms -join ', ')" "Cyan"
+    Write-Host ""
+
+    # ── Per-platform updates (loop) ──────────────────────────────
+    foreach ($plat in $platforms) {
+        Write-ColorOutput "Updating platform: $plat" "Blue"
+
+        switch ($plat) {
+            "claude" {
+                New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".claude\commands") | Out-Null
+                $skillsAdded = 0
+                $skillsUpdated = 0
+
+                foreach ($skill in Get-ChildItem -Path "$ScriptDir\.claude\commands\*.md") {
+                    $skillName = $skill.Name
+                    $target = Join-Path $ProjectDir ".claude\commands\$skillName"
+
+                    if (-not (Test-Path $target)) {
+                        Copy-Item -Path $skill.FullName -Destination $target -Force
+                        Write-ColorOutput "  + Added: $skillName" "Green"
+                        $skillsAdded++
+                    } else {
+                        $sourceContent = Get-FileHash $skill.FullName -Algorithm MD5
+                        $targetContent = Get-FileHash $target -Algorithm MD5
+                        if ($sourceContent.Hash -ne $targetContent.Hash) {
+                            Backup-File $target | Out-Null
+                            Copy-Item -Path $skill.FullName -Destination $target -Force
+                            Write-ColorOutput "  ^ Updated: $skillName" "Cyan"
+                            $skillsUpdated++
+                        }
                     }
                 }
-            }
-        }
 
-        # Copy/update AGENTS.md to project root
-        if (Test-Path "$ScriptDir\.agents\AGENTS.md") {
-            $agentsTarget = Join-Path $ProjectDir "AGENTS.md"
-            if (-not (Test-Path $agentsTarget)) {
-                Copy-Item -Path "$ScriptDir\.agents\AGENTS.md" -Destination $agentsTarget -Force
-                Write-ColorOutput "  + Added: AGENTS.md" "Green"
-            } else {
-                $sourceHash = (Get-FileHash "$ScriptDir\.agents\AGENTS.md" -Algorithm MD5).Hash
-                $targetHash = (Get-FileHash $agentsTarget -Algorithm MD5).Hash
-                if ($sourceHash -ne $targetHash) {
-                    Backup-File $agentsTarget | Out-Null
-                    Copy-Item -Path "$ScriptDir\.agents\AGENTS.md" -Destination $agentsTarget -Force
-                    Write-ColorOutput "  ↑ Updated: AGENTS.md" "Cyan"
+                if ($skillsAdded -eq 0 -and $skillsUpdated -eq 0) {
+                    Write-ColorOutput "  All skills up to date" "Green"
+                } else {
+                    Write-ColorOutput "  $skillsAdded added, $skillsUpdated updated" "Green"
+                }
+            }
+            "copilot" {
+                New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".copilot\custom-agents") | Out-Null
+                $agentsAdded = 0
+                $agentsUpdated = 0
+
+                foreach ($agent in Get-ChildItem -Path "$ScriptDir\.copilot\custom-agents\*.md") {
+                    $agentName = $agent.Name
+                    $target = Join-Path $ProjectDir ".copilot\custom-agents\$agentName"
+
+                    if (-not (Test-Path $target)) {
+                        Copy-Item -Path $agent.FullName -Destination $target -Force
+                        Write-ColorOutput "  + Added: $agentName" "Green"
+                        $agentsAdded++
+                    } else {
+                        $sourceContent = Get-FileHash $agent.FullName -Algorithm MD5
+                        $targetContent = Get-FileHash $target -Algorithm MD5
+                        if ($sourceContent.Hash -ne $targetContent.Hash) {
+                            Backup-File $target | Out-Null
+                            Copy-Item -Path $agent.FullName -Destination $target -Force
+                            Write-ColorOutput "  ^ Updated: $agentName" "Cyan"
+                            $agentsUpdated++
+                        }
+                    }
+                }
+
+                # Update helper and guides
+                if (Test-Path "$ScriptDir\.copilot\helper.sh") {
+                    Copy-Item -Path "$ScriptDir\.copilot\helper.sh" -Destination "$ProjectDir\.copilot\" -Force
+                }
+                if (Test-Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md") {
+                    Copy-Item -Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md" -Destination "$ProjectDir\.copilot\" -Force
+                }
+
+                if ($agentsAdded -eq 0 -and $agentsUpdated -eq 0) {
+                    Write-ColorOutput "  All agents up to date" "Green"
+                } else {
+                    Write-ColorOutput "  $agentsAdded added, $agentsUpdated updated" "Green"
+                }
+            }
+            "cursor" {
+                New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".cursor\rules") | Out-Null
+                $rulesAdded = 0
+                $rulesUpdated = 0
+
+                foreach ($rule in Get-ChildItem -Path "$ScriptDir\.cursor\rules\*.md") {
+                    $ruleName = $rule.Name
+                    $target = Join-Path $ProjectDir ".cursor\rules\$ruleName"
+
+                    if (-not (Test-Path $target)) {
+                        Copy-Item -Path $rule.FullName -Destination $target -Force
+                        Write-ColorOutput "  + Added: $ruleName" "Green"
+                        $rulesAdded++
+                    } else {
+                        $sourceContent = Get-FileHash $rule.FullName -Algorithm MD5
+                        $targetContent = Get-FileHash $target -Algorithm MD5
+                        if ($sourceContent.Hash -ne $targetContent.Hash) {
+                            Backup-File $target | Out-Null
+                            Copy-Item -Path $rule.FullName -Destination $target -Force
+                            Write-ColorOutput "  ^ Updated: $ruleName" "Cyan"
+                            $rulesUpdated++
+                        }
+                    }
+                }
+
+                if ($rulesAdded -eq 0 -and $rulesUpdated -eq 0) {
+                    Write-ColorOutput "  All rules up to date" "Green"
+                } else {
+                    Write-ColorOutput "  $rulesAdded added, $rulesUpdated updated" "Green"
+                }
+            }
+            "codex" {
+                New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".agents\skills") | Out-Null
+                $skillsAdded = 0
+                $skillsUpdated = 0
+
+                foreach ($skillDir in Get-ChildItem -Path "$ScriptDir\.agents\skills\*" -Directory) {
+                    $skillName = $skillDir.Name
+                    $targetDir = Join-Path $ProjectDir ".agents\skills\$skillName"
+                    New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+
+                    $skillFile = Join-Path $skillDir.FullName "SKILL.md"
+                    if (Test-Path $skillFile) {
+                        $target = Join-Path $targetDir "SKILL.md"
+
+                        if (-not (Test-Path $target)) {
+                            Copy-Item -Path $skillFile -Destination $target -Force
+                            Write-ColorOutput "  + Added: $skillName/SKILL.md" "Green"
+                            $skillsAdded++
+                        } else {
+                            $sourceContent = Get-FileHash $skillFile -Algorithm MD5
+                            $targetContent = Get-FileHash $target -Algorithm MD5
+                            if ($sourceContent.Hash -ne $targetContent.Hash) {
+                                Backup-File $target | Out-Null
+                                Copy-Item -Path $skillFile -Destination $target -Force
+                                Write-ColorOutput "  ^ Updated: $skillName/SKILL.md" "Cyan"
+                                $skillsUpdated++
+                            }
+                        }
+                    }
+                }
+
+                # Copy/update AGENTS.md to project root
+                if (Test-Path "$ScriptDir\.agents\AGENTS.md") {
+                    $agentsTarget = Join-Path $ProjectDir "AGENTS.md"
+                    if (-not (Test-Path $agentsTarget)) {
+                        Copy-Item -Path "$ScriptDir\.agents\AGENTS.md" -Destination $agentsTarget -Force
+                        Write-ColorOutput "  + Added: AGENTS.md" "Green"
+                    } else {
+                        $sourceHash = (Get-FileHash "$ScriptDir\.agents\AGENTS.md" -Algorithm MD5).Hash
+                        $targetHash = (Get-FileHash $agentsTarget -Algorithm MD5).Hash
+                        if ($sourceHash -ne $targetHash) {
+                            Backup-File $agentsTarget | Out-Null
+                            Copy-Item -Path "$ScriptDir\.agents\AGENTS.md" -Destination $agentsTarget -Force
+                            Write-ColorOutput "  ^ Updated: AGENTS.md" "Cyan"
+                        }
+                    }
+                }
+
+                if ($skillsAdded -eq 0 -and $skillsUpdated -eq 0) {
+                    Write-ColorOutput "  All skills up to date" "Green"
+                } else {
+                    Write-ColorOutput "  $skillsAdded added, $skillsUpdated updated" "Green"
                 }
             }
         }
 
-        if ($skillsAdded -eq 0 -and $skillsUpdated -eq 0) {
-            Write-ColorOutput "  All skills up to date" "Green"
-        } else {
-            Write-ColorOutput "  $skillsAdded added, $skillsUpdated updated" "Green"
-        }
+        Write-Host ""
     }
+
+    # ── Shared updates (once) ────────────────────────────────────
 
     # Update shared agents
     Write-Host ""
@@ -662,10 +698,12 @@ function Update-Project {
     Write-ColorOutput "Update complete!" "Green"
     Write-ColorOutput "═══════════════════════════════════════════════════════════" "Green"
     Write-Host ""
-    Write-ColorOutput "  Version: v$currentVersion → v$FrameworkVersion" "Cyan"
+    Write-ColorOutput "  Updated project: $ProjectDir" "Cyan"
+    Write-ColorOutput "  Platforms: $($platforms -join ', ')" "Cyan"
+    Write-ColorOutput "  Version: v$currentVersion -> v$FrameworkVersion" "Cyan"
     Write-ColorOutput "  Backup:  $backupDir" "Blue"
     Write-Host ""
-    
+
     return $true
 }
 

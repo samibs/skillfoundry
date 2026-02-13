@@ -65,66 +65,56 @@ is_valid_project() {
 
 get_project_version() {
     local project_dir="$1"
-    # Check all possible platform locations
-    local version_file=""
-    if [ -f "$project_dir/.claude/.framework-version" ]; then
-        version_file="$project_dir/.claude/.framework-version"
-    elif [ -f "$project_dir/.copilot/.framework-version" ]; then
-        version_file="$project_dir/.copilot/.framework-version"
-    elif [ -f "$project_dir/.cursor/.framework-version" ]; then
-        version_file="$project_dir/.cursor/.framework-version"
-    elif [ -f "$project_dir/.agents/.framework-version" ]; then
-        version_file="$project_dir/.agents/.framework-version"
-    fi
-    
-    if [ -n "$version_file" ] && [ -f "$version_file" ]; then
-        cat "$version_file"
-    else
-        echo "0.0.0.0"
-    fi
+    # Check all possible platform locations — they should all have the same version
+    local version_dirs=(".claude" ".copilot" ".cursor" ".agents")
+    for vdir in "${version_dirs[@]}"; do
+        if [ -f "$project_dir/$vdir/.framework-version" ]; then
+            cat "$project_dir/$vdir/.framework-version"
+            return 0
+        fi
+    done
+    echo "0.0.0.0"
 }
 
 set_project_version() {
     local project_dir="$1"
-    # Detect platform and set version accordingly
-    if [ -d "$project_dir/.claude" ]; then
-        mkdir -p "$project_dir/.claude"
-        echo "$FRAMEWORK_VERSION" > "$project_dir/.claude/.framework-version"
-        echo "$FRAMEWORK_DATE" > "$project_dir/.claude/.framework-updated"
-    elif [ -d "$project_dir/.copilot" ]; then
-        mkdir -p "$project_dir/.copilot"
-        echo "$FRAMEWORK_VERSION" > "$project_dir/.copilot/.framework-version"
-        echo "$FRAMEWORK_DATE" > "$project_dir/.copilot/.framework-updated"
-    elif [ -d "$project_dir/.cursor" ]; then
-        mkdir -p "$project_dir/.cursor"
-        echo "$FRAMEWORK_VERSION" > "$project_dir/.cursor/.framework-version"
-        echo "$FRAMEWORK_DATE" > "$project_dir/.cursor/.framework-updated"
-    elif [ -d "$project_dir/.agents" ]; then
-        mkdir -p "$project_dir/.agents"
-        echo "$FRAMEWORK_VERSION" > "$project_dir/.agents/.framework-version"
-        echo "$FRAMEWORK_DATE" > "$project_dir/.agents/.framework-updated"
-    else
-        # Default to .claude if no platform detected
+    local wrote_any=false
+    # Write version to ALL platform dirs that exist in this project
+    local platform_dirs=(".claude" ".copilot" ".cursor" ".agents")
+    for pdir in "${platform_dirs[@]}"; do
+        if [ -d "$project_dir/$pdir" ]; then
+            echo "$FRAMEWORK_VERSION" > "$project_dir/$pdir/.framework-version"
+            echo "$FRAMEWORK_DATE" > "$project_dir/$pdir/.framework-updated"
+            wrote_any=true
+        fi
+    done
+    # Fallback: if no platform dir exists, default to .claude
+    if [ "$wrote_any" = false ]; then
         mkdir -p "$project_dir/.claude"
         echo "$FRAMEWORK_VERSION" > "$project_dir/.claude/.framework-version"
         echo "$FRAMEWORK_DATE" > "$project_dir/.claude/.framework-updated"
     fi
 }
 
-# Detect project platform
+# Detect project platform(s) — returns ALL detected platforms (space-separated)
 detect_platform() {
     local project_dir="$1"
-    if [ -d "$project_dir/.claude" ]; then
-        echo "claude"
-    elif [ -d "$project_dir/.copilot" ]; then
-        echo "copilot"
-    elif [ -d "$project_dir/.cursor" ]; then
-        echo "cursor"
-    elif [ -d "$project_dir/.agents/skills" ]; then
-        echo "codex"
-    else
-        echo "unknown"
+    local platforms=""
+
+    if [ -d "$project_dir/.claude/commands" ]; then
+        platforms="${platforms:+$platforms }claude"
     fi
+    if [ -d "$project_dir/.copilot/custom-agents" ]; then
+        platforms="${platforms:+$platforms }copilot"
+    fi
+    if [ -d "$project_dir/.cursor/rules" ]; then
+        platforms="${platforms:+$platforms }cursor"
+    fi
+    if [ -d "$project_dir/.agents/skills" ]; then
+        platforms="${platforms:+$platforms }codex"
+    fi
+
+    echo "$platforms"
 }
 
 backup_file() {
@@ -297,7 +287,12 @@ list_projects() {
                 status="${YELLOW}[v$version → v$FRAMEWORK_VERSION]${NC}"
             fi
 
+            local proj_platforms
+            proj_platforms=$(detect_platform "$project_dir")
+            local proj_plat_display="${proj_platforms:-(none)}"
+            proj_plat_display=$(echo "$proj_plat_display" | tr ' ' ', ')
             echo -e "  $count. $project_dir $status"
+            echo -e "       Platforms: ${CYAN}$proj_plat_display${NC}"
         fi
     done < "$REGISTRY_FILE"
 
@@ -417,83 +412,98 @@ show_diff() {
         has_changes=true
     fi
 
-    # Check skills/rules/agents (platform-specific)
+    # Check skills/rules/agents (platform-specific — loop through ALL detected platforms)
     echo ""
-    local platform=$(detect_platform "$project_dir")
-    
-    if [ "$platform" = "claude" ]; then
-        echo -e "${BLUE}Claude skills comparison:${NC}"
-        for skill in "$SCRIPT_DIR/.claude/commands/"*.md; do
-            local skill_name=$(basename "$skill")
-            local project_skill="$project_dir/.claude/commands/$skill_name"
-            
-            if [ ! -f "$project_skill" ]; then
-                echo -e "  ${GREEN}+ $skill_name${NC} (new)"
-                has_changes=true
-            elif ! diff -q "$skill" "$project_skill" > /dev/null 2>&1; then
-                echo -e "  ${YELLOW}~ $skill_name${NC} (modified)"
-                has_changes=true
-            fi
-        done
-        
-        if [ -d "$project_dir/.claude/commands" ]; then
-            for project_skill in "$project_dir/.claude/commands/"*.md; do
-                if [ -f "$project_skill" ]; then
-                    local skill_name=$(basename "$project_skill")
-                    if [ ! -f "$SCRIPT_DIR/.claude/commands/$skill_name" ]; then
-                        echo -e "  ${RED}- $skill_name${NC} (will be kept, not in framework)"
-                    fi
-                fi
-            done
-        fi
-    elif [ "$platform" = "copilot" ]; then
-        echo -e "${BLUE}Copilot agents comparison:${NC}"
-        for agent in "$SCRIPT_DIR/.copilot/custom-agents/"*.md; do
-            local agent_name=$(basename "$agent")
-            local project_agent="$project_dir/.copilot/custom-agents/$agent_name"
-            
-            if [ ! -f "$project_agent" ]; then
-                echo -e "  ${GREEN}+ $agent_name${NC} (new)"
-                has_changes=true
-            elif ! diff -q "$agent" "$project_agent" > /dev/null 2>&1; then
-                echo -e "  ${YELLOW}~ $agent_name${NC} (modified)"
-                has_changes=true
-            fi
-        done
-    elif [ "$platform" = "cursor" ]; then
-        echo -e "${BLUE}Cursor rules comparison:${NC}"
-        for rule in "$SCRIPT_DIR/.cursor/rules/"*.md; do
-            local rule_name=$(basename "$rule")
-            local project_rule="$project_dir/.cursor/rules/$rule_name"
+    local platforms
+    platforms=$(detect_platform "$project_dir")
 
-            if [ ! -f "$project_rule" ]; then
-                echo -e "  ${GREEN}+ $rule_name${NC} (new)"
-                has_changes=true
-            elif ! diff -q "$rule" "$project_rule" > /dev/null 2>&1; then
-                echo -e "  ${YELLOW}~ $rule_name${NC} (modified)"
-                has_changes=true
-            fi
-        done
-    elif [ "$platform" = "codex" ]; then
-        echo -e "${BLUE}Codex skills comparison:${NC}"
-        for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
-            if [ -d "$skill_dir" ]; then
-                local skill_name=$(basename "$skill_dir")
-                local source_skill="$skill_dir/SKILL.md"
-                local project_skill="$project_dir/.agents/skills/$skill_name/SKILL.md"
-
-                if [ -f "$source_skill" ]; then
-                    if [ ! -f "$project_skill" ]; then
-                        echo -e "  ${GREEN}+ $skill_name/SKILL.md${NC} (new)"
-                        has_changes=true
-                    elif ! diff -q "$source_skill" "$project_skill" > /dev/null 2>&1; then
-                        echo -e "  ${YELLOW}~ $skill_name/SKILL.md${NC} (modified)"
-                        has_changes=true
-                    fi
-                fi
-            fi
-        done
+    if [ -z "$platforms" ]; then
+        echo -e "${YELLOW}No platforms detected${NC}"
+    else
+        echo -e "${BLUE}Detected platforms: ${CYAN}$platforms${NC}"
     fi
+
+    for plat in $platforms; do
+        echo ""
+        case "$plat" in
+            claude)
+                echo -e "${BLUE}Claude skills comparison:${NC}"
+                for skill in "$SCRIPT_DIR/.claude/commands/"*.md; do
+                    local skill_name=$(basename "$skill")
+                    local project_skill="$project_dir/.claude/commands/$skill_name"
+
+                    if [ ! -f "$project_skill" ]; then
+                        echo -e "  ${GREEN}+ $skill_name${NC} (new)"
+                        has_changes=true
+                    elif ! diff -q "$skill" "$project_skill" > /dev/null 2>&1; then
+                        echo -e "  ${YELLOW}~ $skill_name${NC} (modified)"
+                        has_changes=true
+                    fi
+                done
+
+                if [ -d "$project_dir/.claude/commands" ]; then
+                    for project_skill in "$project_dir/.claude/commands/"*.md; do
+                        if [ -f "$project_skill" ]; then
+                            local skill_name=$(basename "$project_skill")
+                            if [ ! -f "$SCRIPT_DIR/.claude/commands/$skill_name" ]; then
+                                echo -e "  ${RED}- $skill_name${NC} (will be kept, not in framework)"
+                            fi
+                        fi
+                    done
+                fi
+                ;;
+            copilot)
+                echo -e "${BLUE}Copilot agents comparison:${NC}"
+                for agent in "$SCRIPT_DIR/.copilot/custom-agents/"*.md; do
+                    local agent_name=$(basename "$agent")
+                    local project_agent="$project_dir/.copilot/custom-agents/$agent_name"
+
+                    if [ ! -f "$project_agent" ]; then
+                        echo -e "  ${GREEN}+ $agent_name${NC} (new)"
+                        has_changes=true
+                    elif ! diff -q "$agent" "$project_agent" > /dev/null 2>&1; then
+                        echo -e "  ${YELLOW}~ $agent_name${NC} (modified)"
+                        has_changes=true
+                    fi
+                done
+                ;;
+            cursor)
+                echo -e "${BLUE}Cursor rules comparison:${NC}"
+                for rule in "$SCRIPT_DIR/.cursor/rules/"*.md; do
+                    local rule_name=$(basename "$rule")
+                    local project_rule="$project_dir/.cursor/rules/$rule_name"
+
+                    if [ ! -f "$project_rule" ]; then
+                        echo -e "  ${GREEN}+ $rule_name${NC} (new)"
+                        has_changes=true
+                    elif ! diff -q "$rule" "$project_rule" > /dev/null 2>&1; then
+                        echo -e "  ${YELLOW}~ $rule_name${NC} (modified)"
+                        has_changes=true
+                    fi
+                done
+                ;;
+            codex)
+                echo -e "${BLUE}Codex skills comparison:${NC}"
+                for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
+                    if [ -d "$skill_dir" ]; then
+                        local skill_name=$(basename "$skill_dir")
+                        local source_skill="$skill_dir/SKILL.md"
+                        local project_skill="$project_dir/.agents/skills/$skill_name/SKILL.md"
+
+                        if [ -f "$source_skill" ]; then
+                            if [ ! -f "$project_skill" ]; then
+                                echo -e "  ${GREEN}+ $skill_name/SKILL.md${NC} (new)"
+                                has_changes=true
+                            elif ! diff -q "$source_skill" "$project_skill" > /dev/null 2>&1; then
+                                echo -e "  ${YELLOW}~ $skill_name/SKILL.md${NC} (modified)"
+                                has_changes=true
+                            fi
+                        fi
+                    fi
+                done
+                ;;
+        esac
+    done
 
     # Check agents
     echo ""
@@ -575,156 +585,171 @@ update_project() {
     mkdir -p "$backup_dir"
 
     # ─────────────────────────────────────────────────────────────
-    # Update Skills
+    # Detect ALL platforms in this project
     # ─────────────────────────────────────────────────────────────
+    local platforms
+    platforms=$(detect_platform "$project_dir")
+
+    if [ -z "$platforms" ]; then
+        echo -e "${RED}No platform detected in $project_dir${NC}"
+        return 1
+    fi
+
+    echo -e "  Detected platforms: ${CYAN}$platforms${NC}"
+
     # ─────────────────────────────────────────────────────────────
-    # Update Skills/Rules/Agents (platform-specific)
+    # Update Skills/Rules/Agents (per-platform loop)
     # ─────────────────────────────────────────────────────────────
-    echo ""
-    local platform=$(detect_platform "$project_dir")
-    
-    if [ "$platform" = "claude" ]; then
-        echo -e "${YELLOW}Updating Claude skills...${NC}"
-        mkdir -p "$project_dir/.claude/commands"
-        
-        local skills_added=0
-        local skills_updated=0
-        
-        for skill in "$SCRIPT_DIR/.claude/commands/"*.md; do
-            if [ -f "$skill" ]; then
-                local skill_name=$(basename "$skill")
-                local target="$project_dir/.claude/commands/$skill_name"
-                
-                if [ ! -f "$target" ]; then
-                    cp "$skill" "$target"
-                    echo -e "  ${GREEN}+ Added: $skill_name${NC}"
-                    skills_added=$((skills_added + 1))
-                elif ! diff -q "$skill" "$target" > /dev/null 2>&1; then
-                    cp "$target" "$backup_dir/$skill_name"
-                    cp "$skill" "$target"
-                    echo -e "  ${CYAN}↑ Updated: $skill_name${NC}"
-                    skills_updated=$((skills_updated + 1))
-                fi
-            fi
-        done
-        
-        if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
-            echo -e "  ${GREEN}All skills up to date${NC}"
-        else
-            echo -e "  ${GREEN}$skills_added added, $skills_updated updated${NC}"
-        fi
-    elif [ "$platform" = "copilot" ]; then
-        echo -e "${YELLOW}Updating Copilot agents...${NC}"
-        mkdir -p "$project_dir/.copilot/custom-agents"
-        
-        local agents_added=0
-        local agents_updated=0
-        
-        for agent in "$SCRIPT_DIR/.copilot/custom-agents/"*.md; do
-            if [ -f "$agent" ]; then
-                local agent_name=$(basename "$agent")
-                local target="$project_dir/.copilot/custom-agents/$agent_name"
-                
-                if [ ! -f "$target" ]; then
-                    cp "$agent" "$target"
-                    echo -e "  ${GREEN}+ Added: $agent_name${NC}"
-                    agents_added=$((agents_added + 1))
-                elif ! diff -q "$agent" "$target" > /dev/null 2>&1; then
-                    cp "$target" "$backup_dir/$agent_name"
-                    cp "$agent" "$target"
-                    echo -e "  ${CYAN}↑ Updated: $agent_name${NC}"
-                    agents_updated=$((agents_updated + 1))
-                fi
-            fi
-        done
-        
-        # Update helper and workflow guide
-        [ -f "$SCRIPT_DIR/.copilot/helper.sh" ] && cp "$SCRIPT_DIR/.copilot/helper.sh" "$project_dir/.copilot/" && chmod +x "$project_dir/.copilot/helper.sh"
-        [ -f "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" ] && cp "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" "$project_dir/.copilot/"
-        
-        if [ $agents_added -eq 0 ] && [ $agents_updated -eq 0 ]; then
-            echo -e "  ${GREEN}All agents up to date${NC}"
-        else
-            echo -e "  ${GREEN}$agents_added added, $agents_updated updated${NC}"
-        fi
-    elif [ "$platform" = "cursor" ]; then
-        echo -e "${YELLOW}Updating Cursor rules...${NC}"
-        mkdir -p "$project_dir/.cursor/rules"
-        
-        local rules_added=0
-        local rules_updated=0
-        
-        for rule in "$SCRIPT_DIR/.cursor/rules/"*.md; do
-            if [ -f "$rule" ]; then
-                local rule_name=$(basename "$rule")
-                local target="$project_dir/.cursor/rules/$rule_name"
-                
-                if [ ! -f "$target" ]; then
-                    cp "$rule" "$target"
-                    echo -e "  ${GREEN}+ Added: $rule_name${NC}"
-                    rules_added=$((rules_added + 1))
-                elif ! diff -q "$rule" "$target" > /dev/null 2>&1; then
-                    cp "$target" "$backup_dir/$rule_name"
-                    cp "$rule" "$target"
-                    echo -e "  ${CYAN}↑ Updated: $rule_name${NC}"
-                    rules_updated=$((rules_updated + 1))
-                fi
-            fi
-        done
-        
-        if [ $rules_added -eq 0 ] && [ $rules_updated -eq 0 ]; then
-            echo -e "  ${GREEN}All rules up to date${NC}"
-        else
-            echo -e "  ${GREEN}$rules_added added, $rules_updated updated${NC}"
-        fi
-    elif [ "$platform" = "codex" ]; then
-        echo -e "${YELLOW}Updating Codex skills...${NC}"
-        mkdir -p "$project_dir/.agents/skills"
+    for plat in $platforms; do
+        echo ""
+        case "$plat" in
+            claude)
+                echo -e "${YELLOW}Updating Claude skills...${NC}"
+                mkdir -p "$project_dir/.claude/commands"
 
-        local skills_added=0
-        local skills_updated=0
+                local skills_added=0
+                local skills_updated=0
 
-        for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
-            if [ -d "$skill_dir" ]; then
-                local skill_name=$(basename "$skill_dir")
-                local source_skill="$skill_dir/SKILL.md"
-                local target_dir="$project_dir/.agents/skills/$skill_name"
-                local target="$target_dir/SKILL.md"
+                for skill in "$SCRIPT_DIR/.claude/commands/"*.md; do
+                    if [ -f "$skill" ]; then
+                        local skill_name=$(basename "$skill")
+                        local target="$project_dir/.claude/commands/$skill_name"
 
-                if [ -f "$source_skill" ]; then
-                    mkdir -p "$target_dir"
-                    if [ ! -f "$target" ]; then
-                        cp "$source_skill" "$target"
-                        echo -e "  ${GREEN}+ Added: $skill_name/SKILL.md${NC}"
-                        skills_added=$((skills_added + 1))
-                    elif ! diff -q "$source_skill" "$target" > /dev/null 2>&1; then
-                        cp "$target" "$backup_dir/${skill_name}_SKILL.md"
-                        cp "$source_skill" "$target"
-                        echo -e "  ${CYAN}↑ Updated: $skill_name/SKILL.md${NC}"
-                        skills_updated=$((skills_updated + 1))
+                        if [ ! -f "$target" ]; then
+                            cp "$skill" "$target"
+                            echo -e "  ${GREEN}+ Added: $skill_name${NC}"
+                            skills_added=$((skills_added + 1))
+                        elif ! diff -q "$skill" "$target" > /dev/null 2>&1; then
+                            cp "$target" "$backup_dir/$skill_name"
+                            cp "$skill" "$target"
+                            echo -e "  ${CYAN}↑ Updated: $skill_name${NC}"
+                            skills_updated=$((skills_updated + 1))
+                        fi
+                    fi
+                done
+
+                if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
+                    echo -e "  ${GREEN}All skills up to date${NC}"
+                else
+                    echo -e "  ${GREEN}$skills_added added, $skills_updated updated${NC}"
+                fi
+                ;;
+            copilot)
+                echo -e "${YELLOW}Updating Copilot agents...${NC}"
+                mkdir -p "$project_dir/.copilot/custom-agents"
+
+                local agents_added=0
+                local agents_updated=0
+
+                for agent in "$SCRIPT_DIR/.copilot/custom-agents/"*.md; do
+                    if [ -f "$agent" ]; then
+                        local agent_name=$(basename "$agent")
+                        local target="$project_dir/.copilot/custom-agents/$agent_name"
+
+                        if [ ! -f "$target" ]; then
+                            cp "$agent" "$target"
+                            echo -e "  ${GREEN}+ Added: $agent_name${NC}"
+                            agents_added=$((agents_added + 1))
+                        elif ! diff -q "$agent" "$target" > /dev/null 2>&1; then
+                            cp "$target" "$backup_dir/$agent_name"
+                            cp "$agent" "$target"
+                            echo -e "  ${CYAN}↑ Updated: $agent_name${NC}"
+                            agents_updated=$((agents_updated + 1))
+                        fi
+                    fi
+                done
+
+                # Update helper and workflow guide
+                [ -f "$SCRIPT_DIR/.copilot/helper.sh" ] && cp "$SCRIPT_DIR/.copilot/helper.sh" "$project_dir/.copilot/" && chmod +x "$project_dir/.copilot/helper.sh"
+                [ -f "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" ] && cp "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" "$project_dir/.copilot/"
+
+                if [ $agents_added -eq 0 ] && [ $agents_updated -eq 0 ]; then
+                    echo -e "  ${GREEN}All agents up to date${NC}"
+                else
+                    echo -e "  ${GREEN}$agents_added added, $agents_updated updated${NC}"
+                fi
+                ;;
+            cursor)
+                echo -e "${YELLOW}Updating Cursor rules...${NC}"
+                mkdir -p "$project_dir/.cursor/rules"
+
+                local rules_added=0
+                local rules_updated=0
+
+                for rule in "$SCRIPT_DIR/.cursor/rules/"*.md; do
+                    if [ -f "$rule" ]; then
+                        local rule_name=$(basename "$rule")
+                        local target="$project_dir/.cursor/rules/$rule_name"
+
+                        if [ ! -f "$target" ]; then
+                            cp "$rule" "$target"
+                            echo -e "  ${GREEN}+ Added: $rule_name${NC}"
+                            rules_added=$((rules_added + 1))
+                        elif ! diff -q "$rule" "$target" > /dev/null 2>&1; then
+                            cp "$target" "$backup_dir/$rule_name"
+                            cp "$rule" "$target"
+                            echo -e "  ${CYAN}↑ Updated: $rule_name${NC}"
+                            rules_updated=$((rules_updated + 1))
+                        fi
+                    fi
+                done
+
+                if [ $rules_added -eq 0 ] && [ $rules_updated -eq 0 ]; then
+                    echo -e "  ${GREEN}All rules up to date${NC}"
+                else
+                    echo -e "  ${GREEN}$rules_added added, $rules_updated updated${NC}"
+                fi
+                ;;
+            codex)
+                echo -e "${YELLOW}Updating Codex skills...${NC}"
+                mkdir -p "$project_dir/.agents/skills"
+
+                local skills_added=0
+                local skills_updated=0
+
+                for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
+                    if [ -d "$skill_dir" ]; then
+                        local skill_name=$(basename "$skill_dir")
+                        local source_skill="$skill_dir/SKILL.md"
+                        local target_dir="$project_dir/.agents/skills/$skill_name"
+                        local target="$target_dir/SKILL.md"
+
+                        if [ -f "$source_skill" ]; then
+                            mkdir -p "$target_dir"
+                            if [ ! -f "$target" ]; then
+                                cp "$source_skill" "$target"
+                                echo -e "  ${GREEN}+ Added: $skill_name/SKILL.md${NC}"
+                                skills_added=$((skills_added + 1))
+                            elif ! diff -q "$source_skill" "$target" > /dev/null 2>&1; then
+                                cp "$target" "$backup_dir/${skill_name}_SKILL.md"
+                                cp "$source_skill" "$target"
+                                echo -e "  ${CYAN}↑ Updated: $skill_name/SKILL.md${NC}"
+                                skills_updated=$((skills_updated + 1))
+                            fi
+                        fi
+                    fi
+                done
+
+                # Copy/update AGENTS.md to project root
+                if [ -f "$SCRIPT_DIR/AGENTS.md" ]; then
+                    if [ ! -f "$project_dir/AGENTS.md" ]; then
+                        cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
+                        echo -e "  ${GREEN}+ Added: AGENTS.md${NC}"
+                    elif ! diff -q "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md" > /dev/null 2>&1; then
+                        cp "$project_dir/AGENTS.md" "$backup_dir/AGENTS.md"
+                        cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
+                        echo -e "  ${CYAN}↑ Updated: AGENTS.md${NC}"
                     fi
                 fi
-            fi
-        done
 
-        # Copy/update AGENTS.md to project root
-        if [ -f "$SCRIPT_DIR/AGENTS.md" ]; then
-            if [ ! -f "$project_dir/AGENTS.md" ]; then
-                cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
-                echo -e "  ${GREEN}+ Added: AGENTS.md${NC}"
-            elif ! diff -q "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md" > /dev/null 2>&1; then
-                cp "$project_dir/AGENTS.md" "$backup_dir/AGENTS.md"
-                cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
-                echo -e "  ${CYAN}↑ Updated: AGENTS.md${NC}"
-            fi
-        fi
-
-        if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
-            echo -e "  ${GREEN}All skills up to date${NC}"
-        else
-            echo -e "  ${GREEN}$skills_added added, $skills_updated updated${NC}"
-        fi
-    fi
+                if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
+                    echo -e "  ${GREEN}All skills up to date${NC}"
+                else
+                    echo -e "  ${GREEN}$skills_added added, $skills_updated updated${NC}"
+                fi
+                ;;
+        esac
+    done
 
     # ─────────────────────────────────────────────────────────────
     # Update Agents
@@ -928,10 +953,9 @@ update_project() {
         echo -e "  ${CYAN}↑ Removed: bpsbs.md (covered by CLAUDE.md + global rules)${NC}"
     fi
 
-    # Update Copilot files if platform is copilot
-    if [ -f "$project_dir/.copilot/.framework-platform" ]; then
-        local platform=$(cat "$project_dir/.copilot/.framework-platform")
-        if [ "$platform" = "copilot" ]; then
+    # Update extra Copilot files if copilot is among the detected platforms
+    if echo "$platforms" | grep -qw "copilot"; then
+        if [ -f "$project_dir/.copilot/.framework-platform" ]; then
             # Update security-scanner agent
             if [ -f "$SCRIPT_DIR/.copilot/custom-agents/security-scanner.md" ]; then
                 mkdir -p "$project_dir/.copilot/custom-agents"
@@ -943,7 +967,7 @@ update_project() {
                     echo -e "  ${CYAN}↑ Updated: security-scanner agent${NC}"
                 fi
             fi
-            
+
             # Update helper and guides
             [ -f "$SCRIPT_DIR/.copilot/helper.sh" ] && cp "$SCRIPT_DIR/.copilot/helper.sh" "$project_dir/.copilot/helper.sh" && chmod +x "$project_dir/.copilot/helper.sh"
             [ -f "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" ] && cp "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" "$project_dir/.copilot/WORKFLOW-GUIDE.md"
@@ -985,8 +1009,13 @@ update_project() {
     echo -e "${GREEN}Update complete!${NC}"
     echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo -e "  Version: ${CYAN}v$current_version → v$FRAMEWORK_VERSION${NC}"
-    echo -e "  Backup:  ${BLUE}$backup_dir${NC}"
+    echo -e "  Updated project: ${BLUE}$project_dir${NC}"
+    # Format platforms as comma-separated for display
+    local platforms_display
+    platforms_display=$(echo "$platforms" | tr ' ' ', ')
+    echo -e "  Platforms: ${CYAN}$platforms_display${NC}"
+    echo -e "  Version:   ${CYAN}v$current_version → v$FRAMEWORK_VERSION${NC}"
+    echo -e "  Backup:    ${BLUE}$backup_dir${NC}"
     echo ""
 }
 
