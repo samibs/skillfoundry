@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.14] - 2026-02-13
+
+### Added
+- **OpenAI Codex platform support** — 4th platform with native Skills integration
+- **60 Codex Skills** — `.agents/skills/*/SKILL.md` generated from agent sources + standalone commands
+- **AGENTS.md** — Root-level Codex always-on context (framework overview, skill index)
+- **Sync engine 4-platform support** — `sync-platforms.sh` now generates Claude, Copilot, Cursor, and Codex files
+- **Codex SKILL.md format** — YAML frontmatter with `name` and `description` for implicit activation
+- **Anvil skill scripts** — Symlinked `scripts/anvil.sh` for native Codex execution
+
+### Changed
+- Platform sync now generates 4 x agents files (was 3 x)
+- Install scripts detect and support Codex CLI (`codex` command)
+- Companion panel recognizes Codex platform
+- `sync-platforms.sh list` shows 4-column status `[C|P|R|X]`
+- Documentation updated for quad-platform support
+
+---
+
 ## [1.9.0.13] - 2026-02-09
 
 ### Added — The Anvil (6-Tier Quality Gate System)
@@ -1598,6 +1617,7 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 
 | Version | Date | Focus |
 |---------|------|-------|
+| 1.9.0.14 | 2026-02-13 | OpenAI Codex platform support: 4th platform, 60 Codex Skills, AGENTS.md, quad-platform sync engine |
 | 1.9.0.13 | 2026-02-09 | The Anvil: 6-tier quality gate (shell pre-flight, canary, self-adversarial, scope, contract, shadow) |
 | 1.9.0.5 | 2026-02-08 | Knowledge Hub: git-based distribution, cross-machine scratchpad/knowledge sync |
 | 1.9.0.4 | 2026-02-08 | Persistent scratchpad: cross-platform session continuity (Claude/Copilot/Cursor) |

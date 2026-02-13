@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Platform Sync Engine - Generate platform command files from agent source files
-# Generates .claude/commands/, .copilot/custom-agents/, .cursor/rules/ from agents/*.md
+# Generates .claude/commands/, .copilot/custom-agents/, .cursor/rules/, .agents/skills/ from agents/*.md
 #
 # This script supersedes convert-to-copilot.sh by generating ALL platform files
 # directly from agent source definitions.
@@ -36,6 +36,7 @@ AGENTS_DIR="$FRAMEWORK_DIR/agents"
 CLAUDE_DIR="$FRAMEWORK_DIR/.claude/commands"
 COPILOT_DIR="$FRAMEWORK_DIR/.copilot/custom-agents"
 CURSOR_DIR="$FRAMEWORK_DIR/.cursor/rules"
+CODEX_DIR="$FRAMEWORK_DIR/.agents/skills"
 
 # Colors
 RED='\033[0;31m'
@@ -85,11 +86,12 @@ show_help() {
     echo "  Claude Code    .claude/commands/{command}.md"
     echo "  Copilot CLI    .copilot/custom-agents/{command}.md"
     echo "  Cursor         .cursor/rules/{command}.md"
+    echo "  OpenAI Codex   .agents/skills/{command}/SKILL.md"
     echo ""
     echo "WORKFLOW:"
     echo "  1. Create agents/my-agent.md with command: field in YAML frontmatter"
     echo "  2. Run: ./scripts/sync-platforms.sh sync my-agent"
-    echo "  3. All 3 platform files are generated automatically"
+    echo "  3. All 4 platform files are generated automatically"
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -264,6 +266,48 @@ generate_cursor_content() {
     generate_claude_content "$1"
 }
 
+# Generate OpenAI Codex SKILL.md content
+# Usage: generate_codex_content <agent_file>
+generate_codex_content() {
+    local agent_file="$1"
+    local cmd
+    cmd=$(extract_frontmatter_field "$agent_file" "command" 2>/dev/null || echo "")
+    local raw_desc
+    raw_desc=$(extract_frontmatter_field "$agent_file" "description" 2>/dev/null || echo "")
+    local description
+    description=$(clean_description "$raw_desc")
+
+    # Fallback description if empty
+    if [ -z "$description" ]; then
+        description="Use this skill for the ${cmd} workflow."
+    fi
+
+    # SKILL.md frontmatter
+    printf -- '---\nname: %s\ndescription: >-\n  %s\n---\n\n' "$cmd" "$description"
+
+    # Body: same transformation as Claude
+    generate_claude_content "$agent_file"
+}
+
+# Generate Codex SKILL.md from a standalone command file (no backing agent)
+# Usage: generate_codex_standalone_content <command_file>
+generate_codex_standalone_content() {
+    local cmd_file="$1"
+    local cmd_name
+    cmd_name=$(basename "$cmd_file" .md)
+
+    # Extract first heading as description basis
+    local first_line
+    first_line=$(grep -m1 '^#' "$cmd_file" 2>/dev/null | sed 's/^#* *//' || echo "")
+    local description="${first_line:-Use this skill for the ${cmd_name} workflow.}"
+
+    # SKILL.md frontmatter
+    printf -- '---\nname: %s\ndescription: >-\n  %s\n---\n\n' "$cmd_name" "$description"
+
+    # Body: use the Claude command file content directly
+    cat "$cmd_file"
+}
+
 # ═══════════════════════════════════════════════════════════════
 # AGENT DISCOVERY
 # ═══════════════════════════════════════════════════════════════
@@ -323,7 +367,7 @@ find_agent_file() {
 # SYNC COMMAND
 # ═══════════════════════════════════════════════════════════════
 
-# Sync a single agent to all 3 platforms
+# Sync a single agent to all 4 platforms
 # Usage: sync_agent <agent_file>
 sync_agent() {
     local agent_file="$1"
@@ -345,11 +389,14 @@ sync_agent() {
     local claude_file="$CLAUDE_DIR/${cmd}.md"
     local copilot_file="$COPILOT_DIR/${cmd}.md"
     local cursor_file="$CURSOR_DIR/${cmd}.md"
+    local codex_dir="$CODEX_DIR/${cmd}"
+    local codex_file="$codex_dir/SKILL.md"
 
     if [ "$DRY_RUN" = true ]; then
         echo -e "       ${YELLOW}[dry-run]${NC} Would write: $claude_file"
         echo -e "       ${YELLOW}[dry-run]${NC} Would write: $copilot_file"
         echo -e "       ${YELLOW}[dry-run]${NC} Would write: $cursor_file"
+        echo -e "       ${YELLOW}[dry-run]${NC} Would write: $codex_file"
     else
         # Generate Claude Code command
         generate_claude_content "$agent_file" > "$claude_file"
@@ -362,6 +409,11 @@ sync_agent() {
         # Generate Cursor rule
         generate_cursor_content "$agent_file" > "$cursor_file"
         echo -e "       ${GREEN}wrote${NC} $cursor_file"
+
+        # Generate Codex Skill
+        mkdir -p "$codex_dir"
+        generate_codex_content "$agent_file" > "$codex_file"
+        echo -e "       ${GREEN}wrote${NC} $codex_file"
     fi
 
     SYNCED=$((SYNCED + 1))
@@ -396,15 +448,51 @@ cmd_sync() {
     fi
 
     # Ensure output directories exist
-    mkdir -p "$CLAUDE_DIR" "$COPILOT_DIR" "$CURSOR_DIR"
+    mkdir -p "$CLAUDE_DIR" "$COPILOT_DIR" "$CURSOR_DIR" "$CODEX_DIR"
 
     if [ "$target" = "ALL" ]; then
-        echo -e "${BOLD}Syncing all agents to platforms...${NC}"
+        echo -e "${BOLD}Syncing all agents to 4 platforms...${NC}"
         echo ""
 
         for agent_file in $(get_syncable_agents); do
             sync_agent "$agent_file"
         done
+
+        # Sync standalone commands to Codex (commands without backing agents)
+        echo ""
+        echo -e "${BOLD}Syncing standalone commands to Codex...${NC}"
+        echo ""
+        local standalone_count=0
+        for file in "$CLAUDE_DIR"/*.md; do
+            local cmd_name
+            cmd_name=$(basename "$file" .md)
+
+            # Check if this command has a backing agent
+            local has_agent=false
+            for agent_file in "$AGENTS_DIR"/*.md; do
+                [[ "$(basename "$agent_file")" == _* ]] && continue
+                local agent_cmd
+                agent_cmd=$(extract_frontmatter_field "$agent_file" "command" 2>/dev/null || echo "")
+                if [ "$agent_cmd" = "$cmd_name" ]; then
+                    has_agent=true
+                    break
+                fi
+            done
+
+            if [ "$has_agent" = false ]; then
+                local codex_dir="$CODEX_DIR/${cmd_name}"
+                local codex_file="$codex_dir/SKILL.md"
+                if [ "$DRY_RUN" = true ]; then
+                    echo -e "  ${YELLOW}[dry-run]${NC} Would write: $codex_file"
+                else
+                    mkdir -p "$codex_dir"
+                    generate_codex_standalone_content "$file" > "$codex_file"
+                    echo -e "  ${GREEN}wrote${NC} $codex_file (standalone)"
+                fi
+                standalone_count=$((standalone_count + 1))
+            fi
+        done
+        echo -e "  ${CYAN}$standalone_count${NC} standalone skills generated"
     else
         local agent_file
         if ! agent_file=$(find_agent_file "$target"); then
@@ -424,7 +512,7 @@ cmd_sync() {
     # Summary
     echo ""
     echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "Synced:  ${GREEN}$SYNCED${NC} agents (× 3 platforms = $((SYNCED * 3)) files)"
+    echo -e "Synced:  ${GREEN}$SYNCED${NC} agents (× 4 platforms = $((SYNCED * 4)) files)"
     echo -e "Skipped: ${YELLOW}$SKIPPED${NC}"
     if [ $ERRORS -gt 0 ]; then
         echo -e "Errors:  ${RED}$ERRORS${NC}"
@@ -517,6 +605,24 @@ cmd_check() {
             all_ok=false
         fi
 
+        # Check Codex
+        local codex_file="$CODEX_DIR/${cmd}/SKILL.md"
+        if [ -f "$codex_file" ]; then
+            local expected
+            expected=$(generate_codex_content "$agent_file")
+            local actual
+            actual=$(cat "$codex_file")
+            if [ "$expected" = "$actual" ]; then
+                status_parts="${status_parts} ${GREEN}codex:ok${NC}"
+            else
+                status_parts="${status_parts} ${YELLOW}codex:drift${NC}"
+                all_ok=false
+            fi
+        else
+            status_parts="${status_parts} ${RED}codex:MISSING${NC}"
+            all_ok=false
+        fi
+
         if [ "$all_ok" = true ]; then
             ok=$((ok + 1))
         elif echo -e "$status_parts" | grep -q "MISSING"; then
@@ -579,12 +685,13 @@ cmd_list() {
             skipped_count=$((skipped_count + 1))
         else
             # Check platform file existence
-            local claude_ok copilot_ok cursor_ok
+            local claude_ok copilot_ok cursor_ok codex_ok
             [ -f "$CLAUDE_DIR/${cmd}.md" ] && claude_ok="${GREEN}C${NC}" || claude_ok="${RED}C${NC}"
             [ -f "$COPILOT_DIR/${cmd}.md" ] && copilot_ok="${GREEN}P${NC}" || copilot_ok="${RED}P${NC}"
             [ -f "$CURSOR_DIR/${cmd}.md" ] && cursor_ok="${GREEN}R${NC}" || cursor_ok="${RED}R${NC}"
+            [ -f "$CODEX_DIR/${cmd}/SKILL.md" ] && codex_ok="${GREEN}X${NC}" || codex_ok="${RED}X${NC}"
 
-            printf "  %-42s → /%-16s [%b|%b|%b]\n" "$agent_name" "$cmd" "$claude_ok" "$copilot_ok" "$cursor_ok"
+            printf "  %-42s → /%-16s [%b|%b|%b|%b]\n" "$agent_name" "$cmd" "$claude_ok" "$copilot_ok" "$cursor_ok" "$codex_ok"
             mapped=$((mapped + 1))
         fi
     done
@@ -622,7 +729,7 @@ cmd_list() {
     echo -e "Skipped:    ${YELLOW}$skipped_count${NC} (no command)"
     echo -e "Standalone: ${CYAN}$standalone${NC} commands (not synced)"
     echo ""
-    echo -e "Legend: [${GREEN}C${NC}|${GREEN}P${NC}|${GREEN}R${NC}] = Claude | coPilot | cuRsor"
+    echo -e "Legend: [${GREEN}C${NC}|${GREEN}P${NC}|${GREEN}R${NC}|${GREEN}X${NC}] = Claude | coPilot | cuRsor | codeX"
 }
 
 # ═══════════════════════════════════════════════════════════════
@@ -666,6 +773,7 @@ cmd_diff() {
     generate_claude_content "$agent_file" > "$tmpdir/claude.md"
     generate_copilot_content "$agent_file" > "$tmpdir/copilot.md"
     generate_cursor_content "$agent_file" > "$tmpdir/cursor.md"
+    generate_codex_content "$agent_file" > "$tmpdir/codex.md"
 
     local has_diff=false
 
@@ -701,6 +809,20 @@ cmd_diff() {
     echo -e "${BOLD}Cursor${NC} (.cursor/rules/${cmd}.md):"
     if [ -f "$CURSOR_DIR/${cmd}.md" ]; then
         if diff -u "$CURSOR_DIR/${cmd}.md" "$tmpdir/cursor.md" --label "existing" --label "generated" 2>/dev/null; then
+            echo -e "  ${GREEN}In sync${NC}"
+        else
+            has_diff=true
+        fi
+    else
+        echo -e "  ${RED}File does not exist${NC}"
+        has_diff=true
+    fi
+    echo ""
+
+    # Diff Codex
+    echo -e "${BOLD}OpenAI Codex${NC} (.agents/skills/${cmd}/SKILL.md):"
+    if [ -f "$CODEX_DIR/${cmd}/SKILL.md" ]; then
+        if diff -u "$CODEX_DIR/${cmd}/SKILL.md" "$tmpdir/codex.md" --label "existing" --label "generated" 2>/dev/null; then
             echo -e "  ${GREEN}In sync${NC}"
         else
             has_diff=true

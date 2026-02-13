@@ -159,6 +159,34 @@ async function autoRemediate(violation: Violation): Promise<Result> {
 ```
 
 
+## Oscillation Detection (Bidirectional Iteration)
+
+> Adapted from NASAB Pillar 9. See: `agents/_bidirectional-iteration.md`
+
+After the **3rd retry** for the same violation type, check for oscillation:
+
+```
+Oscillation Pattern:
+  Fix for violation A → causes violation B
+  Fix for violation B → re-causes violation A
+  → OSCILLATION DETECTED — stop retrying
+```
+
+**On detection:**
+1. Stop the retry loop immediately
+2. Generate oscillation report:
+   ```
+   OSCILLATION DETECTED
+   Violation A: [type] in [file]
+   Violation B: [type] in [file]
+   Cycle count: [N] attempts without resolution
+   Root cause: Likely shared dependency or tight coupling
+   Recommendation: Refactor both together — individual patches will not converge
+   ```
+3. Escalate with recommendation to refactor, not patch
+4. Do NOT count oscillation-stopped retries as "failure" — they are "investigation needed"
+
+
 ## Escalation Criteria
 
 ### Auto-Fix (No Escalation)

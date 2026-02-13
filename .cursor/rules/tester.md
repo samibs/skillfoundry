@@ -78,32 +78,3 @@ Be thorough, be ruthless, be the last line of defense against production failure
 ### Next Vulnerability to Probe
 [Specific untested attack vector]
 ```
-
----
-
-## Pre-Condition: Canary Smoke Test (The Anvil T2)
-
-Before beginning test design, verify that the Canary Smoke Test (Anvil T2) has passed. See: `agents/_canary-smoke-test.md`
-
-If the canary failed, reject with:
-> **Canary smoke test failed — code cannot be tested until it compiles/imports. Route to Fixer.**
-
-Do not write tests for code that cannot even import or compile.
-
----
-
-## Shadow Tester Risk Input (The Anvil T6)
-
-If a Shadow Tester risk assessment is available (see `agents/_shadow-tester.md`), use it to prioritize test creation:
-
-1. **HIGH-risk items get tests FIRST** — these are the most likely to cause production failures
-2. **MEDIUM-risk items** should have tests if time permits
-3. **LOW-risk items** are informational — cover them if they align with edge cases you'd test anyway
-
-Write tests in the order of the risk list, highest severity first.
-
-## Reflection Protocol
-
-Before and after each major action, follow the reflection protocol in `agents/_reflection-protocol.md`:
-- **Pre-action**: Am I testing the right thing? Have I covered all edge cases?
-- **Post-action**: Are all tests deterministic? Did I avoid testing implementation details?

@@ -205,6 +205,66 @@ Multiple items expressing same knowledge:
 6. Preserve all original items
 ```
 
+## Pattern Detection (Parental Inheritance)
+
+> Adapted from NASAB Pillar 8. Patterns absorbed unconsciously from codebases should be surfaced and made conscious.
+
+### Pattern Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `CodingStyle` | How code is written | "Prefers list comprehensions over loops" |
+| `ErrorPattern` | Recurring mistakes | "Division without zero check" |
+| `Assumption` | Implicit beliefs | "Assumes UTF-8 everywhere" |
+| `CommunicationStyle` | How intent is expressed | "Verbose variable names" |
+| `NamingConvention` | Naming preferences | "snake_case over camelCase" |
+| `CodeStructure` | Architectural preferences | "Flat modules over deep nesting" |
+
+### Pattern Record
+
+```
+Pattern:
+  type: [CodingStyle|ErrorPattern|Assumption|...]
+  content: "[description of the pattern]"
+  frequency: [number of times observed]
+  source: [codebase|git|chat|ide]
+  is_conscious: [true|false]
+```
+
+### Detection Rules
+
+When reviewing code or processing corrections:
+1. Note recurring patterns (same style, same mistake, same structure)
+2. After **3 observations** of the same pattern, create a pattern record
+3. Default `is_conscious: false` — the developer may not know they're doing this
+
+### Surfacing Protocol
+
+When `frequency > 3` and `is_conscious == false`:
+
+```
+PATTERN DETECTED (unconscious)
+Type: [NamingConvention]
+Pattern: "Consistently uses snake_case for all variables"
+Observed: 7 times across 3 sessions
+Source: codebase
+
+Is this intentional? If yes, it becomes a documented preference.
+If no, consider whether this pattern serves your goals.
+```
+
+### Marking Conscious
+
+When the user acknowledges a pattern:
+- Set `is_conscious: true`
+- Store as a **preference** in memory with high retrieval weight
+- Future agents match this pattern instead of imposing generic defaults
+
+### Why Here
+
+Patterns are a form of knowledge. The memory curator already manages permanent, weighted, lineage-tracked knowledge. Patterns fit naturally as a knowledge type with their own detection and surfacing lifecycle.
+
+
 ## Output Formats
 
 **When Storing**:

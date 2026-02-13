@@ -72,7 +72,17 @@ function Detect-Platform {
             Write-ColorOutput "⚠ Also detected: Cursor" "Yellow"
         }
     }
-    
+
+    # Check for OpenAI Codex CLI
+    if (Get-Command codex -ErrorAction SilentlyContinue) {
+        if ([string]::IsNullOrWhiteSpace($platform)) {
+            $platform = "codex"
+            Write-ColorOutput "✓ Detected: OpenAI Codex" "Green"
+        } else {
+            Write-ColorOutput "⚠ Also detected: OpenAI Codex" "Yellow"
+        }
+    }
+
     return $platform
 }
 
@@ -149,12 +159,14 @@ function Main {
         Write-Host "  1) Claude Code"
         Write-Host "  2) GitHub Copilot CLI"
         Write-Host "  3) Cursor"
-        $choice = Read-Host "Choice (1-3)"
-        
+        Write-Host "  4) OpenAI Codex"
+        $choice = Read-Host "Choice (1-4)"
+
         switch ($choice) {
             "1" { $platform = "claude" }
             "2" { $platform = "copilot" }
             "3" { $platform = "cursor" }
+            "4" { $platform = "codex" }
             default {
                 Write-ColorOutput "Invalid choice. Exiting." "Red"
                 exit 1
@@ -170,12 +182,14 @@ function Main {
             Write-Host "  1) Claude Code"
             Write-Host "  2) GitHub Copilot CLI"
             Write-Host "  3) Cursor"
-            $choice = Read-Host "Choice (1-3)"
-            
+            Write-Host "  4) OpenAI Codex"
+            $choice = Read-Host "Choice (1-4)"
+
             switch ($choice) {
                 "1" { $platform = "claude" }
                 "2" { $platform = "copilot" }
                 "3" { $platform = "cursor" }
+                "4" { $platform = "codex" }
                 default {
                     Write-ColorOutput "Invalid choice. Exiting." "Red"
                     exit 1
@@ -241,6 +255,13 @@ function Main {
             Write-Host "  1. Open Cursor IDE"
             Write-Host "  2. Rules are automatically loaded from .cursor/rules/"
             Write-Host "  3. Use in chat: `"use go rule`" or `"follow coder rule`""
+        }
+        "codex" {
+            Write-Host "  1. Run: codex"
+            Write-Host "  2. Skills auto-loaded from .agents/skills/"
+            Write-Host "  3. Invoke skills: `$go, `$coder, `$tester, etc."
+            Write-Host "  4. Or let Codex auto-select based on your prompt"
+            Write-Host "  5. See AGENTS.md for framework overview"
         }
     }
     Write-Host ""

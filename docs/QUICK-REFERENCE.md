@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.13 - Quick Reference Card
+# Claude AS v1.9.0.14 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -79,6 +79,15 @@ math-check     memory
 | `/replay` | Replay Execution | Re-run last /go or /forge with same params |
 | `/analytics` | Agent Analytics | Invocation stats, success rates, trends |
 | `/anvil` | **Anvil Quality Gate** | Run 6-tier validation on changed files or specific tiers |
+
+---
+
+## New in v1.9.0.14: OpenAI Codex Platform Support
+
+### 4th Platform: OpenAI Codex
+- OpenAI Codex added as 4th supported platform with 60 skills in `.agents/skills/`, native SKILL.md format
+- Sync engine: `sync-platforms.sh` now generates 4 platform files
+- Invocation: `$go`, `$coder`, `$tester` etc. with auto-discovery of available skills
 
 ---
 
@@ -464,7 +473,8 @@ your-project/
 | Claude Code | `/command` |
 | Copilot CLI | `task("agent", "prompt")` |
 | Cursor | "use [agent] rule" |
+| OpenAI Codex | `$skill-name` |
 
 ---
 
-*Claude AS Framework v1.9.0.13 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*
+*Claude AS Framework v1.9.0.14 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*

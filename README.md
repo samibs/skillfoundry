@@ -1,8 +1,11 @@
 # Claude AS - Agents & Skills Framework
 
-A comprehensive AI agent and skills framework for structured, production-ready AI-assisted development. **Now supports Claude Code, GitHub Copilot CLI, and Cursor** with advanced GitHub integration and AI-specific security hardening.
+A comprehensive AI agent and skills framework for structured, production-ready AI-assisted development. **Now supports Claude Code, GitHub Copilot CLI, Cursor, and OpenAI Codex** with advanced GitHub integration and AI-specific security hardening.
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
+
+### OpenAI Codex Platform Support (v1.9.0.14)
+- **OpenAI Codex Platform Support**: 4th platform integration. 60 Codex Skills via `.agents/skills/`, native SKILL.md format, `$skill-name` invocation, auto-discovery + implicit activation. Sync engine generates 4 platforms from single source.
 
 ### The Anvil — 6-Tier Quality Gate (v1.9.0.13)
 - **The Anvil** — 6 validation tiers running between every agent handoff to catch issues at the source
@@ -12,7 +15,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 - **T4: Scope Validation** — Expected vs actual file changes. Missing → BLOCK, unexpected → WARN.
 - **T5: Contract Enforcement** — API implementation matches story contract. Missing endpoint → BLOCK.
 - **T6: Shadow Tester** — Read-only parallel risk assessment prioritizes Tester's work.
-- **`/anvil` command** — Manual invocation on all 3 platforms. Run specific tiers or full report.
+- **`/anvil` command** — Manual invocation on all 4 platforms. Run specific tiers or full report.
 - **Fast-fail** — T1/T2 failures skip downstream agents to save tokens.
 - **`--no-anvil`** — Disable Anvil in `/go` for debugging.
 
@@ -27,13 +30,13 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 ### Shortcut Commands + The Forge (v1.9.0.11)
 - **The Forge** — The 46-agent team now has a name: cold-blooded agents forging production code
 - **7 new shortcuts**: `/forge` (full pipeline), `/gosm` (semi-auto), `/goma` (autonomous), `/blitz` (parallel+TDD), `/gohm` (harvest memory), `/ship` (release prep), `/nuke` (clean slate)
-- **All 3 platforms** — Shortcuts available on Claude Code, Cursor, and Copilot
+- **All 4 platforms** — Shortcuts available on Claude Code, Cursor, Copilot, and Codex
 - **Type less, forge more** — Common flag combinations replaced with memorable commands
 
 ### Auto-Memory Recording (v1.9.0.10)
 - **Agents now write lessons automatically** — Orchestrator and Coder record to `memory_bank/knowledge/` after each story
 - **Three knowledge types**: `decisions.jsonl` (architectural choices), `corrections.jsonl` (bugs/fixes), `patterns.jsonl` (reusable patterns)
-- **All 3 platforms** — Works on Claude Code, Cursor, and Copilot (8 agent files updated)
+- **All 4 platforms** — Works on Claude Code, Cursor, Copilot, and Codex (8 agent files updated)
 - **Full lifecycle**: Install creates dir → Agents learn automatically → `scripts/memory.sh harvest` → Git push → Available everywhere
 
 ### Memory Bank Install Fix (v1.9.0.10)
@@ -77,7 +80,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 - **No manual handoff** — scratchpad is always current, next session picks up automatically
 
 ### Platform Sync Engine (v1.9.0.3)
-- **`scripts/sync-platforms.sh`** - Generate all 3 platform command files from agent source files
+- **`scripts/sync-platforms.sh`** - Generate all 4 platform command files from agent source files
 - **Commands**: `sync --all`, `check`, `list`, `diff` with `--dry-run` support
 - **`command:` frontmatter field** - All 26 public agents mapped to command names
 - **Workflow**: Create agent file → run `sync-platforms.sh sync --all` → 72 platform files generated
@@ -171,7 +174,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.13**
+Current version: **1.9.0.14**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -261,10 +264,11 @@ scripts/version-check.sh    # Detailed version comparison
 - 📈 **Cursor**: 22 → 30 rules (+8)
 - 📈 **Total**: 72 → 96 agents/skills/rules (+24)
 
-### Triple-Platform Support
+### Quad-Platform Support
 - ✅ **Claude Code**: Original platform with `/command` syntax
 - ✅ **GitHub Copilot CLI**: Full integration with `task()` tool
 - ✅ **Cursor**: Rules-based AI assistance
+- ✅ **OpenAI Codex**: Native Skills via `.agents/skills/` with `$skill-name` invocation
 - ✅ **Platform Selection**: Choose during installation with `--platform` flag
 - ✅ **Windows Support**: PowerShell scripts (install.ps1, update.ps1) for Windows users
 
@@ -288,7 +292,7 @@ scripts/version-check.sh    # Detailed version comparison
 - **3 Compliance Presets** (HIPAA, SOC2, GDPR)
 - **2 Security Guides** (477 KB of AI vulnerability knowledge)
 - **7 Documentation Guides** (comprehensive workflows, escalation criteria, and examples)
-- **Triple Platform** (Claude Code, GitHub Copilot CLI, Cursor)
+- **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex)
 - **Windows Support** (PowerShell scripts)
 
 ### New in v1.6.0 - The Forge (formerly The Dream Team)
@@ -409,12 +413,12 @@ ls .copilot/custom-agents/
 # Linux/Mac (bash)
 cd /path/to/your/project
 ~/path/to/claude_as/install.sh
-# Choose: 1) Claude Code  2) GitHub Copilot CLI  3) Cursor
+# Choose: 1) Claude Code  2) GitHub Copilot CLI  3) Cursor  4) OpenAI Codex
 
 # Windows (PowerShell)
 cd C:\path\to\your\project
 C:\path\to\claude_as\install.ps1
-# Choose: 1) Claude Code  2) GitHub Copilot CLI  3) Cursor
+# Choose: 1) Claude Code  2) GitHub Copilot CLI  3) Cursor  4) OpenAI Codex
 ```
 
 ---
@@ -474,6 +478,13 @@ That's it. The `/go` command will:
 ## What's Included
 
 ### Platform-Specific Components
+
+| Platform | Location | Invocation |
+|----------|----------|------------|
+| Claude Code | `.claude/commands/{cmd}.md` | `/command` |
+| GitHub Copilot CLI | `.copilot/custom-agents/{cmd}.md` | `task()` |
+| Cursor | `.cursor/rules/{cmd}.md` | Rule reference |
+| OpenAI Codex | `.agents/skills/{cmd}/SKILL.md` | `$skill-name` |
 
 #### Claude Code Skills (`.claude/commands/`)
 
@@ -1110,7 +1121,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.13** - February 9, 2026
+**v1.9.0.14** - February 13, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
@@ -1336,6 +1347,7 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 **Framework Evolution** (v1.9.0.0 - 2026-02-07) - Knowledge exchange, swarm coordination, DX tooling, advanced intelligence
 **Documentation Deduplication** (v1.9.0.10 - 2026-02-08) - Three-tier docs, 13K tokens/session saved
 **The Anvil** (v1.9.0.13 - 2026-02-09) - 6-tier quality gate between every agent handoff
+**OpenAI Codex Support** (v1.9.0.14 - 2026-02-13) - 4th platform integration with native Skills
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 

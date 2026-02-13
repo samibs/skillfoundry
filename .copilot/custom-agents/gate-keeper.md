@@ -107,6 +107,61 @@ grep -rn "TODO\|FIXME\|PLACEHOLDER\|STUB\|NOT IMPLEMENTED\|COMING SOON" \
 - **Auto-Fix Mode:** Route to Refactor Agent → Remove placeholders
 
 
+## Evidence-Based Capability Gates
+
+> Adapted from NASAB Pillar 3 (Reptilian Gates). Capability proves maturity, not time.
+
+Instead of binary pass/fail, track accumulated **evidence** of capability across 5 levels. Gates unlock when sufficient proof has been demonstrated — like a predator graduating when it makes its first kill, not when it turns a certain age.
+
+### Capability Levels
+
+| Level | Capability | Evidence Threshold | What Proves It |
+|-------|-----------|-------------------|----------------|
+| 1 | Syntax Validation | 10 evidences | Code compiles/parses without errors |
+| 2 | Code Execution | 20 evidences | Tests pass, endpoints respond |
+| 3 | Domain Problem-Solving | 30 evidences | Business logic correct, edge cases handled |
+| 4 | Ambiguity Handling | 50 evidences | Unclear requirements resolved correctly |
+| 5 | Financial Validation | 25 evidences | Calculations verified, rounding correct |
+
+### Evidence Types
+
+| Type | Weight | Example |
+|------|--------|---------|
+| `TestPassed` | 1 | Unit/integration test passes |
+| `ExecutionSuccess` | 2 | Code runs in real environment |
+| `UserConfirmation` | 3 | User explicitly approves output |
+| `ReviewApproved` | 2 | Peer agent approves in review |
+
+### Gate Lifecycle
+
+```
+LOCKED (evidence_count = 0)
+    ↓ evidence accumulates with each passing validation
+ACCUMULATING (evidence_count < threshold)
+    ↓ threshold reached
+UNLOCKED (irreversible within session)
+```
+
+### Behavior
+
+- Track evidence count per story/PRD in the gate verdict
+- Report progress: "Gate 2 (Code Execution): 15/20 evidences"
+- Evidence is **append-only** — never reset within a session
+- Does NOT block on insufficient evidence — reports confidence level
+- Higher evidence = higher confidence in the gate decision
+
+### Gate Verdict Addition
+
+Include in every gate check output:
+
+```
+Evidence Summary:
+  Syntax Validation:    12/10  UNLOCKED
+  Code Execution:       18/20  ACCUMULATING (90%)
+  Domain Problem-Solving: 5/30  ACCUMULATING (17%)
+```
+
+
 ## THREE-LAYER ENFORCEMENT
 
 Every full-stack story must pass validation on ALL affected layers:
@@ -424,27 +479,6 @@ Track gate effectiveness:
 - User checkpoint only at project completion
 - Minimum friction, requires high trust
 
-
-## Anvil Integration: Scope Validation (T4) & Contract Enforcement (T5)
-
-### Scope Validation (T4)
-
-During validation, check if the story declares `Expected Changes`. If present, compare against actual changes. See: `agents/_scope-validation.md`
-
-1. Read story's "Expected Changes" section (Create/Modify lists)
-2. Run: git diff --name-only (or scripts/anvil.sh scope <story-file>)
-3. Compare expected vs actual: missing = BLOCK, unexpected = WARN
-
-### Contract Enforcement (T5)
-
-If the story includes an "API Contract" section, validate implementation matches. See: `agents/_contract-enforcement.md`
-
-1. Read story's "API Contract" table (endpoints, methods, models)
-2. Read route/controller files
-3. Verify each declared endpoint exists with correct method
-4. Missing endpoint = BLOCK, wrong status code = WARN
-
-These checks run alongside existing three-layer enforcement and banned pattern scanning.
 
 ## Commands
 

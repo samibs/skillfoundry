@@ -147,10 +147,11 @@ For detailed requirements, load specific sections:
 - **Swarm Mode**: Self-organizing agent coordination (alternative to wave dispatch)
 - **DX Tooling**: `/explain`, `/undo`, `/cost`, `/health` commands
 - **Advanced Intelligence**: Semantic search, monorepo support, compliance presets (HIPAA/SOC2/GDPR)
-- **The Forge (46 Agents + 12 Shortcuts)** across triple platform (Claude Code, Copilot CLI, Cursor)
+- **The Forge (46 Agents + 12 Shortcuts)** across quad platform (Claude Code, Copilot CLI, Cursor, Codex)
 - **The Anvil (v1.9.0.13)**: 6-tier quality gate (shell pre-flight, canary, self-adversarial, scope, contract, shadow tester)
+- **Codex Integration (v1.9.0.14)**: 4th platform via native Skills
 - **NASAB Integration**: Evidence-based gates, constraint classification, pattern detection, bidirectional iteration, dissent resolution
 
 ---
 
-_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.13_
+_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.14_
