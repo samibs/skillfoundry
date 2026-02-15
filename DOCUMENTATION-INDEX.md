@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.14
+# Documentation Index - Claude AS Framework v1.9.0.15
 
 Complete guide to all documentation in the framework.
 
@@ -26,7 +26,7 @@ Start here for installation and basic usage:
 
 ## 📐 Standards Documentation
 
-Three-tier documentation structure (v1.9.0.14):
+Three-tier documentation structure (v1.9.0.15):
 
 | Document | Size | Purpose |
 |----------|------|---------|
@@ -195,6 +195,15 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **Access**: `http://localhost:3001`
 
 ---
+
+### Session Observability & Reasoning Layer (v1.9.0.15)
+- **[scripts/attribution.sh](scripts/attribution.sh)** — Line attribution tracking (human vs AI %). Commands: `baseline`, `calculate`, `report`, `trailer`, `status`
+- **[scripts/session-recorder.sh](scripts/session-recorder.sh)** — Session lifecycle management. Commands: `start`, `log`, `decision`, `file`, `end`, `show`, `list`
+- **[scripts/checkpoint.sh](scripts/checkpoint.sh)** — Named rewindable save points via git tags. Commands: `create`, `list`, `rewind`, `diff`, `show`, `clean`
+- **[agents/_commit-trailers.md](agents/_commit-trailers.md)** — Structured git commit metadata (Agent, Story, Session, Attribution, Gate trailers)
+- **[agents/_session-protocol.md](agents/_session-protocol.md)** — Mandatory session lifecycle and decision logging protocol (4 phases: START → ACTIVE → CLOSING → END)
+- **`/replay --show`** — Session viewer mode across all 4 platforms (read-only timeline with decisions, events, file ops)
+- **Storage**: `logs/sessions/{date}/session-{id}.jsonl` (append-only JSONL), `.claude/attribution/` (baselines + results), `.claude/checkpoints.json` (checkpoint metadata)
 
 ### The Anvil — 6-Tier Quality Gate (v1.9.0.13)
 - **[agents/_anvil-protocol.md](agents/_anvil-protocol.md)** — Master protocol defining all 6 tiers, pipeline integration, output format
@@ -475,7 +484,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.14
+**Framework Version**: 1.9.0.15
 **Documentation Updated**: February 9, 2026
 **Total Agents**: 46 + 12 shortcuts (The Forge)
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

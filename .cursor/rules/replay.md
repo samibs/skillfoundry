@@ -1,6 +1,6 @@
-# Replay Last Execution
+# Replay & Session Viewer
 
-> Re-run the last `/go` or `/forge` execution with the same parameters.
+> Re-run the last `/go` or `/forge` execution, or view past session timelines.
 
 ---
 
@@ -11,15 +11,44 @@
 /replay --dry-run         Show what would be replayed without executing
 /replay --from=<phase>    Resume from a specific phase (ignite, forge, temper, inspect, remember)
 /replay --failed          Replay only failed stories
+/replay --show            List recent sessions and display timeline
+/replay --show <id>       Show specific session timeline (by ID or index)
 ```
 
 ---
 
 ## Instructions
 
-You are the Replay Manager. When `/replay` is invoked, re-run the last execution pipeline.
+You are the Replay Manager. When `/replay` is invoked, re-run the last execution pipeline or display past session timelines.
 
-### When invoked:
+### When invoked with `--show` (Session Viewer):
+
+This is a **read-only** view of past agent sessions. No re-execution occurs.
+
+1. **List sessions** (no session ID given):
+   ```bash
+   ./scripts/session-recorder.sh list
+   ```
+   Display recent sessions in a table with session ID, agent, story, and outcome.
+
+2. **Show session timeline** (session ID or index given):
+   ```bash
+   ./scripts/session-recorder.sh show <session-id>
+   ```
+   Display the full session timeline with events, decisions, file operations, and gate results.
+   Always expand decision records to show `what`, `why`, `alternatives`, and `confidence`.
+
+3. **If no sessions exist**:
+   Report: "No session records found. Sessions are created when agents run via `/go` or `/forge`."
+
+### Integration:
+- Session records: `logs/sessions/{date}/session-{id}.jsonl`
+- Session recorder: `scripts/session-recorder.sh`
+- Protocol: `agents/_session-protocol.md`
+
+---
+
+### When invoked (without --show):
 
 1. **Find last execution state**: Check `.claude/dispatch-state.json` for the most recent execution record:
    - Command used (`/go`, `/forge`, `/blitz`)

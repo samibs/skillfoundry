@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.14** | **The Forge: 46 Agents + 12 Shortcuts** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex)
+**Version 1.9.0.15** | **The Forge: 46 Agents + 12 Shortcuts** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex)
 
 ---
 
@@ -535,4 +535,4 @@ Quick-access shortcuts for common workflows. Available on all 4 platforms.
 
 ---
 
-*Claude AS Framework v1.9.0.14 - February 2026 - The Forge*
+*Claude AS Framework v1.9.0.15 - February 2026 - The Forge*

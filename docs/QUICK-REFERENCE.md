@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.14 - Quick Reference Card
+# Claude AS v1.9.0.15 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -79,6 +79,44 @@ math-check     memory
 | `/replay` | Replay Execution | Re-run last /go or /forge with same params |
 | `/analytics` | Agent Analytics | Invocation stats, success rates, trends |
 | `/anvil` | **Anvil Quality Gate** | Run 6-tier validation on changed files or specific tiers |
+
+---
+
+## New in v1.9.0.15: Session Observability & Reasoning Layer
+
+### Session Tracking & Attribution
+```
+scripts/session-recorder.sh start --agent=coder --story=STORY-003
+scripts/session-recorder.sh decision --what="Used RS256" --why="Asymmetric keys"
+scripts/session-recorder.sh end --outcome=success --gate=anvil-pass
+scripts/session-recorder.sh list            List recent sessions
+scripts/session-recorder.sh show <id>       Full session timeline
+
+scripts/attribution.sh baseline             Snapshot before agent session
+scripts/attribution.sh calculate            Diff after session (human vs AI %)
+scripts/attribution.sh report               Per-file attribution breakdown
+scripts/attribution.sh trailer              Output git commit trailer format
+
+scripts/checkpoint.sh create "description"  Named save point (git tag)
+scripts/checkpoint.sh list                  Show all checkpoints
+scripts/checkpoint.sh rewind <name>         Rewind to checkpoint
+scripts/checkpoint.sh diff <a> <b>          Diff between checkpoints
+```
+
+### Session Viewer
+```
+/replay --show              List recent sessions
+/replay --show <id>         Show session timeline with decisions, events, files
+```
+
+### Commit Trailers (auto-appended by agents)
+```
+Claude-AS-Agent: coder
+Claude-AS-Story: STORY-003
+Claude-AS-Session: 20260215_143000_a1b2c3d4
+Claude-AS-Attribution: 68% agent (146/214 lines)
+Claude-AS-Gate: anvil-pass
+```
 
 ---
 
@@ -477,4 +515,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.14 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*
+*Claude AS Framework v1.9.0.15 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*

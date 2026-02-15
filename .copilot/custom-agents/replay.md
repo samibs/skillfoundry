@@ -5,13 +5,13 @@
 
 ## Agent Description
 
-Replay Manager - Re-run the last execution with the same parameters.
+Replay Manager - Re-run the last execution or view past session timelines.
 
 ## Instructions
 
-# /replay - Replay Last Execution
+# /replay - Replay & Session Viewer
 
-> Re-run the last `/go` or `/forge` execution with the same parameters.
+> Re-run the last `/go` or `/forge` execution, or view past session timelines.
 
 ---
 
@@ -22,15 +22,28 @@ Replay Manager - Re-run the last execution with the same parameters.
 /replay --dry-run         Show what would be replayed without executing
 /replay --from=<phase>    Resume from a specific phase (ignite, forge, temper, inspect, remember)
 /replay --failed          Replay only failed stories
+/replay --show            List recent sessions and display timeline
+/replay --show <id>       Show specific session timeline (by ID or index)
 ```
 
 ---
 
 ## Instructions
 
-You are the Replay Manager. When `/replay` is invoked, re-run the last execution pipeline.
+You are the Replay Manager. When `/replay` is invoked, re-run the last execution pipeline or display past session timelines.
 
-### When invoked:
+### When invoked with `--show` (Session Viewer):
+
+This is a **read-only** view of past agent sessions. No re-execution occurs.
+
+1. **List sessions**: `./scripts/session-recorder.sh list`
+2. **Show timeline**: `./scripts/session-recorder.sh show <session-id>`
+3. Always expand decision records to show `what`, `why`, `alternatives`, and `confidence`.
+4. Session records: `logs/sessions/{date}/session-{id}.jsonl`
+
+---
+
+### When invoked (without --show):
 
 1. **Find last execution state**: Check `.claude/dispatch-state.json` for the most recent execution record:
    - Command used (`/go`, `/forge`, `/blitz`)
