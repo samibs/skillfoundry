@@ -2443,6 +2443,200 @@ test_companion_tmux_flag() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# SESSION OBSERVABILITY TESTS (v1.9.0.15)
+# ═══════════════════════════════════════════════════════════════
+
+test_attribution_script_exists() {
+    log_test "Observability: attribution.sh exists and is executable"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/attribution.sh" ]; then
+        log_failure "scripts/attribution.sh not found"
+        return 1
+    fi
+    if [ ! -x "$FRAMEWORK_DIR/scripts/attribution.sh" ]; then
+        log_failure "scripts/attribution.sh is not executable"
+        return 1
+    fi
+    local output
+    output=$(bash "$FRAMEWORK_DIR/scripts/attribution.sh" --help 2>&1) || true
+    if echo "$output" | grep -qi "attribution"; then
+        log_success "attribution.sh exists, executable, --help works"
+    else
+        log_failure "attribution.sh --help does not produce expected output"
+        return 1
+    fi
+    return 0
+}
+
+test_attribution_has_commands() {
+    log_test "Observability: attribution.sh has baseline/calculate/report/trailer commands"
+    local cmds_found=0
+    for cmd in "baseline" "calculate" "report" "trailer"; do
+        if grep -q "${cmd})" "$FRAMEWORK_DIR/scripts/attribution.sh" 2>/dev/null; then
+            cmds_found=$((cmds_found + 1))
+        fi
+    done
+    if [ "$cmds_found" -ge 4 ]; then
+        log_success "attribution.sh has all 4 commands (baseline, calculate, report, trailer)"
+    else
+        log_failure "attribution.sh only has $cmds_found/4 commands"
+        return 1
+    fi
+    return 0
+}
+
+test_session_recorder_script_exists() {
+    log_test "Observability: session-recorder.sh exists and is executable"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/session-recorder.sh" ]; then
+        log_failure "scripts/session-recorder.sh not found"
+        return 1
+    fi
+    if [ ! -x "$FRAMEWORK_DIR/scripts/session-recorder.sh" ]; then
+        log_failure "scripts/session-recorder.sh is not executable"
+        return 1
+    fi
+    local output
+    output=$(bash "$FRAMEWORK_DIR/scripts/session-recorder.sh" --help 2>&1) || true
+    if echo "$output" | grep -qi "session"; then
+        log_success "session-recorder.sh exists, executable, --help works"
+    else
+        log_failure "session-recorder.sh --help does not produce expected output"
+        return 1
+    fi
+    return 0
+}
+
+test_session_recorder_has_commands() {
+    log_test "Observability: session-recorder.sh has start/log/decision/file/end/show/list commands"
+    local cmds_found=0
+    for cmd in "start" "log" "decision" "file" "end" "show" "list"; do
+        if grep -q "cmd_${cmd}\|${cmd})" "$FRAMEWORK_DIR/scripts/session-recorder.sh" 2>/dev/null; then
+            cmds_found=$((cmds_found + 1))
+        fi
+    done
+    if [ "$cmds_found" -ge 7 ]; then
+        log_success "session-recorder.sh has all 7 commands"
+    else
+        log_failure "session-recorder.sh only has $cmds_found/7 commands"
+        return 1
+    fi
+    return 0
+}
+
+test_checkpoint_script_exists() {
+    log_test "Observability: checkpoint.sh exists and is executable"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/checkpoint.sh" ]; then
+        log_failure "scripts/checkpoint.sh not found"
+        return 1
+    fi
+    if [ ! -x "$FRAMEWORK_DIR/scripts/checkpoint.sh" ]; then
+        log_failure "scripts/checkpoint.sh is not executable"
+        return 1
+    fi
+    local output
+    output=$(bash "$FRAMEWORK_DIR/scripts/checkpoint.sh" --help 2>&1) || true
+    if echo "$output" | grep -qi "checkpoint"; then
+        log_success "checkpoint.sh exists, executable, --help works"
+    else
+        log_failure "checkpoint.sh --help does not produce expected output"
+        return 1
+    fi
+    return 0
+}
+
+test_checkpoint_has_commands() {
+    log_test "Observability: checkpoint.sh has create/list/rewind/diff/show/clean commands"
+    local cmds_found=0
+    for cmd in "create" "list" "rewind" "diff" "show" "clean"; do
+        if grep -q "${cmd})" "$FRAMEWORK_DIR/scripts/checkpoint.sh" 2>/dev/null; then
+            cmds_found=$((cmds_found + 1))
+        fi
+    done
+    if [ "$cmds_found" -ge 6 ]; then
+        log_success "checkpoint.sh has all 6 commands"
+    else
+        log_failure "checkpoint.sh only has $cmds_found/6 commands"
+        return 1
+    fi
+    return 0
+}
+
+test_commit_trailers_module_exists() {
+    log_test "Observability: _commit-trailers.md shared module exists"
+    if [ ! -f "$FRAMEWORK_DIR/agents/_commit-trailers.md" ]; then
+        log_failure "agents/_commit-trailers.md not found"
+        return 1
+    fi
+    local sections_found=0
+    for section in "Claude-AS-Agent" "Claude-AS-Story" "Claude-AS-Session" "Claude-AS-Attribution" "Claude-AS-Gate"; do
+        if grep -q "$section" "$FRAMEWORK_DIR/agents/_commit-trailers.md" 2>/dev/null; then
+            sections_found=$((sections_found + 1))
+        fi
+    done
+    if [ "$sections_found" -ge 5 ]; then
+        log_success "_commit-trailers.md defines all 5 trailer types"
+    else
+        log_failure "_commit-trailers.md only defines $sections_found/5 trailer types"
+        return 1
+    fi
+    return 0
+}
+
+test_session_protocol_module_exists() {
+    log_test "Observability: _session-protocol.md shared module exists"
+    if [ ! -f "$FRAMEWORK_DIR/agents/_session-protocol.md" ]; then
+        log_failure "agents/_session-protocol.md not found"
+        return 1
+    fi
+    local sections_found=0
+    for section in "Phase 1: START" "Phase 2: ACTIVE" "Phase 3: CLOSING" "Phase 4: END" "Decision Record Format"; do
+        if grep -q "$section" "$FRAMEWORK_DIR/agents/_session-protocol.md" 2>/dev/null; then
+            sections_found=$((sections_found + 1))
+        fi
+    done
+    if [ "$sections_found" -ge 4 ]; then
+        log_success "_session-protocol.md has $sections_found/5 expected sections"
+    else
+        log_failure "_session-protocol.md only has $sections_found/5 expected sections"
+        return 1
+    fi
+    return 0
+}
+
+test_replay_show_mode() {
+    log_test "Observability: /replay --show mode exists across platforms"
+    local platforms_found=0
+    for file in ".claude/commands/replay.md" ".cursor/rules/replay.md" ".copilot/custom-agents/replay.md" ".agents/skills/replay/SKILL.md"; do
+        if grep -q "\-\-show" "$FRAMEWORK_DIR/$file" 2>/dev/null; then
+            platforms_found=$((platforms_found + 1))
+        fi
+    done
+    if [ "$platforms_found" -ge 4 ]; then
+        log_success "/replay --show mode present in all 4 platform files"
+    else
+        log_failure "/replay --show only in $platforms_found/4 platform files"
+        return 1
+    fi
+    return 0
+}
+
+test_session_recorder_decision_fields() {
+    log_test "Observability: session-recorder.sh captures decision fields (what, why, alternatives, confidence)"
+    local fields_found=0
+    for field in "what" "why" "alternatives" "confidence"; do
+        if grep -q "$field" "$FRAMEWORK_DIR/scripts/session-recorder.sh" 2>/dev/null; then
+            fields_found=$((fields_found + 1))
+        fi
+    done
+    if [ "$fields_found" -ge 4 ]; then
+        log_success "session-recorder.sh captures all 4 decision fields"
+    else
+        log_failure "session-recorder.sh only captures $fields_found/4 decision fields"
+        return 1
+    fi
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════
 # TEST RUNNER
 # ═══════════════════════════════════════════════════════════════
 
@@ -2666,6 +2860,20 @@ run_all_tests() {
         test_cost_tracker_record
         test_dashboard_reads_swarm
         test_dashboard_progress_bar
+    fi
+
+    # Session Observability Tests (v1.9.0.15)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "observability" ]; then
+        test_attribution_script_exists
+        test_attribution_has_commands
+        test_session_recorder_script_exists
+        test_session_recorder_has_commands
+        test_checkpoint_script_exists
+        test_checkpoint_has_commands
+        test_commit_trailers_module_exists
+        test_session_protocol_module_exists
+        test_replay_show_mode
+        test_session_recorder_decision_fields
     fi
 
     # Cleanup

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.15] - 2026-02-15
+
+### Added — Observability & Reasoning Layer
+
+Native session tracking, line attribution, named checkpoints, and structured commit metadata — inspired by Entire.io concepts but built natively into the framework.
+
+- **`scripts/attribution.sh`** — Line attribution tracking (human vs AI code %). Commands: `baseline` (snapshot before agent session), `calculate` (diff after session), `report` (per-file breakdown), `trailer` (git commit trailer format), `status`. Stores results in `.claude/attribution/`.
+- **`scripts/session-recorder.sh`** — Session lifecycle management. Creates session entry when agent starts, logs events/decisions/file operations, records outcome. Commands: `start`, `log`, `decision`, `file`, `end`, `show` (timeline), `list` (recent sessions). Stores in `logs/sessions/{date}/session-{id}.jsonl`.
+- **`scripts/checkpoint.sh`** — Named rewindable save points using lightweight git tags. Commands: `create "description"`, `list`, `rewind <name|index>`, `diff <a> <b>`, `show`, `clean`. Tag format: `cas-cp-{timestamp}-{description}`.
+- **`agents/_commit-trailers.md`** — Shared module defining structured git commit metadata. Trailers: `Claude-AS-Agent`, `Claude-AS-Story`, `Claude-AS-Session`, `Claude-AS-Attribution`, `Claude-AS-Gate`. Referenced by `/coder`, `/go`, `/ship`, `/forge`.
+- **`agents/_session-protocol.md`** — Shared module defining mandatory session lifecycle and decision logging. Four phases: START (baseline + recorder), ACTIVE (log decisions/events/files), CLOSING (end session + attribution), END (harvest + trailers). Minimum 1 decision record per story.
+- **`/replay --show`** — New session viewer mode. List recent sessions and display full timeline with events, decisions, file operations, and gate results. Read-only (no re-execution). Available across all 4 platforms.
+
+### Changed
+- `/replay` enhanced from "Replay Last Execution" to "Replay & Session Viewer" across all 4 platforms
+- Documentation updated for observability layer (DOCUMENTATION-INDEX, QUICK-REFERENCE, AGENTS.md)
+- Tests added for all 3 new scripts and 2 new shared modules
+
+---
+
 ## [1.9.0.14] - 2026-02-13
 
 ### Added
