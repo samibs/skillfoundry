@@ -4,6 +4,14 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### Session Observability & Reasoning Layer (v1.9.0.15)
+- **`scripts/attribution.sh`** — Line attribution tracking (human vs AI code %). Snapshot baseline before agent session, calculate diff after, generate per-file breakdown and git commit trailers.
+- **`scripts/session-recorder.sh`** — Session lifecycle management. Records events, decisions (with rationale), and file operations in append-only JSONL files at `logs/sessions/`.
+- **`scripts/checkpoint.sh`** — Named rewindable save points using lightweight git tags (`cas-cp-*`). Create, list, rewind, diff between checkpoints.
+- **`agents/_commit-trailers.md`** — Structured git commit metadata: `Claude-AS-Agent`, `Claude-AS-Story`, `Claude-AS-Session`, `Claude-AS-Attribution`, `Claude-AS-Gate`.
+- **`agents/_session-protocol.md`** — Mandatory session lifecycle and decision logging protocol (4 phases: START → ACTIVE → CLOSING → END).
+- **`/replay --show`** — New read-only session viewer mode across all 4 platforms. List recent sessions, display full timeline with events, decisions, file operations, and gate results.
+
 ### OpenAI Codex Platform Support (v1.9.0.14)
 - **OpenAI Codex Platform Support**: 4th platform integration. 60 Codex Skills via `.agents/skills/`, native SKILL.md format, `$skill-name` invocation, auto-discovery + implicit activation. Sync engine generates 4 platforms from single source.
 
@@ -1121,7 +1129,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.14** - February 13, 2026
+**v1.9.0.15** - February 15, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
@@ -1348,6 +1356,7 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 **Documentation Deduplication** (v1.9.0.10 - 2026-02-08) - Three-tier docs, 13K tokens/session saved
 **The Anvil** (v1.9.0.13 - 2026-02-09) - 6-tier quality gate between every agent handoff
 **OpenAI Codex Support** (v1.9.0.14 - 2026-02-13) - 4th platform integration with native Skills
+**Session Observability** (v1.9.0.15 - 2026-02-15) - Line attribution, session recording, checkpoints, commit trailers, decision logging
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 
