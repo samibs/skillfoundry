@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.16] - 2026-02-15
+
+### Added — Competitive Leap: CI/CD + Quality Intelligence + Moonshots
+
+Full execution of the Competitive Leap PRD — 17 stories across 6 phases.
+
+#### Phase 0-1: CI/CD & Bug Fixes
+- **GitHub Actions CI pipeline** — Automated test suite on every push and PR with multi-OS matrix (Ubuntu 22.04, Ubuntu 24.04, macOS)
+- **CI platform sync verification** — `sync-platforms.sh check` runs in CI to catch platform drift
+- **CI shell syntax validation** — `bash -n` validation on all scripts
+- **CI status badge** in README.md
+
+#### Phase 3: Standards & Capture
+- **Agent Trace format** — `scripts/attribution.sh --format=agent-trace` outputs Cursor-compatible Agent Trace JSON
+- **Prompt/response capture** — `scripts/session-recorder.sh prompt` with opt-in recording, sanitization (redacts keys/tokens), SHA-256 hashing, 50KB per-entry limit
+- **Cost-aware routing** — `scripts/cost-router.sh` routes agents to haiku/sonnet/opus based on task complexity. Disabled by default, configurable via `.claude/routing.json`
+
+#### Phase 4: Quality & Intelligence
+- **Quality-at-generation primer** — `agents/_quality-primer.md` injects banned patterns, security rules, and test requirements into agent generation prompts
+- **Rejection tracker** — `scripts/rejection-tracker.sh` records gate rejections, auto-proposes rules after 3+ identical patterns, supports approve/reject/inject lifecycle
+- **Self-improving quality rules** — Rejection patterns auto-propose rules → human approves → `rules inject` updates quality primer
+
+#### Phase 5: Moonshots
+- **A2A protocol agent cards** — `scripts/a2a-server.sh` generates A2A-compatible JSON cards for all 62 agents per Google/Linux Foundation spec. Commands: `card`, `cards`, `discover`, `validate`
+- **Arena mode** — `scripts/arena-evaluate.sh` + `agents/_arena-protocol.md` for competitive agent evaluation. Weighted scoring: correctness (40%), quality (25%), security (20%), performance (15%)
+- **Compliance-as-code pipeline** — `compliance/` directory with HIPAA (15 checks), SOC2 (12 checks), GDPR (10 checks). Each profile: `checks.sh`, `profile.json`, `README.md`
+- **Compliance evidence collection** — `scripts/compliance-evidence.sh` with SHA-256 tamper-evident manifests. Commands: `collect`, `package`, `verify`, `report`
+
+#### PRD & Stories
+- **Competitive Leap PRD** — `genesis/2026-02-15-competitive-leap.md` with 6 phases, 17 stories, 46 functional requirements
+- **17 implementation stories** in `docs/stories/competitive-leap/`
+
+### Fixed
+- **`harvest.sh --status`** — Exit code 1 on empty `.project-registry-meta.jsonl` (grep on empty file under `set -o pipefail`). Added `-s` file check and `|| true` guard.
+
+### Security
+- **Removed `eval()` command injection** in `rejection-tracker.sh` — replaced with safe `jq` filtering
+- **Secured `mktemp`** in `rejection-tracker.sh` — project-dir + `chmod 600` instead of world-readable `/tmp`
+- **Replaced unsafe `sed`** with `awk` for quality primer rule injection (no delimiter injection)
+- **Added input validation** with category allowlist in rejection tracker
+
+### Removed
+- **`scripts/convert-to-copilot.sh`** — Deprecated script superseded by `sync-platforms.sh` since v1.9.0.3
+- **`.project-registry-meta.jsonl`** — Removed 0-byte file; harvest.sh already handles missing file gracefully
+
+---
+
 ## [1.9.0.15] - 2026-02-15
 
 ### Added — Observability & Reasoning Layer

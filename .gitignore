@@ -109,5 +109,19 @@ memory_bank/knowledge/*
 # Hub config (machine-specific, contains local paths)
 .claude/hub.json
 
+# Runtime artifacts (generated during sessions, not tracked)
+.claude/attribution/
+.claude/arena-results.jsonl
+.claude/routing-log.jsonl
+.claude/rejections.jsonl
+.claude/learned-rules.jsonl
+
+# Compliance evidence (generated per-run, not tracked)
+compliance/evidence/*
+!compliance/evidence/.gitkeep
+
+# Arena worktrees (temporary)
+.arena/
+
 # Test temp directories
 /tmp/claude-as-*

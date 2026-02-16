@@ -2637,6 +2637,387 @@ test_session_recorder_decision_fields() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# COMPETITIVE LEAP TESTS (v1.9.0.16)
+# ═══════════════════════════════════════════════════════════════
+
+test_ci_workflow_exists() {
+    log_test "Competitive Leap: GitHub Actions CI workflow exists"
+    if [ -f "$FRAMEWORK_DIR/.github/workflows/ci.yml" ]; then
+        log_success "CI workflow file exists"
+    else
+        log_failure "CI workflow file missing at .github/workflows/ci.yml"
+        return 1
+    fi
+    return 0
+}
+
+test_ci_workflow_valid() {
+    log_test "Competitive Leap: CI workflow contains required jobs"
+    local ci_file="$FRAMEWORK_DIR/.github/workflows/ci.yml"
+    if [ ! -f "$ci_file" ]; then
+        log_failure "CI workflow not found"
+        return 1
+    fi
+    local checks=0
+    grep -q "run-tests.sh" "$ci_file" 2>/dev/null && checks=$((checks + 1))
+    grep -q "sync-platforms.sh" "$ci_file" 2>/dev/null && checks=$((checks + 1))
+    grep -q "bash -n" "$ci_file" 2>/dev/null && checks=$((checks + 1))
+    if [ "$checks" -ge 3 ]; then
+        log_success "CI workflow has test suite, sync check, and syntax validation"
+    else
+        log_failure "CI workflow missing required steps ($checks/3)"
+        return 1
+    fi
+    return 0
+}
+
+test_agent_trace_format() {
+    log_test "Competitive Leap: attribution.sh supports --format=agent-trace"
+    local output
+    output=$(bash "$FRAMEWORK_DIR/scripts/attribution.sh" --help 2>&1) || true
+    if echo "$output" | grep -qi "agent-trace"; then
+        log_success "attribution.sh supports agent-trace format"
+    else
+        log_failure "attribution.sh missing agent-trace format support"
+        return 1
+    fi
+    return 0
+}
+
+test_prompt_capture_support() {
+    log_test "Competitive Leap: session-recorder.sh supports prompt capture"
+    local output
+    output=$(bash "$FRAMEWORK_DIR/scripts/session-recorder.sh" --help 2>&1) || true
+    if echo "$output" | grep -qi "capture-prompts"; then
+        log_success "session-recorder.sh supports --capture-prompts"
+    else
+        log_failure "session-recorder.sh missing --capture-prompts flag"
+        return 1
+    fi
+    return 0
+}
+
+test_prompt_capture_module() {
+    log_test "Competitive Leap: prompt capture shared module exists"
+    if [ -f "$FRAMEWORK_DIR/agents/_prompt-capture.md" ]; then
+        log_success "agents/_prompt-capture.md exists"
+    else
+        log_failure "agents/_prompt-capture.md missing"
+        return 1
+    fi
+    return 0
+}
+
+test_cost_router_exists() {
+    log_test "Competitive Leap: cost-router.sh exists and has valid syntax"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/cost-router.sh" ]; then
+        log_failure "scripts/cost-router.sh not found"
+        return 1
+    fi
+    if bash -n "$FRAMEWORK_DIR/scripts/cost-router.sh" 2>/dev/null; then
+        log_success "cost-router.sh exists with valid syntax"
+    else
+        log_failure "cost-router.sh has syntax errors"
+        return 1
+    fi
+    return 0
+}
+
+test_cost_router_assess() {
+    log_test "Competitive Leap: cost-router.sh assess returns valid complexity"
+    local result
+    result=$(bash "$FRAMEWORK_DIR/scripts/cost-router.sh" assess docs "write readme" 2>&1) || true
+    if echo "$result" | grep -qE "^(low|medium|high|critical)$"; then
+        log_success "cost-router.sh assess returns: $result"
+    else
+        log_failure "cost-router.sh assess returned unexpected: $result"
+        return 1
+    fi
+    return 0
+}
+
+test_cost_routing_module() {
+    log_test "Competitive Leap: cost routing shared module exists"
+    if [ -f "$FRAMEWORK_DIR/agents/_cost-routing.md" ]; then
+        log_success "agents/_cost-routing.md exists"
+    else
+        log_failure "agents/_cost-routing.md missing"
+        return 1
+    fi
+    return 0
+}
+
+test_quality_primer_exists() {
+    log_test "Competitive Leap: quality primer shared module exists"
+    if [ ! -f "$FRAMEWORK_DIR/agents/_quality-primer.md" ]; then
+        log_failure "agents/_quality-primer.md missing"
+        return 1
+    fi
+    local checks=0
+    grep -qi "banned patterns" "$FRAMEWORK_DIR/agents/_quality-primer.md" 2>/dev/null && checks=$((checks + 1))
+    grep -qi "security rules" "$FRAMEWORK_DIR/agents/_quality-primer.md" 2>/dev/null && checks=$((checks + 1))
+    grep -qi "learned rules" "$FRAMEWORK_DIR/agents/_quality-primer.md" 2>/dev/null && checks=$((checks + 1))
+    if [ "$checks" -ge 3 ]; then
+        log_success "Quality primer has banned patterns, security rules, and learned rules sections"
+    else
+        log_failure "Quality primer missing sections ($checks/3)"
+        return 1
+    fi
+    return 0
+}
+
+test_rejection_tracker_exists() {
+    log_test "Competitive Leap: rejection-tracker.sh exists and has valid syntax"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/rejection-tracker.sh" ]; then
+        log_failure "scripts/rejection-tracker.sh not found"
+        return 1
+    fi
+    if bash -n "$FRAMEWORK_DIR/scripts/rejection-tracker.sh" 2>/dev/null; then
+        log_success "rejection-tracker.sh exists with valid syntax"
+    else
+        log_failure "rejection-tracker.sh has syntax errors"
+        return 1
+    fi
+    return 0
+}
+
+test_rejection_tracker_has_commands() {
+    log_test "Competitive Leap: rejection-tracker.sh has all required commands"
+    local output
+    output=$(bash "$FRAMEWORK_DIR/scripts/rejection-tracker.sh" --help 2>&1) || true
+    local checks=0
+    echo "$output" | grep -qi "record" && checks=$((checks + 1))
+    echo "$output" | grep -qi "stats" && checks=$((checks + 1))
+    echo "$output" | grep -qi "rules" && checks=$((checks + 1))
+    echo "$output" | grep -qi "trends" && checks=$((checks + 1))
+    if [ "$checks" -ge 4 ]; then
+        log_success "rejection-tracker.sh has record, stats, rules, and trends commands"
+    else
+        log_failure "rejection-tracker.sh missing commands ($checks/4)"
+        return 1
+    fi
+    return 0
+}
+
+test_competitive_leap_prd_exists() {
+    log_test "Competitive Leap: PRD exists in genesis/"
+    if [ -f "$FRAMEWORK_DIR/genesis/2026-02-15-competitive-leap.md" ]; then
+        log_success "Competitive leap PRD exists"
+    else
+        log_failure "Competitive leap PRD missing"
+        return 1
+    fi
+    return 0
+}
+
+test_competitive_leap_stories_exist() {
+    log_test "Competitive Leap: Implementation stories exist"
+    local story_count
+    story_count=$(find "$FRAMEWORK_DIR/docs/stories/competitive-leap" -name "STORY-*.md" -type f 2>/dev/null | wc -l || echo "0")
+    if [ "$story_count" -ge 17 ]; then
+        log_success "$story_count stories found (expected 17)"
+    else
+        log_failure "Only $story_count stories found (expected 17)"
+        return 1
+    fi
+    return 0
+}
+
+test_deprecated_files_removed() {
+    log_test "Competitive Leap: Deprecated files removed"
+    local issues=0
+    if [ -f "$FRAMEWORK_DIR/scripts/convert-to-copilot.sh" ]; then
+        log_failure "convert-to-copilot.sh still exists"
+        issues=$((issues + 1))
+    fi
+    if [ -f "$FRAMEWORK_DIR/.project-registry-meta.jsonl" ] && [ ! -s "$FRAMEWORK_DIR/.project-registry-meta.jsonl" ]; then
+        log_failure ".project-registry-meta.jsonl is still 0 bytes"
+        issues=$((issues + 1))
+    fi
+    if [ "$issues" -eq 0 ]; then
+        log_success "All deprecated/broken files cleaned up"
+    fi
+    return "$issues"
+}
+
+# ═══════════════════════════════════════════════════════════════
+# TEST: Phase 5 Moonshot Tests (v1.9.0.16)
+# ═══════════════════════════════════════════════════════════════
+
+test_a2a_server_exists() {
+    log_test "Phase 5: a2a-server.sh exists and has valid syntax"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/a2a-server.sh" ]; then
+        log_failure "scripts/a2a-server.sh not found"
+        return 1
+    fi
+    if bash -n "$FRAMEWORK_DIR/scripts/a2a-server.sh" 2>/dev/null; then
+        log_success "a2a-server.sh exists with valid syntax"
+    else
+        log_failure "a2a-server.sh has syntax errors"
+        return 1
+    fi
+    return 0
+}
+
+test_a2a_card_generation() {
+    log_test "Phase 5: a2a-server.sh generates valid agent card JSON"
+    local card
+    card=$(bash "$FRAMEWORK_DIR/scripts/a2a-server.sh" card coder 2>/dev/null) || true
+    if echo "$card" | jq -e '.name' >/dev/null 2>&1; then
+        local name skills_count
+        name=$(echo "$card" | jq -r '.name')
+        skills_count=$(echo "$card" | jq '.skills | length')
+        if [ "$name" = "coder" ] && [ "$skills_count" -gt 0 ]; then
+            log_success "Agent card: name=$name, skills=$skills_count"
+        else
+            log_failure "Agent card has unexpected values: name=$name, skills=$skills_count"
+            return 1
+        fi
+    else
+        log_failure "Agent card is not valid JSON"
+        return 1
+    fi
+    return 0
+}
+
+test_a2a_cards_count() {
+    log_test "Phase 5: a2a-server.sh cards generates multiple agent cards"
+    local count
+    count=$(bash "$FRAMEWORK_DIR/scripts/a2a-server.sh" cards 2>/dev/null | jq length) || true
+    if [ -n "$count" ] && [ "$count" -gt 20 ]; then
+        log_success "Generated $count agent cards"
+    else
+        log_failure "Expected >20 agent cards, got: $count"
+        return 1
+    fi
+    return 0
+}
+
+test_arena_evaluate_exists() {
+    log_test "Phase 5: arena-evaluate.sh exists and has valid syntax"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/arena-evaluate.sh" ]; then
+        log_failure "scripts/arena-evaluate.sh not found"
+        return 1
+    fi
+    if bash -n "$FRAMEWORK_DIR/scripts/arena-evaluate.sh" 2>/dev/null; then
+        log_success "arena-evaluate.sh exists with valid syntax"
+    else
+        log_failure "arena-evaluate.sh has syntax errors"
+        return 1
+    fi
+    return 0
+}
+
+test_arena_protocol_module() {
+    log_test "Phase 5: arena protocol shared module exists"
+    if [ -f "$FRAMEWORK_DIR/agents/_arena-protocol.md" ]; then
+        local has_scoring has_isolation
+        has_scoring=$(grep -c "Correctness\|Quality\|Security\|Performance" "$FRAMEWORK_DIR/agents/_arena-protocol.md" 2>/dev/null || echo "0")
+        has_isolation=$(grep -c "isolat\|worktree" "$FRAMEWORK_DIR/agents/_arena-protocol.md" 2>/dev/null || echo "0")
+        if [ "$has_scoring" -ge 4 ] && [ "$has_isolation" -ge 1 ]; then
+            log_success "Arena protocol has scoring criteria and isolation rules"
+        else
+            log_failure "Arena protocol missing key sections (scoring=$has_scoring, isolation=$has_isolation)"
+            return 1
+        fi
+    else
+        log_failure "agents/_arena-protocol.md missing"
+        return 1
+    fi
+    return 0
+}
+
+test_compliance_profiles_exist() {
+    log_test "Phase 5: Compliance profiles (HIPAA, SOC2, GDPR) exist"
+    local found=0
+    for profile in hipaa soc2 gdpr; do
+        if [ -f "$FRAMEWORK_DIR/compliance/$profile/checks.sh" ] && \
+           [ -f "$FRAMEWORK_DIR/compliance/$profile/profile.json" ] && \
+           [ -f "$FRAMEWORK_DIR/compliance/$profile/README.md" ]; then
+            found=$((found + 1))
+        fi
+    done
+    if [ "$found" -eq 3 ]; then
+        log_success "All 3 compliance profiles have checks.sh, profile.json, README.md"
+    else
+        log_failure "Only $found/3 compliance profiles complete"
+        return 1
+    fi
+    return 0
+}
+
+test_compliance_hipaa_checks() {
+    log_test "Phase 5: HIPAA checks.sh returns 15 valid JSON checks"
+    local count
+    count=$(bash "$FRAMEWORK_DIR/compliance/hipaa/checks.sh" "$FRAMEWORK_DIR" 2>/dev/null | jq length) || true
+    if [ "$count" = "15" ]; then
+        log_success "HIPAA checks return $count results"
+    else
+        log_failure "Expected 15 HIPAA checks, got: $count"
+        return 1
+    fi
+    return 0
+}
+
+test_compliance_soc2_checks() {
+    log_test "Phase 5: SOC2 checks.sh returns 12 valid JSON checks"
+    local count
+    count=$(bash "$FRAMEWORK_DIR/compliance/soc2/checks.sh" "$FRAMEWORK_DIR" 2>/dev/null | jq length) || true
+    if [ "$count" = "12" ]; then
+        log_success "SOC2 checks return $count results"
+    else
+        log_failure "Expected 12 SOC2 checks, got: $count"
+        return 1
+    fi
+    return 0
+}
+
+test_compliance_gdpr_checks() {
+    log_test "Phase 5: GDPR checks.sh returns 10 valid JSON checks"
+    local count
+    count=$(bash "$FRAMEWORK_DIR/compliance/gdpr/checks.sh" "$FRAMEWORK_DIR" 2>/dev/null | jq length) || true
+    if [ "$count" = "10" ]; then
+        log_success "GDPR checks return $count results"
+    else
+        log_failure "Expected 10 GDPR checks, got: $count"
+        return 1
+    fi
+    return 0
+}
+
+test_compliance_evidence_script() {
+    log_test "Phase 5: compliance-evidence.sh exists and has valid syntax"
+    if [ ! -f "$FRAMEWORK_DIR/scripts/compliance-evidence.sh" ]; then
+        log_failure "scripts/compliance-evidence.sh not found"
+        return 1
+    fi
+    if bash -n "$FRAMEWORK_DIR/scripts/compliance-evidence.sh" 2>/dev/null; then
+        log_success "compliance-evidence.sh exists with valid syntax"
+    else
+        log_failure "compliance-evidence.sh has syntax errors"
+        return 1
+    fi
+    return 0
+}
+
+test_compliance_evidence_has_commands() {
+    log_test "Phase 5: compliance-evidence.sh has collect/package/verify/report commands"
+    local script="$FRAMEWORK_DIR/scripts/compliance-evidence.sh"
+    local has_collect has_package has_verify has_report
+    has_collect=$(grep -c "cmd_collect" "$script" 2>/dev/null || echo "0")
+    has_package=$(grep -c "cmd_package" "$script" 2>/dev/null || echo "0")
+    has_verify=$(grep -c "cmd_verify" "$script" 2>/dev/null || echo "0")
+    has_report=$(grep -c "cmd_report" "$script" 2>/dev/null || echo "0")
+    if [ "$has_collect" -ge 2 ] && [ "$has_package" -ge 2 ] && [ "$has_verify" -ge 2 ] && [ "$has_report" -ge 2 ]; then
+        log_success "compliance-evidence.sh has all 4 required commands"
+    else
+        log_failure "Missing commands (collect=$has_collect, package=$has_package, verify=$has_verify, report=$has_report)"
+        return 1
+    fi
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════
 # TEST RUNNER
 # ═══════════════════════════════════════════════════════════════
 
@@ -2874,6 +3255,39 @@ run_all_tests() {
         test_session_protocol_module_exists
         test_replay_show_mode
         test_session_recorder_decision_fields
+    fi
+
+    # Competitive Leap Tests (v1.9.0.16)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "competitive-leap" ]; then
+        test_ci_workflow_exists
+        test_ci_workflow_valid
+        test_agent_trace_format
+        test_prompt_capture_support
+        test_prompt_capture_module
+        test_cost_router_exists
+        test_cost_router_assess
+        test_cost_routing_module
+        test_quality_primer_exists
+        test_rejection_tracker_exists
+        test_rejection_tracker_has_commands
+        test_competitive_leap_prd_exists
+        test_competitive_leap_stories_exist
+        test_deprecated_files_removed
+    fi
+
+    # Phase 5 Moonshot Tests (v1.9.0.16)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "moonshot" ]; then
+        test_a2a_server_exists
+        test_a2a_card_generation
+        test_a2a_cards_count
+        test_arena_evaluate_exists
+        test_arena_protocol_module
+        test_compliance_profiles_exist
+        test_compliance_hipaa_checks
+        test_compliance_soc2_checks
+        test_compliance_gdpr_checks
+        test_compliance_evidence_script
+        test_compliance_evidence_has_commands
     fi
 
     # Cleanup

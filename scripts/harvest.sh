@@ -513,9 +513,9 @@ show_status() {
         while IFS= read -r project_path; do
             if [ -n "$project_path" ]; then
                 local last="never"
-                if [ -f "$registry_meta" ]; then
+                if [ -f "$registry_meta" ] && [ -s "$registry_meta" ]; then
                     local meta
-                    meta=$(grep -F "\"path\":\"$project_path\"" "$registry_meta" 2>/dev/null | tail -1)
+                    meta=$(grep -F "\"path\":\"$project_path\"" "$registry_meta" 2>/dev/null | tail -1 || true)
                     if [ -n "$meta" ]; then
                         local lh
                         lh=$(echo "$meta" | jq -r '.last_harvested // "never"' 2>/dev/null)

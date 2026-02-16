@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.15
+# Documentation Index - Claude AS Framework v1.9.0.16
 
 Complete guide to all documentation in the framework.
 
@@ -195,6 +195,23 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **Access**: `http://localhost:3001`
 
 ---
+
+### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.16)
+- **[.github/workflows/ci.yml](.github/workflows/ci.yml)** — GitHub Actions CI pipeline (multi-OS matrix, syntax validation, platform sync check)
+- **[scripts/cost-router.sh](scripts/cost-router.sh)** — Cost-aware agent routing. Commands: `assess`, `route`, `config`, `stats`, `init`
+- **[scripts/rejection-tracker.sh](scripts/rejection-tracker.sh)** — Gate rejection tracking with auto-rule generation. Commands: `record`, `list`, `stats`, `trends`, `rules` (approve/reject/inject)
+- **[scripts/a2a-server.sh](scripts/a2a-server.sh)** — A2A protocol agent card generator (62 cards). Commands: `card`, `cards`, `discover`, `validate`
+- **[scripts/arena-evaluate.sh](scripts/arena-evaluate.sh)** — Arena mode evaluation engine. Commands: `setup`, `evaluate`, `results`, `history`, `cleanup`
+- **[scripts/compliance-evidence.sh](scripts/compliance-evidence.sh)** — Compliance evidence collection with SHA-256 integrity. Commands: `collect`, `package`, `verify`, `report`
+- **[agents/_quality-primer.md](agents/_quality-primer.md)** — Quality-at-generation shared module (banned patterns, security rules, test requirements, learned rules)
+- **[agents/_cost-routing.md](agents/_cost-routing.md)** — Cost-aware routing protocol (tier mapping, forced overrides)
+- **[agents/_prompt-capture.md](agents/_prompt-capture.md)** — Prompt/response capture protocol (opt-in, sanitization, storage limits)
+- **[agents/_arena-protocol.md](agents/_arena-protocol.md)** — Arena mode protocol (contestant isolation, scoring criteria, resource management)
+- **[compliance/hipaa/](compliance/hipaa/)** — HIPAA compliance profile (15 checks: encryption, access control, audit logging, data handling, incident response)
+- **[compliance/soc2/](compliance/soc2/)** — SOC 2 Type II compliance profile (12 checks: security, availability, processing integrity, confidentiality, privacy)
+- **[compliance/gdpr/](compliance/gdpr/)** — GDPR compliance profile (10 checks: data protection, consent, data subject rights, breach notification, data processing)
+- **[genesis/2026-02-15-competitive-leap.md](genesis/2026-02-15-competitive-leap.md)** — Competitive Leap PRD (6 phases, 17 stories, 46 functional requirements)
+- **[docs/stories/competitive-leap/](docs/stories/competitive-leap/)** — 17 implementation stories with INDEX.md
 
 ### Session Observability & Reasoning Layer (v1.9.0.15)
 - **[scripts/attribution.sh](scripts/attribution.sh)** — Line attribution tracking (human vs AI %). Commands: `baseline`, `calculate`, `report`, `trailer`, `status`
@@ -484,7 +501,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.15
+**Framework Version**: 1.9.0.16
 **Documentation Updated**: February 9, 2026
 **Total Agents**: 46 + 12 shortcuts (The Forge)
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

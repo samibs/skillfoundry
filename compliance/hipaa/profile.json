@@ -1,0 +1,14 @@
+{
+  "name": "HIPAA",
+  "version": "1.0",
+  "description": "Health Insurance Portability and Accountability Act compliance checks",
+  "categories": [
+    "encryption",
+    "access_control",
+    "audit_logging",
+    "data_handling",
+    "incident_response"
+  ],
+  "total_checks": 15,
+  "critical_checks": ["HIPAA-001", "HIPAA-002", "HIPAA-004", "HIPAA-005", "HIPAA-011"]
+}
