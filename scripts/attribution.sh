@@ -7,7 +7,7 @@
 # USAGE:
 #   ./scripts/attribution.sh baseline [--session=ID]
 #   ./scripts/attribution.sh calculate [--session=ID]
-#   ./scripts/attribution.sh report [--file=PATH] [--json]
+#   ./scripts/attribution.sh report [--file=PATH] [--json] [--format=agent-trace]
 #   ./scripts/attribution.sh trailer [--session=ID]
 #   ./scripts/attribution.sh status
 #   ./scripts/attribution.sh --help
@@ -31,6 +31,7 @@ BASELINE_DIR="$ATTRIBUTION_DIR/baselines"
 JSON_OUTPUT=false
 SESSION_ID=""
 TARGET_FILE=""
+OUTPUT_FORMAT="text"
 
 # ═══════════════════════════════════════════════════════════════
 # ARGUMENT PARSING
@@ -53,6 +54,7 @@ show_help() {
     echo "  --session=ID          Session identifier (default: auto-generated)"
     echo "  --file=PATH           Filter report to specific file"
     echo "  --json                Output in JSON format"
+    echo "  --format=FORMAT       Output format: text (default), json, agent-trace"
     echo "  --help                Show this help message"
     echo ""
     echo "WORKFLOW:"
@@ -79,6 +81,14 @@ parse_args() {
                 ;;
             --json)
                 JSON_OUTPUT=true
+                OUTPUT_FORMAT="json"
+                shift
+                ;;
+            --format=*)
+                OUTPUT_FORMAT="${1#*=}"
+                if [ "$OUTPUT_FORMAT" = "json" ]; then
+                    JSON_OUTPUT=true
+                fi
                 shift
                 ;;
             --help)
@@ -474,6 +484,128 @@ cmd_status() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# AGENT TRACE FORMAT - Industry-standard attribution output
+# ═══════════════════════════════════════════════════════════════
+
+cmd_report_agent_trace() {
+    init_attribution
+
+    # Find most recent result
+    local latest
+    latest=$(find "$ATTRIBUTION_DIR" -name "*.result.json" -type f 2>/dev/null | sort -r | head -1)
+
+    if [ -z "$latest" ]; then
+        echo '{"error": "No attribution data found"}'
+        exit 0
+    fi
+
+    local sid
+    sid=$(jq -r '.session_id' "$latest")
+    local calc_at
+    calc_at=$(jq -r '.calculated_at' "$latest")
+    local framework_version
+    framework_version=$(cat .version 2>/dev/null || echo "unknown")
+
+    # Read session data for decisions (if session-recorder data exists)
+    local session_dir="logs/sessions"
+    local session_file=""
+    if [ -d "$session_dir" ]; then
+        session_file=$(find "$session_dir" -name "*${sid}*" -o -name "*.jsonl" 2>/dev/null | sort -r | head -1 || true)
+    fi
+
+    # Build traces array
+    local traces="[]"
+
+    # Add file_edit traces from attribution result
+    local file_traces
+    file_traces=$(jq -r '.files | to_entries[] | select(.value.status != "unchanged") | @json' "$latest" 2>/dev/null || true)
+
+    if [ -n "$file_traces" ]; then
+        traces=$(echo "$file_traces" | jq -s '[.[] | fromjson | {
+            type: "file_edit",
+            timestamp: "'$calc_at'",
+            file: .key,
+            lines_added: .value.agent_lines,
+            lines_removed: 0,
+            total_lines: .value.total_lines,
+            attribution: (if .value.agent_pct > 50 then "agent" else "human" end),
+            agent_pct: .value.agent_pct
+        }]' 2>/dev/null || echo "[]")
+    fi
+
+    # Add decision traces from session recorder (if available)
+    if [ -n "$session_file" ] && [ -f "$session_file" ]; then
+        local decision_traces
+        decision_traces=$(grep '"type":"decision"' "$session_file" 2>/dev/null | jq -s '[.[] | {
+            type: "decision",
+            timestamp: .timestamp,
+            what: .what,
+            why: .why,
+            confidence: (.confidence // 0.8)
+        }]' 2>/dev/null || echo "[]")
+
+        if [ "$decision_traces" != "[]" ]; then
+            traces=$(echo "$traces" "$decision_traces" | jq -s 'add | sort_by(.timestamp)' 2>/dev/null || echo "$traces")
+        fi
+    fi
+
+    # Build summary from attribution result
+    local files_modified
+    files_modified=$(jq -r '.summary.files_created + .summary.files_modified' "$latest")
+    local agent_lines
+    agent_lines=$(jq -r '.summary.total_agent_lines' "$latest")
+    local total_lines
+    total_lines=$(jq -r '.summary.total_lines_in_changed_files' "$latest")
+    local agent_pct
+    agent_pct=$(jq -r '.summary.overall_agent_pct' "$latest")
+    local decisions_count
+    decisions_count=$(echo "$traces" | jq '[.[] | select(.type == "decision")] | length' 2>/dev/null || echo "0")
+    local file_edits_count
+    file_edits_count=$(echo "$traces" | jq '[.[] | select(.type == "file_edit")] | length' 2>/dev/null || echo "0")
+
+    # Determine agent name from session data or default
+    local agent_name="unknown"
+    if [ -n "$session_file" ] && [ -f "$session_file" ]; then
+        agent_name=$(grep '"agent"' "$session_file" 2>/dev/null | head -1 | jq -r '.agent // "unknown"' 2>/dev/null || echo "unknown")
+    fi
+
+    # Output Agent Trace JSON
+    jq -nc \
+        --arg version "0.1" \
+        --arg sid "$sid" \
+        --arg agent "$agent_name" \
+        --arg framework "claude-as" \
+        --arg fw_version "$framework_version" \
+        --arg calc_at "$calc_at" \
+        --argjson traces "$traces" \
+        --argjson files_modified "$files_modified" \
+        --argjson lines_added "$agent_lines" \
+        --argjson lines_removed 0 \
+        --argjson total_lines "$total_lines" \
+        --argjson agent_pct "$agent_pct" \
+        --argjson decisions "$decisions_count" \
+        --argjson file_edits "$file_edits_count" \
+        '{
+            version: $version,
+            session_id: $sid,
+            agent: $agent,
+            framework: $framework,
+            framework_version: $fw_version,
+            generated_at: $calc_at,
+            traces: $traces,
+            summary: {
+                files_modified: $files_modified,
+                lines_added: $lines_added,
+                lines_removed: $lines_removed,
+                total_lines_in_scope: $total_lines,
+                agent_attribution_pct: $agent_pct,
+                decisions_made: $decisions,
+                file_edits: $file_edits
+            }
+        }'
+}
+
+# ═══════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════
 
@@ -487,7 +619,11 @@ case "$COMMAND" in
         cmd_calculate
         ;;
     report)
-        cmd_report
+        if [ "$OUTPUT_FORMAT" = "agent-trace" ]; then
+            cmd_report_agent_trace
+        else
+            cmd_report
+        fi
         ;;
     trailer)
         cmd_trailer

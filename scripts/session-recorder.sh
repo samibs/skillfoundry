@@ -5,12 +5,13 @@
 # Stores structured session records for replay, harvest, and analytics.
 #
 # USAGE:
-#   ./scripts/session-recorder.sh start --agent=AGENT [--story=STORY] [--session=ID]
+#   ./scripts/session-recorder.sh start --agent=AGENT [--story=STORY] [--session=ID] [--capture-prompts]
 #   ./scripts/session-recorder.sh log --event=EVENT [--detail=DETAIL]
 #   ./scripts/session-recorder.sh decision --what=WHAT --why=WHY [--alternatives=A,B] [--confidence=0.9]
 #   ./scripts/session-recorder.sh file --action=read|create|modify --path=PATH
+#   ./scripts/session-recorder.sh prompt --agent=AGENT --direction=prompt|response --content=TEXT [--model=MODEL]
 #   ./scripts/session-recorder.sh end --outcome=success|partial|failed [--gate=GATE_RESULT]
-#   ./scripts/session-recorder.sh show [--session=ID] [--date=YYYY-MM-DD] [--json]
+#   ./scripts/session-recorder.sh show [--session=ID] [--date=YYYY-MM-DD] [--json] [--show-prompts]
 #   ./scripts/session-recorder.sh list [--date=YYYY-MM-DD] [--limit=N]
 #   ./scripts/session-recorder.sh --help
 
@@ -49,6 +50,12 @@ OUTCOME=""
 GATE_RESULT=""
 TARGET_DATE=""
 LIMIT="10"
+CAPTURE_PROMPTS=false
+PROMPT_DIRECTION=""
+PROMPT_CONTENT=""
+PROMPT_MODEL=""
+SHOW_PROMPTS=false
+MAX_CAPTURE_SIZE=104857600  # 100MB
 
 # ═══════════════════════════════════════════════════════════════
 # ARGUMENT PARSING
@@ -65,6 +72,7 @@ show_help() {
     echo "  log                   Log an event to current session"
     echo "  decision              Record a decision with rationale"
     echo "  file                  Record a file operation"
+    echo "  prompt                Record a prompt/response (requires --capture-prompts)"
     echo "  end                   End current session with outcome"
     echo "  show                  Display a session record"
     echo "  list                  List recent sessions"
@@ -73,6 +81,7 @@ show_help() {
     echo "  --agent=AGENT         Agent name (required)"
     echo "  --story=STORY         Story ID (optional)"
     echo "  --session=ID          Custom session ID (optional, auto-generated)"
+    echo "  --capture-prompts     Enable prompt/response capture for this session"
     echo ""
     echo "LOG OPTIONS:"
     echo "  --event=EVENT         Event description (required)"
@@ -95,9 +104,17 @@ show_help() {
     echo ""
     echo "SHOW/LIST OPTIONS:"
     echo "  --session=ID          Show specific session"
+    echo ""
+    echo "PROMPT OPTIONS:"
+    echo "  --direction=DIR       prompt|response (required)"
+    echo "  --content=TEXT        Prompt or response text (required)"
+    echo "  --model=MODEL         Model used (optional)"
+    echo ""
+    echo "SHOW/LIST OPTIONS:"
     echo "  --date=YYYY-MM-DD     Filter by date"
     echo "  --limit=N             Max sessions to list (default: 10)"
     echo "  --json                Output in JSON format"
+    echo "  --show-prompts        Show captured prompts (redacted by default)"
 }
 
 parse_args() {
@@ -123,6 +140,11 @@ parse_args() {
             --date=*)        TARGET_DATE="${1#*=}"; shift ;;
             --limit=*)       LIMIT="${1#*=}"; shift ;;
             --json)          JSON_OUTPUT=true; shift ;;
+            --capture-prompts) CAPTURE_PROMPTS=true; shift ;;
+            --direction=*)   PROMPT_DIRECTION="${1#*=}"; shift ;;
+            --content=*)     PROMPT_CONTENT="${1#*=}"; shift ;;
+            --model=*)       PROMPT_MODEL="${1#*=}"; shift ;;
+            --show-prompts)  SHOW_PROMPTS=true; shift ;;
             --help)          show_help; exit 0 ;;
             *)
                 echo -e "${RED}Unknown option: $1${NC}"
@@ -199,20 +221,24 @@ cmd_start() {
     mkdir -p "$(dirname "$CURRENT_SESSION_FILE")"
 
     # Write current session pointer
+    local capture_flag="false"
+    [ "$CAPTURE_PROMPTS" = true ] && capture_flag="true"
+
     cat > "$CURRENT_SESSION_FILE" <<EOF
 {
   "session_id": "$SESSION_ID",
   "agent": "$AGENT",
   "story": "$STORY",
   "started_at": "$timestamp",
-  "session_file": "$session_file"
+  "session_file": "$session_file",
+  "capture_prompts": $capture_flag
 }
 EOF
 
     # Write session start event
     local start_event
     start_event=$(cat <<EOF
-{"type":"session_start","session_id":"$SESSION_ID","agent":"$AGENT","story":"$STORY","timestamp":"$timestamp","head_commit":"$(git rev-parse --short HEAD 2>/dev/null || echo 'none')"}
+{"type":"session_start","session_id":"$SESSION_ID","agent":"$AGENT","story":"$STORY","timestamp":"$timestamp","head_commit":"$(git rev-parse --short HEAD 2>/dev/null || echo 'none')","capture_prompts":$capture_flag}
 EOF
     )
     append_event "$session_file" "$start_event"
@@ -222,6 +248,7 @@ EOF
     echo "Session: $SESSION_ID"
     echo "Agent:   $AGENT"
     [ -n "$STORY" ] && echo "Story:   $STORY"
+    [ "$CAPTURE_PROMPTS" = true ] && echo "Capture: prompts enabled"
     echo "File:    $session_file"
 }
 
@@ -594,6 +621,119 @@ cmd_list() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# PROMPT CAPTURE - Record agent prompts and responses
+# ═══════════════════════════════════════════════════════════════
+
+sanitize_content() {
+    local content="$1"
+    # Redact API keys, tokens, passwords, secrets
+    content=$(echo "$content" | sed -E \
+        -e 's/sk-[a-zA-Z0-9]{20,}/[REDACTED_API_KEY]/g' \
+        -e 's/Bearer [a-zA-Z0-9._-]+/Bearer [REDACTED]/g' \
+        -e 's/(password|passwd|pwd)[=:][[:space:]]*[^[:space:],}\"]+/\1=[REDACTED]/gi' \
+        -e 's/(token|secret|api_key|apikey)[=:][[:space:]]*[^[:space:],}\"]+/\1=[REDACTED]/gi' \
+        -e 's/(ANTHROPIC_API_KEY|OPENAI_API_KEY|AWS_SECRET)[=:][[:space:]]*[^[:space:],}\"]+/\1=[REDACTED]/gi')
+    echo "$content"
+}
+
+estimate_tokens() {
+    local content="$1"
+    # Rough estimate: ~4 chars per token
+    local chars
+    chars=$(echo -n "$content" | wc -c)
+    echo $((chars / 4))
+}
+
+cmd_prompt() {
+    local sid
+    sid=$(get_current_session)
+
+    if [ -z "$sid" ]; then
+        echo -e "${RED}Error: No active session. Start one first.${NC}"
+        exit 1
+    fi
+
+    if [ -z "$PROMPT_DIRECTION" ] || [ -z "$PROMPT_CONTENT" ]; then
+        echo -e "${RED}Error: --direction and --content are required${NC}"
+        exit 1
+    fi
+
+    if [ "$PROMPT_DIRECTION" != "prompt" ] && [ "$PROMPT_DIRECTION" != "response" ]; then
+        echo -e "${RED}Error: --direction must be 'prompt' or 'response'${NC}"
+        exit 1
+    fi
+
+    # Check if capture is enabled for this session
+    local session_file
+    session_file=$(get_session_file "$sid")
+    local capture_enabled=false
+
+    if [ -f "$session_file" ]; then
+        capture_enabled=$(grep '"capture_prompts":true' "$session_file" 2>/dev/null | head -1 | grep -c "true" || echo "0")
+    fi
+
+    # Also check global config
+    if [ "$capture_enabled" = "0" ] && [ -f ".claude/config.json" ]; then
+        capture_enabled=$(jq -r '.capture_prompts // false' ".claude/config.json" 2>/dev/null || echo "false")
+        [ "$capture_enabled" = "true" ] && capture_enabled="1"
+    fi
+
+    if [ "$capture_enabled" = "0" ] || [ "$capture_enabled" = "false" ]; then
+        echo -e "${YELLOW}[SKIP]${NC} Prompt capture not enabled for this session"
+        echo "Start session with --capture-prompts to enable"
+        exit 0
+    fi
+
+    # Check file size limit
+    if [ -f "$session_file" ]; then
+        local file_size
+        file_size=$(wc -c < "$session_file" 2>/dev/null || echo "0")
+        if [ "$file_size" -gt "$MAX_CAPTURE_SIZE" ]; then
+            echo -e "${YELLOW}[WARN]${NC} Capture limit reached (${MAX_CAPTURE_SIZE} bytes). Skipping."
+            exit 0
+        fi
+    fi
+
+    # Sanitize content
+    local sanitized
+    sanitized=$(sanitize_content "$PROMPT_CONTENT")
+
+    # Truncate if too large (50KB max per entry)
+    local max_entry=51200
+    local content_len
+    content_len=$(echo -n "$sanitized" | wc -c)
+    if [ "$content_len" -gt "$max_entry" ]; then
+        sanitized="${sanitized:0:$max_entry}[TRUNCATED]"
+    fi
+
+    # Calculate hash and token estimate
+    local content_hash
+    content_hash=$(echo -n "$sanitized" | sha256sum 2>/dev/null | cut -d' ' -f1 || echo "unknown")
+    local token_est
+    token_est=$(estimate_tokens "$sanitized")
+
+    local timestamp
+    timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local agent_name="${AGENT:-unknown}"
+
+    ensure_session_dir "$session_file"
+
+    jq -nc \
+        --arg type "prompt_capture" \
+        --arg ts "$timestamp" \
+        --arg dir "$PROMPT_DIRECTION" \
+        --arg agent "$agent_name" \
+        --arg hash "$content_hash" \
+        --argjson tokens "$token_est" \
+        --arg model "${PROMPT_MODEL:-unknown}" \
+        --arg content "$sanitized" \
+        '{type:$type,timestamp:$ts,direction:$dir,agent:$agent,content_hash:$hash,token_count_estimate:$tokens,model:$model,content:$content}' \
+        >> "$session_file"
+
+    echo -e "${GREEN}[PASS]${NC} Captured $PROMPT_DIRECTION ($token_est est. tokens)"
+}
+
+# ═══════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════
 
@@ -604,6 +744,7 @@ case "$COMMAND" in
     log)        cmd_log ;;
     decision)   cmd_decision ;;
     file)       cmd_file ;;
+    prompt)     cmd_prompt ;;
     end)        cmd_end ;;
     show)       cmd_show ;;
     list)       cmd_list ;;

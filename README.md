@@ -1,8 +1,22 @@
 # Claude AS - Agents & Skills Framework
 
+![CI](https://github.com/samibs/claude_as/actions/workflows/ci.yml/badge.svg)
+
 A comprehensive AI agent and skills framework for structured, production-ready AI-assisted development. **Now supports Claude Code, GitHub Copilot CLI, Cursor, and OpenAI Codex** with advanced GitHub integration and AI-specific security hardening.
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
+
+### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.16)
+- **GitHub Actions CI** — Multi-OS test suite (Ubuntu 22.04/24.04, macOS), shell syntax validation, platform sync checks
+- **Agent Trace format** — `scripts/attribution.sh --format=agent-trace` for Cursor-compatible tracing
+- **Prompt capture** — `scripts/session-recorder.sh prompt` with opt-in recording and automatic sanitization
+- **Cost-aware routing** — `scripts/cost-router.sh` routes agents to haiku/sonnet/opus by complexity (disabled by default)
+- **Quality primer** — `agents/_quality-primer.md` injects quality rules at generation time, reducing gate rejections
+- **Rejection tracker** — `scripts/rejection-tracker.sh` records gate rejections, auto-proposes rules after 3+ identical patterns
+- **A2A protocol** — `scripts/a2a-server.sh` generates 62 A2A-compatible agent cards per Google/Linux Foundation spec
+- **Arena mode** — `scripts/arena-evaluate.sh` competitive agent evaluation with weighted scoring
+- **Compliance-as-code** — HIPAA (15 checks), SOC2 (12 checks), GDPR (10 checks) with `compliance/` profiles
+- **Tamper-evident evidence** — `scripts/compliance-evidence.sh` with SHA-256 manifest integrity verification
 
 ### Session Observability & Reasoning Layer (v1.9.0.15)
 - **`scripts/attribution.sh`** — Line attribution tracking (human vs AI code %). Snapshot baseline before agent session, calculate diff after, generate per-file breakdown and git commit trailers.
@@ -182,7 +196,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.15**
+Current version: **1.9.0.16**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -293,14 +307,16 @@ scripts/version-check.sh    # Detailed version comparison
 - 📊 **86% XSS failure rate** in AI code → prevented by framework
 
 ### Statistics
-- **46 Claude Code Skills** (`.claude/commands/`) - v1.9.0.1: +1 educate command
+- **60 Claude Code Skills** (`.claude/commands/`)
 - **49 Copilot CLI Agents** (`.copilot/custom-agents/`)
 - **41 Cursor Rules** (`.cursor/rules/`)
-- **46 Shared Agent Modules** (cross-platform) - includes knowledge-curator, _swarm-coordinator, agent-profile, project-educator
-- **3 Compliance Presets** (HIPAA, SOC2, GDPR)
+- **46 Shared Agent Modules** (cross-platform)
+- **62 A2A Agent Cards** (A2A protocol discovery)
+- **37 Compliance Checks** (HIPAA 15 + SOC2 12 + GDPR 10)
 - **2 Security Guides** (477 KB of AI vulnerability knowledge)
 - **7 Documentation Guides** (comprehensive workflows, escalation criteria, and examples)
 - **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex)
+- **GitHub Actions CI** (multi-OS automated testing)
 - **Windows Support** (PowerShell scripts)
 
 ### New in v1.6.0 - The Forge (formerly The Dream Team)
@@ -1245,7 +1261,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full version history.
 - Added GitHub Copilot CLI support alongside Claude Code
 - Platform selection via `--platform=claude` or `--platform=copilot` flag
 - Interactive platform selection in `install.sh`
-- Created `convert-to-copilot.sh` to transform agent formats
+- Created `sync-platforms.sh` to generate all platform files from agent sources
 
 **🆕 GitHub Integration (Copilot CLI)**:
 - **github-orchestrator.md** - Workflow coordination using GitHub MCP APIs

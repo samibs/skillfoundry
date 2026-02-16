@@ -1,0 +1,14 @@
+{
+  "name": "SOC2",
+  "version": "1.0",
+  "description": "SOC 2 Type II Trust Services Criteria compliance checks",
+  "categories": [
+    "security",
+    "availability",
+    "processing_integrity",
+    "confidentiality",
+    "privacy"
+  ],
+  "total_checks": 12,
+  "critical_checks": ["SOC2-001", "SOC2-002", "SOC2-005", "SOC2-009"]
+}

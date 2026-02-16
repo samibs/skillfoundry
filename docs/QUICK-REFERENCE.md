@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.15 - Quick Reference Card
+# Claude AS v1.9.0.16 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -79,6 +79,35 @@ math-check     memory
 | `/replay` | Replay Execution | Re-run last /go or /forge with same params |
 | `/analytics` | Agent Analytics | Invocation stats, success rates, trends |
 | `/anvil` | **Anvil Quality Gate** | Run 6-tier validation on changed files or specific tiers |
+
+---
+
+## New in v1.9.0.16: Competitive Leap
+
+### CI/CD, Quality Intelligence & Moonshots
+```
+scripts/cost-router.sh assess <agent> <desc>   Assess task complexity
+scripts/cost-router.sh route <agent> <level>    Get model tier
+
+scripts/rejection-tracker.sh record <cat> <desc>   Log gate rejection
+scripts/rejection-tracker.sh rules approve <id>    Approve proposed rule
+scripts/rejection-tracker.sh rules inject          Update quality primer
+
+scripts/a2a-server.sh card <agent>        A2A agent card JSON
+scripts/a2a-server.sh cards               All agent cards array
+scripts/a2a-server.sh discover            List discoverable agents
+
+scripts/arena-evaluate.sh setup --story=X --contestants=3
+scripts/arena-evaluate.sh evaluate --story=X --solutions=dir1,dir2
+
+bash compliance/hipaa/checks.sh [project]   Run HIPAA checks (15)
+bash compliance/soc2/checks.sh [project]    Run SOC2 checks (12)
+bash compliance/gdpr/checks.sh [project]    Run GDPR checks (10)
+
+scripts/compliance-evidence.sh collect <profile>   Collect evidence
+scripts/compliance-evidence.sh verify <dir>        Verify integrity
+scripts/compliance-evidence.sh package <profile>   Archive for auditor
+```
 
 ---
 
@@ -515,4 +544,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.15 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*
+*Claude AS Framework v1.9.0.16 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*

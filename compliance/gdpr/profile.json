@@ -1,0 +1,14 @@
+{
+  "name": "GDPR",
+  "version": "1.0",
+  "description": "General Data Protection Regulation compliance checks",
+  "categories": [
+    "data_protection",
+    "consent",
+    "data_subject_rights",
+    "breach_notification",
+    "data_processing"
+  ],
+  "total_checks": 10,
+  "critical_checks": ["GDPR-001", "GDPR-002", "GDPR-005", "GDPR-008"]
+}
