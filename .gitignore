@@ -115,6 +115,11 @@ memory_bank/knowledge/*
 .claude/routing-log.jsonl
 .claude/rejections.jsonl
 .claude/learned-rules.jsonl
+.claude/heartbeat.pid
+.claude/heartbeat-state.json
+.claude/notifications.json
+.claude/notifications.jsonl
+.claude/preferences.json
 
 # Compliance evidence (generated per-run, not tracked)
 compliance/evidence/*

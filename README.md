@@ -6,7 +6,12 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
-### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.16)
+### OpenClaw-Inspired: Monitoring, Notifications & Developer Memory (v1.9.0.17)
+- **Heartbeat daemon** — `scripts/heartbeat.sh` proactively monitors test health, git health, session health, rejection rate, disk usage
+- **Multi-channel notifications** — `scripts/notify.sh` sends alerts via Slack, Discord, desktop, and terminal with throttling + quiet hours
+- **Developer preferences** — `scripts/preferences.sh` auto-learns code style, frameworks, and testing patterns; injects into agent prompts
+
+### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.17)
 - **GitHub Actions CI** — Multi-OS test suite (Ubuntu 22.04/24.04, macOS), shell syntax validation, platform sync checks
 - **Agent Trace format** — `scripts/attribution.sh --format=agent-trace` for Cursor-compatible tracing
 - **Prompt capture** — `scripts/session-recorder.sh prompt` with opt-in recording and automatic sanitization
@@ -196,7 +201,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.16**
+Current version: **1.9.0.17**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)

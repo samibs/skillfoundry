@@ -304,6 +304,9 @@ render() {
     cmd "/undo" "Revert action"
     cmd "/cost" "Token usage"
     cmd "/health" "Diagnostics"
+    cmd "/heartbeat" "Health monitor"
+    cmd "/notify" "Notifications"
+    cmd "/prefs" "Dev preferences"
     cmd "/swarm" "Swarm coord"
     echo ""
 

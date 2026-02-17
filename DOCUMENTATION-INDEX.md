@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.16
+# Documentation Index - Claude AS Framework v1.9.0.17
 
 Complete guide to all documentation in the framework.
 
@@ -195,6 +195,13 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **Access**: `http://localhost:3001`
 
 ---
+
+### OpenClaw-Inspired: Monitoring, Notifications & Developer Memory (v1.9.0.17)
+- **[scripts/heartbeat.sh](scripts/heartbeat.sh)** — Proactive monitoring daemon. Commands: `start`, `stop`, `status`, `run-once`, `logs`, `init`
+- **[scripts/notify.sh](scripts/notify.sh)** — Multi-channel notification dispatcher. Commands: `send`, `test`, `config`, `history`, `init`
+- **[scripts/preferences.sh](scripts/preferences.sh)** — Developer behavioral memory. Commands: `set`, `get`, `list`, `learn`, `inject`, `init`, `reset`
+- **[agents/_preferences-protocol.md](agents/_preferences-protocol.md)** — Shared module for preference enforcement across all agents
+- **[docs/USER-GUIDE-v1.9.0.16.md](docs/USER-GUIDE-v1.9.0.16.md)** — Comprehensive user guide for v1.9.0.16-17 features
 
 ### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.16)
 - **[.github/workflows/ci.yml](.github/workflows/ci.yml)** — GitHub Actions CI pipeline (multi-OS matrix, syntax validation, platform sync check)
@@ -501,7 +508,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.16
+**Framework Version**: 1.9.0.17
 **Documentation Updated**: February 9, 2026
 **Total Agents**: 46 + 12 shortcuts (The Forge)
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

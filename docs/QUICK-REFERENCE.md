@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.16 - Quick Reference Card
+# Claude AS v1.9.0.17 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -82,7 +82,38 @@ math-check     memory
 
 ---
 
-## New in v1.9.0.16: Competitive Leap
+## New in v1.9.0.17: OpenClaw-Inspired Features
+
+### Heartbeat Monitoring
+```
+scripts/heartbeat.sh init                Create HEARTBEAT.md template
+scripts/heartbeat.sh start               Start monitoring daemon
+scripts/heartbeat.sh stop                Stop daemon
+scripts/heartbeat.sh status              Show daemon state + last check
+scripts/heartbeat.sh run-once            Execute one check cycle
+scripts/heartbeat.sh logs                View daemon logs
+```
+
+### Notifications
+```
+scripts/notify.sh init                   Create notification config
+scripts/notify.sh send <lvl> <msg>       Send notification
+scripts/notify.sh test                   Test all enabled channels
+scripts/notify.sh config                 Show current config
+scripts/notify.sh history                View notification history
+```
+
+### Developer Preferences
+```
+scripts/preferences.sh init              Create preferences file
+scripts/preferences.sh learn             Auto-detect from codebase
+scripts/preferences.sh inject            Markdown summary for agents
+scripts/preferences.sh set <key> <val>   Set explicit preference
+scripts/preferences.sh get <key>         Get preference value
+scripts/preferences.sh list              List all preferences
+```
+
+## Competitive Leap (v1.9.0.16)
 
 ### CI/CD, Quality Intelligence & Moonshots
 ```
@@ -544,4 +575,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.16 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*
+*Claude AS Framework v1.9.0.17 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*

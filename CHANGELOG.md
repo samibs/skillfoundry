@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.17] - 2026-02-17
+
+### Added — OpenClaw-Inspired Monitoring & Developer Memory
+
+Three new features inspired by OpenClaw's proactive intelligence:
+
+#### Heartbeat — Proactive Monitoring Daemon
+- **`scripts/heartbeat.sh`** — Background daemon for project health monitoring
+- **Commands:** `start`, `stop`, `status`, `run-once`, `logs`, `init`
+- **5 health checks:** Test suite, git health (secrets/uncommitted/divergence), session health, gate rejection rate, disk/log health
+- **User-editable `HEARTBEAT.md`** at project root enables/disables checks and sets severity
+- **Daemon pattern:** Background loop with PID file, configurable interval via `HEARTBEAT_INTERVAL` env var (default: 30 min)
+- **State tracking:** `.claude/heartbeat-state.json` stores last check results
+- **Log rotation:** `logs/heartbeat.log` keeps last 1000 lines
+
+#### Notify — Multi-Channel Notification System
+- **`scripts/notify.sh`** — Multi-channel notification dispatcher
+- **Commands:** `send`, `test`, `config`, `history`, `init`
+- **4 channels:** Slack (webhook), Discord (webhook), desktop (notify-send/osascript), terminal (colored stderr + bell)
+- **5 notification levels:** info, success, warning, error, critical (color-coded)
+- **Throttling:** SHA-256 message hashing, suppress duplicates within configurable window (default: 5 min)
+- **Quiet hours:** Optional time range to suppress non-critical notifications
+- **Sourceable:** `notify()` function callable from other scripts
+
+#### Preferences — Developer Behavioral Memory
+- **`scripts/preferences.sh`** — Persistent developer preference management
+- **Commands:** `set`, `get`, `list`, `learn`, `inject`, `init`, `reset`
+- **Auto-learning:** Scans codebase for indentation, naming conventions, frameworks (package.json/requirements.txt), test patterns, commit style
+- **Confidence scoring:** Each preference has 0.0-1.0 confidence; only >0.7 injected into agents
+- **Preference hierarchy:** Project overrides global, explicit overrides learned
+- **`inject` command:** Generates ~20-30 line markdown summary for agent prompt injection
+- **`agents/_preferences-protocol.md`** — Shared module enforcing preference compliance across all agents
+
+### Changed
+- **Companion panel** — Added `/heartbeat`, `/notify`, `/prefs` to always-available commands
+- **`.gitignore`** — Added heartbeat.pid, heartbeat-state.json, notifications.json/jsonl, preferences.json
+
+---
+
 ## [1.9.0.16] - 2026-02-15
 
 ### Added — Competitive Leap: CI/CD + Quality Intelligence + Moonshots

@@ -3018,6 +3018,223 @@ test_compliance_evidence_has_commands() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# HEARTBEAT, NOTIFY & PREFERENCES TESTS (v1.9.0.17)
+# ═══════════════════════════════════════════════════════════════
+
+test_notify_script_exists() {
+    log_test "notify.sh exists and is executable"
+    if [ -x "$FRAMEWORK_DIR/scripts/notify.sh" ]; then
+        log_success "notify.sh exists and is executable"
+        return 0
+    fi
+    log_failure "notify.sh missing or not executable"
+    return 1
+}
+
+test_notify_init() {
+    log_test "notify.sh init creates valid config"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        bash "$FRAMEWORK_DIR/scripts/notify.sh" init >/dev/null 2>&1
+        if [ -f ".claude/notifications.json" ] && jq -e '.enabled' .claude/notifications.json >/dev/null 2>&1; then
+            log_success "Notification config created with valid JSON"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "Config not created or invalid JSON"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_notify_send_terminal() {
+    log_test "notify.sh send delivers terminal notification"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        bash "$FRAMEWORK_DIR/scripts/notify.sh" init >/dev/null 2>&1
+        # Disable desktop to avoid popups during tests, keep terminal only
+        jq '.channels.desktop.enabled = false' .claude/notifications.json > .claude/notifications.json.tmp
+        mv .claude/notifications.json.tmp .claude/notifications.json
+        bash "$FRAMEWORK_DIR/scripts/notify.sh" send info "Test message" 2>/dev/null
+        if [ -f ".claude/notifications.jsonl" ] && grep -q "Test message" .claude/notifications.jsonl; then
+            log_success "Terminal notification sent and logged"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "Notification not logged to history"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_notify_throttling() {
+    log_test "notify.sh throttling suppresses duplicates"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        bash "$FRAMEWORK_DIR/scripts/notify.sh" init >/dev/null 2>&1
+        jq '.channels.desktop.enabled = false | .throttle_minutes = 60' .claude/notifications.json > .claude/notifications.json.tmp
+        mv .claude/notifications.json.tmp .claude/notifications.json
+        bash "$FRAMEWORK_DIR/scripts/notify.sh" send info "Duplicate msg" 2>/dev/null
+        bash "$FRAMEWORK_DIR/scripts/notify.sh" send info "Duplicate msg" 2>/dev/null
+        local count
+        count=$(grep -c "Duplicate msg" .claude/notifications.jsonl 2>/dev/null || echo 0)
+        if [ "$count" -eq 1 ]; then
+            log_success "Throttling suppressed duplicate notification"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "Throttling failed (found $count, expected 1)"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_heartbeat_script_exists() {
+    log_test "heartbeat.sh exists and is executable"
+    if [ -x "$FRAMEWORK_DIR/scripts/heartbeat.sh" ]; then
+        log_success "heartbeat.sh exists and is executable"
+        return 0
+    fi
+    log_failure "heartbeat.sh missing or not executable"
+    return 1
+}
+
+test_heartbeat_init() {
+    log_test "heartbeat.sh init creates HEARTBEAT.md template"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        bash "$FRAMEWORK_DIR/scripts/heartbeat.sh" init >/dev/null 2>&1
+        if [ -f "HEARTBEAT.md" ] && grep -q "### Test Health" HEARTBEAT.md && grep -q "### Git Health" HEARTBEAT.md; then
+            log_success "HEARTBEAT.md template created with check sections"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "Template missing or incomplete"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_heartbeat_run_once() {
+    log_test "heartbeat.sh run-once creates state file"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        git init --quiet . 2>/dev/null || true
+        bash "$FRAMEWORK_DIR/scripts/heartbeat.sh" init >/dev/null 2>&1
+        bash "$FRAMEWORK_DIR/scripts/notify.sh" init >/dev/null 2>&1
+        jq '.channels.desktop.enabled = false' .claude/notifications.json > .claude/notifications.json.tmp
+        mv .claude/notifications.json.tmp .claude/notifications.json
+        bash "$FRAMEWORK_DIR/scripts/heartbeat.sh" run-once >/dev/null 2>&1
+        if [ -f ".claude/heartbeat-state.json" ] && jq -e '.results' .claude/heartbeat-state.json >/dev/null 2>&1; then
+            log_success "State file created with check results"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "State file not created or missing results"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_preferences_script_exists() {
+    log_test "preferences.sh exists and is executable"
+    if [ -x "$FRAMEWORK_DIR/scripts/preferences.sh" ]; then
+        log_success "preferences.sh exists and is executable"
+        return 0
+    fi
+    log_failure "preferences.sh missing or not executable"
+    return 1
+}
+
+test_preferences_init() {
+    log_test "preferences.sh init creates valid config"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        bash "$FRAMEWORK_DIR/scripts/preferences.sh" init >/dev/null 2>&1
+        if [ -f ".claude/preferences.json" ] && jq -e '.version' .claude/preferences.json >/dev/null 2>&1; then
+            log_success "Preferences file created with valid JSON"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "Preferences file not created or invalid"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_preferences_set_get() {
+    log_test "preferences.sh set/get round-trip works"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        bash "$FRAMEWORK_DIR/scripts/preferences.sh" init >/dev/null 2>&1
+        bash "$FRAMEWORK_DIR/scripts/preferences.sh" set "testing.coverage" "85" >/dev/null 2>&1
+        local value
+        value=$(bash "$FRAMEWORK_DIR/scripts/preferences.sh" get "testing.coverage" 2>/dev/null)
+        if [ "$value" = "85" ]; then
+            log_success "Set/get round-trip successful"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "Set/get failed (got: '$value', expected: '85')"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_preferences_inject() {
+    log_test "preferences.sh inject generates markdown"
+    setup_test_workspace
+    (
+        cd "$TEST_DIR"
+        bash "$FRAMEWORK_DIR/scripts/preferences.sh" init >/dev/null 2>&1
+        bash "$FRAMEWORK_DIR/scripts/preferences.sh" set "framework.backend" "FastAPI" >/dev/null 2>&1
+        local output
+        output=$(bash "$FRAMEWORK_DIR/scripts/preferences.sh" inject 2>/dev/null)
+        if echo "$output" | grep -q "## Developer Preferences" && echo "$output" | grep -q "FastAPI"; then
+            log_success "Inject generates markdown with preferences"
+            cleanup_test_workspace
+            exit 0
+        else
+            log_failure "Inject output missing expected content"
+            cleanup_test_workspace
+            exit 1
+        fi
+    )
+    return $?
+}
+
+test_preferences_protocol_exists() {
+    log_test "_preferences-protocol.md shared module exists"
+    if [ -f "$FRAMEWORK_DIR/agents/_preferences-protocol.md" ]; then
+        log_success "_preferences-protocol.md exists"
+        return 0
+    fi
+    log_failure "_preferences-protocol.md missing"
+    return 1
+}
+
+# ═══════════════════════════════════════════════════════════════
 # TEST RUNNER
 # ═══════════════════════════════════════════════════════════════
 
@@ -3288,6 +3505,22 @@ run_all_tests() {
         test_compliance_gdpr_checks
         test_compliance_evidence_script
         test_compliance_evidence_has_commands
+    fi
+
+    # Heartbeat, Notify & Preferences Tests (v1.9.0.17)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "heartbeat-notify-prefs" ]; then
+        test_notify_script_exists
+        test_notify_init
+        test_notify_send_terminal
+        test_notify_throttling
+        test_heartbeat_script_exists
+        test_heartbeat_init
+        test_heartbeat_run_once
+        test_preferences_script_exists
+        test_preferences_init
+        test_preferences_set_get
+        test_preferences_inject
+        test_preferences_protocol_exists
     fi
 
     # Cleanup
