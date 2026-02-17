@@ -37,21 +37,79 @@ if [ ! -f "$VERSION_FILE" ]; then
     exit 1
 fi
 FRAMEWORK_VERSION="$(cat "$VERSION_FILE" | tr -d '[:space:]')"
-FRAMEWORK_DATE="2026-02-05"  # Update this when releasing new version
+FRAMEWORK_DATE=$(date -r "$VERSION_FILE" +"%Y-%m-%d" 2>/dev/null || date +"%Y-%m-%d")
+BOLD='\033[1m'
+
+# ═══════════════════════════════════════════════════════════════
+# UTILITY FUNCTIONS
+# ═══════════════════════════════════════════════════════════════
+
+# Timer
+timer_start() {
+    _TIMER_START=$(date +%s)
+}
+
+timer_elapsed() {
+    local end
+    end=$(date +%s)
+    echo $(( end - _TIMER_START ))
+}
+
+# Parse What's New from CHANGELOG.md (first version block)
+show_whats_new() {
+    local changelog_file="$1"
+    local version="$2"
+
+    [ ! -f "$changelog_file" ] && return 0
+
+    echo ""
+    echo -e "  ${CYAN}What's New in v${version}${NC}"
+    echo -e "  ${CYAN}$(printf '%.0s─' $(seq 1 40))${NC}"
+
+    local in_block=false
+    local line_count=0
+    while IFS= read -r line; do
+        if [[ "$line" =~ ^##\ \[ ]] && [ "$in_block" = false ]; then
+            in_block=true
+            continue
+        fi
+        if [ "$in_block" = true ]; then
+            if [[ "$line" =~ ^##\ \[ ]] || [[ "$line" =~ ^---$ ]]; then
+                break
+            fi
+            if [[ "$line" =~ ^###\  ]]; then
+                local heading="${line#*### }"
+                heading="${heading%% —*}"
+                echo -e "    ${YELLOW}${heading}${NC}"
+            elif [[ "$line" =~ ^-\  ]] && [ $line_count -lt 10 ]; then
+                local bullet="${line#- }"
+                if [[ "$bullet" =~ \*\*(.+)\*\* ]]; then
+                    echo -e "      ${BASH_REMATCH[1]}"
+                else
+                    echo -e "      ${bullet}"
+                fi
+                line_count=$((line_count + 1))
+            fi
+        fi
+    done < "$changelog_file"
+
+    if [ $line_count -ge 10 ]; then
+        echo -e "      ${BLUE}... see CHANGELOG.md for full details${NC}"
+    fi
+    echo ""
+}
 
 # ═══════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════
 
 print_header() {
-    echo -e "${CYAN}"
-    echo "╔═══════════════════════════════════════════════════════════╗"
-    echo "║           Claude AS - Framework Updater                   ║"
-    echo "║                                                           ║"
-    echo "║   Version: $FRAMEWORK_VERSION ($FRAMEWORK_DATE)                       ║"
-    echo "║   Format: MAJOR.FEATURE.DATABASE.ITERATION                ║"
-    echo "╚═══════════════════════════════════════════════════════════╝"
-    echo -e "${NC}"
+    echo ""
+    echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— Updater${NC}                     ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 4 platforms             ${CYAN}│${NC}"
+    echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
+    echo ""
 }
 
 is_valid_project() {
@@ -349,8 +407,13 @@ scan_projects() {
                 echo -e "  ${YELLOW}+${NC} $project_dir ${YELLOW}[v$version - not registered]${NC}"
 
                 # Ask to register
-                read -p "    Register this project? [Y/n]: " -n 1 -r
-                echo ""
+                if [ "$YES_MODE" = true ]; then
+                    REPLY="y"
+                    echo -e "    ${GREEN}--yes: auto-registering${NC}"
+                else
+                    read -p "    Register this project? [Y/n]: " -n 1 -r
+                    echo ""
+                fi
                 if [[ ! $REPLY =~ ^[Nn]$ ]]; then
                     echo "$project_dir" >> "$REGISTRY_FILE"
                     echo -e "    ${GREEN}Registered!${NC}"
@@ -567,6 +630,8 @@ update_project() {
 
     # Get current version
     local current_version=$(get_project_version "$project_dir")
+
+    timer_start
 
     echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
     echo -e "${BLUE}Updating: ${NC}$project_dir"
@@ -819,14 +884,19 @@ update_project() {
             cp "$project_dir/CLAUDE.md" "$backup_dir/CLAUDE.md"
 
             echo -e "  ${YELLOW}CLAUDE.md has local modifications.${NC}"
-            echo ""
-            echo "  Options:"
-            echo "    1) Overwrite with latest (backup saved)"
-            echo "    2) Keep current version"
-            echo "    3) Save latest as CLAUDE.md.new for manual merge"
-            echo ""
-            read -p "  Choose [1/2/3]: " -n 1 -r
-            echo ""
+            if [ "$YES_MODE" = true ]; then
+                REPLY="1"
+                echo -e "  ${GREEN}--yes: overwriting CLAUDE.md (backup saved)${NC}"
+            else
+                echo ""
+                echo "  Options:"
+                echo "    1) Overwrite with latest (backup saved)"
+                echo "    2) Keep current version"
+                echo "    3) Save latest as CLAUDE.md.new for manual merge"
+                echo ""
+                read -p "  Choose [1/2/3]: " -n 1 -r
+                echo ""
+            fi
 
             case $REPLY in
                 1)
@@ -1004,19 +1074,24 @@ update_project() {
     # ─────────────────────────────────────────────────────────────
     # Summary
     # ─────────────────────────────────────────────────────────────
+    local elapsed
+    elapsed=$(timer_elapsed)
+
     echo ""
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
-    echo -e "${GREEN}Update complete!${NC}"
-    echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${GREEN}┌─────────────────────────────────────────────────────┐${NC}"
+    echo -e "${GREEN}│${NC}  ${BOLD}Update Complete${NC}                                    ${GREEN}│${NC}"
+    echo -e "${GREEN}└─────────────────────────────────────────────────────┘${NC}"
     echo ""
-    echo -e "  Updated project: ${BLUE}$project_dir${NC}"
-    # Format platforms as comma-separated for display
     local platforms_display
     platforms_display=$(echo "$platforms" | tr ' ' ', ')
-    echo -e "  Platforms: ${CYAN}$platforms_display${NC}"
-    echo -e "  Version:   ${CYAN}v$current_version → v$FRAMEWORK_VERSION${NC}"
-    echo -e "  Backup:    ${BLUE}$backup_dir${NC}"
+    echo -e "  ${BOLD}Project:${NC}    $project_dir"
+    echo -e "  ${BOLD}Platforms:${NC}  $platforms_display"
+    echo -e "  ${BOLD}Version:${NC}    v$current_version → v$FRAMEWORK_VERSION"
+    echo -e "  ${BOLD}Duration:${NC}   ${elapsed}s"
+    echo -e "  ${BOLD}Backup:${NC}     $backup_dir"
     echo ""
+
+    show_whats_new "$CHANGELOG_FILE" "$FRAMEWORK_VERSION"
 }
 
 update_all_projects() {
@@ -1064,6 +1139,17 @@ update_all_projects() {
 # MAIN
 # ═══════════════════════════════════════════════════════════════
 
+# Pre-parse --yes/-y from args (must happen before dispatch)
+YES_MODE=false
+declare -a POSITIONAL_ARGS=()
+for arg in "$@"; do
+    case "$arg" in
+        --yes|-y) YES_MODE=true ;;
+        *) POSITIONAL_ARGS+=("$arg") ;;
+    esac
+done
+set -- "${POSITIONAL_ARGS[@]}"
+
 print_header
 
 case "${1:-}" in
@@ -1072,6 +1158,7 @@ case "${1:-}" in
         echo ""
         echo "Options:"
         echo "  --all                    Update all registered projects"
+        echo "  --yes, -y               Non-interactive mode (accept all defaults)"
         echo "  --register PATH          Register a project (use . for current dir)"
         echo "  --unregister PATH        Remove a project from registry"
         echo "  --scan PATH              Scan directory for Claude AS projects"
@@ -1084,6 +1171,7 @@ case "${1:-}" in
         echo ""
         echo "Examples:"
         echo "  $0 .                        Update current directory"
+        echo "  $0 --yes .                  Update without prompts (CI/CD)"
         echo "  $0 /path/to/project         Update single project"
         echo "  $0 --register .             Register current directory"
         echo "  $0 --scan ~/projects        Find and register projects"
@@ -1092,27 +1180,7 @@ case "${1:-}" in
         echo ""
         ;;
     --version|-v)
-        echo ""
-        echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
-        echo -e "${CYAN}║${NC}                  ${GREEN}Claude AS Framework${NC}                       ${CYAN}║${NC}"
-        echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
-        echo -e "${CYAN}║${NC}  Version: ${YELLOW}$FRAMEWORK_VERSION${NC}                                     ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  Date: ${YELLOW}$FRAMEWORK_DATE${NC}                                        ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  Format: ${YELLOW}MAJOR.FEATURE.DATABASE.ITERATION${NC}                 ${CYAN}║${NC}"
-        IFS='.' read -r -a PARTS <<< "$FRAMEWORK_VERSION"
-        echo -e "${CYAN}║${NC}  ${PARTS[0]:-0} - Major      (Breaking changes)                          ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${PARTS[1]:-0} - Feature    (New features)                             ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${PARTS[2]:-0} - Database   (Schema changes)                           ${CYAN}║${NC}"
-        echo -e "${CYAN}║${NC}  ${PARTS[3]:-0} - Iteration  (Patches/bug fixes)                        ${CYAN}║${NC}"
-        echo -e "${CYAN}╚═══════════════════════════════════════════════════════════════╝${NC}"
-        echo ""
-
-        # Show version check if script exists
-        if [ -f "$SCRIPT_DIR/scripts/version-check.sh" ]; then
-            echo -e "${BLUE}Checking for updates...${NC}"
-            bash "$SCRIPT_DIR/scripts/version-check.sh" claude ~ false || true
-        fi
+        echo "$FRAMEWORK_VERSION"
         ;;
     --register)
         if [ -z "${2:-}" ]; then
@@ -1162,8 +1230,13 @@ case "${1:-}" in
         sync_status=$?
         if [ $sync_status -eq 2 ]; then
             echo ""
-            read -p "Regenerate CLAUDE-SUMMARY.md from framework? [Y/n]: " -n 1 -r
-            echo ""
+            if [ "$YES_MODE" = true ]; then
+                REPLY="y"
+                echo -e "${GREEN}--yes: auto-regenerating CLAUDE-SUMMARY.md${NC}"
+            else
+                read -p "Regenerate CLAUDE-SUMMARY.md from framework? [Y/n]: " -n 1 -r
+                echo ""
+            fi
             if [[ ! $REPLY =~ ^[Nn]$ ]]; then
                 generate_summary_from_claude "$project_path"
             fi
@@ -1173,7 +1246,7 @@ case "${1:-}" in
         ;;
     --remote)
         echo -e "${BLUE}Pulling latest from Knowledge Hub...${NC}"
-        local sync_script="$SCRIPT_DIR/scripts/knowledge-sync.sh"
+        sync_script="$SCRIPT_DIR/scripts/knowledge-sync.sh"
         if [ -f "$sync_script" ] && [ -x "$sync_script" ]; then
             bash "$sync_script" pull || echo -e "${YELLOW}Hub pull skipped (not configured or offline)${NC}"
         else

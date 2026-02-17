@@ -18,6 +18,10 @@
 param(
     [string]$Platform = "",
     [string]$TargetDir = ".",
+    [switch]$Yes,
+    [switch]$DryRun,
+    [switch]$Help,
+    [switch]$Version,
     [switch]$Debug = $false
 )
 
@@ -148,6 +152,104 @@ function Write-ColorOutput {
 # Get the directory where this script lives
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
+# Read version early
+$VersionFilePath = Join-Path $ScriptDir ".version"
+if (-not (Test-Path $VersionFilePath)) {
+    Write-ColorOutput "Error: .version file not found at $VersionFilePath" "Red"
+    exit 1
+}
+$FrameworkVersion = (Get-Content $VersionFilePath -Raw).Trim()
+$FrameworkDate = (Get-Item $VersionFilePath).LastWriteTime.ToString("yyyy-MM-dd")
+
+# Handle -Help
+if ($Help) {
+    Write-Host "Claude AS Framework - Installer v$FrameworkVersion"
+    Write-Host ""
+    Write-Host "Usage: .\install.ps1 [OPTIONS] [-TargetDir PATH]"
+    Write-Host ""
+    Write-Host "Options:"
+    Write-Host "  -Platform PLATFORMS   Comma-separated: claude,copilot,cursor,codex"
+    Write-Host "  -Yes                  Non-interactive mode (accept all defaults)"
+    Write-Host "  -DryRun               Show what would be installed without doing it"
+    Write-Host "  -Debug                Enable diagnostic logging"
+    Write-Host "  -Help                 Show this help message"
+    Write-Host "  -Version              Show framework version"
+    Write-Host ""
+    Write-Host "Examples:"
+    Write-Host "  .\install.ps1                                    # Interactive install"
+    Write-Host "  .\install.ps1 -Platform claude -TargetDir C:\proj # Install Claude"
+    Write-Host "  .\install.ps1 -Platform 'claude,cursor' -Yes     # Non-interactive"
+    Write-Host "  .\install.ps1 -DryRun -Platform claude           # Preview"
+    exit 0
+}
+
+# Handle -Version
+if ($Version) {
+    Write-Host $FrameworkVersion
+    exit 0
+}
+
+# Timer
+$script:TimerStart = Get-Date
+
+function Get-ElapsedSeconds {
+    return [int]((Get-Date) - $script:TimerStart).TotalSeconds
+}
+
+# Step progress counter
+$script:StepCurrent = 0
+$script:StepTotal = 0
+
+function Initialize-Steps {
+    param([int]$Total)
+    $script:StepTotal = $Total
+    $script:StepCurrent = 0
+}
+
+function Write-Step {
+    param([string]$Message)
+    $script:StepCurrent++
+    Write-Host "  [$($script:StepCurrent)/$($script:StepTotal)] $Message" -ForegroundColor Cyan
+}
+
+# What's New from CHANGELOG
+function Show-WhatsNew {
+    param([string]$ChangelogPath, [string]$Ver)
+    if (-not (Test-Path $ChangelogPath)) { return }
+
+    Write-Host ""
+    Write-Host "  What's New in v$Ver" -ForegroundColor Cyan
+    Write-Host "  $(('─' * 40))" -ForegroundColor Cyan
+
+    $inBlock = $false
+    $lineCount = 0
+    foreach ($line in Get-Content $ChangelogPath) {
+        if ($line -match '^## \[' -and -not $inBlock) {
+            $inBlock = $true
+            continue
+        }
+        if ($inBlock) {
+            if ($line -match '^## \[' -or $line -match '^---$') { break }
+            if ($line -match '^### (.+)') {
+                $heading = $Matches[1] -replace ' —.*', ''
+                Write-Host "    $heading" -ForegroundColor Yellow
+            } elseif ($line -match '^- (.+)' -and $lineCount -lt 10) {
+                $bullet = $Matches[1]
+                if ($bullet -match '\*\*(.+?)\*\*') {
+                    Write-Host "      $($Matches[1])"
+                } else {
+                    Write-Host "      $bullet"
+                }
+                $lineCount++
+            }
+        }
+    }
+    if ($lineCount -ge 10) {
+        Write-Host "      ... see CHANGELOG.md for full details" -ForegroundColor Blue
+    }
+    Write-Host ""
+}
+
 # Convert to absolute path
 if (Test-Path $TargetDir) {
     $TargetDir = Resolve-Path $TargetDir
@@ -156,44 +258,48 @@ if (Test-Path $TargetDir) {
     exit 4  # File not found
 }
 
-Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Cyan"
-Write-ColorOutput "║      Agents & Skills Installer (Multi-Platform)          ║" "Cyan"
-Write-ColorOutput "║                                                           ║" "Cyan"
-Write-ColorOutput "║   Genesis-First Development Framework                     ║" "Cyan"
-Write-ColorOutput "║   Supports: Claude Code, Copilot CLI, Cursor & Codex      ║" "Cyan"
-Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Cyan"
+Write-Host ""
+Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+Write-Host "  │  Claude AS Framework — Installer                    │" -ForegroundColor Cyan
+Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 4 platforms             │" -ForegroundColor Cyan
+Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
 Write-Host ""
 
 # Platform selection if not specified
 if ([string]::IsNullOrWhiteSpace($Platform)) {
-    Write-ColorOutput "Select platforms (comma-separated, e.g. 1,4):" "Yellow"
-    Write-Host "  1) Claude Code"
-    Write-Host "  2) GitHub Copilot CLI"
-    Write-Host "  3) Cursor"
-    Write-Host "  4) OpenAI Codex"
-    Write-Host "  a) All platforms"
-    Write-Host ""
-    $choice = Read-Host "Choice"
-
-    # Map for number-to-name lookup
-    $choiceMap = @{ "1" = "claude"; "2" = "copilot"; "3" = "cursor"; "4" = "codex" }
-
-    if ($choice -eq "a" -or $choice -eq "A") {
-        $Platforms = @("claude", "copilot", "cursor", "codex")
+    if ($Yes) {
+        $Platforms = @("claude")
+        Write-ColorOutput "  -Yes: defaulting to Claude platform" "Green"
     } else {
-        $selections = $choice -split ',' | ForEach-Object { $_.Trim() }
-        $Platforms = @()
-        foreach ($sel in $selections) {
-            if ($choiceMap.ContainsKey($sel)) {
-                $Platforms += $choiceMap[$sel]
-            } else {
-                Write-ColorOutput "Invalid choice '$sel'. Must be 1-4 or 'a'." "Red"
+        Write-ColorOutput "Select platforms (comma-separated, e.g. 1,4):" "Yellow"
+        Write-Host "  1) Claude Code"
+        Write-Host "  2) GitHub Copilot CLI"
+        Write-Host "  3) Cursor"
+        Write-Host "  4) OpenAI Codex"
+        Write-Host "  a) All platforms"
+        Write-Host ""
+        $choice = Read-Host "Choice"
+
+        # Map for number-to-name lookup
+        $choiceMap = @{ "1" = "claude"; "2" = "copilot"; "3" = "cursor"; "4" = "codex" }
+
+        if ($choice -eq "a" -or $choice -eq "A") {
+            $Platforms = @("claude", "copilot", "cursor", "codex")
+        } else {
+            $selections = $choice -split ',' | ForEach-Object { $_.Trim() }
+            $Platforms = @()
+            foreach ($sel in $selections) {
+                if ($choiceMap.ContainsKey($sel)) {
+                    $Platforms += $choiceMap[$sel]
+                } else {
+                    Write-ColorOutput "Invalid choice '$sel'. Must be 1-4 or 'a'." "Red"
+                    exit 1
+                }
+            }
+            if ($Platforms.Count -eq 0) {
+                Write-ColorOutput "No platforms selected. Exiting." "Red"
                 exit 1
             }
-        }
-        if ($Platforms.Count -eq 0) {
-            Write-ColorOutput "No platforms selected. Exiting." "Red"
-            exit 1
         }
     }
 } else {
@@ -237,7 +343,12 @@ if (Test-Path (Join-Path $TargetDir "claude_as")) {
     Write-ColorOutput "  Remove-Item -Recurse -Force claude_as" "Cyan"
     Write-ColorOutput "$ScriptDir\install.ps1" "Cyan"
     Write-Host ""
-    $response = Read-Host "Remove claude_as folder and continue? (y/N)"
+    if ($Yes) {
+        $response = "y"
+        Write-ColorOutput "  -Yes: auto-removing claude_as folder" "Green"
+    } else {
+        $response = Read-Host "Remove claude_as folder and continue? (y/N)"
+    }
     if ($response -match "^[Yy]$") {
         Remove-Item -Recurse -Force (Join-Path $TargetDir "claude_as")
         Write-ColorOutput "Removed claude_as folder. Continuing installation..." "Green"
@@ -288,10 +399,14 @@ foreach ($plat in $Platforms) {
 
     if ($existingDir) {
         Write-ColorOutput "Warning: $existingDir directory already exists (platform: $plat)." "Yellow"
-        $response = Read-Host "Overwrite existing $($existingLabel)? (y/N)"
-        if ($response -notmatch "^[Yy]$") {
-            Write-ColorOutput "Installation cancelled for platform '$plat'." "Red"
-            exit 1
+        if ($Yes) {
+            Write-ColorOutput "  -Yes: overwriting $existingLabel" "Green"
+        } else {
+            $response = Read-Host "Overwrite existing $($existingLabel)? (y/N)"
+            if ($response -notmatch "^[Yy]$") {
+                Write-ColorOutput "Installation cancelled for platform '$plat'." "Red"
+                exit 1
+            }
         }
     }
 }
@@ -317,7 +432,7 @@ foreach ($plat in $Platforms) {
 }
 
 # Copy skills/agents/rules for each platform
-Write-ColorOutput "Installing agents and skills..." "Blue"
+Write-Step "Installing agents and skills..."
 
 # Track counts per platform for summary
 $PlatformCounts = @{}
@@ -355,20 +470,27 @@ foreach ($plat in $Platforms) {
     }
 }
 
-# Copy shared agent modules (once, not per platform)
+Write-Step "Installing shared agent modules..."
 Copy-Item -Path "$ScriptDir\agents\*" -Destination "$TargetDir\agents\" -Recurse -Force
 $SharedCount = (Get-ChildItem -Path "$TargetDir\agents\*.md" -ErrorAction SilentlyContinue).Count
 Write-ColorOutput "  ✓ Shared agent modules installed ($SharedCount modules)" "Green"
 
+Write-Step "Installing templates and documentation..."
+
 # Copy CLAUDE.md
 if (Test-Path (Join-Path $TargetDir "CLAUDE.md")) {
     Write-ColorOutput "  CLAUDE.md already exists." "Yellow"
-    $response = Read-Host "  Overwrite? (y/N)"
-    if ($response -match "^[Yy]$") {
+    if ($Yes) {
         Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination "$TargetDir\CLAUDE.md" -Force
-        Write-ColorOutput "  ✓ CLAUDE.md updated" "Green"
+        Write-ColorOutput "  ✓ CLAUDE.md updated (-Yes)" "Green"
     } else {
-        Write-ColorOutput "  → Keeping existing CLAUDE.md" "Yellow"
+        $response = Read-Host "  Overwrite? (y/N)"
+        if ($response -match "^[Yy]$") {
+            Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination "$TargetDir\CLAUDE.md" -Force
+            Write-ColorOutput "  ✓ CLAUDE.md updated" "Green"
+        } else {
+            Write-ColorOutput "  → Keeping existing CLAUDE.md" "Yellow"
+        }
     }
 } else {
     Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination "$TargetDir\CLAUDE.md" -Force
@@ -398,13 +520,58 @@ if (-not (Test-Path $BootstrapTarget)) {
 }
 
 # Set framework version marker
-$VersionFile = Join-Path $ScriptDir ".version"
-if (-not (Test-Path $VersionFile)) {
-    Write-ColorOutput "Error: .version file not found at $VersionFile" "Red"
-    exit 1
+# ═══════════════════════════════════════════════════════════════
+# DRY-RUN: Preview what would be installed, then exit
+# ═══════════════════════════════════════════════════════════════
+if ($DryRun) {
+    Write-Host ""
+    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+    Write-Host "  │  Dry Run — No files will be modified               │" -ForegroundColor Cyan
+    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  Target:     $TargetDir"
+    Write-Host "  Platforms:  $PlatformDisplay"
+    Write-Host "  Source:     $ScriptDir"
+    Write-Host ""
+    Write-Host "  Would install:"
+    $agentCount = (Get-ChildItem -Path "$ScriptDir\agents\*.md" -ErrorAction SilentlyContinue).Count
+    Write-Host "    agents/               $agentCount shared modules"
+    Write-Host "    genesis/TEMPLATE.md   PRD template"
+    Write-Host "    docs/                 Security anti-pattern docs"
+    Write-Host "    memory_bank/          Knowledge bootstrap"
+    Write-Host "    CLAUDE.md             Project instructions"
+    foreach ($plat in $Platforms) {
+        switch ($plat) {
+            "claude" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.claude\commands\*.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .claude/commands/     $c skills"
+            }
+            "copilot" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.copilot\custom-agents\*.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .copilot/custom-agents/ $c agents"
+            }
+            "cursor" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.cursor\rules\*.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .cursor/rules/        $c rules"
+            }
+            "codex" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.agents\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .agents/skills/       $c skills"
+            }
+        }
+    }
+    Write-Host ""
+    Write-ColorOutput "  No changes were made." "Yellow"
+    exit 0
 }
-$FrameworkVersion = (Get-Content $VersionFile -Raw).Trim()
-$FrameworkDate = "2026-01-20"
+
+# ═══════════════════════════════════════════════════════════════
+# Initialize progress counter
+# ═══════════════════════════════════════════════════════════════
+Initialize-Steps (3 + $Platforms.Count + 2)
+
+# Create directory structure — shared directories (once)
+Write-Step "Creating shared directory structure..."
 
 foreach ($plat in $Platforms) {
     $platDir = $null
@@ -420,7 +587,7 @@ foreach ($plat in $Platforms) {
 }
 Write-ColorOutput "  ✓ Framework version: v$FrameworkVersion (Platform(s): $PlatformDisplay)" "Green"
 
-# Auto-register project for updates
+Write-Step "Registering project..."
 $RegistryFile = Join-Path $ScriptDir ".project-registry"
 $RegistryContent = @()
 if (Test-Path $RegistryFile) {
@@ -431,164 +598,75 @@ if ($RegistryContent -notcontains $TargetDir) {
 }
 Write-ColorOutput "  ✓ Registered for framework updates" "Green"
 
-# Summary
+Write-Step "Done!"
+
+$Elapsed = Get-ElapsedSeconds
+
 Write-Host ""
-Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Green"
-Write-ColorOutput "║                  Installation Complete!                    ║" "Green"
-Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Green"
+Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Green
+Write-Host "  │  Installation Complete                              │" -ForegroundColor Green
+Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Green
 Write-Host ""
-Write-ColorOutput "Project: $TargetDir" "Blue"
-Write-ColorOutput "Platform(s): $PlatformDisplay" "Blue"
+Write-Host "  Project:    $TargetDir"
+Write-Host "  Version:    v$FrameworkVersion"
+Write-Host "  Platforms:  $PlatformDisplay"
+Write-Host "  Duration:   ${Elapsed}s"
 Write-Host ""
-Write-Host "Installed:"
+Write-Host "  Installed:"
 foreach ($plat in $Platforms) {
-    if ($plat -eq "claude") {
-        Write-Host "  ├── .claude/commands/       ($($PlatformCounts['claude']) skills)"
-    } elseif ($plat -eq "copilot") {
-        Write-Host "  ├── .copilot/custom-agents/ ($($PlatformCounts['copilot']) agents)"
-    } elseif ($plat -eq "codex") {
-        Write-Host "  ├── .agents/skills/         ($($PlatformCounts['codex']) skills)"
-        Write-Host "  ├── AGENTS.md"
-    } elseif ($plat -eq "cursor") {
-        Write-Host "  ├── .cursor/rules/          ($($PlatformCounts['cursor']) rules)"
+    switch ($plat) {
+        "claude"  { Write-Host "    .claude/commands/       $($PlatformCounts['claude']) skills" }
+        "copilot" { Write-Host "    .copilot/custom-agents/ $($PlatformCounts['copilot']) agents" }
+        "codex"   { Write-Host "    .agents/skills/         $($PlatformCounts['codex']) skills" }
+        "cursor"  { Write-Host "    .cursor/rules/          $($PlatformCounts['cursor']) rules" }
     }
 }
-Write-Host "  ├── agents/               ($SharedCount shared modules)"
-Write-Host "  ├── genesis/              (PRD folder)"
-Write-Host "  │   └── TEMPLATE.md"
-Write-Host "  ├── docs/stories/         (story output)"
-Write-Host "  ├── memory_bank/knowledge/ (lessons learned)"
-Write-Host "  ├── CLAUDE.md"
-Write-Host "  ├── docs/ANTI_PATTERNS_BREADTH.md  (Security - wide coverage)"
-Write-Host "  └── docs/ANTI_PATTERNS_DEPTH.md    (Security - top 7 critical)"
-Write-Host ""
-Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
-Write-ColorOutput "                   THE GENESIS WORKFLOW                    " "Cyan"
-Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
+Write-Host "    agents/                 $SharedCount shared modules"
+Write-Host "    genesis/                PRD template"
 Write-Host ""
 
+# Compact Quick Start
+Write-Host "  Quick Start:"
+Write-Host ""
 foreach ($plat in $Platforms) {
-    if ($Platforms.Count -gt 1) {
-        Write-Host ""
-        Write-ColorOutput "── $($plat.Substring(0,1).ToUpper() + $plat.Substring(1)) ──" "Cyan"
-        Write-Host ""
-    }
-
-    if ($plat -eq "claude") {
-        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-        Write-Host "  /prd `"your feature idea`"     → Saved to genesis/"
-        Write-Host "  Or manually create in genesis/"
-        Write-Host ""
-        Write-ColorOutput "Step 2: Implement" "Yellow"
-        Write-Host "  /go                           → Full implementation"
-        Write-Host ""
-        Write-ColorOutput "That's it. PRDs in genesis/ → /go → Production code." "Green"
-        Write-Host ""
-        Write-ColorOutput "Key Commands:" "Yellow"
-        Write-Host "  /go              - Implement all PRDs from genesis/"
-        Write-Host "  /go --validate   - Check PRDs are complete"
-        Write-Host "  /prd             - Create new PRD"
-        Write-Host "  /layer-check     - Validate three layers"
-        Write-Host "  /coder           - Ruthless implementation"
-        Write-Host "  /tester          - Brutal testing"
-        Write-Host "  /architect       - Architecture review"
-        Write-Host ""
-        Write-ColorOutput "Start now:" "Green"
-        Write-Host "  cd $TargetDir"
-        Write-Host "  claude"
-        Write-Host "  > /prd `"Your feature idea`""
-        Write-Host "  > /go"
-    } elseif ($plat -eq "cursor") {
-        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-        Write-Host "  Manually create in genesis/ folder"
-        Write-Host "  Use genesis/TEMPLATE.md as guide"
-        Write-Host ""
-        Write-ColorOutput "Step 2: Implement" "Yellow"
-        Write-Host "  Use rules via Cursor AI chat"
-        Write-Host "  Rules are automatically loaded from .cursor/rules/"
-        Write-Host ""
-        Write-ColorOutput "PRDs in genesis/ → use rules in Cursor → Production code." "Green"
-        Write-Host ""
-        Write-ColorOutput "Available Rules:" "Yellow"
-        Write-Host "  go.md            - Project kickstart orchestrator"
-        Write-Host "  prd.md           - PRD creation"
-        Write-Host "  coder.md         - Ruthless implementation with TDD"
-        Write-Host "  tester.md        - Brutal testing"
-        Write-Host "  architect.md      - Architecture review"
-        Write-Host "  layer-check.md   - Three-layer validation"
-        Write-Host "  + 16 more in .cursor/rules/"
-        Write-Host ""
-        Write-ColorOutput "Usage in Cursor:" "Yellow"
-        Write-Host "  1. Open Cursor in this project"
-        Write-Host "  2. Rules are automatically available in chat"
-        Write-Host "  3. Reference rules by name: 'use go rule' or 'follow coder rule'"
-        Write-Host "  4. Rules provide structured workflows and commands"
-        Write-Host ""
-        Write-ColorOutput "Rules are automatically loaded by Cursor from .cursor/rules/" "Green"
-    } elseif ($plat -eq "codex") {
-        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-        Write-Host "  Manually create in genesis/ folder"
-        Write-Host "  Use genesis/TEMPLATE.md as guide"
-        Write-Host ""
-        Write-ColorOutput "Step 2: Implement" "Yellow"
-        Write-Host "  Use skills via Codex CLI"
-        Write-Host "  Skills are loaded from .agents/skills/"
-        Write-Host ""
-        Write-ColorOutput "PRDs in genesis/ → use skills in Codex → Production code." "Green"
-        Write-Host ""
-        Write-ColorOutput "Available Skills:" "Yellow"
-        Write-Host "  `$go              - Project kickstart orchestrator"
-        Write-Host "  `$coder           - Ruthless implementation with TDD"
-        Write-Host "  `$tester          - Brutal testing"
-        Write-Host "  `$architect       - Architecture review"
-        Write-Host "  `$evaluator       - BPSBS compliance"
-        Write-Host "  `$debugger        - Systematic debugging"
-        Write-Host "  `$docs            - Documentation"
-        Write-Host "  + more in .agents/skills/"
-        Write-Host ""
-        Write-ColorOutput "Start now:" "Green"
-        Write-Host "  cd $TargetDir"
-        Write-Host "  codex"
-        Write-Host "  > `$go"
-    } elseif ($plat -eq "copilot") {
-        Write-ColorOutput "Step 1: Create PRDs" "Yellow"
-        Write-Host "  Manually create in genesis/ folder"
-        Write-Host "  Use genesis/TEMPLATE.md as guide"
-        Write-Host ""
-        Write-ColorOutput "Step 2: Implement" "Yellow"
-        Write-Host "  Use agents via task tool in Copilot CLI"
-        Write-Host ""
-        Write-ColorOutput "PRDs in genesis/ → invoke agents → Production code." "Green"
-        Write-Host ""
-        Write-ColorOutput "Available Agents:" "Yellow"
-        Write-Host "  coder            - Ruthless implementation with TDD"
-        Write-Host "  tester           - Brutal testing"
-        Write-Host "  architect        - Architecture review"
-        Write-Host "  evaluator        - BPSBS compliance"
-        Write-Host "  debugger         - Systematic debugging"
-        Write-Host "  docs             - Documentation"
-        Write-Host "  + 16 more in .copilot/custom-agents/"
-        Write-Host ""
-        Write-ColorOutput "Example Usage:" "Yellow"
-        Write-Host '  task('
-        Write-Host '    agent_type="task",'
-        Write-Host '    description="Implement auth service",'
-        Write-Host '    prompt="Read .copilot/custom-agents/coder.md and genesis/auth.md, then implement"'
-        Write-Host '  )'
-        Write-Host ""
-        Write-ColorOutput "See .copilot/custom-agents/README.md for details" "Green"
+    switch ($plat) {
+        "claude" {
+            Write-Host "    Claude Code:" -ForegroundColor Cyan
+            Write-Host "      cd $TargetDir; claude"
+            Write-Host "      > /prd `"your feature`"    Create a PRD"
+            Write-Host "      > /go                     Implement everything"
+            Write-Host ""
+        }
+        "cursor" {
+            Write-Host "    Cursor:" -ForegroundColor Cyan
+            Write-Host "      Open project in Cursor — rules auto-load from .cursor/rules/"
+            Write-Host "      Create PRDs in genesis/ using genesis/TEMPLATE.md"
+            Write-Host ""
+        }
+        "codex" {
+            Write-Host "    OpenAI Codex:" -ForegroundColor Cyan
+            Write-Host "      cd $TargetDir; codex"
+            Write-Host "      > `$prd `"your feature`"    Create a PRD"
+            Write-Host "      > `$go                     Implement everything"
+            Write-Host ""
+        }
+        "copilot" {
+            Write-Host "    GitHub Copilot CLI:" -ForegroundColor Cyan
+            Write-Host "      Create PRDs in genesis/ using genesis/TEMPLATE.md"
+            Write-Host "      Invoke agents from .copilot/custom-agents/"
+            Write-Host ""
+        }
     }
 }
 
+Write-Host "  Docs: CLAUDE.md, docs/ANTI_PATTERNS_DEPTH.md" -ForegroundColor Blue
 Write-Host ""
-Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
-Write-ColorOutput "                   FRAMEWORK UPDATES                       " "Cyan"
-Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
+
+# What's New
+Show-WhatsNew (Join-Path $ScriptDir "CHANGELOG.md") $FrameworkVersion
+
+# Update instructions
+Write-Host "  Updates:  $ScriptDir\update.ps1 $TargetDir" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "To receive framework updates in this project:"
-Write-ColorOutput "  $ScriptDir\update.ps1 $TargetDir" "Cyan"
+Write-Host "  Happy building." -ForegroundColor Blue
 Write-Host ""
-Write-Host "To update all registered projects:"
-Write-ColorOutput "  $ScriptDir\update.ps1 -All" "Cyan"
-Write-Host ""
-Write-ColorOutput "Happy building!" "Blue"
