@@ -364,7 +364,7 @@ check_sessions() {
             last_ts=$(tail -1 "$session_file" | jq -r '.timestamp // empty' 2>/dev/null)
             if [ -n "$last_ts" ]; then
                 local last_epoch
-                last_epoch=$(date -d "$last_ts" +%s 2>/dev/null || echo 0)
+                last_epoch=$(date -d "$last_ts" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$last_ts" +%s 2>/dev/null || echo 0)
                 if [ "$last_epoch" -gt 0 ] && [ "$last_epoch" -lt "$threshold" ]; then
                     stalled_count=$((stalled_count + 1))
                 fi

@@ -90,3 +90,7 @@ If any persona fails validation, the chain breaks and goes back to the previous 
 ### Handoff to Next Persona
 [What the next persona needs to know]
 ```
+
+## Reflection Protocol
+
+Apply `agents/_reflection-protocol.md` before and after each architectural decision. Self-Score your work (1-10) on correctness, scalability, and security before handoff.

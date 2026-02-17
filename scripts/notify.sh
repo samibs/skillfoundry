@@ -35,6 +35,18 @@ CONFIG_FILE="$PROJECT_DIR/.claude/notifications.json"
 HISTORY_FILE="$PROJECT_DIR/.claude/notifications.jsonl"
 MAX_MESSAGE_LEN=500
 
+# Portable SHA-256 hash (works on Linux and macOS)
+portable_sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum | cut -d' ' -f1
+    elif command -v shasum >/dev/null 2>&1; then
+        shasum -a 256 | cut -d' ' -f1
+    else
+        # Last resort fallback
+        cksum | cut -d' ' -f1
+    fi
+}
+
 # ═══════════════════════════════════════════════════════════════
 # HELP
 # ═══════════════════════════════════════════════════════════════
@@ -272,7 +284,7 @@ is_throttled() {
     [ ! -f "$HISTORY_FILE" ] && return 1
 
     local msg_hash
-    msg_hash=$(echo -n "$message" | sha256sum | cut -d' ' -f1)
+    msg_hash=$(echo -n "$message" | portable_sha256)
     local now
     now=$(date +%s)
     local threshold=$((now - throttle_minutes * 60))
@@ -331,7 +343,7 @@ log_notification() {
     local timestamp
     timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     local msg_hash
-    msg_hash=$(echo -n "$message" | sha256sum | cut -d' ' -f1)
+    msg_hash=$(echo -n "$message" | portable_sha256)
 
     local channels_json="[]"
     if [ ${#channels[@]} -gt 0 ]; then

@@ -88,6 +88,10 @@ Be thorough, be ruthless, be the last line of defense against production failure
 [Specific untested attack vector]
 ```
 
+## Reflection Protocol
+
+Apply `agents/_reflection-protocol.md` before and after each test cycle. Self-Score your work (1-10) on coverage, edge cases, and security testing before handoff.
+
 ---
 
 ## Usage in GitHub Copilot CLI
