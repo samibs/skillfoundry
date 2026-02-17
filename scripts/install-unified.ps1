@@ -22,10 +22,10 @@ function Write-ColorOutput {
 }
 
 # Banner
-Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Cyan"
-Write-ColorOutput "║     Claude AS Framework - One-Click Installer             ║" "Cyan"
-Write-ColorOutput "║     Multi-Platform AI Agent & Skills Framework           ║" "Cyan"
-Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Cyan"
+Write-Host ""
+Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+Write-Host "  │  Claude AS Framework — One-Click Installer          │" -ForegroundColor Cyan
+Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
 Write-Host ""
 
 # Detect platforms (Claude Code, Copilot CLI, Cursor, Codex)
@@ -231,16 +231,9 @@ function Main {
     Write-Host ""
     Write-ColorOutput "Step 4: Installing framework..." "Blue"
 
-    Push-Location $targetDir
-    try {
-        foreach ($plat in $platforms) {
-            Write-Host ""
-            Write-ColorOutput "Installing for platform: $plat" "Cyan"
-            & "$frameworkDir\install.ps1" -Platform $plat
-        }
-    } finally {
-        Pop-Location
-    }
+    # Build comma-separated platform string for single install call
+    $platformCsv = $platforms -join ","
+    & "$frameworkDir\install.ps1" -Platform $platformCsv -TargetDir $targetDir -Yes
 
     Write-Host ""
     Write-ColorOutput "✓ Installation Complete!" "Green"

@@ -3240,6 +3240,83 @@ test_preferences_protocol_exists() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# INSTALL/UPDATE FLAG TESTS (v1.9.0.17 modernization)
+# ═══════════════════════════════════════════════════════════════
+
+test_install_help_flag() {
+    log_test "install.sh --help exits 0 and shows usage"
+    local output
+    output=$(bash "$FRAMEWORK_DIR/install.sh" --help 2>&1)
+    local rc=$?
+    if [ $rc -eq 0 ] && echo "$output" | grep "Usage" >/dev/null 2>&1; then
+        log_success "--help shows usage and exits 0"
+        return 0
+    fi
+    log_failure "--help failed (rc=$rc)"
+    return 1
+}
+
+test_install_version_flag() {
+    log_test "install.sh --version outputs correct version"
+    local output
+    output=$(bash "$FRAMEWORK_DIR/install.sh" --version 2>&1)
+    local expected
+    expected=$(cat "$FRAMEWORK_DIR/.version" | tr -d '[:space:]')
+    if [ "$output" = "$expected" ]; then
+        log_success "--version outputs $expected"
+        return 0
+    fi
+    log_failure "--version output '$output' != expected '$expected'"
+    return 1
+}
+
+test_install_dry_run() {
+    log_test "install.sh --dry-run previews without creating files"
+    setup_test_workspace
+    local output
+    output=$(bash "$FRAMEWORK_DIR/install.sh" --dry-run --platform=claude "$TEST_DIR" 2>&1)
+    local rc=$?
+    # Should exit 0 and NOT create .claude directory
+    if [ $rc -eq 0 ] && ! [ -d "$TEST_DIR/.claude" ] && echo "$output" | grep "Dry Run" >/dev/null 2>&1; then
+        log_success "--dry-run previews without writing files"
+    else
+        log_failure "--dry-run failed (rc=$rc, .claude exists=$([ -d "$TEST_DIR/.claude" ] && echo yes || echo no))"
+    fi
+    cleanup_test_workspace
+    return $rc
+}
+
+test_install_yes_mode() {
+    log_test "install.sh --yes completes without stdin"
+    setup_test_workspace
+    (
+        set +e
+        bash "$FRAMEWORK_DIR/install.sh" --yes --platform=claude "$TEST_DIR" >/dev/null 2>&1
+        exit $?
+    )
+    local result=$?
+    if [ $result -eq 0 ] && [ -d "$TEST_DIR/.claude/commands" ]; then
+        log_success "--yes non-interactive install succeeded"
+    else
+        log_failure "--yes install failed (rc=$result)"
+    fi
+    cleanup_test_workspace
+    return $result
+}
+
+test_update_yes_flag() {
+    log_test "update.sh --help mentions --yes flag"
+    local output
+    output=$(bash "$FRAMEWORK_DIR/update.sh" --help 2>&1)
+    if echo "$output" | grep "\-\-yes" >/dev/null 2>&1; then
+        log_success "update.sh --help documents --yes flag"
+        return 0
+    fi
+    log_failure "update.sh --help missing --yes documentation"
+    return 1
+}
+
+# ═══════════════════════════════════════════════════════════════
 # TEST RUNNER
 # ═══════════════════════════════════════════════════════════════
 
@@ -3515,6 +3592,15 @@ run_all_tests() {
         test_compliance_gdpr_checks
         test_compliance_evidence_script
         test_compliance_evidence_has_commands
+    fi
+
+    # Install/Update Flag Tests (v1.9.0.17 modernization)
+    if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "flags" ]; then
+        test_install_help_flag
+        test_install_version_flag
+        test_install_dry_run
+        test_install_yes_mode
+        test_update_yes_flag
     fi
 
     # Heartbeat, Notify & Preferences Tests (v1.9.0.17)

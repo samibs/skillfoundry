@@ -20,13 +20,21 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-# Banner
-echo -e "${CYAN}${BOLD}"
-echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║     Claude AS Framework - One-Click Installer             ║"
-echo "║     Multi-Platform AI Agent & Skills Framework           ║"
-echo "╚═══════════════════════════════════════════════════════════╝"
-echo -e "${NC}"
+# Banner (version filled in after framework is located)
+print_banner() {
+    local ver="${1:-}"
+    local dt="${2:-}"
+    echo ""
+    echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— One-Click Installer${NC}           ${CYAN}│${NC}"
+    if [ -n "$ver" ]; then
+        echo -e "${CYAN}│${NC}  v${ver} · ${dt} · 4 platforms             ${CYAN}│${NC}"
+    fi
+    echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
+    echo ""
+}
+
+print_banner
 
 # Detect OS
 detect_os() {
@@ -251,15 +259,21 @@ main() {
         exit 0
     fi
 
+    # Re-print banner with version now that we know the framework location
+    if [ -f "$FRAMEWORK_DIR/.version" ]; then
+        local fw_ver
+        fw_ver=$(cat "$FRAMEWORK_DIR/.version" | tr -d '[:space:]')
+        local fw_date
+        fw_date=$(date -r "$FRAMEWORK_DIR/.version" +"%Y-%m-%d" 2>/dev/null || date +"%Y-%m-%d")
+    fi
+
     echo ""
     echo -e "${BLUE}Step 4: Installing framework...${NC}"
 
-    cd "$TARGET_DIR"
-    for plat in $PLATFORMS; do
-        echo ""
-        echo -e "${CYAN}Installing for platform: ${BOLD}${plat}${NC}"
-        "$FRAMEWORK_DIR/install.sh" --platform="$plat"
-    done
+    # Build comma-separated platform string for single install call
+    local platform_csv
+    platform_csv="$(echo "$PLATFORMS" | tr ' ' ',')"
+    "$FRAMEWORK_DIR/install.sh" --platform="$platform_csv" --yes "$TARGET_DIR"
 
     echo ""
     echo -e "${GREEN}${BOLD}✓ Installation Complete!${NC}${BOLD}"

@@ -14,6 +14,7 @@
 param(
     [string]$Project = "",
     [switch]$All,
+    [switch]$Yes,
     [string]$Register = "",
     [string]$Scan = "",
     [switch]$List,
@@ -148,18 +149,70 @@ if (-not (Test-Path $VersionFile)) {
     exit 4  # File not found
 }
 $FrameworkVersion = (Get-Content $VersionFile -Raw).Trim()
-$FrameworkDate = "2026-01-20"
+$FrameworkDate = (Get-Item $VersionFile).LastWriteTime.ToString("yyyy-MM-dd")
 
 # ═══════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════
 
 function Print-Header {
-    Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Cyan"
-    Write-ColorOutput "║           Claude AS - Framework Updater                   ║" "Cyan"
-    Write-ColorOutput "║                                                           ║" "Cyan"
-    Write-ColorOutput "║   Version: $FrameworkVersion ($FrameworkDate)                       ║" "Cyan"
-    Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Cyan"
+    Write-Host ""
+    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+    Write-Host "  │  Claude AS Framework — Updater                     │" -ForegroundColor Cyan
+    Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 4 platforms             │" -ForegroundColor Cyan
+    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host ""
+}
+
+# Timer
+$script:TimerStart = $null
+
+function Start-Timer {
+    $script:TimerStart = Get-Date
+}
+
+function Get-ElapsedSeconds {
+    if ($script:TimerStart) {
+        return [int]((Get-Date) - $script:TimerStart).TotalSeconds
+    }
+    return 0
+}
+
+# What's New from CHANGELOG
+function Show-WhatsNew {
+    param([string]$ChangelogPath, [string]$Ver)
+    if (-not (Test-Path $ChangelogPath)) { return }
+
+    Write-Host ""
+    Write-Host "  What's New in v$Ver" -ForegroundColor Cyan
+    Write-Host "  $(('─' * 40))" -ForegroundColor Cyan
+
+    $inBlock = $false
+    $lineCount = 0
+    foreach ($line in Get-Content $ChangelogPath) {
+        if ($line -match '^## \[' -and -not $inBlock) {
+            $inBlock = $true
+            continue
+        }
+        if ($inBlock) {
+            if ($line -match '^## \[' -or $line -match '^---$') { break }
+            if ($line -match '^### (.+)') {
+                $heading = $Matches[1] -replace ' —.*', ''
+                Write-Host "    $heading" -ForegroundColor Yellow
+            } elseif ($line -match '^- (.+)' -and $lineCount -lt 10) {
+                $bullet = $Matches[1]
+                if ($bullet -match '\*\*(.+?)\*\*') {
+                    Write-Host "      $($Matches[1])"
+                } else {
+                    Write-Host "      $bullet"
+                }
+                $lineCount++
+            }
+        }
+    }
+    if ($lineCount -ge 10) {
+        Write-Host "      ... see CHANGELOG.md for full details" -ForegroundColor Blue
+    }
     Write-Host ""
 }
 
@@ -373,6 +426,8 @@ function Update-Project {
         return $true
     }
     
+    Start-Timer
+
     Write-ColorOutput "Updating: $ProjectDir" "Blue"
     Write-ColorOutput "  Current: v$currentVersion → Target: v$FrameworkVersion" "Blue"
     Write-Host ""
@@ -606,13 +661,18 @@ function Update-Project {
             Backup-File (Join-Path $ProjectDir "CLAUDE.md") | Out-Null
             
             Write-ColorOutput "  CLAUDE.md has local modifications." "Yellow"
-            Write-Host ""
-            Write-Host "  Options:"
-            Write-Host "    1) Overwrite with latest (backup saved)"
-            Write-Host "    2) Keep current version"
-            Write-Host "    3) Save latest as CLAUDE.md.new for manual merge"
-            Write-Host ""
-            $choice = Read-Host "  Choose [1/2/3]"
+            if ($Yes) {
+                $choice = "1"
+                Write-ColorOutput "  -Yes: overwriting CLAUDE.md (backup saved)" "Green"
+            } else {
+                Write-Host ""
+                Write-Host "  Options:"
+                Write-Host "    1) Overwrite with latest (backup saved)"
+                Write-Host "    2) Keep current version"
+                Write-Host "    3) Save latest as CLAUDE.md.new for manual merge"
+                Write-Host ""
+                $choice = Read-Host "  Choose [1/2/3]"
+            }
             
             switch ($choice) {
                 "1" {
@@ -693,16 +753,21 @@ function Update-Project {
         Add-Content -Path $RegistryFile -Value $ProjectDir
     }
     
+    $elapsed = Get-ElapsedSeconds
+
     Write-Host ""
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Green"
-    Write-ColorOutput "Update complete!" "Green"
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Green"
+    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Green
+    Write-Host "  │  Update Complete                                    │" -ForegroundColor Green
+    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Green
     Write-Host ""
-    Write-ColorOutput "  Updated project: $ProjectDir" "Cyan"
-    Write-ColorOutput "  Platforms: $($platforms -join ', ')" "Cyan"
-    Write-ColorOutput "  Version: v$currentVersion -> v$FrameworkVersion" "Cyan"
-    Write-ColorOutput "  Backup:  $backupDir" "Blue"
+    Write-Host "  Project:    $ProjectDir"
+    Write-Host "  Platforms:  $($platforms -join ', ')"
+    Write-Host "  Version:    v$currentVersion → v$FrameworkVersion"
+    Write-Host "  Duration:   ${elapsed}s"
+    Write-Host "  Backup:     $backupDir"
     Write-Host ""
+
+    Show-WhatsNew $ChangelogFile $FrameworkVersion
 
     return $true
 }
@@ -770,12 +835,13 @@ if ($List) {
 } else {
     Write-ColorOutput "Usage:" "Yellow"
     Write-Host "  .\update.ps1 -Project C:\path\to\project    # Update single project"
+    Write-Host "  .\update.ps1 -Yes -Project .                 # Non-interactive update"
     Write-Host "  .\update.ps1 -All                            # Update all registered"
     Write-Host "  .\update.ps1 -Register C:\path\to\project   # Register project"
     Write-Host "  .\update.ps1 -List                           # List registered"
     Write-Host ""
     Write-Host "Examples:"
     Write-ColorOutput "  .\update.ps1 -Project ." "Cyan"
-    Write-ColorOutput "  .\update.ps1 -All" "Cyan"
+    Write-ColorOutput "  .\update.ps1 -Yes -All" "Cyan"
     Write-ColorOutput "  .\update.ps1 -Register ." "Cyan"
 }
