@@ -152,8 +152,9 @@ For detailed requirements, load specific sections:
 - **Codex Integration (v1.9.0.14)**: 4th platform via native Skills
 - **Session Observability (v1.9.0.15)**: Line attribution, session recording, named checkpoints, commit trailers, decision logging protocol
 - **Competitive Leap (v1.9.0.16)**: GitHub Actions CI, Agent Trace format, prompt capture, cost-aware routing, quality primer, rejection tracker with auto-rules, A2A protocol agent cards, arena mode, compliance-as-code (HIPAA/SOC2/GDPR), tamper-evident evidence collection
+- **OpenClaw-Inspired (v1.9.0.17)**: Heartbeat daemon (proactive monitoring), multi-channel notifications (Slack/Discord/desktop/terminal), developer preferences (auto-learned code style + framework detection + agent prompt injection)
 - **NASAB Integration**: Evidence-based gates, constraint classification, pattern detection, bidirectional iteration, dissent resolution
 
 ---
 
-_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.16_
+_Full reference: CLAUDE.md (framework-specific, ~270 lines) + docs/enterprise-standards.md (production patterns, ~1350 lines) | This summary: ~400 lines | Framework v1.9.0.17_
