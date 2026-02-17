@@ -1,9 +1,7 @@
 ---
 name: replay
 description: >-
-  /replay - Replay & Session Viewer. Re-run last execution or view past session
-  timelines with decisions, files touched, and gate results. Use --show for
-  read-only session history.
+  /replay - Replay & Session Viewer
 ---
 
 # /replay - Replay & Session Viewer
@@ -33,10 +31,56 @@ You are the Replay Manager. When `/replay` is invoked, re-run the last execution
 
 This is a **read-only** view of past agent sessions. No re-execution occurs.
 
-1. **List sessions**: `./scripts/session-recorder.sh list`
-2. **Show timeline**: `./scripts/session-recorder.sh show <session-id>`
-3. Always expand decision records to show `what`, `why`, `alternatives`, and `confidence`.
-4. Session records: `logs/sessions/{date}/session-{id}.jsonl`
+1. **List sessions** (no session ID given):
+   ```bash
+   ./scripts/session-recorder.sh list
+   ```
+   Display recent sessions in a table:
+   ```
+   Session History
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   #  Session ID                        Agent    Story       Outcome
+   1  20260215_143000_a1b2c3d4          coder    STORY-003   success
+   2  20260215_120000_e5f6g7h8          tester   STORY-002   success
+   3  20260214_160000_i9j0k1l2          fixer    STORY-001   failed
+   ```
+
+2. **Show session timeline** (session ID or index given):
+   ```bash
+   ./scripts/session-recorder.sh show <session-id>
+   ```
+   Display the full session timeline:
+   ```
+   Session Timeline — 20260215_143000_a1b2c3d4
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Agent: coder | Story: STORY-003 | Duration: 12m 34s
+
+   14:30:00  ▶ SESSION START
+   14:30:15  📁 READ    src/auth/types.ts
+   14:31:02  📁 CREATE  src/auth/jwt.ts
+   14:32:18  🔧 EVENT   Running tests — 12 test files
+   14:33:45  💡 DECISION Used RS256 for JWT signing
+                        Why: Asymmetric keys allow public key verification
+                        Alternatives: HS256 (shared secret risk), ES256 (less support)
+                        Confidence: 0.9
+   14:35:22  📁 MODIFY  src/auth/index.ts
+   14:38:10  🔧 EVENT   Anvil Tier 3 passed
+   14:42:34  ✅ SESSION END — success (anvil-pass)
+
+   Summary:
+     Events: 4 | Decisions: 1 | Files: 3 (1 read, 1 created, 1 modified)
+   ```
+
+3. **If no sessions exist**:
+   Report: "No session records found. Sessions are created when agents run via `/go` or `/forge`."
+
+4. **Decision details**: When showing a timeline, always expand decision records to show `what`, `why`, `alternatives`, and `confidence`. These are the most valuable part of session history.
+
+### Integration with other tools:
+- Session records live in `logs/sessions/{date}/session-{id}.jsonl`
+- Current session pointer: `.claude/current-session.json`
+- Use `scripts/session-recorder.sh` for all session operations
+- See `agents/_session-protocol.md` for the full session lifecycle protocol
 
 ---
 

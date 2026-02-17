@@ -127,3 +127,7 @@ After completing a story implementation, append lessons learned to `memory_bank/
 ## Next Steps
 - [What should happen next]
 ```
+
+## Reflection Protocol
+
+Apply `agents/_reflection-protocol.md` before and after each implementation. Self-Score your work (1-10) on correctness, completeness, and security before handoff.

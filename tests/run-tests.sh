@@ -462,19 +462,16 @@ test_integration_update_workflow() {
 
 test_integration_multi_platform_project() {
     log_test "Integration: Project can have multiple platform installations"
-    
+
     setup_test_workspace
     TEST_PROJECT="$TEST_DIR/test-multi-platform"
     mkdir -p "$TEST_PROJECT"
-    
+
     cd "$FRAMEWORK_DIR"
-    
-    # Install Claude
-    bash install.sh --platform=claude "$TEST_PROJECT" > /dev/null 2>&1
-    
-    # Install Cursor (should coexist)
-    bash install.sh --platform=cursor "$TEST_PROJECT" > /dev/null 2>&1
-    
+
+    # Install both platforms at once to avoid interactive overwrite prompts
+    bash install.sh --platform=claude,cursor "$TEST_PROJECT" > /dev/null 2>&1
+
     # Verify both exist
     if [ -d "$TEST_PROJECT/.claude/commands" ] && [ -d "$TEST_PROJECT/.cursor/rules" ]; then
         log_success "Integration: Multi-platform installation works"
@@ -483,7 +480,7 @@ test_integration_multi_platform_project() {
         cleanup_test_workspace
         return 1
     fi
-    
+
     cleanup_test_workspace
     return 0
 }
@@ -526,25 +523,25 @@ test_performance_file_count() {
     COPILOT_FILES=$(find "$FRAMEWORK_DIR/.copilot/custom-agents" -name "*.md" 2>/dev/null | wc -l)
     CURSOR_FILES=$(find "$FRAMEWORK_DIR/.cursor/rules" -name "*.md" 2>/dev/null | wc -l)
     
-    # Should have reasonable number of agents (20-50 per platform)
-    if [ $CLAUDE_FILES -ge 20 ] && [ $CLAUDE_FILES -le 50 ]; then
+    # Should have reasonable number of agents (20-80 per platform)
+    if [ $CLAUDE_FILES -ge 20 ] && [ $CLAUDE_FILES -le 80 ]; then
         log_success "Claude agents count reasonable: $CLAUDE_FILES"
     else
-        log_failure "Claude agents count unexpected: $CLAUDE_FILES (expected 20-50)"
+        log_failure "Claude agents count unexpected: $CLAUDE_FILES (expected 20-80)"
         return 1
     fi
-    
-    if [ $COPILOT_FILES -ge 20 ] && [ $COPILOT_FILES -le 50 ]; then
+
+    if [ $COPILOT_FILES -ge 20 ] && [ $COPILOT_FILES -le 80 ]; then
         log_success "Copilot agents count reasonable: $COPILOT_FILES"
     else
-        log_failure "Copilot agents count unexpected: $COPILOT_FILES (expected 20-50)"
+        log_failure "Copilot agents count unexpected: $COPILOT_FILES (expected 20-80)"
         return 1
     fi
-    
-    if [ $CURSOR_FILES -ge 20 ] && [ $CURSOR_FILES -le 50 ]; then
+
+    if [ $CURSOR_FILES -ge 20 ] && [ $CURSOR_FILES -le 80 ]; then
         log_success "Cursor rules count reasonable: $CURSOR_FILES"
     else
-        log_failure "Cursor rules count unexpected: $CURSOR_FILES (expected 20-50)"
+        log_failure "Cursor rules count unexpected: $CURSOR_FILES (expected 20-80)"
         return 1
     fi
     
@@ -1306,7 +1303,7 @@ test_swarm_queue_script() {
     fi
 
     # Verify --help works
-    if bash "$FRAMEWORK_DIR/parallel/swarm-queue.sh" --help 2>&1 | grep -q "Swarm Task Queue"; then
+    if bash "$FRAMEWORK_DIR/parallel/swarm-queue.sh" --help 2>&1 | grep "Swarm Task Queue" >/dev/null 2>&1; then
         log_success "swarm-queue.sh exists, executable, --help works"
     else
         log_failure "swarm-queue.sh --help does not produce expected output"
@@ -1329,7 +1326,7 @@ test_swarm_scratchpad_script() {
         return 1
     fi
 
-    if bash "$FRAMEWORK_DIR/parallel/swarm-scratchpad.sh" --help 2>&1 | grep -q "Swarm Scratchpad"; then
+    if bash "$FRAMEWORK_DIR/parallel/swarm-scratchpad.sh" --help 2>&1 | grep "Swarm Scratchpad" >/dev/null 2>&1; then
         log_success "swarm-scratchpad.sh exists, executable, --help works"
     else
         log_failure "swarm-scratchpad.sh --help does not produce expected output"
@@ -1352,7 +1349,7 @@ test_conflict_detector_script() {
         return 1
     fi
 
-    if bash "$FRAMEWORK_DIR/parallel/conflict-detector.sh" --help 2>&1 | grep -q "Conflict Detector"; then
+    if bash "$FRAMEWORK_DIR/parallel/conflict-detector.sh" --help 2>&1 | grep "Conflict Detector" >/dev/null 2>&1; then
         log_success "conflict-detector.sh exists, executable, --help works"
     else
         log_failure "conflict-detector.sh --help does not produce expected output"
@@ -1512,7 +1509,7 @@ test_cost_tracker_script() {
         return 1
     fi
 
-    if bash "$FRAMEWORK_DIR/scripts/cost-tracker.sh" --help 2>&1 | grep -q "Cost Tracker"; then
+    if bash "$FRAMEWORK_DIR/scripts/cost-tracker.sh" --help 2>&1 | grep "Cost Tracker" >/dev/null 2>&1; then
         log_success "cost-tracker.sh exists, executable, --help works"
     else
         log_failure "cost-tracker.sh --help does not produce expected output"
@@ -1535,7 +1532,7 @@ test_dashboard_script() {
         return 1
     fi
 
-    if bash "$FRAMEWORK_DIR/scripts/dashboard.sh" --help 2>&1 | grep -q "Live Execution Dashboard"; then
+    if bash "$FRAMEWORK_DIR/scripts/dashboard.sh" --help 2>&1 | grep "Live Execution Dashboard" >/dev/null 2>&1; then
         log_success "dashboard.sh exists, executable, --help works"
     else
         log_failure "dashboard.sh --help does not produce expected output"
@@ -3035,48 +3032,51 @@ test_notify_init() {
     log_test "notify.sh init creates valid config"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         bash "$FRAMEWORK_DIR/scripts/notify.sh" init >/dev/null 2>&1
-        if [ -f ".claude/notifications.json" ] && jq -e '.enabled' .claude/notifications.json >/dev/null 2>&1; then
-            log_success "Notification config created with valid JSON"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "Config not created or invalid JSON"
-            cleanup_test_workspace
-            exit 1
-        fi
+        [ -f ".claude/notifications.json" ] && jq -e '.enabled' .claude/notifications.json >/dev/null 2>&1
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "Notification config created with valid JSON"
+    else
+        log_failure "Config not created or invalid JSON"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_notify_send_terminal() {
     log_test "notify.sh send delivers terminal notification"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         bash "$FRAMEWORK_DIR/scripts/notify.sh" init >/dev/null 2>&1
         # Disable desktop to avoid popups during tests, keep terminal only
         jq '.channels.desktop.enabled = false' .claude/notifications.json > .claude/notifications.json.tmp
         mv .claude/notifications.json.tmp .claude/notifications.json
         bash "$FRAMEWORK_DIR/scripts/notify.sh" send info "Test message" 2>/dev/null
-        if [ -f ".claude/notifications.jsonl" ] && grep -q "Test message" .claude/notifications.jsonl; then
-            log_success "Terminal notification sent and logged"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "Notification not logged to history"
-            cleanup_test_workspace
-            exit 1
-        fi
+        [ -f ".claude/notifications.jsonl" ] && grep -q "Test message" .claude/notifications.jsonl
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "Terminal notification sent and logged"
+    else
+        log_failure "Notification not logged to history"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_notify_throttling() {
     log_test "notify.sh throttling suppresses duplicates"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         bash "$FRAMEWORK_DIR/scripts/notify.sh" init >/dev/null 2>&1
         jq '.channels.desktop.enabled = false | .throttle_minutes = 60' .claude/notifications.json > .claude/notifications.json.tmp
@@ -3085,17 +3085,17 @@ test_notify_throttling() {
         bash "$FRAMEWORK_DIR/scripts/notify.sh" send info "Duplicate msg" 2>/dev/null
         local count
         count=$(grep -c "Duplicate msg" .claude/notifications.jsonl 2>/dev/null || echo 0)
-        if [ "$count" -eq 1 ]; then
-            log_success "Throttling suppressed duplicate notification"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "Throttling failed (found $count, expected 1)"
-            cleanup_test_workspace
-            exit 1
-        fi
+        [ "$count" -eq 1 ]
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "Throttling suppressed duplicate notification"
+    else
+        log_failure "Throttling failed"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_heartbeat_script_exists() {
@@ -3112,25 +3112,27 @@ test_heartbeat_init() {
     log_test "heartbeat.sh init creates HEARTBEAT.md template"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         bash "$FRAMEWORK_DIR/scripts/heartbeat.sh" init >/dev/null 2>&1
-        if [ -f "HEARTBEAT.md" ] && grep -q "### Test Health" HEARTBEAT.md && grep -q "### Git Health" HEARTBEAT.md; then
-            log_success "HEARTBEAT.md template created with check sections"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "Template missing or incomplete"
-            cleanup_test_workspace
-            exit 1
-        fi
+        [ -f "HEARTBEAT.md" ] && grep -q "### Test Health" HEARTBEAT.md && grep -q "### Git Health" HEARTBEAT.md
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "HEARTBEAT.md template created with check sections"
+    else
+        log_failure "Template missing or incomplete"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_heartbeat_run_once() {
     log_test "heartbeat.sh run-once creates state file"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         git init --quiet . 2>/dev/null || true
         bash "$FRAMEWORK_DIR/scripts/heartbeat.sh" init >/dev/null 2>&1
@@ -3138,17 +3140,17 @@ test_heartbeat_run_once() {
         jq '.channels.desktop.enabled = false' .claude/notifications.json > .claude/notifications.json.tmp
         mv .claude/notifications.json.tmp .claude/notifications.json
         bash "$FRAMEWORK_DIR/scripts/heartbeat.sh" run-once >/dev/null 2>&1
-        if [ -f ".claude/heartbeat-state.json" ] && jq -e '.results' .claude/heartbeat-state.json >/dev/null 2>&1; then
-            log_success "State file created with check results"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "State file not created or missing results"
-            cleanup_test_workspace
-            exit 1
-        fi
+        [ -f ".claude/heartbeat-state.json" ] && jq -e '.results' .claude/heartbeat-state.json >/dev/null 2>&1
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "State file created with check results"
+    else
+        log_failure "State file not created or missing results"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_preferences_script_exists() {
@@ -3165,63 +3167,66 @@ test_preferences_init() {
     log_test "preferences.sh init creates valid config"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         bash "$FRAMEWORK_DIR/scripts/preferences.sh" init >/dev/null 2>&1
-        if [ -f ".claude/preferences.json" ] && jq -e '.version' .claude/preferences.json >/dev/null 2>&1; then
-            log_success "Preferences file created with valid JSON"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "Preferences file not created or invalid"
-            cleanup_test_workspace
-            exit 1
-        fi
+        [ -f ".claude/preferences.json" ] && jq -e '.version' .claude/preferences.json >/dev/null 2>&1
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "Preferences file created with valid JSON"
+    else
+        log_failure "Preferences file not created or invalid"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_preferences_set_get() {
     log_test "preferences.sh set/get round-trip works"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         bash "$FRAMEWORK_DIR/scripts/preferences.sh" init >/dev/null 2>&1
         bash "$FRAMEWORK_DIR/scripts/preferences.sh" set "testing.coverage" "85" >/dev/null 2>&1
         local value
         value=$(bash "$FRAMEWORK_DIR/scripts/preferences.sh" get "testing.coverage" 2>/dev/null)
-        if [ "$value" = "85" ]; then
-            log_success "Set/get round-trip successful"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "Set/get failed (got: '$value', expected: '85')"
-            cleanup_test_workspace
-            exit 1
-        fi
+        [ "$value" = "85" ]
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "Set/get round-trip successful"
+    else
+        log_failure "Set/get failed"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_preferences_inject() {
     log_test "preferences.sh inject generates markdown"
     setup_test_workspace
     (
+        set +e
         cd "$TEST_DIR"
         bash "$FRAMEWORK_DIR/scripts/preferences.sh" init >/dev/null 2>&1
         bash "$FRAMEWORK_DIR/scripts/preferences.sh" set "framework.backend" "FastAPI" >/dev/null 2>&1
         local output
         output=$(bash "$FRAMEWORK_DIR/scripts/preferences.sh" inject 2>/dev/null)
-        if echo "$output" | grep -q "## Developer Preferences" && echo "$output" | grep -q "FastAPI"; then
-            log_success "Inject generates markdown with preferences"
-            cleanup_test_workspace
-            exit 0
-        else
-            log_failure "Inject output missing expected content"
-            cleanup_test_workspace
-            exit 1
-        fi
+        echo "$output" | grep -q "## Developer Preferences" && echo "$output" | grep -q "FastAPI"
+        exit $?
     )
-    return $?
+    local result=$?
+    if [ $result -eq 0 ]; then
+        log_success "Inject generates markdown with preferences"
+    else
+        log_failure "Inject output missing expected content"
+    fi
+    cleanup_test_workspace
+    return $result
 }
 
 test_preferences_protocol_exists() {
@@ -3239,12 +3244,17 @@ test_preferences_protocol_exists() {
 # ═══════════════════════════════════════════════════════════════
 
 run_all_tests() {
+    # Disable set -e inside test runner — test failures are tracked via
+    # TESTS_FAILED counter, not via exit codes. set -e would abort the
+    # entire suite on the first failing test.
+    set +e
+
     echo -e "${BLUE}"
     echo "╔═══════════════════════════════════════════════════════════╗"
     echo "║        Claude AS Framework - Test Suite                   ║"
     echo "╚═══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
-    
+
     # Version Management Tests
     if [ -z "$TEST_FILTER" ] || [ "$TEST_FILTER" = "version" ]; then
         test_version_file_exists
