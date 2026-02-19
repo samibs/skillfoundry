@@ -1,0 +1,9 @@
+{
+  "adjustments": [],
+  "metadata": {
+    "created": "2026-02-06T00:00:00Z",
+    "updated": "2026-02-06T00:00:00Z",
+    "version": "1.0",
+    "description": "Weight adjustment history. Records all changes to knowledge entry weights with timestamps and reasons."
+  }
+}

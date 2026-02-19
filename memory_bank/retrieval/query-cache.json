@@ -1,0 +1,10 @@
+{
+  "cache": [],
+  "max_size": 1000,
+  "metadata": {
+    "created": "2026-02-06T00:00:00Z",
+    "updated": "2026-02-06T00:00:00Z",
+    "version": "1.0",
+    "description": "Query result cache. Stores recent query results for faster retrieval. Auto-evicts oldest entries when max_size is reached."
+  }
+}
