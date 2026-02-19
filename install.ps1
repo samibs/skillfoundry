@@ -411,8 +411,58 @@ foreach ($plat in $Platforms) {
     }
 }
 
+# ═══════════════════════════════════════════════════════════════
+# DRY-RUN: Preview what would be installed, then exit
+# ═══════════════════════════════════════════════════════════════
+if ($DryRun) {
+    Write-Host ""
+    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+    Write-Host "  │  Dry Run — No files will be modified               │" -ForegroundColor Cyan
+    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "  Target:     $TargetDir"
+    Write-Host "  Platforms:  $PlatformDisplay"
+    Write-Host "  Source:     $ScriptDir"
+    Write-Host ""
+    Write-Host "  Would install:"
+    $agentCount = (Get-ChildItem -Path "$ScriptDir\agents\*.md" -ErrorAction SilentlyContinue).Count
+    Write-Host "    agents/               $agentCount shared modules"
+    Write-Host "    genesis/TEMPLATE.md   PRD template"
+    Write-Host "    docs/                 Security anti-pattern docs"
+    Write-Host "    memory_bank/          Knowledge bootstrap"
+    Write-Host "    CLAUDE.md             Project instructions"
+    foreach ($plat in $Platforms) {
+        switch ($plat) {
+            "claude" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.claude\commands\*.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .claude/commands/     $c skills"
+            }
+            "copilot" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.copilot\custom-agents\*.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .copilot/custom-agents/ $c agents"
+            }
+            "cursor" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.cursor\rules\*.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .cursor/rules/        $c rules"
+            }
+            "codex" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.agents\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .agents/skills/       $c skills"
+            }
+        }
+    }
+    Write-Host ""
+    Write-ColorOutput "  No changes were made." "Yellow"
+    exit 0
+}
+
+# ═══════════════════════════════════════════════════════════════
+# Initialize progress counter
+# ═══════════════════════════════════════════════════════════════
+Initialize-Steps (3 + $Platforms.Count + 2)
+
 # Create directory structure — shared directories (once)
-Write-ColorOutput "Creating directory structure..." "Blue"
+Write-Step "Creating shared directory structure..."
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "agents") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "genesis") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "docs\stories") | Out-Null
@@ -432,12 +482,11 @@ foreach ($plat in $Platforms) {
 }
 
 # Copy skills/agents/rules for each platform
-Write-Step "Installing agents and skills..."
-
 # Track counts per platform for summary
 $PlatformCounts = @{}
 
 foreach ($plat in $Platforms) {
+    Write-Step "Installing platform: $plat..."
     if ($plat -eq "claude") {
         Copy-Item -Path "$ScriptDir\.claude\commands\*" -Destination "$TargetDir\.claude\commands\" -Recurse -Force
         $count = (Get-ChildItem -Path "$TargetDir\.claude\commands\*.md" -ErrorAction SilentlyContinue).Count
@@ -519,60 +568,8 @@ if (-not (Test-Path $BootstrapTarget)) {
     Write-ColorOutput "  ✓ memory_bank/knowledge/ initialized with bootstrap" "Green"
 }
 
-# Set framework version marker
-# ═══════════════════════════════════════════════════════════════
-# DRY-RUN: Preview what would be installed, then exit
-# ═══════════════════════════════════════════════════════════════
-if ($DryRun) {
-    Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-    Write-Host "  │  Dry Run — No files will be modified               │" -ForegroundColor Cyan
-    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "  Target:     $TargetDir"
-    Write-Host "  Platforms:  $PlatformDisplay"
-    Write-Host "  Source:     $ScriptDir"
-    Write-Host ""
-    Write-Host "  Would install:"
-    $agentCount = (Get-ChildItem -Path "$ScriptDir\agents\*.md" -ErrorAction SilentlyContinue).Count
-    Write-Host "    agents/               $agentCount shared modules"
-    Write-Host "    genesis/TEMPLATE.md   PRD template"
-    Write-Host "    docs/                 Security anti-pattern docs"
-    Write-Host "    memory_bank/          Knowledge bootstrap"
-    Write-Host "    CLAUDE.md             Project instructions"
-    foreach ($plat in $Platforms) {
-        switch ($plat) {
-            "claude" {
-                $c = (Get-ChildItem -Path "$ScriptDir\.claude\commands\*.md" -ErrorAction SilentlyContinue).Count
-                Write-Host "    .claude/commands/     $c skills"
-            }
-            "copilot" {
-                $c = (Get-ChildItem -Path "$ScriptDir\.copilot\custom-agents\*.md" -ErrorAction SilentlyContinue).Count
-                Write-Host "    .copilot/custom-agents/ $c agents"
-            }
-            "cursor" {
-                $c = (Get-ChildItem -Path "$ScriptDir\.cursor\rules\*.md" -ErrorAction SilentlyContinue).Count
-                Write-Host "    .cursor/rules/        $c rules"
-            }
-            "codex" {
-                $c = (Get-ChildItem -Path "$ScriptDir\.agents\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
-                Write-Host "    .agents/skills/       $c skills"
-            }
-        }
-    }
-    Write-Host ""
-    Write-ColorOutput "  No changes were made." "Yellow"
-    exit 0
-}
-
-# ═══════════════════════════════════════════════════════════════
-# Initialize progress counter
-# ═══════════════════════════════════════════════════════════════
-Initialize-Steps (3 + $Platforms.Count + 2)
-
-# Create directory structure — shared directories (once)
-Write-Step "Creating shared directory structure..."
-
+# Set framework version markers
+Write-Step "Registering project..."
 foreach ($plat in $Platforms) {
     $platDir = $null
     if ($plat -eq "claude") { $platDir = ".claude" }
@@ -587,7 +584,6 @@ foreach ($plat in $Platforms) {
 }
 Write-ColorOutput "  ✓ Framework version: v$FrameworkVersion (Platform(s): $PlatformDisplay)" "Green"
 
-Write-Step "Registering project..."
 $RegistryFile = Join-Path $ScriptDir ".project-registry"
 $RegistryContent = @()
 if (Test-Path $RegistryFile) {
