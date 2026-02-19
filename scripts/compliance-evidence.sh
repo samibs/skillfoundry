@@ -110,7 +110,7 @@ cmd_collect() {
     mkdir -p "$evidence_path"
     chmod 700 "$evidence_path"
 
-    echo -e "${CYAN}${BOLD}COLLECTING EVIDENCE: ${profile^^}${NC}"
+    echo -e "${CYAN}${BOLD}COLLECTING EVIDENCE: $(echo "$profile" | tr '[:lower:]' '[:upper:]')${NC}"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "Profile:   $profile"
     echo "Project:   $PROJECT_DIR"
@@ -363,7 +363,7 @@ cmd_report() {
         exit 0
     fi
 
-    echo -e "${CYAN}${BOLD}COMPLIANCE EVIDENCE REPORT: ${profile^^}${NC}"
+    echo -e "${CYAN}${BOLD}COMPLIANCE EVIDENCE REPORT: $(echo "$profile" | tr '[:lower:]' '[:upper:]')${NC}"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 

@@ -268,7 +268,7 @@ send_terminal() {
         critical) color="${RED}${BOLD}" ;;
     esac
 
-    echo -e "${color}[NOTIFY:${level^^}]${NC} $message" >&2
+    echo -e "${color}[NOTIFY:$(echo "$level" | tr '[:lower:]' '[:upper:]')]${NC} $message" >&2
     echo -e "\a" 2>/dev/null || true
 }
 
