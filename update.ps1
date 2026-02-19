@@ -149,7 +149,7 @@ if (-not (Test-Path $VersionFile)) {
     exit 4  # File not found
 }
 $FrameworkVersion = (Get-Content $VersionFile -Raw).Trim()
-$FrameworkDate = (Get-Item $VersionFile).LastWriteTime.ToString("yyyy-MM-dd")
+$FrameworkDate = (Get-Item -Force $VersionFile).LastWriteTime.ToString("yyyy-MM-dd")
 
 # ═══════════════════════════════════════════════════════════════
 # HELPER FUNCTIONS
