@@ -1,0 +1,10 @@
+{
+  "nodes": [],
+  "edges": [],
+  "metadata": {
+    "created": "2026-02-06T00:00:00Z",
+    "updated": "2026-02-06T00:00:00Z",
+    "version": "1.0",
+    "description": "Knowledge relationship graph. Nodes are knowledge entry IDs, edges are typed relationships (supports, contradicts, relates_to)."
+  }
+}

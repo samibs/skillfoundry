@@ -105,6 +105,15 @@ memory_bank/knowledge/*
 !memory_bank/knowledge/decisions-universal.jsonl
 !memory_bank/knowledge/errors-universal.jsonl
 !memory_bank/knowledge/patterns-universal.jsonl
+# Track seed JSON files for relationships and retrieval
+!memory_bank/relationships/
+memory_bank/relationships/*
+!memory_bank/relationships/knowledge-graph.json
+!memory_bank/relationships/lineage.json
+!memory_bank/retrieval/
+memory_bank/retrieval/*
+!memory_bank/retrieval/query-cache.json
+!memory_bank/retrieval/weights.json
 
 # Hub config (machine-specific, contains local paths)
 .claude/hub.json
