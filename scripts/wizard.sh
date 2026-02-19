@@ -100,7 +100,13 @@ select_tech_stack() {
             echo "  5) Other"
             read -p "Choice (1-5): " -n 1 -r
             echo ""
-            FRONTEND=$(case $REPLY in 1) echo "react" ;; 2) echo "angular" ;; 3) echo "vue" ;; 4) echo "vanilla" ;; *) echo "other" ;; esac)
+            case $REPLY in
+                1) FRONTEND="react" ;;
+                2) FRONTEND="angular" ;;
+                3) FRONTEND="vue" ;;
+                4) FRONTEND="vanilla" ;;
+                *) FRONTEND="other" ;;
+            esac
             
             echo ""
             echo "Backend framework:"
@@ -111,7 +117,13 @@ select_tech_stack() {
             echo "  5) Other"
             read -p "Choice (1-5): " -n 1 -r
             echo ""
-            BACKEND=$(case $REPLY in 1) echo "nodejs" ;; 2) echo "fastapi" ;; 3) echo "django" ;; 4) echo "dotnet" ;; *) echo "other" ;; esac)
+            case $REPLY in
+                1) BACKEND="nodejs" ;;
+                2) BACKEND="fastapi" ;;
+                3) BACKEND="django" ;;
+                4) BACKEND="dotnet" ;;
+                *) BACKEND="other" ;;
+            esac
             
             echo "$FRONTEND|$BACKEND"
             ;;
