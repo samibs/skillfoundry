@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.9.0.18] - 2026-02-15
 
-### Fixed — install.ps1 Execution Order
-- **Dry-run check** was placed after file installation — moved before any file operations
-- **Step counter** (`Initialize-Steps`) was called after `Write-Step` calls — moved before first step
-- **Duplicate directory creation** — removed second mkdir+version-marker block that re-created dirs already created earlier
+### Fixed
+- **install.ps1 execution order** — Dry-run check was placed after file installation, step counter was initialized after use, duplicate directory creation; restructured entire post-validation flow
+- **memory_bank seed files not tracked** — `.gitignore` blanket `memory_bank/*` rule had no negation for `relationships/` and `retrieval/` directories; 4 JSON seed files never committed (fixed 8 test failures)
+- **wizard.sh macOS syntax error** — `$(case $REPLY in 1) echo ...)` pattern fails on bash 3.2 (macOS default) because parser interprets case `)` as closing `$(`; replaced with portable case blocks
 
 ### Changed — Script Modernization (all 6 scripts)
 - **`--yes`/`-y`/`-Yes`** non-interactive mode on all install and update scripts (bash + PowerShell)

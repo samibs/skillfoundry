@@ -6,10 +6,12 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
-### Script Modernization & Bugfix (v1.9.0.18)
+### Script Modernization, Fixes & macOS Compat (v1.9.0.18)
 - **install.ps1 critical fix** — Dry-run check, step counter, and directory creation were running in wrong order; restructured execution flow
 - **Modernized install/update scripts** — `--yes`/`-y` non-interactive mode, `--dry-run` preview, `--help`/`--version` flags, progress `[1/N]` step counters, elapsed timer, compact summary, What's New from CHANGELOG
 - **All 6 scripts updated** — `install.sh`, `update.sh`, `install.ps1`, `update.ps1`, `install-unified.sh`, `install-unified.ps1`
+- **memory_bank seed files tracked** — `relationships/knowledge-graph.json`, `lineage.json`, `retrieval/query-cache.json`, `weights.json` were gitignored; now committed (fixes 8 test failures)
+- **macOS bash 3.2 fix** — `scripts/wizard.sh` used `$(case ... in 1) ...)` pattern that fails on macOS default bash; replaced with portable syntax
 
 ### OpenClaw-Inspired: Monitoring, Notifications & Developer Memory (v1.9.0.17)
 - **Heartbeat daemon** — `scripts/heartbeat.sh` proactively monitors test health, git health, session health, rejection rate, disk usage
@@ -869,14 +871,28 @@ cd C:\dev_tools_20260120_latest\claude_as
 .\update.ps1 -Project C:\path\to\your\project
 ```
 
+### Non-Interactive Mode (CI/CD)
+
+```bash
+# Linux/Mac — skip all prompts
+./update.sh --yes /path/to/your/project
+./install.sh --yes --platform=claude /path/to/your/project
+
+# Windows PowerShell
+.\update.ps1 -Yes -Project C:\path\to\your\project
+.\install.ps1 -Yes -Platform claude -TargetDir C:\path\to\your\project
+```
+
 ### Preview Changes First
 
 ```bash
 # Linux/Mac (bash)
 ./update.sh --diff /path/to/your/project
+./install.sh --dry-run --platform=claude
 
 # Windows (PowerShell)
 .\update.ps1 -Diff C:\path\to\your\project
+.\install.ps1 -DryRun -Platform claude
 ```
 
 ### What Gets Updated
@@ -1385,7 +1401,7 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 **Session Observability** (v1.9.0.15 - 2026-02-15) - Line attribution, session recording, checkpoints, commit trailers, decision logging
 **Competitive Leap** (v1.9.0.16 - 2026-02-15) - CI/CD pipeline, quality intelligence, A2A protocol, compliance-as-code
 **OpenClaw Monitoring** (v1.9.0.17 - 2026-02-17) - Heartbeat daemon, multi-channel notifications, developer preferences
-**Script Modernization** (v1.9.0.18 - 2026-02-15) - Modernized install/update scripts, fixed install.ps1 execution order
+**Script Modernization** (v1.9.0.18 - 2026-02-15) - Modernized install/update scripts, fixed install.ps1 execution order, memory_bank seed files, macOS compat
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 
