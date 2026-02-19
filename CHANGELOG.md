@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.18] - 2026-02-15
+
+### Fixed — install.ps1 Execution Order
+- **Dry-run check** was placed after file installation — moved before any file operations
+- **Step counter** (`Initialize-Steps`) was called after `Write-Step` calls — moved before first step
+- **Duplicate directory creation** — removed second mkdir+version-marker block that re-created dirs already created earlier
+
+### Changed — Script Modernization (all 6 scripts)
+- **`--yes`/`-y`/`-Yes`** non-interactive mode on all install and update scripts (bash + PowerShell)
+- **`--dry-run`/`-DryRun`** preview mode on install scripts
+- **`--help`/`-Help`** and **`--version`/`-Version`** flags on install scripts
+- **Progress indicators** `[1/N]` step counter through installation phases
+- **Elapsed timer** shows duration in completion summary
+- **What's New** parses CHANGELOG.md and displays latest version highlights
+- **Compact summary** replaces 130-line verbose output with ~35-line quick-start
+- **Auto-derived dates** from `.version` file mtime instead of hardcoded strings
+- **Modern headers** `┌───┐` box style with version and date
+- **Unified installers** now use single `install.sh --platform=csv --yes` call instead of per-platform loop
+
+### Fixed — update.sh
+- **`local` outside function** bug at line 1176 (pre-existing)
+- **`$CHANGELOG_FILE`** variable defined but never used — now referenced in What's New display
+
+---
+
 ## [1.9.0.17] - 2026-02-17
 
 ### Added — OpenClaw-Inspired Monitoring & Developer Memory
