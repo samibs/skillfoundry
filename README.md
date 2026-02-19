@@ -12,6 +12,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 - **All 6 scripts updated** — `install.sh`, `update.sh`, `install.ps1`, `update.ps1`, `install-unified.sh`, `install-unified.ps1`
 - **memory_bank seed files tracked** — `relationships/knowledge-graph.json`, `lineage.json`, `retrieval/query-cache.json`, `weights.json` were gitignored; now committed (fixes 8 test failures)
 - **macOS bash 3.2 fix** — `scripts/wizard.sh` used `$(case ... in 1) ...)` pattern that fails on macOS default bash; replaced with portable syntax
+- **macOS bash 4+ compatibility** — Removed `declare -A` (associative arrays) and `${var^^}` (case conversion) from `install.sh`, `notify.sh`, `heartbeat.sh`, `compliance-evidence.sh`; added bash 4 version guards to `visualize.sh` and `monorepo.sh`
 
 ### OpenClaw-Inspired: Monitoring, Notifications & Developer Memory (v1.9.0.17)
 - **Heartbeat daemon** — `scripts/heartbeat.sh` proactively monitors test health, git health, session health, rejection rate, disk usage

@@ -378,14 +378,16 @@ for p in "${PLATFORMS[@]}"; do
     fi
 done
 
-# Deduplicate platforms (preserve order)
-declare -a UNIQUE_PLATFORMS=()
-declare -A SEEN_PLATFORMS=()
+# Deduplicate platforms (preserve order, bash 3.2 compatible)
+UNIQUE_PLATFORMS=()
 for p in "${PLATFORMS[@]}"; do
     p="$(echo "$p" | tr -d '[:space:]')"
-    if [ -z "${SEEN_PLATFORMS[$p]+x}" ]; then
+    _dup=false
+    for u in "${UNIQUE_PLATFORMS[@]}"; do
+        if [ "$u" = "$p" ]; then _dup=true; break; fi
+    done
+    if [ "$_dup" = false ]; then
         UNIQUE_PLATFORMS+=("$p")
-        SEEN_PLATFORMS[$p]=1
     fi
 done
 PLATFORMS=("${UNIQUE_PLATFORMS[@]}")
@@ -684,11 +686,9 @@ fi
 # PHASE 2: Per-platform installation (loop over each platform)
 # ═══════════════════════════════════════════════════════════════
 
-# Declare associative arrays to store per-platform counts for summary
-declare -A PLAT_SKILL_COUNT
-declare -A PLAT_AGENT_COUNT
-declare -A PLAT_RULE_COUNT
-declare -A PLAT_HOOK_COUNT
+# Per-platform count variables (bash 3.2 compatible — no associative arrays)
+# Set via: eval "PLAT_SKILL_COUNT_${plat}=N"
+# Get via: eval "_val=\${PLAT_SKILL_COUNT_${plat}:-0}"
 
 install_platform() {
     local plat="$1"
@@ -715,8 +715,9 @@ install_platform() {
     case "$plat" in
         claude)
             cp -r "$SCRIPT_DIR/.claude/commands/"* "$TARGET_DIR/.claude/commands/"
-            PLAT_SKILL_COUNT[$plat]=$(ls -1 "$TARGET_DIR/.claude/commands/"*.md 2>/dev/null | wc -l)
-            echo -e "${GREEN}    ✓ Claude skills installed (${PLAT_SKILL_COUNT[$plat]} skills)${NC}"
+            _count=$(ls -1 "$TARGET_DIR/.claude/commands/"*.md 2>/dev/null | wc -l)
+            eval "PLAT_SKILL_COUNT_${plat}=${_count}"
+            echo -e "${GREEN}    ✓ Claude skills installed (${_count} skills)${NC}"
 
             # Deploy autonomous execution configuration (permission profile + hooks)
             if [ -f "$SCRIPT_DIR/.claude/settings.json" ]; then
@@ -726,8 +727,9 @@ install_platform() {
             if [ -d "$SCRIPT_DIR/.claude/hooks" ]; then
                 cp -r "$SCRIPT_DIR/.claude/hooks/"* "$TARGET_DIR/.claude/hooks/" 2>/dev/null || true
                 chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
-                PLAT_HOOK_COUNT[$plat]=$(ls -1 "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null | wc -l)
-                echo -e "${GREEN}    ✓ Safety hooks installed (${PLAT_HOOK_COUNT[$plat]} hooks)${NC}"
+                _count=$(ls -1 "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null | wc -l)
+                eval "PLAT_HOOK_COUNT_${plat}=${_count}"
+                echo -e "${GREEN}    ✓ Safety hooks installed (${_count} hooks)${NC}"
             fi
             ;;
         copilot)
@@ -738,21 +740,24 @@ install_platform() {
             # Make helper executable
             [ -f "$TARGET_DIR/.copilot/helper.sh" ] && chmod +x "$TARGET_DIR/.copilot/helper.sh"
 
-            PLAT_AGENT_COUNT[$plat]=$(ls -1 "$TARGET_DIR/.copilot/custom-agents/"*.md 2>/dev/null | wc -l)
-            echo -e "${GREEN}    ✓ Copilot custom agents installed (${PLAT_AGENT_COUNT[$plat]} agents)${NC}"
+            _count=$(ls -1 "$TARGET_DIR/.copilot/custom-agents/"*.md 2>/dev/null | wc -l)
+            eval "PLAT_AGENT_COUNT_${plat}=${_count}"
+            echo -e "${GREEN}    ✓ Copilot custom agents installed (${_count} agents)${NC}"
             echo -e "${GREEN}    ✓ Copilot helper and workflow guide installed${NC}"
             ;;
         codex)
             cp -r "$SCRIPT_DIR/.agents/skills/"* "$TARGET_DIR/.agents/skills/"
             # Copy AGENTS.md to target
             [ -f "$SCRIPT_DIR/AGENTS.md" ] && cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"
-            PLAT_SKILL_COUNT[$plat]=$(find "$TARGET_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l)
-            echo -e "${GREEN}    ✓ Codex skills installed (${PLAT_SKILL_COUNT[$plat]} skills)${NC}"
+            _count=$(find "$TARGET_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l)
+            eval "PLAT_SKILL_COUNT_${plat}=${_count}"
+            echo -e "${GREEN}    ✓ Codex skills installed (${_count} skills)${NC}"
             ;;
         cursor)
             cp -r "$SCRIPT_DIR/.cursor/rules/"* "$TARGET_DIR/.cursor/rules/"
-            PLAT_RULE_COUNT[$plat]=$(ls -1 "$TARGET_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l)
-            echo -e "${GREEN}    ✓ Cursor rules installed (${PLAT_RULE_COUNT[$plat]} rules)${NC}"
+            _count=$(ls -1 "$TARGET_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l)
+            eval "PLAT_RULE_COUNT_${plat}=${_count}"
+            echo -e "${GREEN}    ✓ Cursor rules installed (${_count} rules)${NC}"
             ;;
     esac
 
@@ -817,20 +822,25 @@ echo -e "  ${BOLD}Duration:${NC}   ${ELAPSED}s"
 echo ""
 echo -e "  ${BOLD}Installed:${NC}"
 
-# Per-platform summary lines (compact)
+# Per-platform summary lines (compact, bash 3.2 compatible)
 for plat in "${PLATFORMS[@]}"; do
     case "$plat" in
         claude)
-            echo "    .claude/commands/       ${PLAT_SKILL_COUNT[$plat]:-0} skills, ${PLAT_HOOK_COUNT[$plat]:-0} hooks"
+            eval "_skills=\${PLAT_SKILL_COUNT_${plat}:-0}"
+            eval "_hooks=\${PLAT_HOOK_COUNT_${plat}:-0}"
+            echo "    .claude/commands/       ${_skills} skills, ${_hooks} hooks"
             ;;
         copilot)
-            echo "    .copilot/custom-agents/ ${PLAT_AGENT_COUNT[$plat]:-0} agents"
+            eval "_agents=\${PLAT_AGENT_COUNT_${plat}:-0}"
+            echo "    .copilot/custom-agents/ ${_agents} agents"
             ;;
         codex)
-            echo "    .agents/skills/         ${PLAT_SKILL_COUNT[$plat]:-0} skills"
+            eval "_skills=\${PLAT_SKILL_COUNT_${plat}:-0}"
+            echo "    .agents/skills/         ${_skills} skills"
             ;;
         cursor)
-            echo "    .cursor/rules/          ${PLAT_RULE_COUNT[$plat]:-0} rules"
+            eval "_rules=\${PLAT_RULE_COUNT_${plat}:-0}"
+            echo "    .cursor/rules/          ${_rules} rules"
             ;;
     esac
 done

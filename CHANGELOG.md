@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **install.ps1 execution order** — Dry-run check was placed after file installation, step counter was initialized after use, duplicate directory creation; restructured entire post-validation flow
 - **memory_bank seed files not tracked** — `.gitignore` blanket `memory_bank/*` rule had no negation for `relationships/` and `retrieval/` directories; 4 JSON seed files never committed (fixed 8 test failures)
 - **wizard.sh macOS syntax error** — `$(case $REPLY in 1) echo ...)` pattern fails on bash 3.2 (macOS default) because parser interprets case `)` as closing `$(`; replaced with portable case blocks
+- **macOS bash 4+ incompatibilities** — `declare -A` (associative arrays) in `install.sh` caused all install tests to fail with exit code 2 on macOS bash 3.2; replaced with loop-based dedup and `eval`-based variables. `${var^^}` case conversion in `notify.sh`, `heartbeat.sh`, `compliance-evidence.sh` replaced with `tr`. Added bash 4 version guards to `parallel/visualize.sh` and `scripts/monorepo.sh` which require associative arrays for graph algorithms
 
 ### Changed — Script Modernization (all 6 scripts)
 - **`--yes`/`-y`/`-Yes`** non-interactive mode on all install and update scripts (bash + PowerShell)

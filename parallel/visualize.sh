@@ -11,6 +11,13 @@
 set -e
 set -o pipefail
 
+# Requires bash 4+ for associative arrays
+if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    echo "Error: visualize.sh requires bash 4.0+ (you have $BASH_VERSION)" >&2
+    echo "On macOS: brew install bash" >&2
+    exit 1
+fi
+
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'

@@ -481,7 +481,7 @@ run_cycle() {
         message=$(echo "$output" | cut -d'|' -f2-)
 
         results_json+=("{\"check\":\"$name\",\"status\":\"$status\",\"message\":$(echo "$message" | jq -Rs .)}")
-        log_msg "${status^^}" "$name: $message"
+        log_msg "$(echo "$status" | tr '[:lower:]' '[:upper:]')" "$name: $message"
 
         # Trigger notification for failures/warnings
         local severity
