@@ -39,12 +39,13 @@ trap {
     Write-ColorOutput "  Reason: $($_.Exception.Message)" "Yellow"
     Write-ColorOutput "  Location: $($_.InvocationInfo.ScriptLineNumber)" "Yellow"
     
-    # Rollback if partial installation
-    if ($TargetDir -and (Test-Path $TargetDir)) {
-        if ((Test-Path (Join-Path $TargetDir ".claude")) -or
-            (Test-Path (Join-Path $TargetDir ".copilot")) -or
-            (Test-Path (Join-Path $TargetDir ".cursor")) -or
-            (Test-Path (Join-Path $TargetDir ".agents"))) {
+    # Rollback if partial installation — but NEVER rollback the source framework itself
+    $resolvedTarget = if ($TargetDir) { (Resolve-Path $TargetDir -ErrorAction SilentlyContinue).Path } else { $null }
+    if ($resolvedTarget -and $resolvedTarget -ne $ScriptDir -and (Test-Path $resolvedTarget)) {
+        if ((Test-Path (Join-Path $resolvedTarget ".claude")) -or
+            (Test-Path (Join-Path $resolvedTarget ".copilot")) -or
+            (Test-Path (Join-Path $resolvedTarget ".cursor")) -or
+            (Test-Path (Join-Path $resolvedTarget ".agents"))) {
             Write-ColorOutput "Rolling back partial installation..." "Yellow"
             Rollback-Installation
         }
@@ -159,7 +160,7 @@ if (-not (Test-Path $VersionFilePath)) {
     exit 1
 }
 $FrameworkVersion = (Get-Content $VersionFilePath -Raw).Trim()
-$FrameworkDate = (Get-Item $VersionFilePath).LastWriteTime.ToString("yyyy-MM-dd")
+$FrameworkDate = (Get-Item -Force $VersionFilePath).LastWriteTime.ToString("yyyy-MM-dd")
 
 # Handle -Help
 if ($Help) {
