@@ -6,12 +6,17 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### Script Modernization & Bugfix (v1.9.0.18)
+- **install.ps1 critical fix** — Dry-run check, step counter, and directory creation were running in wrong order; restructured execution flow
+- **Modernized install/update scripts** — `--yes`/`-y` non-interactive mode, `--dry-run` preview, `--help`/`--version` flags, progress `[1/N]` step counters, elapsed timer, compact summary, What's New from CHANGELOG
+- **All 6 scripts updated** — `install.sh`, `update.sh`, `install.ps1`, `update.ps1`, `install-unified.sh`, `install-unified.ps1`
+
 ### OpenClaw-Inspired: Monitoring, Notifications & Developer Memory (v1.9.0.17)
 - **Heartbeat daemon** — `scripts/heartbeat.sh` proactively monitors test health, git health, session health, rejection rate, disk usage
 - **Multi-channel notifications** — `scripts/notify.sh` sends alerts via Slack, Discord, desktop, and terminal with throttling + quiet hours
 - **Developer preferences** — `scripts/preferences.sh` auto-learns code style, frameworks, and testing patterns; injects into agent prompts
 
-### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.17)
+### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.16)
 - **GitHub Actions CI** — Multi-OS test suite (Ubuntu 22.04/24.04, macOS), shell syntax validation, platform sync checks
 - **Agent Trace format** — `scripts/attribution.sh --format=agent-trace` for Cursor-compatible tracing
 - **Prompt capture** — `scripts/session-recorder.sh prompt` with opt-in recording and automatic sanitization
@@ -201,7 +206,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.17**
+Current version: **1.9.0.18**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -1150,7 +1155,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.15** - February 15, 2026
+**v1.9.0.18** - February 15, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
@@ -1378,6 +1383,9 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 **The Anvil** (v1.9.0.13 - 2026-02-09) - 6-tier quality gate between every agent handoff
 **OpenAI Codex Support** (v1.9.0.14 - 2026-02-13) - 4th platform integration with native Skills
 **Session Observability** (v1.9.0.15 - 2026-02-15) - Line attribution, session recording, checkpoints, commit trailers, decision logging
+**Competitive Leap** (v1.9.0.16 - 2026-02-15) - CI/CD pipeline, quality intelligence, A2A protocol, compliance-as-code
+**OpenClaw Monitoring** (v1.9.0.17 - 2026-02-17) - Heartbeat daemon, multi-channel notifications, developer preferences
+**Script Modernization** (v1.9.0.18 - 2026-02-15) - Modernized install/update scripts, fixed install.ps1 execution order
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 
