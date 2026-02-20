@@ -246,6 +246,65 @@ Before final commit:
 
 ---
 
+## Autonomous Developer Loop
+
+When autonomous mode is active (`.claude/.autonomous` flag file exists in the project), Claude operates as a fully autonomous developer:
+
+1. **Every user input is classified** — FEATURE, BUG, REFACTOR, QUESTION, OPS, or MEMORY
+2. **The correct pipeline executes automatically** — no manual `/command` invocation needed
+3. **Results are presented for review** — user approves, rejects, or adjusts at the end
+4. **Knowledge is recorded** — decisions, facts, and errors written to `memory_bank/`
+5. **Knowledge syncs to GitHub** — the Knowledge Sync Daemon pushes to a global knowledge repo
+
+### Protocol Files
+
+| File | Purpose |
+|------|---------|
+| `agents/_autonomous-protocol.md` | Routing rules, execution pipeline, review format |
+| `agents/_intent-classifier.md` | Classification examples, edge cases, confidence thresholds |
+| `.claude/commands/autonomous.md` | `/autonomous` toggle on/off/status |
+| `scripts/knowledge-sync.sh` | Daemon: init, start, stop, sync, register, promote |
+| `scripts/sanitize-knowledge.sh` | Strip secrets, normalize paths, validate JSON |
+| `scripts/session-init.sh` | Pull global knowledge, start sync daemon |
+| `scripts/session-close.sh` | Harvest memory, force sync, stop daemon |
+
+### Session Lifecycle (Autonomous Mode)
+
+```
+SESSION START:
+  → Run scripts/session-init.sh (pull global knowledge, start sync daemon)
+  → Load memory_bank/ into context
+  → Autonomous protocol activates
+
+DURING SESSION:
+  → Every input auto-classified and routed
+  → Pipelines execute fully, review at end
+  → memory_bank/ updated with decisions/facts/errors
+  → Sync daemon pushes to GitHub on interval
+
+SESSION END:
+  → Run scripts/session-close.sh (harvest, final sync, stop daemon)
+  → Lessons promoted if patterns repeat 3+ times
+```
+
+### Quick Start
+
+```bash
+# One-time setup: configure the global knowledge repo
+./scripts/knowledge-sync.sh init https://github.com/user/dev-memory.git
+
+# Enable autonomous mode in any project
+/autonomous on
+
+# Just type what you want — Claude handles the rest
+"add dark mode to the dashboard"  → FEATURE pipeline
+"the login is broken"             → BUG pipeline
+"clean up the auth module"        → REFACTOR pipeline
+"how does the payment flow work?" → QUESTION (read-only)
+```
+
+---
+
 ## The Illusion of Control: Why Prompt Memory Matters
 
 > "Alex believes he's in control... but he's not. It's the illusion of free will." — RoboCop (2014)
@@ -264,4 +323,4 @@ AI/LLMs must check for and eliminate duplicate code blocks before suggesting or 
 
 ---
 
-_Last Updated: 2026-02-08_
+_Last Updated: 2026-02-20_
