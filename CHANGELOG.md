@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.19] - 2026-02-20
+
+### Added — Autonomous Developer Loop & Knowledge Sync
+- **`agents/_autonomous-protocol.md`** — Intent routing rules, execution pipeline, review format. Classifies every user input as FEATURE/BUG/REFACTOR/QUESTION/OPS/MEMORY and routes to the correct pipeline
+- **`agents/_intent-classifier.md`** — Classification examples, edge cases, confidence thresholds, disambiguation rules
+- **`.claude/commands/autonomous.md`** — `/autonomous` toggle command (on/off/status) with flag file `.claude/.autonomous`
+- **`scripts/knowledge-sync.sh`** — Background daemon (1295 lines): init, start, stop, sync, status, register, promote, log. Interval-based sync (default 5 min) with PID management and log rotation
+- **`scripts/sanitize-knowledge.sh`** — Pre-commit sanitizer (601 lines): strips secrets (API_KEY, TOKEN, PASSWORD, PRIVATE_KEY, AWS_ACCESS), normalizes paths to `$PROJECT_ROOT`, validates JSON/JSONL, skips .env/.key/.pem files
+- **`scripts/session-init.sh`** — Session start: pulls global knowledge from remote, starts sync daemon
+- **`scripts/session-close.sh`** — Session end: records session end, forces final sync, runs promotion check, stops daemon
+- **Global knowledge repo structure** — `global/` (lessons, preferences, anti-patterns, tech-stack) + `projects/<name>/` (per-project knowledge, sessions, agent stats)
+- **Lesson promotion engine** — Patterns appearing 3+ times in `errors.jsonl` auto-promoted to `global/lessons.jsonl`
+- **PRD** — `genesis/2026-02-20-autonomous-developer-loop.md` with 9 stories, dependency graph, parallel execution groups
+- **CLAUDE.md** — Added Autonomous Developer Loop section with protocol files, session lifecycle, quick start
+
+### Fixed
+- **PowerShell Linux dotfile handling** — `Get-Item` cannot find files starting with `.` on Linux without `-Force` flag; added to `install.ps1` and `update.ps1`
+- **install.ps1 rollback safety** — Error trap rollback now checks `$resolvedTarget` against `$ScriptDir` to prevent deleting the framework source directories when `TargetDir` defaults to `.`
+
+---
+
 ## [1.9.0.18] - 2026-02-15
 
 ### Fixed
