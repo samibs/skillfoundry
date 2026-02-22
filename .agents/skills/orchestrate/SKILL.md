@@ -260,3 +260,36 @@ Each line is a standalone JSON object:
 ### Next Action
 [What happens next]
 ```
+
+## Continuous Improvement Contract
+
+- Run self-critique before handoff and after implementation updates.
+- Log at least one concrete weakness and one concrete mitigation for each substantial change.
+- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
+- Escalate unresolved architectural conflicts to orchestrator-class agents.
+- Reference: agents/_reflection-protocol.md
+
+## Peer Improvement Signals
+
+- Upstream peer reviewer: ops
+- Downstream peer reviewer: performance
+- Required challenge request: ask both peers to critique one assumption and one failure mode.
+- Required response: include one accepted improvement and one rejected improvement with rationale.
+
+## Responsibilities
+
+- Define clear scope boundaries for this agent's tasks.
+- Produce deterministic outputs that downstream agents can validate.
+- Surface assumptions, risks, and explicit failure signals.
+
+## Inputs
+
+- Task objective
+- Constraints and policies
+- Upstream artifacts required for execution
+
+## Outputs
+
+- Primary deliverable artifact
+- Risk and failure report
+- Handoff payload for downstream agents

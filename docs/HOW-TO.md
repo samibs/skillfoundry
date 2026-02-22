@@ -65,8 +65,8 @@ cd ~/DevLab/MyProject
 ```
 your-project/
 ├── .claude/
-│   └── commands/           # 46 skill files
-├── agents/                 # 26 agent personas + 21 shared modules
+│   └── commands/           # 60 skill files
+├── agents/                 # Agent personas + shared modules
 ├── genesis/                # PRD folder
 │   ├── TEMPLATE.md
 │   └── .schema.json        # PRD validation schema
@@ -105,6 +105,18 @@ That's it. The framework handles:
 - Three-layer validation
 - Security audits
 - Documentation
+
+### Continuous Agent Evolution (53-agent core)
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MaxIterations 10
+```
+
+For forced stress loops:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MinIterations 100 -MaxIterations 100
+```
 
 ### Checking Progress
 

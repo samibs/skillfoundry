@@ -4,7 +4,7 @@ Complete guide to all documentation in the framework.
 
 **Version:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-**46 Agents** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex) | **Auto-Remediation** | **Knowledge Exchange** | **Swarm Coordination** | **DX Tooling** | **Advanced Intelligence**
+**53 Agents (Core Roster) / 60 Skills** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex) | **Auto-Remediation** | **Knowledge Exchange** | **Swarm Coordination** | **DX Tooling** | **Advanced Intelligence**
 
 ---
 
@@ -16,6 +16,7 @@ Start here for installation and basic usage:
 |----------|------|---------|
 | **[README.md](README.md)** | 30 KB | **START HERE** - Overview, installation, quick start |
 | **[docs/AGENTS.md](docs/AGENTS.md)** | 16 KB | **AGENT TEAM** - Complete guide to all 46 agents |
+| **[docs/AGENT-EVOLUTION.md](docs/AGENT-EVOLUTION.md)** | - | 53-agent debate/iteration hardening engine, perfection gate, and commands |
 | **[docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)** | 8 KB | Quick reference card |
 | **[docs/ESCALATION-CRITERIA.md](docs/ESCALATION-CRITERIA.md)** | 18 KB | **NEW v1.7.0** - Auto-fix vs. escalation decision matrix |
 | **[docs/AUTONOMOUS-EXECUTION.md](docs/AUTONOMOUS-EXECUTION.md)** | 10 KB | **NEW v1.7.0.2** - Autonomous execution setup, permission profiles, safety hooks |

@@ -205,6 +205,11 @@ Feature: [Feature name from PRD]
 - [ ] [Edge case 2]
 - [ ] [Null/empty handling]
 
+### Testability Notes
+- **Expected Results Matrix:** For each acceptance criterion, specify the exact assertion the tester must implement (maps 1:1 to the tester template's **Expected** field).
+- **Blast Radius Hooks:** List downstream modules that must be re-tested when this story changes (feeds `regression-prevention`).
+- **Evidence Owner:** Name the agent responsible for attaching execution output (screenshots, logs).
+
 ---
 
 ## Security Checklist
@@ -462,3 +467,36 @@ When `/auto` receives a PRD:
 5. Report overall progress
 
 **The story becomes the unit of work for the auto pipeline.**
+
+## Continuous Improvement Contract
+
+- Run self-critique before handoff and after implementation updates.
+- Log at least one concrete weakness and one concrete mitigation for each substantial change.
+- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
+- Escalate unresolved architectural conflicts to orchestrator-class agents.
+- Reference: agents/_reflection-protocol.md
+
+## Responsibilities
+
+- Define clear scope boundaries for this agent's tasks.
+- Produce deterministic outputs that downstream agents can validate.
+- Surface assumptions, risks, and explicit failure signals.
+
+## Workflow
+
+1. Analyze inputs, constraints, and success criteria.
+2. Produce implementation artifacts with explicit guardrails.
+3. Run self-critique and peer challenge integration.
+4. Emit a handoff payload with risks and next actions.
+
+## Inputs
+
+- Task objective
+- Constraints and policies
+- Upstream artifacts required for execution
+
+## Outputs
+
+- Primary deliverable artifact
+- Risk and failure report
+- Handoff payload for downstream agents

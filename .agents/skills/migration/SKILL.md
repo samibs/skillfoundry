@@ -394,3 +394,43 @@ After each migration, self-assess:
 - `CLAUDE.md` - Database migration standards
 - `layer-check.md` - Database layer validation
 - Framework-specific migration tools (Alembic, EF Migrations, etc.)
+
+## Peer Improvement Signals
+
+- Upstream peer reviewer: metrics
+- Downstream peer reviewer: ops
+- Required challenge request: ask both peers to critique one assumption and one failure mode.
+- Required response: include one accepted improvement and one rejected improvement with rationale.
+
+## Continuous Improvement Contract
+
+- Run self-critique before handoff and after implementation updates.
+- Log at least one concrete weakness and one concrete mitigation for each substantial change.
+- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
+- Escalate unresolved architectural conflicts to orchestrator-class agents.
+- Reference: agents/_reflection-protocol.md
+
+## Responsibilities
+
+- Define clear scope boundaries for this agent's tasks.
+- Produce deterministic outputs that downstream agents can validate.
+- Surface assumptions, risks, and explicit failure signals.
+
+## Workflow
+
+1. Analyze inputs, constraints, and success criteria.
+2. Produce implementation artifacts with explicit guardrails.
+3. Run self-critique and peer challenge integration.
+4. Emit a handoff payload with risks and next actions.
+
+## Inputs
+
+- Task objective
+- Constraints and policies
+- Upstream artifacts required for execution
+
+## Outputs
+
+- Primary deliverable artifact
+- Risk and failure report
+- Handoff payload for downstream agents
