@@ -16,7 +16,8 @@ It supports 5 platforms:
 - PRD-first workflow for non-trivial work
 - Multi-agent execution with explicit handoffs
 - Built-in quality gates (The Anvil, 6 tiers)
-- Security and standards enforcement
+- Security and standards enforcement (Top 12 critical checks)
+- Data isolation enforcement (row-level ownership, query scoping)
 - Cross-platform skill generation and sync
 - Continuous agent evolution loop (debate -> implement -> iterate)
 
@@ -83,7 +84,7 @@ Or run the full shortcut pipeline:
 
 ## Versioning and Releases
 
-Current framework line: `v1.9.0.21`
+Current framework line: `v1.9.0.22`
 
 Detailed release notes are maintained in:
 - `CHANGELOG.md`

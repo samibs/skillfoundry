@@ -236,14 +236,18 @@ DOCUMENTATION CHECKLIST:
 □ Code comments explain WHY (not what)
 □ Public functions/methods have docstrings
 □ API endpoints documented (OpenAPI/Swagger)
-□ README updated if architecture changed
-□ Change logged in CHANGELOG or story file
+□ README updated if architecture or capabilities changed
+□ Change logged in CHANGELOG with version entry
+□ Version bumped in README.md and CHANGELOG.md
+□ Version follows semver (patch for fixes, minor for features)
 
 REJECTION TRIGGERS:
 - Undocumented public API
 - Missing parameter descriptions
 - No usage examples for complex functions
 - Outdated documentation
+- Framework changes without CHANGELOG entry
+- Version not bumped after feature/fix
 ```
 
 ### 2. SECURITY GATE

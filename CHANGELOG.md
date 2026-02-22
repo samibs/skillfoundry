@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.22] - 2026-02-22
+
+### Added — Data Isolation & 27 Enforcement Gap Fixes
+
+Real-world testing revealed that the agent pipeline enforced authentication and role-based access but never verified data ownership. A systematic audit uncovered 27 gaps where agents mention concerns but lack concrete enforcement. This release closes all of them.
+
+#### PRD Template (`genesis/TEMPLATE.md`)
+- **Entity Cards**: `Data Ownership` and `Access Scope` rows — forces specifying which column scopes rows and the access boundary
+- **Permissions Matrix**: `Data Scope` column mapping each action to a concrete WHERE clause pattern
+- **Section 6.7 — Data Isolation Specification**: query scope rules, isolation enforcement, cross-tenant rules, mandatory test cases
+- **Section 4.2 — Security**: session lifecycle, rate limits, CORS policy, concurrent access, file uploads, error handling
+- **Section 4.5 — Observability**: structured logging, health checks, monitoring, audit logging requirements
+- **API Contract**: pagination max cap, rate limits, data scoping on endpoints
+- **Error Codes**: `VERSION_CONFLICT`, `IDEMPOTENCY_CONFLICT`, `PAYLOAD_TOO_LARGE`
+- **PRD Checklist**: data isolation, observability, pagination, rate limits, concurrent modification
+
+#### Layer-Check (`layer-check/SKILL.md`)
+- **Database**: ownership columns, version/ETag for optimistic locking, migration safety (backward compat, NOT NULL backfill, idempotent, perf on large tables), soft delete scoping, cascade documentation, UTC timestamps
+- **Backend API**: input size limits, error leakage prevention, CORS specifics, session management, file upload validation, structured logging with correlation ID, health/readiness probes, config validation on startup, circuit breaker
+- **Backend Evidence**: negative tests, boundary tests, concurrent access, rate limit verification required
+- **Documentation Gate**: version bump enforcement added
+
+#### Coder Skills (`coder/SKILL.md`, `ruthless-coder.md`)
+- **Top 7 → Top 12** critical security checks
+- New checks: pagination/input size limits, error information leakage, concurrent modification safety (optimistic locking), session/token lifecycle
+
+#### Data Architect (`data-architect.md`)
+- **Query Anti-Pattern**: `Unscoped Query on Owned Entity`
+- **New Checklist Categories**: Data Ownership, Concurrent Modification, Soft Delete Integrity, Cascade Rules, Timestamp Standards
+
+#### API Design (`api-design/SKILL.md`)
+- **Design Checklist**: pagination caps, input constraints, idempotency, optimistic locking, deprecation policy
+- **Security Checklist**: expanded from 6 to 15 items — data isolation, file uploads, bulk endpoint limits, session lifecycle, structured error responses
+
+#### Security Specialist (`security-specialist.md`)
+- **STRIDE**: cross-user/cross-tenant exposure added to Info Disclosure
+- **OWASP A01**: unscoped queries, missing ownership WHERE, scope from request params
+- **OWASP A04**: optimistic locking, unbounded endpoints, idempotency
+- **OWASP A05**: verbose errors, CORS wildcard, config validation, secrets in config
+- **OWASP A07**: token expiry, session invalidation, refresh token rotation, auth rate limiting
+- **OWASP A09**: WHO/WHAT/WHICH/WHEN audit, failed access logging, correlation ID, bulk op logging
+
+#### Tester (`ruthless-tester.md`, `tester/SKILL.md`)
+- **Test Categories**: expanded from 6 to 15 — data isolation, concurrent modification, pagination abuse, rate limit verification, input size attacks, error leakage audit, idempotency, session lifecycle, soft delete verification
+- **Coverage Summary**: expanded from 4 to 9 checkpoints
+
+#### Merciless Evaluator (`merciless-evaluator.md`)
+- **What to Look For**: 6 new evaluation criteria (unbounded endpoints, optimistic locking, error leakage, negative tests, session lifecycle, audit logging)
+- **BPSBS Compliance**: expanded from 3 to 7 checks
+
+### Changed
+- Version bump from `1.9.0.21` to `1.9.0.22`
+- Documentation gate now requires version bump on framework changes
+
+---
+
 ## [1.9.0.21] - 2026-02-22
 
 ### Added — Google Gemini Platform Support
