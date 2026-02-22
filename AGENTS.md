@@ -1,6 +1,6 @@
 # Claude AS Framework — Agent Instructions for OpenAI Codex
 
-**Version 1.9.0.18** | **Quad-Platform: Claude Code · Cursor · Copilot · Codex** | **60 Skills**
+**Version 1.9.0.19** | **Quad-Platform: Claude Code · Cursor · Copilot · Codex** | **60 Skills**
 
 ---
 
@@ -138,4 +138,4 @@ scripts/              # Automation scripts
 
 ---
 
-*Claude AS Framework v1.9.0.18 — Quad-Platform Support*
+*Claude AS Framework v1.9.0.19 — Quad-Platform Support*
