@@ -6,6 +6,16 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### Autonomous Developer Loop & Knowledge Sync (v1.9.0.19)
+- **Autonomous mode** — `/autonomous on` enables fully autonomous operation: every input is auto-classified (FEATURE/BUG/REFACTOR/QUESTION/OPS/MEMORY) and routed to the correct pipeline without manual command invocation
+- **Intent classifier** — `agents/_intent-classifier.md` provides classification examples, confidence thresholds, edge case handling for ambiguous inputs
+- **Knowledge Sync daemon** — `scripts/knowledge-sync.sh` background daemon syncs `memory_bank/`, sessions, and agent stats to a global GitHub repo on configurable interval (default: 5 min)
+- **Sanitization pipeline** — `scripts/sanitize-knowledge.sh` strips secrets (API keys, tokens, passwords), normalizes absolute paths to `$PROJECT_ROOT`, validates JSON/JSONL before push
+- **Session lifecycle** — `scripts/session-init.sh` pulls global knowledge on session start; `scripts/session-close.sh` harvests memory and forces final sync on session end
+- **Cross-project learning** — Lessons promoted from `errors.jsonl` (3+ occurrences) to `global/lessons.jsonl`, automatically loaded in all future projects
+- **Global knowledge repo** — Single `dev-memory` repo spans all projects: `global/` (shared lessons, preferences, anti-patterns) + `projects/<name>/` (per-project knowledge)
+- **PowerShell Linux dotfile fix** — `Get-Item -Force` for `.version` file, safe rollback guard prevents wiping framework source directories
+
 ### Script Modernization, Fixes & macOS Compat (v1.9.0.18)
 - **install.ps1 critical fix** — Dry-run check, step counter, and directory creation were running in wrong order; restructured execution flow
 - **Modernized install/update scripts** — `--yes`/`-y` non-interactive mode, `--dry-run` preview, `--help`/`--version` flags, progress `[1/N]` step counters, elapsed timer, compact summary, What's New from CHANGELOG
@@ -209,7 +219,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.18**
+Current version: **1.9.0.19**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -1172,7 +1182,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.18** - February 15, 2026
+**v1.9.0.19** - February 20, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
