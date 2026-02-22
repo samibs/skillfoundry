@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.17
+# Documentation Index - Claude AS Framework v1.9.0.20
 
 Complete guide to all documentation in the framework.
 
@@ -15,7 +15,7 @@ Start here for installation and basic usage:
 | Document | Size | Purpose |
 |----------|------|---------|
 | **[README.md](README.md)** | 30 KB | **START HERE** - Overview, installation, quick start |
-| **[docs/AGENTS.md](docs/AGENTS.md)** | 16 KB | **AGENT TEAM** - Complete guide to all 46 agents |
+| **[docs/AGENTS.md](docs/AGENTS.md)** | 16 KB | **AGENT TEAM** - Core roster and platform skill references |
 | **[docs/AGENT-EVOLUTION.md](docs/AGENT-EVOLUTION.md)** | - | 53-agent debate/iteration hardening engine, perfection gate, and commands |
 | **[docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)** | 8 KB | Quick reference card |
 | **[docs/ESCALATION-CRITERIA.md](docs/ESCALATION-CRITERIA.md)** | 18 KB | **NEW v1.7.0** - Auto-fix vs. escalation decision matrix |
@@ -335,7 +335,7 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 | **SOC 2** | [agents/compliance-profiles/SOC2.md](agents/compliance-profiles/SOC2.md) | 28 rules: security, availability, integrity, confidentiality, privacy |
 | **GDPR** | [agents/compliance-profiles/GDPR.md](agents/compliance-profiles/GDPR.md) | 27 rules: consent, DSR, data protection, security, breach notification |
 
-## Agent Personas (46 Agents)
+## Agent Personas (53 Core Agents)
 
 **See [docs/AGENTS.md](docs/AGENTS.md) for complete agent documentation.**
 
@@ -509,9 +509,9 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.17
-**Documentation Updated**: February 9, 2026
-**Total Agents**: 46 + 12 shortcuts (The Forge)
+**Framework Version**: 1.9.0.20
+**Documentation Updated**: February 22, 2026
+**Total Agents**: 53 core agents / 60 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
 **Total Documentation Size**: ~700 KB
 **Documentation Files**: 60+ files

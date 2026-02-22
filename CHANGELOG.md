@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.20] - 2026-02-22
+
+### Added — 53-Agent Evolution & Perfection Loop
+- **`scripts/agent-evolution.ps1`** — Debate -> implement -> iterate engine with deterministic peer reviewers, strict debate findings, auto-remediation, and `perfection_achieved` gate
+- **`scripts/agent-evolution.sh`** — Bash parity for analyze/cycle workflows with roster-aware target counts
+- **`config/core-agents-53.txt`** — Canonical 53-agent core roster (default baseline)
+- **`config/core-agents-46.txt`** — Legacy roster fallback for compatibility
+- **`docs/AGENT-EVOLUTION.md`** — Complete usage guide: analyze/debate/cycle, reports, perfection criteria, 100-iteration stress command
+- **`tests/test-agent-evolution.ps1`** and **`tests/test-agent-evolution.sh`** — Validation for report schema and debate/perfection signals
+
+### Changed
+- **`.agents/skills/*/SKILL.md`** — Added continuous-improvement contracts, peer-improvement signals, and explicit execution sections to support iterative hardening
+- **`README.md`** — Updated with v1.9.0.20 highlights and current version bump
+- **`DOCUMENTATION-INDEX.md`** — Updated framework version and references to 53-agent core roster
+- **`docs/QUICK-REFERENCE.md`** — Updated version and added agent evolution command set
+- **`docs/AGENTS.md`** — Updated headline statistics for 53-agent core / 60 skills
+
+### Verified
+- 100-iteration forced cycle executed with auto-fix:
+  - `core_count=53`
+  - `debate_open_findings=0`
+  - `perfection_score=100`
+  - `perfection_achieved=true`
+
+---
+
 ## [1.9.0.19] - 2026-02-20
 
 ### Added — Autonomous Developer Loop & Knowledge Sync
