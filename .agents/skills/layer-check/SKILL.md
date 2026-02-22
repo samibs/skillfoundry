@@ -83,12 +83,23 @@ BANNED PATTERNS:
 │ □ Foreign keys with proper relationships                    │
 │ □ Indexes on frequently queried columns                     │
 │ □ Constraints (NOT NULL, UNIQUE, CHECK) where needed        │
+│ □ Ownership column (user_id/tenant_id) on user-facing tables│
+│ □ Version/ETag column on concurrently editable entities     │
 │                                                             │
 │ DATA INTEGRITY:                                             │
-│ □ No orphan records possible (cascade rules)                │
+│ □ No orphan records possible (cascade rules documented)     │
+│ □ Cascade behavior specified per FK (CASCADE/RESTRICT/NULL) │
 │ □ Audit columns (created_at, updated_at, created_by)        │
 │ □ Soft delete if required (deleted_at)                      │
-│ □ Version/revision tracking if needed                       │
+│ □ Soft-deleted rows excluded from queries by default        │
+│ □ All timestamps stored as UTC                              │
+│                                                             │
+│ MIGRATION SAFETY:                                           │
+│ □ Migration is backward-compatible with running app code    │
+│ □ New NOT NULL columns have default or backfill step        │
+│ □ Migration tested on production-sized dataset              │
+│ □ Migration is idempotent (safe to run twice)               │
+│ □ Rollback migration tested and verified                    │
 │                                                             │
 │ SECURITY:                                                   │
 │ □ Sensitive data identified and encrypted                   │
@@ -113,35 +124,58 @@ BANNED PATTERNS:
 │ API ENDPOINTS:                                              │
 │ □ All PRD endpoints implemented                             │
 │ □ Proper HTTP methods (GET, POST, PUT, DELETE)              │
-│ □ Request validation (schema validation, type checking)     │
+│ □ Request validation (schema, types, max lengths, limits)   │
 │ □ Response format matches API spec                          │
-│ □ Error responses are structured and informative            │
-│ □ Pagination implemented for list endpoints                 │
+│ □ Error responses are structured (no stack traces/SQL/IPs)  │
+│ □ Pagination on all list endpoints with max pageSize cap    │
+│ □ Idempotency-Key supported on non-idempotent mutations     │
 │                                                             │
 │ BUSINESS LOGIC:                                             │
 │ □ All business rules from PRD implemented                   │
 │ □ No shortcuts or simplified logic                          │
 │ □ Edge cases handled (null, empty, boundary values)         │
 │ □ Transactions where data consistency required              │
+│ □ Optimistic locking (ETag/version) on concurrent resources │
+│ □ Retry with backoff on external service calls              │
 │                                                             │
 │ SECURITY:                                                   │
 │ □ Authentication on protected routes                        │
 │ □ Authorization checks (role-based access)                  │
 │ □ Input sanitization (SQL injection, XSS prevention)        │
-│ □ Rate limiting on sensitive endpoints                      │
-│ □ No secrets in code or logs                                │
-│ □ CORS configured correctly                                 │
+│ □ Input size limits enforced (string length, file size, etc)│
+│ □ Rate limiting per-endpoint with 429 response              │
+│ □ No secrets in code, logs, or config files                 │
+│ □ CORS: specific origins only (not *), credentials correct  │
+│ □ Session expiry enforced, invalidated on password change   │
+│ □ File uploads validated (magic bytes, size, path traversal)│
+│ □ Error responses: no stack traces, SQL, or internal IPs    │
+│ □ Structured logging with correlation ID, PII redacted      │
+│                                                             │
+│ DATA ISOLATION:                                             │
+│ □ Queries on user-owned entities include ownership WHERE    │
+│ □ Scope derived from auth token, not request parameters     │
+│ □ User A cannot access User B's resources (returns 404)     │
+│ □ List endpoints return only caller's rows by default       │
+│ □ JOINs do not leak rows from scoped tables                 │
+│ □ Bulk operations respect same scope as single-record ops   │
 │                                                             │
 │ INTEGRATION:                                                │
 │ □ Database queries use parameterized statements             │
-│ □ External service calls have timeout and retry             │
+│ □ External calls have timeout, retry with backoff, circuit  │
+│   breaker pattern for cascading failure prevention          │
 │ □ Connection pooling configured                             │
 │ □ Health check endpoint exists (/health)                    │
+│ □ Readiness probe exists (/ready) for load balancer         │
+│ □ Config validated on startup (fail fast if missing/invalid)│
 │                                                             │
 │ EVIDENCE REQUIRED:                                          │
 │ □ All endpoints respond correctly (curl/httpie output)      │
 │ □ Unit tests pass (show output)                             │
 │ □ Integration tests pass                                    │
+│ □ Negative tests exist (invalid input, unauthorized access) │
+│ □ Boundary tests exist (empty, null, max length, overflow)  │
+│ □ Concurrent access tested (two users edit same resource)   │
+│ □ Rate limit returns 429 when exceeded                      │
 │ □ API documentation generated/updated                       │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -232,6 +266,8 @@ SCAN COMMANDS:
 - grep -r "secret" --include="*.py" --include="*.ts" --include="*.js"
 - grep -r "api_key" --include="*.py" --include="*.ts" --include="*.js"
 - Check for eval(), exec(), innerHTML without sanitization
+- grep -rn "SELECT.*FROM" --include="*.py" --include="*.ts" --include="*.js" | grep -v "WHERE.*\(user_id\|tenant_id\|owner_id\|created_by\)"
+- Check for queries on scoped entities missing ownership column in WHERE clause
 ```
 
 ### 3. AUDIT GATE

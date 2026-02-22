@@ -55,7 +55,8 @@ For every feature, enumerate threats using STRIDE:
 │                      │ → Audit logs, signing, non-repudiation          │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ I - INFO DISCLOSURE  │ Can attacker access unauthorized data?          │
-│                      │ → Data leaks, error messages, timing attacks    │
+│                      │ → Data leaks, error messages, timing attacks,   │
+│                      │   cross-user/cross-tenant data exposure         │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ D - DENIAL OF SERVICE│ Can attacker make system unavailable?           │
 │                      │ → Resource exhaustion, rate limiting, loops     │
@@ -89,6 +90,9 @@ For every feature, enumerate threats using STRIDE:
   - Missing function-level access control
   - CORS misconfiguration
   - Path traversal
+  - Unscoped queries returning other users'/tenants' data
+  - Missing ownership WHERE clause on user-owned entities
+  - Scope derived from request parameters instead of auth token
 
 □ A02:2021 - Cryptographic Failures
   - Weak algorithms (MD5, SHA1, DES)
@@ -105,16 +109,22 @@ For every feature, enumerate threats using STRIDE:
 
 □ A04:2021 - Insecure Design
   - Missing threat modeling
-  - No rate limiting
-  - Missing input validation
+  - No rate limiting (per-endpoint, with 429 response)
+  - Missing input validation (string length, array size, nesting depth)
   - Trust boundary violations
+  - No optimistic locking on concurrent resources (lost updates)
+  - Unbounded list endpoints (no max pageSize cap)
+  - Missing idempotency on non-idempotent mutations
 
 □ A05:2021 - Security Misconfiguration
   - Default credentials
   - Unnecessary features enabled
   - Missing security headers
-  - Verbose error messages
+  - Verbose error messages (stack traces, SQL errors, internal IPs)
   - Outdated software
+  - CORS: wildcard (*) origin with credentials enabled
+  - No config validation on startup (invalid config discovered at runtime)
+  - Secrets in config files instead of env vars/vault
 
 □ A06:2021 - Vulnerable Components
   - Known CVEs in dependencies
@@ -126,6 +136,11 @@ For every feature, enumerate threats using STRIDE:
   - Missing MFA
   - Session fixation
   - Credential stuffing vulnerable
+  - No token/session expiration enforcement
+  - Sessions not invalidated on password change
+  - No refresh token rotation (reuse allows session hijacking)
+  - No concurrent session limits
+  - Auth endpoints not rate-limited (brute force)
 
 □ A08:2021 - Data Integrity Failures
   - Insecure deserialization
@@ -133,9 +148,14 @@ For every feature, enumerate threats using STRIDE:
   - CI/CD pipeline security
 
 □ A09:2021 - Logging Failures
-  - Missing audit logs
-  - Sensitive data in logs
+  - Missing audit logs (WHO did WHAT to WHICH resource WHEN)
+  - Failed access attempts not logged
+  - Sensitive data in logs (PII, tokens, passwords)
   - No alerting on security events
+  - No correlation ID across service calls
+  - Unstructured log format (not machine-parseable)
+  - Audit logs mutable (can be deleted/modified after write)
+  - Bulk operations not individually logged
 
 □ A10:2021 - SSRF
   - Unvalidated URL fetching

@@ -146,6 +146,7 @@ DROP TABLE ...
 | **Functions on Indexed Columns** | Index not used | Computed column |
 | **Missing LIMIT** | Returns entire table | Always paginate |
 | **ORDER BY RAND()** | Full scan + sort | Application-side |
+| **Unscoped Query on Owned Entity** | Returns all tenants'/users' data | Add ownership WHERE clause (user_id/tenant_id) |
 
 ---
 
@@ -331,6 +332,33 @@ DATA QUALITY
 □ Consistent timezone handling (UTC)
 □ Consistent casing conventions
 □ No mixed encodings
+
+DATA OWNERSHIP
+□ Every user-facing table has an ownership column (user_id/tenant_id)
+□ Ownership column is NOT NULL and indexed
+□ Default query scope includes ownership WHERE clause
+□ No query on owned entity omits ownership filter without explicit justification
+□ Row Level Security (RLS) enabled where database supports it
+
+CONCURRENT MODIFICATION
+□ Concurrently editable entities have version/ETag column
+□ UPDATE uses WHERE version = :expected (optimistic locking)
+□ Version mismatch returns 409 Conflict, not silent overwrite
+
+SOFT DELETE INTEGRITY
+□ Soft-deleted rows (deleted_at IS NOT NULL) excluded from all default queries
+□ Soft-deleted records inaccessible via API (return 404)
+□ Hard delete restricted to admin/system operations only
+
+CASCADE RULES
+□ Every FK documents cascade behavior (CASCADE/RESTRICT/SET NULL)
+□ Cascade deletes log affected child records for audit
+□ No orphan records possible after parent deletion
+
+TIMESTAMP STANDARDS
+□ All timestamps stored as UTC (no local timezone in DB)
+□ API responses use ISO 8601 with timezone (e.g., 2026-01-01T00:00:00Z)
+□ Frontend converts UTC to user's local timezone for display
 ```
 
 ---

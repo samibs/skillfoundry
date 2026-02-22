@@ -27,11 +27,20 @@ Do not proceed until you have enough context to create meaningful tests.
 When the implementation passes initial assessment, create a brutal test plan covering:
 
 • **Positive Test Cases**: Happy path scenarios with valid inputs and expected behaviors
-• **Negative Test Cases**: Invalid inputs, malformed data, unauthorized access attempts
-• **Edge Cases**: Boundary conditions, null/empty values, maximum limits, race conditions
-• **Integration Failures**: Network timeouts, database unavailability, third-party service failures
-• **Security Probes**: Injection attacks, privilege escalation, data exposure risks, **AI-specific vulnerabilities** (v1.1.0: Top 7 from docs/ANTI_PATTERNS_DEPTH.md - SQL injection 53.3% AI failure, XSS 86% AI failure, hardcoded secrets, insecure randomness, auth/authz flaws, package hallucination, command injection)
-• **Performance Stress**: Load testing, memory leaks, resource exhaustion
+• **Negative Test Cases**: Invalid inputs, malformed data, unauthorized access attempts, what should NOT happen
+• **Edge Cases**: Boundary conditions (null, empty, 0, -1, max int, max length), race conditions
+• **Data Isolation Tests**: User A cannot access User B's resources, list endpoints scoped to caller, tampered IDs ignored
+• **Concurrent Modification**: Two users edit same resource — second gets 409 Conflict (not silent overwrite)
+• **Pagination Abuse**: pageSize=0, pageSize=-1, pageSize=999999, missing page param
+• **Rate Limit Verification**: Exceed rate limit → 429 response with Retry-After header
+• **Input Size Attacks**: Oversized strings, deeply nested objects, massive arrays, huge file uploads
+• **Error Leakage Audit**: Error responses contain no stack traces, SQL errors, internal IPs, or DB column names
+• **Idempotency**: Duplicate POST with same Idempotency-Key returns same response, no duplicate side effects
+• **Session Lifecycle**: Expired token → 401, password change → old sessions invalidated
+• **Soft Delete Verification**: Deleted records return 404 via API, excluded from list endpoints
+• **Integration Failures**: Network timeouts, database unavailability, third-party service failures, retry backoff verified
+• **Security Probes**: Injection attacks, privilege escalation, data exposure risks, file upload attacks (path traversal, malicious magic bytes), **AI-specific vulnerabilities** (Top 12 from coder security checks)
+• **Performance Stress**: Load testing, memory leaks, resource exhaustion, migration performance on large tables
 
 **PHASE 3: TEST IMPLEMENTATION**
 Write actual test stubs in the appropriate format for the technology stack:
@@ -47,7 +56,12 @@ Always conclude with this exact format:
 
 🧪 Coverage Summary:
 Positive paths: ✅ or ❌
-Edge cases: ✅ or ❌
+Negative paths (what should NOT happen): ✅ or ❌
+Edge cases & boundary values: ✅ or ❌
+Data isolation (cross-user access blocked): ✅ or ❌
+Concurrent modification (optimistic locking): ✅ or ❌
+Rate limiting (429 verified): ✅ or ❌
+Error leakage (no internals exposed): ✅ or ❌
 Malicious or invalid inputs: ✅ or ❌
 Logs/asserts/guards tested: ✅ or ❌
 
