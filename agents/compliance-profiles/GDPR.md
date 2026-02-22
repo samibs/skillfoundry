@@ -156,4 +156,4 @@ When activated, these rules are injected into the gate-keeper validation pipelin
 
 ---
 
-*GDPR Compliance Preset v1.0 - Claude AS Framework*
+*GDPR Compliance Preset v1.0 - SkillFoundry Framework*

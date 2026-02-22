@@ -72,4 +72,4 @@ layers: [backend]
 
 ---
 
-*Template: CLI Tool — The Forge — Claude AS Framework*
+*Template: CLI Tool — The Forge — SkillFoundry Framework*

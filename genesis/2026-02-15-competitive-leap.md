@@ -27,7 +27,7 @@ layers: [backend]
 
 ### 1.1 Problem Statement
 
-The Claude AS Framework (v1.9.0.15) is architecturally strong — 46 agents, 4 platforms, 6-tier quality gate, session observability — but a competitive audit against Cursor (Agent Trace, 8 parallel subagents, Cursor Blame), Entire.io ($60M, prompt/response capture, cost analytics), Windsurf (Arena Mode, auto-memories), Devin (autonomous agent), Google Antigravity (Manager View), and emerging standards (MCP, A2A, SKILL.md) reveals critical gaps:
+The SkillFoundry Framework (v1.9.0.15) is architecturally strong — 46 agents, 4 platforms, 6-tier quality gate, session observability — but a competitive audit against Cursor (Agent Trace, 8 parallel subagents, Cursor Blame), Entire.io ($60M, prompt/response capture, cost analytics), Windsurf (Arena Mode, auto-memories), Devin (autonomous agent), Google Antigravity (Manager View), and emerging standards (MCP, A2A, SKILL.md) reveals critical gaps:
 
 1. **No CI/CD**: Zero automated testing. Every push is manual trust. Competitors ship with CI pipelines on day one.
 2. **No reference project**: The framework has never been dogfooded on a real application. 46 agents have never forged a real product.
@@ -112,7 +112,7 @@ A six-phase evolution from framework to industry standard:
 | FR-020 | Create reference project PRD | A real CLI tool built entirely with the framework | Given a PRD exists in genesis/, When `/go` is invoked, Then the framework builds a complete CLI application |
 | FR-021 | Exercise all agent types | Reference project touches all 46 agents | Given the project is complete, When agent analytics are checked, Then all agent types were invoked at least once |
 | FR-022 | Document lessons learned | Capture every friction point during dogfooding | Given the project is built, When lessons are harvested, Then a retrospective document exists with fixes applied |
-| FR-023 | Publish as example | Reference project serves as a usage example | Given the project is complete, When README is updated, Then it links to the reference project as "Built with Claude AS" |
+| FR-023 | Publish as example | Reference project serves as a usage example | Given the project is complete, When README is updated, Then it links to the reference project as "Built with SkillFoundry" |
 
 ### 3.3 Phase 3: Standards & Capture
 
@@ -631,7 +631,7 @@ Project             & Capture
 - [MCP (Anthropic)](https://modelcontextprotocol.io/) — Model Context Protocol
 - [Entire.io](https://entire.io/) — AI-native IDE with prompt capture and cost analytics
 - [Windsurf Arena Mode](https://windsurf.com/) — Multi-agent competition approach
-- [Claude AS Framework Assessment (2026-02-15)](../docs/competitive-assessment.md) — Internal competitive analysis
+- [SkillFoundry Framework Assessment (2026-02-15)](../docs/competitive-assessment.md) — Internal competitive analysis
 
 ### 11.3 Change Log
 

@@ -1,4 +1,4 @@
-# Claude AS - Complete Agent Team Reference
+# SkillFoundry - Complete Agent Team Reference
 
 **Version 1.9.0.20** | **The Forge: 53 Core Agents / 60 Skills** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex) | **62 A2A Cards** | **37 Compliance Checks**
 
@@ -535,4 +535,4 @@ Quick-access shortcuts for common workflows. Available on all 4 platforms.
 
 ---
 
-*Claude AS Framework v1.9.0.20 - February 2026 - The Forge*
+*SkillFoundry Framework v1.9.0.20 - February 2026 - The Forge*

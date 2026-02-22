@@ -78,7 +78,7 @@ Copy the configuration files to your project:
 
 ```bash
 # From your project directory
-FRAMEWORK_DIR="/path/to/claude_as"
+FRAMEWORK_DIR="/path/to/skillfoundry"
 
 # Copy shared settings (permission profile)
 cp "$FRAMEWORK_DIR/.claude/settings.json" .claude/settings.json

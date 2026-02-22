@@ -1,4 +1,4 @@
-# Claude AS Framework v1.9.0.16 — User Guide
+# SkillFoundry Framework v1.9.0.16 — User Guide
 
 > **Competitive Leap** — 17 stories, 7 new scripts, 37 compliance checks, 62 A2A agent cards, CI/CD infrastructure.
 
@@ -217,7 +217,7 @@ Each card includes:
 
 ### What A2A Enables
 
-The Agent-to-Agent protocol allows agents from different frameworks and vendors to discover and communicate with each other. By exposing 62 agents as A2A cards, any A2A-compatible system can discover and invoke Claude AS agents.
+The Agent-to-Agent protocol allows agents from different frameworks and vendors to discover and communicate with each other. By exposing 62 agents as A2A cards, any A2A-compatible system can discover and invoke SkillFoundry agents.
 
 ---
 
@@ -662,5 +662,5 @@ v1.9.0.16 includes these security hardening changes in `scripts/rejection-tracke
 
 ---
 
-*Claude AS Framework v1.9.0.16 — Competitive Leap*
+*SkillFoundry Framework v1.9.0.16 — Competitive Leap*
 *Last Updated: 2026-02-15*

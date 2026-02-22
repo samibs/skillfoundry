@@ -1,6 +1,6 @@
 # Example: Building a REST API
 
-This example demonstrates building a REST API using Claude AS Framework, focusing on backend implementation.
+This example demonstrates building a REST API using SkillFoundry Framework, focusing on backend implementation.
 
 ---
 
@@ -175,7 +175,7 @@ GET    /docs                  # OpenAPI docs (Swagger UI)
 ### Install Framework
 ```bash
 # From your project directory
-~/DevLab/IDEA/claude_as/install.sh --platform=copilot
+~/DevLab/IDEA/skillfoundry/install.sh --platform=copilot
 ```
 
 ### Use Agents

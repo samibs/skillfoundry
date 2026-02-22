@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Claude AS Framework will be documented in this file.
+All notable changes to the SkillFoundry Framework will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -1250,10 +1250,10 @@ Completing the full software development lifecycle:
 ##### MCP (Model Context Protocol) Integration
 - **MCP Server Framework**: `mcp-servers/` directory structure
 - **Four MCP Servers**:
-  - `mcp-claude-as-filesystem` - Safe file operations with permission model
-  - `mcp-claude-as-database` - Database schema inspection and migration management
-  - `mcp-claude-as-testing` - Test runner integration
-  - `mcp-claude-as-security` - Security scanning and vulnerability detection
+  - `mcp-skillfoundry-filesystem` - Safe file operations with permission model
+  - `mcp-skillfoundry-database` - Database schema inspection and migration management
+  - `mcp-skillfoundry-testing` - Test runner integration
+  - `mcp-skillfoundry-security` - Security scanning and vulnerability detection
 - **Documentation**: `docs/MCP-INTEGRATION.md` with server specifications and usage
 - **Server READMEs**: Individual README files for each MCP server
 
@@ -1795,7 +1795,7 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 ## [1.0.0] - 2026-01-17
 
 ### Added
-- Initial release of Claude AS Framework
+- Initial release of SkillFoundry Framework
 - Genesis-first development workflow
 - PRD and Story templates
 - Three-layer enforcement (Database, Backend, Frontend)
@@ -1844,7 +1844,7 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 
 1. Run the update script:
    ```bash
-   /path/to/claude_as/update.sh /path/to/your/project
+   /path/to/skillfoundry/update.sh /path/to/your/project
    ```
 
 2. New files added:
@@ -1883,7 +1883,7 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 
 1. Run the update script:
    ```bash
-   /path/to/claude_as/update.sh /path/to/your/project
+   /path/to/skillfoundry/update.sh /path/to/your/project
    ```
 
 2. New files added:
@@ -1930,7 +1930,7 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 
 1. Run the update script:
    ```bash
-   /path/to/claude_as/update.sh /path/to/your/project
+   /path/to/skillfoundry/update.sh /path/to/your/project
    ```
 
 2. New files added:
@@ -1973,14 +1973,14 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 
 7. Validate sync:
    ```bash
-   /path/to/claude_as/update.sh --sync /path/to/your/project
+   /path/to/skillfoundry/update.sh --sync /path/to/your/project
    ```
 
 ### From 1.1.0 to 1.2.0
 
 1. Run the update script:
    ```bash
-   /path/to/claude_as/update.sh /path/to/your/project
+   /path/to/skillfoundry/update.sh /path/to/your/project
    ```
 
 2. New files added:
@@ -2006,12 +2006,12 @@ Based on [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/25
 
 1. Run the update script:
    ```bash
-   /path/to/claude_as/update.sh /path/to/your/project
+   /path/to/skillfoundry/update.sh /path/to/your/project
    ```
 
 2. Review the diff first (optional):
    ```bash
-   /path/to/claude_as/update.sh --diff /path/to/your/project
+   /path/to/skillfoundry/update.sh --diff /path/to/your/project
    ```
 
 3. Choose how to handle CLAUDE.md:

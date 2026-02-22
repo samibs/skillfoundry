@@ -154,4 +154,4 @@ Style preferences are automatically harvested via `scripts/harvest.sh` and promo
 
 ---
 
-*Agent Learning Profile Protocol v1.0.0 - Claude AS Framework*
+*Agent Learning Profile Protocol v1.0.0 - SkillFoundry Framework*

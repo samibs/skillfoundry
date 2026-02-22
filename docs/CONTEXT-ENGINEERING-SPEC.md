@@ -1,4 +1,4 @@
-# Context Engineering Specification for Claude AS
+# Context Engineering Specification for SkillFoundry
 
 Based on:
 - [Recursive Language Models (arXiv:2512.24601)](https://arxiv.org/abs/2512.24601)
@@ -16,7 +16,7 @@ Based on:
 
 ## Problem Statement
 
-### Current Claude AS Context Usage
+### Current SkillFoundry Context Usage
 
 ```
 Session Start:

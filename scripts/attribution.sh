@@ -574,7 +574,7 @@ cmd_report_agent_trace() {
         --arg version "0.1" \
         --arg sid "$sid" \
         --arg agent "$agent_name" \
-        --arg framework "claude-as" \
+        --arg framework "skillfoundry" \
         --arg fw_version "$framework_version" \
         --arg calc_at "$calc_at" \
         --argjson traces "$traces" \

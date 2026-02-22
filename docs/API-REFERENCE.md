@@ -1,6 +1,6 @@
 # API Reference - Agent Protocols
 
-Reference documentation for Claude AS Framework agent protocols and communication standards.
+Reference documentation for SkillFoundry Framework agent protocols and communication standards.
 
 ---
 

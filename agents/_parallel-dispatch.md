@@ -498,4 +498,4 @@ The following shell scripts implement the parallel dispatch system:
 
 ---
 
-*Parallel Dispatch Protocol v1.0.0 - Claude AS Framework*
+*Parallel Dispatch Protocol v1.0.0 - SkillFoundry Framework*

@@ -99,4 +99,4 @@ STORY-007 (Reference build)  STORY-009 (Prompt capture)
 
 ---
 
-*Generated from PRD: competitive-leap | Claude AS Framework v1.9.0.15*
+*Generated from PRD: competitive-leap | SkillFoundry Framework v1.9.0.15*

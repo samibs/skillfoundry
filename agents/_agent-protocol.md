@@ -7,7 +7,7 @@
 
 ## Overview
 
-All agents in the Claude AS framework communicate using a standardized message format. This ensures:
+All agents in the SkillFoundry framework communicate using a standardized message format. This ensures:
 - Predictable handoffs between agents
 - Token-efficient communication
 - Clear accountability and traceability

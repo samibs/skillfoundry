@@ -11,7 +11,7 @@
 
 ## Description
 
-Implement A2A (Agent-to-Agent) protocol agent cards for each Claude AS agent. Agent cards are JSON metadata documents that describe an agent's capabilities, allowing external systems to discover and interact with our agents via the A2A standard.
+Implement A2A (Agent-to-Agent) protocol agent cards for each SkillFoundry agent. Agent cards are JSON metadata documents that describe an agent's capabilities, allowing external systems to discover and interact with our agents via the A2A standard.
 
 ---
 
@@ -56,7 +56,7 @@ Implement A2A (Agent-to-Agent) protocol agent cards for each Claude AS agent. Ag
 
 ```bash
 #!/usr/bin/env bash
-# A2A protocol support for Claude AS agents
+# A2A protocol support for SkillFoundry agents
 
 # Usage:
 #   a2a-server.sh card <agent>           → Output A2A agent card JSON

@@ -1,6 +1,6 @@
 # HIPAA Compliance Profile
 
-Health Insurance Portability and Accountability Act compliance checks for the Claude AS Framework.
+Health Insurance Portability and Accountability Act compliance checks for the SkillFoundry Framework.
 
 ## Checks (15 total)
 

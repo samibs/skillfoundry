@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Claude AS - Quick Start Wizard
+# SkillFoundry - Quick Start Wizard
 # Interactive wizard for first-time setup and project initialization
 #
 # USAGE:
@@ -26,7 +26,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Banner
 echo -e "${CYAN}${BOLD}"
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║        Claude AS Framework - Quick Start Wizard          ║"
+echo "║        SkillFoundry Framework - Quick Start Wizard          ║"
 echo "║        Get started in 5 minutes!                         ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"

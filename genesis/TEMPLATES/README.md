@@ -30,4 +30,4 @@ cp genesis/TEMPLATES/api-service.md genesis/2026-02-09-my-api.md
 
 ---
 
-*The Forge — Claude AS Framework*
+*The Forge — SkillFoundry Framework*

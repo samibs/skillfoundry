@@ -81,7 +81,7 @@ Scenario: Framework bugs fixed
 Scenario: README links to reference project
   Given the reference project is complete
   When README.md is viewed
-  Then it contains a "Built with Claude AS" reference
+  Then it contains a "Built with SkillFoundry" reference
 ```
 
 ---

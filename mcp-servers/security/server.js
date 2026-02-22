@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Claude AS Security MCP Server
+ * SkillFoundry Security MCP Server
  * Provides security scanning and vulnerability detection
  */
 
@@ -23,7 +23,7 @@ const __dirname = path.dirname(__filename);
 
 const server = new Server(
   {
-    name: "claude-as-security",
+    name: "skillfoundry-security",
     version: "1.0.0",
   },
   {
@@ -492,7 +492,7 @@ function formatReportText(report) {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Claude AS Security MCP server running on stdio");
+  console.error("SkillFoundry Security MCP server running on stdio");
 }
 
 main().catch((error) => {

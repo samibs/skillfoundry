@@ -574,4 +574,4 @@ Debug metrics feed into the main metrics system:
 
 ---
 
-*Systematic Debugging Protocol v1.0.0 - Claude AS Framework*
+*Systematic Debugging Protocol v1.0.0 - SkillFoundry Framework*

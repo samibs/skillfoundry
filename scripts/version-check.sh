@@ -187,7 +187,7 @@ display_version_banner() {
     parse_version "$version"
 
     echo -e "${CYAN}╔═══════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${CYAN}║${NC}                  ${GREEN}Claude AS Framework${NC}                       ${CYAN}║${NC}"
+    echo -e "${CYAN}║${NC}                  ${GREEN}SkillFoundry Framework${NC}                       ${CYAN}║${NC}"
     echo -e "${CYAN}╠═══════════════════════════════════════════════════════════════╣${NC}"
     echo -e "${CYAN}║${NC}  Version: ${YELLOW}$MAJOR${NC}.${YELLOW}$FEATURE${NC}.${YELLOW}$DATABASE${NC}.${YELLOW}$ITERATION${NC}                                        ${CYAN}║${NC}"
     echo -e "${CYAN}║${NC}                                                               ${CYAN}║${NC}"

@@ -1,6 +1,6 @@
 # GDPR Compliance Profile
 
-General Data Protection Regulation compliance checks for the Claude AS Framework.
+General Data Protection Regulation compliance checks for the SkillFoundry Framework.
 
 ## Checks (10 total)
 

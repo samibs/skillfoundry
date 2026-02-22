@@ -1,4 +1,4 @@
-# Parallel Execution Tooling - Claude AS Framework
+# Parallel Execution Tooling - SkillFoundry Framework
 
 Shell-based tooling for DAG computation and dispatch state management. Used by `/delegate`, `/go --parallel`, and `/orchestrate`.
 

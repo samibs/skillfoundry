@@ -31,10 +31,10 @@ Implement Phase 1 Quick Wins from the Strategic Improvement Plan to reduce frict
 **Usage**:
 ```bash
 # Linux/Mac
-curl -fsSL https://raw.githubusercontent.com/your-repo/claude_as/main/install-unified.sh | bash
+curl -fsSL https://raw.githubusercontent.com/your-repo/skillfoundry/main/install-unified.sh | bash
 
 # Windows
-iwr https://raw.githubusercontent.com/your-repo/claude_as/main/install-unified.ps1 | iex
+iwr https://raw.githubusercontent.com/your-repo/skillfoundry/main/install-unified.ps1 | iex
 ```
 
 **Impact**: Reduces installation time from 5+ minutes to <1 minute

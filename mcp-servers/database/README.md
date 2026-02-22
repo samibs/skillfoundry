@@ -1,6 +1,6 @@
 # MCP Database Server
 
-Claude AS Database MCP Server - Database schema inspection and migration management.
+SkillFoundry Database MCP Server - Database schema inspection and migration management.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Configure in your MCP client:
 ```json
 {
   "servers": {
-    "claude-as-database": {
+    "skillfoundry-database": {
       "command": "node",
       "args": ["mcp-servers/database/server.js"],
       "env": {

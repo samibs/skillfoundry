@@ -27,7 +27,7 @@ layers: [backend]
 
 ### 1.1 Problem Statement
 
-The Claude AS Framework (v1.7.0.2) has 41 agents operating in a top-down orchestration model: `/go` dispatches waves, agents execute in isolation, report back, next wave starts. This creates two limitations:
+The SkillFoundry Framework (v1.7.0.2) has 41 agents operating in a top-down orchestration model: `/go` dispatches waves, agents execute in isolation, report back, next wave starts. This creates two limitations:
 
 1. **Rigid coordination**: Agents cannot self-organize, hand off work mid-task, or dynamically respond to emerging needs. A tester waits for an entire wave to finish before testing code that was ready 30 seconds in.
 
@@ -213,7 +213,7 @@ N/A - This is a CLI framework, no REST APIs.
 │                    FRAMEWORK EVOLUTION ARCHITECTURE                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
-│  CENTRAL FRAMEWORK (~/dev_tools/claude_as/)                        │
+│  CENTRAL FRAMEWORK (~/dev_tools/skillfoundry/)                        │
 │  ┌───────────────────────────────────────────────────────────┐     │
 │  │  memory_bank/knowledge/                                    │     │
 │  │  ├── bootstrap.jsonl (grows via harvest)                   │     │
@@ -505,7 +505,7 @@ All scripts support:
 - [ ] Automatic code generation from learned patterns (patterns are reference, not generators)
 - [ ] Git-based knowledge versioning (knowledge uses JSONL append-only, not git)
 - [ ] Agent personality customization (agents follow fixed agent definitions)
-- [ ] Cross-framework compatibility (only Claude AS, not other AI frameworks)
+- [ ] Cross-framework compatibility (only SkillFoundry, not other AI frameworks)
 
 ---
 

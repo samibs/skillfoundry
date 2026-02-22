@@ -118,8 +118,8 @@ Complete Phase 2 Polish tasks:
 - ✅ Update status (for update script)
 
 **Diagnostic File Location**:
-- Installation: `{project}/.claude-as-diagnostics.log`
-- Update: `{framework}/.claude-as-diagnostics.log`
+- Installation: `{project}/.skillfoundry-diagnostics.log`
+- Update: `{framework}/.skillfoundry-diagnostics.log`
 
 **Impact**: Better troubleshooting information for support and debugging
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Claude AS - Agents & Skills Installer
+# SkillFoundry - Agents & Skills Installer
 # Installs the Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, and/or Google Gemini framework to a target project
 #
 # USAGE:
@@ -10,7 +10,7 @@
 #   ./install.sh --dry-run --platform=claude        # Preview what would be installed
 #   ./install.sh --help                             # Show usage
 #
-# DO NOT copy the claude_as folder into your project!
+# DO NOT copy the skillfoundry folder into your project!
 # Keep it in one central location and run the installer from there.
 
 set -e
@@ -41,7 +41,7 @@ handle_error() {
     # Diagnostic information
     if [ "$DEBUG" = "true" ]; then
         collect_diagnostics
-        echo -e "${CYAN}Diagnostics saved to: ${TARGET_DIR:-.}/.claude-as-diagnostics.log${NC}"
+        echo -e "${CYAN}Diagnostics saved to: ${TARGET_DIR:-.}/.skillfoundry-diagnostics.log${NC}"
     fi
 
     exit $exit_code
@@ -87,10 +87,10 @@ rollback_installation() {
 
 # Diagnostic collection
 collect_diagnostics() {
-    local diag_file="${TARGET_DIR:-.}/.claude-as-diagnostics.log"
+    local diag_file="${TARGET_DIR:-.}/.skillfoundry-diagnostics.log"
 
     cat > "$diag_file" <<EOF
-# Claude AS Framework - Diagnostic Information
+# SkillFoundry Framework - Diagnostic Information
 Generated: $(date)
 
 ## System Information
@@ -233,7 +233,7 @@ show_whats_new() {
 
 # Show help
 show_install_help() {
-    echo "Claude AS Framework — Installer v${FRAMEWORK_VERSION}"
+    echo "SkillFoundry Framework — Installer v${FRAMEWORK_VERSION}"
     echo ""
     echo "Usage: $(basename "$0") [OPTIONS] [TARGET_DIR]"
     echo ""
@@ -311,7 +311,7 @@ timer_start
 
 echo ""
 echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
-echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— Installer${NC}                    ${CYAN}│${NC}"
+echo -e "${CYAN}│${NC}  ${BOLD}SkillFoundry Framework${NC} ${YELLOW}— Installer${NC}                    ${CYAN}│${NC}"
 echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 5 platforms             ${CYAN}│${NC}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
 echo ""
@@ -401,40 +401,40 @@ PLATFORMS=("${UNIQUE_PLATFORMS[@]}")
 echo -e "${GREEN}Platforms: ${PLATFORMS[*]}${NC}"
 echo ""
 
-# Check if user accidentally copied claude_as into their project
-if [ -d "$TARGET_DIR/claude_as" ]; then
+# Check if user accidentally copied skillfoundry into their project
+if [ -d "$TARGET_DIR/skillfoundry" ]; then
     echo -e "${RED}╔═══════════════════════════════════════════════════════════╗"
-    echo "║  ERROR: Found 'claude_as' folder in target directory!     ║"
+    echo "║  ERROR: Found 'skillfoundry' folder in target directory!     ║"
     echo "╚═══════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo -e "${YELLOW}You should NOT copy the claude_as folder into your project.${NC}"
+    echo -e "${YELLOW}You should NOT copy the skillfoundry folder into your project.${NC}"
     echo ""
     echo "The correct workflow is:"
-    echo "  1. Keep claude_as in a central location (like ~/DevLab/IDEA/)"
+    echo "  1. Keep skillfoundry in a central location (like ~/DevLab/IDEA/)"
     echo "  2. Run this installer FROM that location INTO your project"
     echo ""
     echo "To fix this:"
     echo -e "  ${CYAN}cd $TARGET_DIR${NC}"
-    echo -e "  ${CYAN}rm -rf claude_as${NC}"
+    echo -e "  ${CYAN}rm -rf skillfoundry${NC}"
     echo -e "  ${CYAN}$SCRIPT_DIR/install.sh${NC}"
     echo ""
     if [ "$YES_MODE" = true ]; then
         REPLY="y"
-        echo -e "  ${GREEN}--yes: auto-removing claude_as folder${NC}"
+        echo -e "  ${GREEN}--yes: auto-removing skillfoundry folder${NC}"
     else
-        read -p "Remove claude_as folder and continue? (y/N): " -n 1 -r
+        read -p "Remove skillfoundry folder and continue? (y/N): " -n 1 -r
         echo ""
     fi
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         # Safety: validate the path before rm -rf
-        remove_path="$TARGET_DIR/claude_as"
-        if [ -d "$remove_path" ] && [[ "$remove_path" != "/" ]] && [[ "$remove_path" != "$HOME" ]] && [[ "$remove_path" == */claude_as ]]; then
+        remove_path="$TARGET_DIR/skillfoundry"
+        if [ -d "$remove_path" ] && [[ "$remove_path" != "/" ]] && [[ "$remove_path" != "$HOME" ]] && [[ "$remove_path" == */skillfoundry ]]; then
             rm -rf "$remove_path"
         else
-            log_error "Refusing to remove suspicious path" "Path validation failed" "$remove_path" "Manually remove the claude_as folder"
+            log_error "Refusing to remove suspicious path" "Path validation failed" "$remove_path" "Manually remove the skillfoundry folder"
             exit 1
         fi
-        echo -e "${GREEN}Removed claude_as folder. Continuing installation...${NC}"
+        echo -e "${GREEN}Removed skillfoundry folder. Continuing installation...${NC}"
         echo ""
     else
         echo -e "${RED}Installation cancelled.${NC}"
@@ -442,13 +442,13 @@ if [ -d "$TARGET_DIR/claude_as" ]; then
     fi
 fi
 
-# Check if installing into the claude_as source folder itself
+# Check if installing into the skillfoundry source folder itself
 if [ "$TARGET_DIR" = "$SCRIPT_DIR" ]; then
     echo -e "${RED}╔═══════════════════════════════════════════════════════════╗"
     echo "║  ERROR: Cannot install into the source folder itself!     ║"
     echo "╚═══════════════════════════════════════════════════════════╝${NC}"
     echo ""
-    echo "You're trying to install into the claude_as template folder."
+    echo "You're trying to install into the skillfoundry template folder."
     echo ""
     echo "The correct workflow is:"
     echo "  1. Create or navigate to your PROJECT folder"

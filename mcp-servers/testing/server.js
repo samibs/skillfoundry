@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Claude AS Testing MCP Server
+ * SkillFoundry Testing MCP Server
  * Provides test runner integration
  */
 
@@ -23,7 +23,7 @@ const __dirname = path.dirname(__filename);
 
 const server = new Server(
   {
-    name: "claude-as-testing",
+    name: "skillfoundry-testing",
     version: "1.0.0",
   },
   {
@@ -436,7 +436,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Claude AS Testing MCP server running on stdio");
+  console.error("SkillFoundry Testing MCP server running on stdio");
 }
 
 main().catch((error) => {

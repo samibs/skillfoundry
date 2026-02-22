@@ -27,7 +27,7 @@ layers: [backend]
 
 ### 1.1 Problem Statement
 
-Developers using Claude AS must manually invoke specific commands (`/forge`, `/go`, `/coder`, etc.) for every task, remember which agent handles which scenario, and lose all session knowledge when context resets. Knowledge accumulated across sessions and projects is not persisted to any external store, meaning every new session or new project starts from zero. This creates friction, slows iteration, and prevents the framework from becoming truly autonomous.
+Developers using SkillFoundry must manually invoke specific commands (`/forge`, `/go`, `/coder`, etc.) for every task, remember which agent handles which scenario, and lose all session knowledge when context resets. Knowledge accumulated across sessions and projects is not persisted to any external store, meaning every new session or new project starts from zero. This creates friction, slows iteration, and prevents the framework from becoming truly autonomous.
 
 ### 1.2 Proposed Solution
 
@@ -52,7 +52,7 @@ Together, these create a self-improving loop: every session's lessons feed back 
 
 ## 2. User Stories
 
-### Primary User: Developer using Claude AS
+### Primary User: Developer using SkillFoundry
 
 | ID | As a... | I want to... | So that... | Priority |
 |----|---------|--------------|------------|----------|

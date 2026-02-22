@@ -1,4 +1,4 @@
-# Claude AS - Quick Start Wizard (PowerShell)
+# SkillFoundry - Quick Start Wizard (PowerShell)
 # Interactive wizard for first-time setup and project initialization
 #
 # USAGE:
@@ -27,7 +27,7 @@ $ScriptDir = Split-Path -Parent $ScriptDir
 
 # Banner
 Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Cyan"
-Write-ColorOutput "║        Claude AS Framework - Quick Start Wizard          ║" "Cyan"
+Write-ColorOutput "║        SkillFoundry Framework - Quick Start Wizard          ║" "Cyan"
 Write-ColorOutput "║        Get started in 5 minutes!                         ║" "Cyan"
 Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Cyan"
 Write-Host ""

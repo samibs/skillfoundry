@@ -53,7 +53,7 @@ Evaluate, curate, and promote harvested knowledge entries from project memory ba
 3. **Scope**
    - Universal knowledge applies across project types
    - Project-specific knowledge references particular files, tables, or entities
-   - Framework knowledge relates to Claude AS itself
+   - Framework knowledge relates to SkillFoundry itself
 
 4. **Weight Thresholds**
    - weight < 0.3: Low confidence, needs more evidence

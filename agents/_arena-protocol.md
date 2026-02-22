@@ -107,4 +107,4 @@ Scoring scale: 0.0 to 1.0 per criterion.
 
 ---
 
-*Claude AS Framework — Arena Mode Protocol*
+*SkillFoundry Framework — Arena Mode Protocol*

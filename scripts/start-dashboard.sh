@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Start Claude AS Dashboard
+# Start SkillFoundry Dashboard
 
 set -e
 set -o pipefail
@@ -27,7 +27,7 @@ if [ ! -d "server/node_modules" ]; then
 fi
 
 # Start server
-echo "Starting Claude AS Dashboard..."
+echo "Starting SkillFoundry Dashboard..."
 echo "Access at: http://localhost:$PORT"
 cd server
 node index.js

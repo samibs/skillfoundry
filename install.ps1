@@ -1,18 +1,18 @@
-# Claude AS - Agents & Skills Installer (PowerShell)
+# SkillFoundry - Agents & Skills Installer (PowerShell)
 # Installs the Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, or Google Gemini framework to a target project
 # Supports installing MULTIPLE platforms in a single run via comma-separated values.
 #
 # USAGE:
 #   From your project directory:
-#   C:\DevLab\IDEA\claude_as\install.ps1
-#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform claude
-#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform copilot
-#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform cursor
-#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform codex
-#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform "copilot,codex"
-#   C:\DevLab\IDEA\claude_as\install.ps1 -Platform "claude,copilot,cursor,codex,gemini"
+#   C:\DevLab\IDEA\skillfoundry\install.ps1
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform claude
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform copilot
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform cursor
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform codex
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform "copilot,codex"
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform "claude,copilot,cursor,codex,gemini"
 #
-# DO NOT copy the claude_as folder into your project!
+# DO NOT copy the skillfoundry folder into your project!
 # Keep it in one central location and run the installer from there.
 
 param(
@@ -55,7 +55,7 @@ trap {
     # Diagnostic information
     if ($Debug) {
         Collect-Diagnostics
-        Write-ColorOutput "Diagnostics saved to: $(Join-Path $TargetDir '.claude-as-diagnostics.log')" "Cyan"
+        Write-ColorOutput "Diagnostics saved to: $(Join-Path $TargetDir '.skillfoundry-diagnostics.log')" "Cyan"
     }
     
     exit $exitCode
@@ -92,10 +92,10 @@ function Rollback-Installation {
 
 # Diagnostic collection
 function Collect-Diagnostics {
-    $diagFile = Join-Path $TargetDir ".claude-as-diagnostics.log"
+    $diagFile = Join-Path $TargetDir ".skillfoundry-diagnostics.log"
     
     $diagnostics = @"
-# Claude AS Framework - Diagnostic Information
+# SkillFoundry Framework - Diagnostic Information
 Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 
 ## System Information
@@ -165,7 +165,7 @@ $FrameworkDate = (Get-Item -Force $VersionFilePath).LastWriteTime.ToString("yyyy
 
 # Handle -Help
 if ($Help) {
-    Write-Host "Claude AS Framework - Installer v$FrameworkVersion"
+    Write-Host "SkillFoundry Framework - Installer v$FrameworkVersion"
     Write-Host ""
     Write-Host "Usage: .\install.ps1 [OPTIONS] [-TargetDir PATH]"
     Write-Host ""
@@ -262,7 +262,7 @@ if (Test-Path $TargetDir) {
 
 Write-Host ""
 Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-Write-Host "  │  Claude AS Framework — Installer                    │" -ForegroundColor Cyan
+Write-Host "  │  SkillFoundry Framework — Installer                    │" -ForegroundColor Cyan
 Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 5 platforms             │" -ForegroundColor Cyan
 Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
 Write-Host ""
@@ -329,32 +329,32 @@ $PlatformDisplay = ($Platforms -join ", ")
 Write-ColorOutput "Platform(s): $PlatformDisplay" "Green"
 Write-Host ""
 
-# Check if user accidentally copied claude_as into their project
-if (Test-Path (Join-Path $TargetDir "claude_as")) {
+# Check if user accidentally copied skillfoundry into their project
+if (Test-Path (Join-Path $TargetDir "skillfoundry")) {
     Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Red"
-    Write-ColorOutput "║  ERROR: Found 'claude_as' folder in target directory!     ║" "Red"
+    Write-ColorOutput "║  ERROR: Found 'skillfoundry' folder in target directory!     ║" "Red"
     Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Red"
     Write-Host ""
-    Write-ColorOutput "You should NOT copy the claude_as folder into your project." "Yellow"
+    Write-ColorOutput "You should NOT copy the skillfoundry folder into your project." "Yellow"
     Write-Host ""
     Write-Host "The correct workflow is:"
-    Write-Host "  1. Keep claude_as in a central location (like C:\DevLab\IDEA\)"
+    Write-Host "  1. Keep skillfoundry in a central location (like C:\DevLab\IDEA\)"
     Write-Host "  2. Run this installer FROM that location INTO your project"
     Write-Host ""
     Write-Host "To fix this:"
     Write-ColorOutput "  cd $TargetDir" "Cyan"
-    Write-ColorOutput "  Remove-Item -Recurse -Force claude_as" "Cyan"
+    Write-ColorOutput "  Remove-Item -Recurse -Force skillfoundry" "Cyan"
     Write-ColorOutput "$ScriptDir\install.ps1" "Cyan"
     Write-Host ""
     if ($Yes) {
         $response = "y"
-        Write-ColorOutput "  -Yes: auto-removing claude_as folder" "Green"
+        Write-ColorOutput "  -Yes: auto-removing skillfoundry folder" "Green"
     } else {
-        $response = Read-Host "Remove claude_as folder and continue? (y/N)"
+        $response = Read-Host "Remove skillfoundry folder and continue? (y/N)"
     }
     if ($response -match "^[Yy]$") {
-        Remove-Item -Recurse -Force (Join-Path $TargetDir "claude_as")
-        Write-ColorOutput "Removed claude_as folder. Continuing installation..." "Green"
+        Remove-Item -Recurse -Force (Join-Path $TargetDir "skillfoundry")
+        Write-ColorOutput "Removed skillfoundry folder. Continuing installation..." "Green"
         Write-Host ""
     } else {
         Write-ColorOutput "Installation cancelled." "Red"
@@ -362,13 +362,13 @@ if (Test-Path (Join-Path $TargetDir "claude_as")) {
     }
 }
 
-# Check if installing into the claude_as source folder itself
+# Check if installing into the skillfoundry source folder itself
 if ($TargetDir -eq $ScriptDir) {
     Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Red"
     Write-ColorOutput "║  ERROR: Cannot install into the source folder itself!     ║" "Red"
     Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Red"
     Write-Host ""
-    Write-Host "You're trying to install into the claude_as template folder."
+    Write-Host "You're trying to install into the skillfoundry template folder."
     Write-Host ""
     Write-Host "The correct workflow is:"
     Write-Host "  1. Create or navigate to your PROJECT folder"
