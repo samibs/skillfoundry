@@ -2,13 +2,20 @@
 
 ![CI](https://github.com/samibs/claude_as/actions/workflows/ci.yml/badge.svg)
 
-A comprehensive AI agent and skills framework for structured, production-ready AI-assisted development. **Now supports Claude Code, GitHub Copilot CLI, Cursor, and OpenAI Codex** with advanced GitHub integration and AI-specific security hardening.
+A comprehensive AI agent and skills framework for structured, production-ready AI-assisted development. **Now supports Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, and Google Gemini** with advanced GitHub integration and AI-specific security hardening.
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
+
+### Google Gemini Platform Support (v1.9.0.21)
+- **5th platform added** — Gemini skills now available via `.gemini/skills/`
+- **Installers/updaters upgraded** — `install.*`, `update.*`, and unified installers now support `gemini` selection/detection
+- **Sync engine expanded** — `scripts/sync-platforms.sh` now generates/checks/diffs across 5 platforms
+- **On-repo assets included** — Gemini skill files generated from framework command sources
 
 ### Agent Evolution Engine & 53-Agent Perfection Loop (v1.9.0.20)
 - **53-agent baseline** — Canonical roster in `config/core-agents-53.txt` (with `config/core-agents-46.txt` fallback compatibility)
 - **Debate -> implement -> iterate engine** — `scripts/agent-evolution.ps1` / `scripts/agent-evolution.sh` performs deterministic peer review, emits findings, auto-remediates weak skill contracts
+- **On-demand CLI wrapper** — `scripts/evolve.ps1` / `scripts/evolve.sh` exposes direct `debate`, `implement`, `iterate`, and phased `run` workflows
 - **Perfection gate** — Reports explicit `perfection_score` and `perfection_achieved`; requires zero open debate findings across core roster
 - **Forced stress loops** — Supports fixed-length runs (e.g. 100 iterations) with stability/perfection tracking per iteration
 - **Dedicated guide + tests** — `docs/AGENT-EVOLUTION.md`, `tests/test-agent-evolution.ps1`, `tests/test-agent-evolution.sh`
@@ -316,11 +323,12 @@ scripts/version-check.sh    # Detailed version comparison
 - 📈 **Cursor**: 22 → 30 rules (+8)
 - 📈 **Total**: 72 → 96 agents/skills/rules (+24)
 
-### Quad-Platform Support
+### Penta-Platform Support
 - ✅ **Claude Code**: Original platform with `/command` syntax
 - ✅ **GitHub Copilot CLI**: Full integration with `task()` tool
 - ✅ **Cursor**: Rules-based AI assistance
 - ✅ **OpenAI Codex**: Native Skills via `.agents/skills/` with `$skill-name` invocation
+- ✅ **Google Gemini**: Native skill documents via `.gemini/skills/`
 - ✅ **Platform Selection**: Choose during installation with `--platform` flag
 - ✅ **Windows Support**: PowerShell scripts (install.ps1, update.ps1) for Windows users
 
@@ -345,7 +353,7 @@ scripts/version-check.sh    # Detailed version comparison
 - **37 Compliance Checks** (HIPAA 15 + SOC2 12 + GDPR 10)
 - **2 Security Guides** (477 KB of AI vulnerability knowledge)
 - **7 Documentation Guides** (comprehensive workflows, escalation criteria, and examples)
-- **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex)
+- **Penta Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini)
 - **GitHub Actions CI** (multi-OS automated testing)
 - **Windows Support** (PowerShell scripts)
 

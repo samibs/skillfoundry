@@ -64,7 +64,7 @@ function Restore-FromBackup {
     Write-ColorOutput "Restoring from backup: $BackupPath" "Yellow"
     
     # Restore platform-specific directories
-    $platformDirs = @(".claude", ".copilot", ".cursor", ".agents")
+    $platformDirs = @(".claude", ".copilot", ".cursor", ".agents", ".gemini")
     foreach ($dir in $platformDirs) {
         $targetPath = Join-Path $ProjectDir $dir
         $backupDirPath = Join-Path $BackupPath $dir
@@ -159,7 +159,7 @@ function Print-Header {
     Write-Host ""
     Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
     Write-Host "  │  Claude AS Framework — Updater                     │" -ForegroundColor Cyan
-    Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 4 platforms             │" -ForegroundColor Cyan
+    Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 5 platforms             │" -ForegroundColor Cyan
     Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
     Write-Host ""
 }
@@ -228,6 +228,8 @@ function Get-ProjectVersion {
         $versionFile = Join-Path $ProjectDir ".cursor\.framework-version"
     } elseif (Test-Path (Join-Path $ProjectDir ".agents\.framework-version")) {
         $versionFile = Join-Path $ProjectDir ".agents\.framework-version"
+    } elseif (Test-Path (Join-Path $ProjectDir ".gemini\.framework-version")) {
+        $versionFile = Join-Path $ProjectDir ".gemini\.framework-version"
     }
     
     if ($versionFile -and (Test-Path $versionFile)) {
@@ -247,6 +249,7 @@ function Set-ProjectVersion {
         "copilot" = ".copilot"
         "cursor"  = ".cursor"
         "codex"   = ".agents"
+        "gemini"  = ".gemini"
     }
 
     if ($platforms.Count -eq 0) {
@@ -284,6 +287,9 @@ function Detect-Platform {
     if (Test-Path (Join-Path $ProjectDir ".agents\skills")) {
         $platforms += "codex"
     }
+    if (Test-Path (Join-Path $ProjectDir ".gemini\skills")) {
+        $platforms += "gemini"
+    }
 
     return ,$platforms
 }
@@ -295,6 +301,7 @@ function Test-ValidProject {
            (Test-Path (Join-Path $ProjectDir ".copilot")) -or
            (Test-Path (Join-Path $ProjectDir ".cursor")) -or
            (Test-Path (Join-Path $ProjectDir ".agents\skills")) -or
+           (Test-Path (Join-Path $ProjectDir ".gemini\skills")) -or
            (Test-Path (Join-Path $ProjectDir "CLAUDE.md"))
 }
 
@@ -598,6 +605,37 @@ function Update-Project {
                             Backup-File $agentsTarget | Out-Null
                             Copy-Item -Path "$ScriptDir\.agents\AGENTS.md" -Destination $agentsTarget -Force
                             Write-ColorOutput "  ^ Updated: AGENTS.md" "Cyan"
+                        }
+                    }
+                }
+
+                if ($skillsAdded -eq 0 -and $skillsUpdated -eq 0) {
+                    Write-ColorOutput "  All skills up to date" "Green"
+                } else {
+                    Write-ColorOutput "  $skillsAdded added, $skillsUpdated updated" "Green"
+                }
+            }
+            "gemini" {
+                New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".gemini\skills") | Out-Null
+                $skillsAdded = 0
+                $skillsUpdated = 0
+
+                foreach ($skill in Get-ChildItem -Path "$ScriptDir\.gemini\skills\*.md" -ErrorAction SilentlyContinue) {
+                    $skillName = $skill.Name
+                    $target = Join-Path $ProjectDir ".gemini\skills\$skillName"
+
+                    if (-not (Test-Path $target)) {
+                        Copy-Item -Path $skill.FullName -Destination $target -Force
+                        Write-ColorOutput "  + Added: $skillName" "Green"
+                        $skillsAdded++
+                    } else {
+                        $sourceContent = Get-FileHash $skill.FullName -Algorithm MD5
+                        $targetContent = Get-FileHash $target -Algorithm MD5
+                        if ($sourceContent.Hash -ne $targetContent.Hash) {
+                            Backup-File $target | Out-Null
+                            Copy-Item -Path $skill.FullName -Destination $target -Force
+                            Write-ColorOutput "  ^ Updated: $skillName" "Cyan"
+                            $skillsUpdated++
                         }
                     }
                 }

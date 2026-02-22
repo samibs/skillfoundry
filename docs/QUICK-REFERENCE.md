@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.20 - Quick Reference Card
+# Claude AS v1.9.0.21 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -86,6 +86,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 debate
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MaxIterations 10
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MinIterations 100 -MaxIterations 100
+
+# On-demand wrapper (debate|implement|iterate|run)
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 debate
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 implement -AutoFix
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 iterate -AutoFix -MinIterations 1 -MaxIterations 20
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 run -Phases debate,implement,iterate -AutoFix
 ```
 
 ---
@@ -590,7 +596,8 @@ your-project/
 | Copilot CLI | `task("agent", "prompt")` |
 | Cursor | "use [agent] rule" |
 | OpenAI Codex | `$skill-name` |
+| Google Gemini | Load skill from `.gemini/skills/<skill>.md` |
 
 ---
 
-*Claude AS Framework v1.9.0.20 - February 2026 - The Forge (53 Core Agents / 60 Skills)*
+*Claude AS Framework v1.9.0.21 - February 2026 - The Forge (53 Core Agents / 60 Skills)*

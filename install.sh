@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Claude AS - Agents & Skills Installer
-# Installs the Claude Code, GitHub Copilot CLI, Cursor, and/or OpenAI Codex framework to a target project
+# Installs the Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, and/or Google Gemini framework to a target project
 #
 # USAGE:
 #   ./install.sh                                    # Interactive install to current dir
@@ -32,7 +32,7 @@ handle_error() {
 
     # Rollback if partial installation
     if [ -n "$TARGET_DIR" ] && [ -d "$TARGET_DIR" ]; then
-        if [ -d "$TARGET_DIR/.claude" ] || [ -d "$TARGET_DIR/.copilot" ] || [ -d "$TARGET_DIR/.cursor" ] || [ -d "$TARGET_DIR/.agents" ]; then
+        if [ -d "$TARGET_DIR/.claude" ] || [ -d "$TARGET_DIR/.copilot" ] || [ -d "$TARGET_DIR/.cursor" ] || [ -d "$TARGET_DIR/.agents" ] || [ -d "$TARGET_DIR/.gemini" ]; then
             echo -e "${YELLOW}Rolling back partial installation...${NC}"
             rollback_installation
         fi
@@ -69,6 +69,9 @@ rollback_installation() {
                 ;;
             codex)
                 [ -d "$TARGET_DIR/.agents" ] && rm -rf "$TARGET_DIR/.agents" && echo "  Removed .agents/"
+                ;;
+            gemini)
+                [ -d "$TARGET_DIR/.gemini" ] && rm -rf "$TARGET_DIR/.gemini" && echo "  Removed .gemini/"
                 ;;
         esac
     done
@@ -235,7 +238,7 @@ show_install_help() {
     echo "Usage: $(basename "$0") [OPTIONS] [TARGET_DIR]"
     echo ""
     echo "Options:"
-    echo "  --platform=PLATFORMS   Comma-separated: claude,copilot,cursor,codex"
+    echo "  --platform=PLATFORMS   Comma-separated: claude,copilot,cursor,codex,gemini"
     echo "  --yes, -y              Non-interactive mode (accept all defaults)"
     echo "  --dry-run              Show what would be installed without doing it"
     echo "  --debug, -d            Enable diagnostic logging"
@@ -309,7 +312,7 @@ timer_start
 echo ""
 echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
 echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— Installer${NC}                    ${CYAN}│${NC}"
-echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 4 platforms             ${CYAN}│${NC}"
+echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 5 platforms             ${CYAN}│${NC}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
 echo ""
 
@@ -319,11 +322,12 @@ if [ -z "$platform_input" ]; then
         platform_input="claude"
         echo -e "  ${GREEN}--yes: defaulting to Claude platform${NC}"
     else
-    echo -e "${YELLOW}Select platforms (comma-separated, e.g. 1,4):${NC}"
+    echo -e "${YELLOW}Select platforms (comma-separated, e.g. 1,5):${NC}"
     echo "  1) Claude Code"
     echo "  2) GitHub Copilot CLI"
     echo "  3) Cursor"
     echo "  4) OpenAI Codex"
+    echo "  5) Google Gemini"
     echo "  a) All platforms"
     echo ""
     read -p "Choice: " -r
@@ -331,7 +335,7 @@ if [ -z "$platform_input" ]; then
 
     # Handle "all" shortcut
     if [[ "$REPLY" =~ ^[aA]$ ]]; then
-        platform_input="claude,copilot,cursor,codex"
+        platform_input="claude,copilot,cursor,codex,gemini"
     else
         # Parse comma-separated numeric choices
         local_platforms=()
@@ -344,8 +348,9 @@ if [ -z "$platform_input" ]; then
                 2) local_platforms+=("copilot") ;;
                 3) local_platforms+=("cursor") ;;
                 4) local_platforms+=("codex") ;;
+                5) local_platforms+=("gemini") ;;
                 *)
-                    echo -e "${RED}Invalid choice: '$choice'. Must be 1-4 or 'a' for all.${NC}"
+                    echo -e "${RED}Invalid choice: '$choice'. Must be 1-5 or 'a' for all.${NC}"
                     exit 1
                     ;;
             esac
@@ -372,8 +377,8 @@ IFS=',' read -ra PLATFORMS <<< "$platform_input"
 for p in "${PLATFORMS[@]}"; do
     # Trim whitespace
     p="$(echo "$p" | tr -d '[:space:]')"
-    if [[ ! "$p" =~ ^(claude|copilot|cursor|codex)$ ]]; then
-        log_error "Invalid platform '$p'" "Platform must be 'claude', 'copilot', 'cursor', or 'codex'" "install.sh line $LINENO" "Use --platform=claude,copilot (comma-separated, no spaces)"
+    if [[ ! "$p" =~ ^(claude|copilot|cursor|codex|gemini)$ ]]; then
+        log_error "Invalid platform '$p'" "Platform must be 'claude', 'copilot', 'cursor', 'codex', or 'gemini'" "install.sh line $LINENO" "Use --platform=claude,copilot (comma-separated, no spaces)"
         exit 2  # Invalid arguments
     fi
 done
@@ -513,6 +518,18 @@ for plat in "${PLATFORMS[@]}"; do
                 PLATFORMS=("${PLATFORMS[@]/codex}")
             fi
         fi
+    elif [ "$plat" = "gemini" ] && [ -d "$TARGET_DIR/.gemini/skills" ]; then
+        echo -e "${YELLOW}Warning: .gemini/skills directory already exists.${NC}"
+        if [ "$YES_MODE" = true ]; then
+            echo -e "  ${GREEN}--yes: overwriting gemini skills${NC}"
+        else
+            read -p "Overwrite existing skills? (y/N): " -n 1 -r
+            echo ""
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo -e "${RED}Installation cancelled for gemini.${NC}"
+                PLATFORMS=("${PLATFORMS[@]/gemini}")
+            fi
+        fi
     fi
 done
 
@@ -536,6 +553,7 @@ case "$FIRST_PLAT" in
     claude)  FIRST_PLAT_DIR=".claude" ;;
     copilot) FIRST_PLAT_DIR=".copilot" ;;
     codex)   FIRST_PLAT_DIR=".agents" ;;
+    gemini)  FIRST_PLAT_DIR=".gemini" ;;
     cursor)  FIRST_PLAT_DIR=".cursor" ;;
 esac
 
@@ -609,6 +627,10 @@ if [ "$DRY_RUN" = true ]; then
             codex)
                 local_count=$(find "$SCRIPT_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l)
                 echo "    .agents/skills/       $local_count skills"
+                ;;
+            gemini)
+                local_count=$(ls -1 "$SCRIPT_DIR/.gemini/skills/"*.md 2>/dev/null | wc -l)
+                echo "    .gemini/skills/       $local_count skills"
                 ;;
         esac
     done
@@ -705,6 +727,9 @@ install_platform() {
         codex)
             mkdir -p "$TARGET_DIR/.agents/skills"
             ;;
+        gemini)
+            mkdir -p "$TARGET_DIR/.gemini/skills"
+            ;;
         cursor)
             mkdir -p "$TARGET_DIR/.cursor/rules"
             ;;
@@ -753,6 +778,12 @@ install_platform() {
             eval "PLAT_SKILL_COUNT_${plat}=${_count}"
             echo -e "${GREEN}    ✓ Codex skills installed (${_count} skills)${NC}"
             ;;
+        gemini)
+            cp -r "$SCRIPT_DIR/.gemini/skills/"* "$TARGET_DIR/.gemini/skills/"
+            _count=$(ls -1 "$TARGET_DIR/.gemini/skills/"*.md 2>/dev/null | wc -l)
+            eval "PLAT_SKILL_COUNT_${plat}=${_count}"
+            echo -e "${GREEN}    ✓ Gemini skills installed (${_count} skills)${NC}"
+            ;;
         cursor)
             cp -r "$SCRIPT_DIR/.cursor/rules/"* "$TARGET_DIR/.cursor/rules/"
             _count=$(ls -1 "$TARGET_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l)
@@ -767,6 +798,7 @@ install_platform() {
         claude)  version_dir="$TARGET_DIR/.claude" ;;
         copilot) version_dir="$TARGET_DIR/.copilot" ;;
         codex)   version_dir="$TARGET_DIR/.agents" ;;
+        gemini)  version_dir="$TARGET_DIR/.gemini" ;;
         cursor)  version_dir="$TARGET_DIR/.cursor" ;;
     esac
     mkdir -p "$version_dir"
@@ -838,6 +870,10 @@ for plat in "${PLATFORMS[@]}"; do
             eval "_skills=\${PLAT_SKILL_COUNT_${plat}:-0}"
             echo "    .agents/skills/         ${_skills} skills"
             ;;
+        gemini)
+            eval "_skills=\${PLAT_SKILL_COUNT_${plat}:-0}"
+            echo "    .gemini/skills/         ${_skills} skills"
+            ;;
         cursor)
             eval "_rules=\${PLAT_RULE_COUNT_${plat}:-0}"
             echo "    .cursor/rules/          ${_rules} rules"
@@ -873,6 +909,12 @@ for plat in "${PLATFORMS[@]}"; do
             echo "      cd $TARGET_DIR && codex"
             echo "      > \$prd \"your feature\"    Create a PRD"
             echo "      > \$go                     Implement everything"
+            echo ""
+            ;;
+        gemini)
+            echo -e "    ${CYAN}Google Gemini:${NC}"
+            echo "      Open your Gemini CLI/workspace in $TARGET_DIR"
+            echo "      Skills are available from .gemini/skills/"
             echo ""
             ;;
         copilot)

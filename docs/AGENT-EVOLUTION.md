@@ -46,6 +46,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MinIterations 100 -MaxIterations 100
 ```
 
+## On-Demand CLI Wrapper
+
+For direct phase control:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 debate
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 implement -AutoFix
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 iterate -AutoFix -MinIterations 1 -MaxIterations 20
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/evolve.ps1 run -Phases debate,implement,iterate -AutoFix
+```
+
 ## Validation Rules
 
 Per core agent skill:
