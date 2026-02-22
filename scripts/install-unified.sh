@@ -28,7 +28,7 @@ print_banner() {
     echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
     echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— One-Click Installer${NC}           ${CYAN}│${NC}"
     if [ -n "$ver" ]; then
-        echo -e "${CYAN}│${NC}  v${ver} · ${dt} · 4 platforms             ${CYAN}│${NC}"
+        echo -e "${CYAN}│${NC}  v${ver} · ${dt} · 5 platforms             ${CYAN}│${NC}"
     fi
     echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
     echo ""
@@ -49,7 +49,7 @@ detect_os() {
     fi
 }
 
-# Detect platform(s) (Claude Code, Copilot CLI, Cursor, Codex)
+# Detect platform(s) (Claude Code, Copilot CLI, Cursor, Codex, Gemini)
 # Returns space-separated list of all detected platforms on stdout.
 # Display messages are sent to stderr so they don't pollute the return value.
 detect_platform() {
@@ -77,6 +77,11 @@ detect_platform() {
     if command -v codex &> /dev/null; then
         platforms="${platforms:+$platforms }codex"
         echo -e "${GREEN}✓${NC} Detected: OpenAI Codex" >&2
+    fi
+    # Check for Google Gemini CLI
+    if command -v gemini &> /dev/null; then
+        platforms="${platforms:+$platforms }gemini"
+        echo -e "${GREEN}✓${NC} Detected: Google Gemini" >&2
     fi
 
     echo "$platforms"
@@ -166,6 +171,7 @@ select_platforms_menu() {
     echo "  2) GitHub Copilot CLI" >&2
     echo "  3) Cursor" >&2
     echo "  4) OpenAI Codex" >&2
+    echo "  5) Google Gemini" >&2
     echo "" >&2
     read -p "Platforms: " selection </dev/tty
     local chosen=""
@@ -179,6 +185,7 @@ select_platforms_menu() {
             2) chosen="${chosen:+$chosen }copilot" ;;
             3) chosen="${chosen:+$chosen }cursor" ;;
             4) chosen="${chosen:+$chosen }codex" ;;
+            5) chosen="${chosen:+$chosen }gemini" ;;
             *)
                 echo -e "${YELLOW}⚠${NC} Ignoring invalid selection: $num" >&2
                 ;;
@@ -306,6 +313,12 @@ main() {
                 echo "    3. Invoke skills: \$go, \$coder, \$tester, etc."
                 echo "    4. Or let Codex auto-select based on your prompt"
                 echo "    5. See AGENTS.md for framework overview"
+                ;;
+            gemini)
+                echo -e "  ${CYAN}[Google Gemini]${NC}"
+                echo "    1. Run: gemini"
+                echo "    2. Skills are available from .gemini/skills/"
+                echo "    3. Invoke framework commands per your Gemini workflow"
                 ;;
         esac
         echo ""

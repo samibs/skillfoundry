@@ -28,7 +28,7 @@ Write-Host "  │  Claude AS Framework — One-Click Installer          │" -Fo
 Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
 Write-Host ""
 
-# Detect platforms (Claude Code, Copilot CLI, Cursor, Codex)
+# Detect platforms (Claude Code, Copilot CLI, Cursor, Codex, Gemini)
 function Detect-Platform {
     $platforms = @()
 
@@ -69,6 +69,11 @@ function Detect-Platform {
     if (Get-Command codex -ErrorAction SilentlyContinue) {
         $platforms += "codex"
         Write-ColorOutput "✓ Detected: OpenAI Codex" "Green"
+    }
+    # Check for Google Gemini CLI
+    if (Get-Command gemini -ErrorAction SilentlyContinue) {
+        $platforms += "gemini"
+        Write-ColorOutput "✓ Detected: Google Gemini" "Green"
     }
 
     return ,$platforms
@@ -141,6 +146,7 @@ function Select-PlatformsFromMenu {
     Write-Host "  2) GitHub Copilot CLI"
     Write-Host "  3) Cursor"
     Write-Host "  4) OpenAI Codex"
+    Write-Host "  5) Google Gemini"
     Write-Host ""
     $input = Read-Host "Platforms"
 
@@ -149,6 +155,7 @@ function Select-PlatformsFromMenu {
         "2" = "copilot"
         "3" = "cursor"
         "4" = "codex"
+        "5" = "gemini"
     }
 
     $selected = @()
@@ -266,6 +273,12 @@ function Main {
                 Write-Host "  3. Invoke skills: `$go, `$coder, `$tester, etc."
                 Write-Host "  4. Or let Codex auto-select based on your prompt"
                 Write-Host "  5. See AGENTS.md for framework overview"
+            }
+            "gemini" {
+                Write-Host "  [$plat]"
+                Write-Host "  1. Run: gemini"
+                Write-Host "  2. Skills are available from .gemini/skills/"
+                Write-Host "  3. Invoke framework commands per your Gemini workflow"
             }
         }
         Write-Host ""

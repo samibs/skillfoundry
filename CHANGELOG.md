@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.21] - 2026-02-22
+
+### Added — Google Gemini Platform Support
+- **`.gemini/skills/*.md`** — New Gemini skill target directory generated from framework command sources
+- **`install.sh` / `install.ps1`** — Added `gemini` to platform selection, validation, dry-run summaries, install copy, and quick-start output
+- **`update.sh` / `update.ps1`** — Added Gemini platform detection, version marker propagation, and per-platform skill updates
+- **`scripts/install-unified.sh` / `scripts/install-unified.ps1`** — Added Gemini auto-detection, menu selection, and post-install guidance
+- **`scripts/sync-platforms.sh`** — Extended sync/check/list/diff flows to include Gemini as 5th generated platform
+
+### Changed
+- **Platform count** updated from 4 to 5 in install/update headers and sync summaries
+- **Documentation** updated to reflect 5-platform support (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini)
+
+### Notes
+- Bash validation/runtime steps could not be executed in this environment due local `bash.exe` WSL mount failure; PowerShell script parsing completed successfully
+
+---
+
 ## [1.9.0.20] - 2026-02-22
 
 ### Added — 53-Agent Evolution & Perfection Loop

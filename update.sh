@@ -107,7 +107,7 @@ print_header() {
     echo ""
     echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
     echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— Updater${NC}                     ${CYAN}│${NC}"
-    echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 4 platforms             ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 5 platforms             ${CYAN}│${NC}"
     echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
     echo ""
 }
@@ -115,7 +115,7 @@ print_header() {
 is_valid_project() {
     local project_dir="$1"
     # A valid Claude AS project has at least one platform folder
-    if [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ]; then
+    if [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ] || [ -d "$project_dir/.gemini/skills" ]; then
         return 0
     fi
     return 1
@@ -124,7 +124,7 @@ is_valid_project() {
 get_project_version() {
     local project_dir="$1"
     # Check all possible platform locations — they should all have the same version
-    local version_dirs=(".claude" ".copilot" ".cursor" ".agents")
+    local version_dirs=(".claude" ".copilot" ".cursor" ".agents" ".gemini")
     for vdir in "${version_dirs[@]}"; do
         if [ -f "$project_dir/$vdir/.framework-version" ]; then
             cat "$project_dir/$vdir/.framework-version"
@@ -138,7 +138,7 @@ set_project_version() {
     local project_dir="$1"
     local wrote_any=false
     # Write version to ALL platform dirs that exist in this project
-    local platform_dirs=(".claude" ".copilot" ".cursor" ".agents")
+    local platform_dirs=(".claude" ".copilot" ".cursor" ".agents" ".gemini")
     for pdir in "${platform_dirs[@]}"; do
         if [ -d "$project_dir/$pdir" ]; then
             echo "$FRAMEWORK_VERSION" > "$project_dir/$pdir/.framework-version"
@@ -170,6 +170,9 @@ detect_platform() {
     fi
     if [ -d "$project_dir/.agents/skills" ]; then
         platforms="${platforms:+$platforms }codex"
+    fi
+    if [ -d "$project_dir/.gemini/skills" ]; then
+        platforms="${platforms:+$platforms }gemini"
     fi
 
     echo "$platforms"
@@ -565,6 +568,24 @@ show_diff() {
                     fi
                 done
                 ;;
+            gemini)
+                echo -e "${BLUE}Gemini skills comparison:${NC}"
+                for skill in "$SCRIPT_DIR/.gemini/skills/"*.md; do
+                    if [ -f "$skill" ]; then
+                        local skill_name
+                        skill_name=$(basename "$skill")
+                        local project_skill="$project_dir/.gemini/skills/$skill_name"
+
+                        if [ ! -f "$project_skill" ]; then
+                            echo -e "  ${GREEN}+ $skill_name${NC} (new)"
+                            has_changes=true
+                        elif ! diff -q "$skill" "$project_skill" > /dev/null 2>&1; then
+                            echo -e "  ${YELLOW}~ $skill_name${NC} (modified)"
+                            has_changes=true
+                        fi
+                    fi
+                done
+                ;;
         esac
     done
 
@@ -806,6 +827,38 @@ update_project() {
                         echo -e "  ${CYAN}↑ Updated: AGENTS.md${NC}"
                     fi
                 fi
+
+                if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
+                    echo -e "  ${GREEN}All skills up to date${NC}"
+                else
+                    echo -e "  ${GREEN}$skills_added added, $skills_updated updated${NC}"
+                fi
+                ;;
+            gemini)
+                echo -e "${YELLOW}Updating Gemini skills...${NC}"
+                mkdir -p "$project_dir/.gemini/skills"
+
+                local skills_added=0
+                local skills_updated=0
+
+                for skill in "$SCRIPT_DIR/.gemini/skills/"*.md; do
+                    if [ -f "$skill" ]; then
+                        local skill_name
+                        skill_name=$(basename "$skill")
+                        local target="$project_dir/.gemini/skills/$skill_name"
+
+                        if [ ! -f "$target" ]; then
+                            cp "$skill" "$target"
+                            echo -e "  ${GREEN}+ Added: $skill_name${NC}"
+                            skills_added=$((skills_added + 1))
+                        elif ! diff -q "$skill" "$target" > /dev/null 2>&1; then
+                            cp "$target" "$backup_dir/gemini_${skill_name}"
+                            cp "$skill" "$target"
+                            echo -e "  ${CYAN}↑ Updated: $skill_name${NC}"
+                            skills_updated=$((skills_updated + 1))
+                        fi
+                    fi
+                done
 
                 if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
                     echo -e "  ${GREEN}All skills up to date${NC}"
