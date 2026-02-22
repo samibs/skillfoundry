@@ -1,4 +1,4 @@
-# Claude AS v1.9.0.17 - Quick Reference Card
+# Claude AS v1.9.0.20 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -89,6 +89,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 
 ```
 
 ---
+
+## New in v1.9.0.20: Agent Evolution Engine
+
+### 53-Agent Debate/Implement/Iterate Loop
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 analyze
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 debate
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MaxIterations 10
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MinIterations 100 -MaxIterations 100
+```
 
 ## New in v1.9.0.17: OpenClaw-Inspired Features
 
@@ -583,4 +593,4 @@ your-project/
 
 ---
 
-*Claude AS Framework v1.9.0.17 - February 2026 - The Forge (46 Agents + 12 Shortcuts)*
+*Claude AS Framework v1.9.0.20 - February 2026 - The Forge (53 Core Agents / 60 Skills)*

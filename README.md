@@ -6,6 +6,13 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 ## 🆕 What's New - Version 1.9.0 (Framework Evolution)
 
+### Agent Evolution Engine & 53-Agent Perfection Loop (v1.9.0.20)
+- **53-agent baseline** — Canonical roster in `config/core-agents-53.txt` (with `config/core-agents-46.txt` fallback compatibility)
+- **Debate -> implement -> iterate engine** — `scripts/agent-evolution.ps1` / `scripts/agent-evolution.sh` performs deterministic peer review, emits findings, auto-remediates weak skill contracts
+- **Perfection gate** — Reports explicit `perfection_score` and `perfection_achieved`; requires zero open debate findings across core roster
+- **Forced stress loops** — Supports fixed-length runs (e.g. 100 iterations) with stability/perfection tracking per iteration
+- **Dedicated guide + tests** — `docs/AGENT-EVOLUTION.md`, `tests/test-agent-evolution.ps1`, `tests/test-agent-evolution.sh`
+
 ### Autonomous Developer Loop & Knowledge Sync (v1.9.0.19)
 - **Autonomous mode** — `/autonomous on` enables fully autonomous operation: every input is auto-classified (FEATURE/BUG/REFACTOR/QUESTION/OPS/MEMORY) and routed to the correct pipeline without manual command invocation
 - **Intent classifier** — `agents/_intent-classifier.md` provides classification examples, confidence thresholds, edge case handling for ambiguous inputs
@@ -219,7 +226,7 @@ A comprehensive AI agent and skills framework for structured, production-ready A
 
 **Semantic Versioning:** `MAJOR.FEATURE.DATABASE.ITERATION`
 
-Current version: **1.9.0.19**
+Current version: **1.9.0.20**
 
 - **1** - Major version (breaking changes require fresh install)
 - **9** - Feature version (new capabilities, safe update)
@@ -1182,7 +1189,7 @@ MIT - Use freely, modify as needed.
 
 ## Version
 
-**v1.9.0.19** - February 20, 2026
+**v1.9.0.20** - February 22, 2026
 
 ### What's New in v1.9.0.0 - Framework Evolution (4 Phases)
 
@@ -1413,6 +1420,7 @@ Security patterns based on OWASP Top 10, CWE Top 25, and AI-specific vulnerabili
 **Competitive Leap** (v1.9.0.16 - 2026-02-15) - CI/CD pipeline, quality intelligence, A2A protocol, compliance-as-code
 **OpenClaw Monitoring** (v1.9.0.17 - 2026-02-17) - Heartbeat daemon, multi-channel notifications, developer preferences
 **Script Modernization** (v1.9.0.18 - 2026-02-15) - Modernized install/update scripts, fixed install.ps1 execution order, memory_bank seed files, macOS compat
+**Agent Evolution Engine** (v1.9.0.20 - 2026-02-22) - 53-agent debate/implement/iterate hardening, perfection gate, and forced long-run cycles
 
 **Philosophy**: Production-ready, ruthlessly tested, zero-tolerance for placeholders.
 

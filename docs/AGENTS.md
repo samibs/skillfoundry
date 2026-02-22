@@ -1,6 +1,6 @@
 # Claude AS - Complete Agent Team Reference
 
-**Version 1.9.0.17** | **The Forge: 46 Agents + 12 Shortcuts** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex) | **62 A2A Cards** | **37 Compliance Checks**
+**Version 1.9.0.20** | **The Forge: 53 Core Agents / 60 Skills** | **Quad Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex) | **62 A2A Cards** | **37 Compliance Checks**
 
 ---
 
@@ -10,7 +10,7 @@ Your complete AI development team, covering the full software development lifecy
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       THE FORGE (46 Agents + 12 Shortcuts)                  │
+│                     THE FORGE (53 Core Agents / 60 Skills)                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  LEADERSHIP        ARCHITECTURE         IMPLEMENTATION       QUALITY       │
@@ -521,12 +521,12 @@ Quick-access shortcuts for common workflows. Available on all 4 platforms.
 
 | Category | Count |
 |----------|-------|
-| **Total Agents** | 46 |
+| **Total Agents** | 53 (core roster) |
 | **Shortcut Commands** | 12 |
-| **Claude Code Skills** | 58 (46 + 12) |
+| **Claude Code Skills** | 60 |
 | **Copilot CLI Agents** | 63 (46 + 12 + 5 GitHub-specific) |
 | **Cursor Rules** | 53 (41 + 12) |
-| **Codex Skills** | 58 (46 + 12) |
+| **Codex Skills** | 60 |
 | **Shared Modules** | 46 |
 | **Session Profiles** | 4 (default, blitz, cautious, autonomous) |
 | **PRD Templates** | 4 (api-service, cli-tool, fullstack-feature, dashboard) |
@@ -535,4 +535,4 @@ Quick-access shortcuts for common workflows. Available on all 4 platforms.
 
 ---
 
-*Claude AS Framework v1.9.0.17 - February 2026 - The Forge*
+*Claude AS Framework v1.9.0.20 - February 2026 - The Forge*
