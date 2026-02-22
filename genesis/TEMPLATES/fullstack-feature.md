@@ -72,4 +72,4 @@ layers: [database, backend, frontend]
 
 ---
 
-*Template: Full-Stack Feature — The Forge — Claude AS Framework*
+*Template: Full-Stack Feature — The Forge — SkillFoundry Framework*

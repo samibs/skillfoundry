@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Claude AS Framework - Test Suite
+# SkillFoundry Framework - Test Suite
 # Basic validation tests for install.sh and update.sh
 #
 # USAGE:
@@ -2400,7 +2400,7 @@ test_companion_renders_without_scratchpad() {
 
 test_companion_phase_aware() {
     log_test "Companion: phase-aware command display"
-    local tmp_dir="/tmp/claude-as-companion-test-$$"
+    local tmp_dir="/tmp/skillfoundry-companion-test-$$"
     mkdir -p "$tmp_dir/.claude"
     cat > "$tmp_dir/.claude/scratchpad.md" << 'SCRATCHPAD'
 # Session Scratchpad
@@ -3328,7 +3328,7 @@ run_all_tests() {
 
     echo -e "${BLUE}"
     echo "╔═══════════════════════════════════════════════════════════╗"
-    echo "║        Claude AS Framework - Test Suite                   ║"
+    echo "║        SkillFoundry Framework - Test Suite                   ║"
     echo "╚═══════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 

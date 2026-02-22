@@ -48,7 +48,7 @@ Enable safe, isolated development by using git worktrees. Each PRD or story can 
 
 ---
 
-## Benefits for Claude AS
+## Benefits for SkillFoundry
 
 | Benefit | Description |
 |---------|-------------|
@@ -102,7 +102,7 @@ git worktree remove ../project-feature
 git worktree prune
 ```
 
-### Claude AS Integration Commands
+### SkillFoundry Integration Commands
 
 ```bash
 # Create worktree for PRD
@@ -541,4 +541,4 @@ Worktree metrics feed into the main metrics system:
 
 ---
 
-*Git Worktree Protocol v1.0.0 - Claude AS Framework*
+*Git Worktree Protocol v1.0.0 - SkillFoundry Framework*

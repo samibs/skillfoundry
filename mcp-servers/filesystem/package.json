@@ -1,7 +1,7 @@
 {
-  "name": "@claude-as/mcp-filesystem",
+  "name": "@skillfoundry/mcp-filesystem",
   "version": "1.0.0",
-  "description": "Claude AS Filesystem MCP Server - Safe file operations",
+  "description": "SkillFoundry Filesystem MCP Server - Safe file operations",
   "type": "module",
   "main": "server.js",
   "scripts": {
@@ -10,7 +10,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.5.0"
   },
-  "keywords": ["mcp", "filesystem", "claude-as"],
-  "author": "Claude AS Framework",
+  "keywords": ["mcp", "filesystem", "skillfoundry"],
+  "author": "SkillFoundry Framework",
   "license": "MIT"
 }

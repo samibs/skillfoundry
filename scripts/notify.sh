@@ -177,7 +177,7 @@ send_slack() {
     payload=$(jq -nc \
         --arg text "$message" \
         --arg color "$color" \
-        --arg footer "Claude AS Framework" \
+        --arg footer "SkillFoundry Framework" \
         --argjson ts "$(date +%s)" \
         '{attachments:[{color:$color,text:$text,footer:$footer,ts:$ts}]}')
 
@@ -216,7 +216,7 @@ send_discord() {
         --argjson color "$color" \
         --arg level "$level" \
         --arg ts "$timestamp" \
-        '{embeds:[{title:"Claude AS Notification",description:$desc,color:$color,footer:{text:("Level: "+$level)},timestamp:$ts}]}')
+        '{embeds:[{title:"SkillFoundry Notification",description:$desc,color:$color,footer:{text:("Level: "+$level)},timestamp:$ts}]}')
 
     if curl -s -o /dev/null -w "%{http_code}" -X POST "$webhook" \
         -H "Content-Type: application/json" \
@@ -241,10 +241,10 @@ send_desktop() {
             critical|error) urgency="critical" ;;
             info|success)   urgency="low" ;;
         esac
-        notify-send -u "$urgency" "Claude AS" "$message" 2>/dev/null
+        notify-send -u "$urgency" "SkillFoundry" "$message" 2>/dev/null
         return $?
     elif [[ "$OSTYPE" == "darwin"* ]] && command -v osascript &>/dev/null; then
-        osascript -e "display notification \"$message\" with title \"Claude AS\" subtitle \"$level\"" 2>/dev/null
+        osascript -e "display notification \"$message\" with title \"SkillFoundry\" subtitle \"$level\"" 2>/dev/null
         return $?
     else
         echo -e "\a" 2>/dev/null
@@ -499,7 +499,7 @@ cmd_test() {
     echo -e "${BOLD}Testing notification channels...${NC}"
     echo ""
 
-    local test_msg="Test notification from Claude AS Framework ($(date +%H:%M:%S))"
+    local test_msg="Test notification from SkillFoundry Framework ($(date +%H:%M:%S))"
 
     # Slack
     local slack_enabled

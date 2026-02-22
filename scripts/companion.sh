@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════
-# Claude AS Companion Panel
+# SkillFoundry Companion Panel
 # Context-aware command reference that runs in a tmux side pane
 #
 # Usage:
@@ -263,7 +263,7 @@ render() {
     read_hub_status
 
     # Header
-    header " Claude AS v${VERSION}"
+    header " SkillFoundry v${VERSION}"
     echo ""
 
     # Status block
@@ -390,12 +390,12 @@ run_tmux() {
             "CLAUDE_AS_PROJECT_DIR='$PROJECT_DIR' bash '$script_path'"
     else
         # Not in tmux — create new session with split
-        tmux new-session -d -s claude-as-companion -x "$(tput cols)" -y "$(tput lines)" \
+        tmux new-session -d -s skillfoundry-companion -x "$(tput cols)" -y "$(tput lines)" \
             "cd '$PROJECT_DIR' && $SHELL"
-        tmux split-window -h -l "$pane_width" -t claude-as-companion \
+        tmux split-window -h -l "$pane_width" -t skillfoundry-companion \
             "CLAUDE_AS_PROJECT_DIR='$PROJECT_DIR' bash '$script_path'"
-        tmux select-pane -t claude-as-companion:0.0
-        tmux attach-session -t claude-as-companion
+        tmux select-pane -t skillfoundry-companion:0.0
+        tmux attach-session -t skillfoundry-companion
     fi
 }
 
@@ -416,7 +416,7 @@ run_claude() {
     local pane_width="${COMPANION_WIDTH:-35}"
     local script_path
     script_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
-    local session_name="claude-as"
+    local session_name="skillfoundry"
 
     # Kill existing session if present
     tmux kill-session -t "$session_name" 2>/dev/null || true
@@ -432,7 +432,7 @@ run_claude() {
 
 show_help() {
     cat <<'HELP'
-Claude AS Companion Panel
+SkillFoundry Companion Panel
 Context-aware command reference for your terminal.
 
 USAGE:
@@ -457,7 +457,7 @@ CLAUDE MODE (--claude):
     Left (main):  claude CLI — you type /go --mode=autonomous here
     Right (35col): companion panel — auto-refreshes as you work
 
-  This is the recommended way to use Claude AS. One command replaces:
+  This is the recommended way to use SkillFoundry. One command replaces:
     1. Open terminal
     2. Type "claude"
     3. Somehow open companion in another pane

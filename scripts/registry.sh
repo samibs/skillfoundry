@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Project Registry Manager - CRUD operations for .project-registry
-# Tracks all projects installed with the Claude AS Framework
+# Tracks all projects installed with the SkillFoundry Framework
 #
 # USAGE:
 #   ./scripts/registry.sh register /path/to/project [--platform=claude]

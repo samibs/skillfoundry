@@ -1,4 +1,4 @@
-# CLAUDE.md — Claude AS Framework Project Instructions
+# CLAUDE.md — SkillFoundry Framework Project Instructions
 
 > For universal AI agent rules (security, testing, LLM guardrails, workflow preferences): see `~/.claude/CLAUDE.md`
 > For production operations (PM2, caching, APM, migrations, incident response): see `docs/enterprise-standards.md`

@@ -112,4 +112,4 @@ When activated, these rules are injected into the gate-keeper validation pipelin
 
 ---
 
-*HIPAA Compliance Preset v1.0 - Claude AS Framework*
+*HIPAA Compliance Preset v1.0 - SkillFoundry Framework*

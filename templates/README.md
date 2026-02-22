@@ -1,4 +1,4 @@
-# Project Templates - Claude AS Framework
+# Project Templates - SkillFoundry Framework
 
 Pre-filled PRD templates by project type. Used by `scripts/wizard.sh` and the `/prd` agent.
 

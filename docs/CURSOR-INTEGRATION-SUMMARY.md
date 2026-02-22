@@ -149,13 +149,13 @@
 **Windows**:
 ```powershell
 cd C:\DevLab\MyNewProject
-C:\DevLab\IDEA\claude_as\install.ps1 -Platform cursor
+C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform cursor
 ```
 
 **Linux/Mac**:
 ```bash
 cd ~/DevLab/MyNewProject
-~/DevLab/IDEA/claude_as/install.sh --platform=cursor
+~/DevLab/IDEA/skillfoundry/install.sh --platform=cursor
 ```
 
 ### Use Rules in Cursor

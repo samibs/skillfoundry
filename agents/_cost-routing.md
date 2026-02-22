@@ -70,4 +70,4 @@ When `/go --mode=semi-auto` or `/forge` dispatches agents:
 
 ---
 
-*Claude AS Framework — Cost-Aware Routing Protocol*
+*SkillFoundry Framework — Cost-Aware Routing Protocol*

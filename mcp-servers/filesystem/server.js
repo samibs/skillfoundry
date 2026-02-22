@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Claude AS Filesystem MCP Server
+ * SkillFoundry Filesystem MCP Server
  * Provides safe file operations with permission model
  */
 
@@ -24,7 +24,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB default
 
 const server = new Server(
   {
-    name: "claude-as-filesystem",
+    name: "skillfoundry-filesystem",
     version: "1.0.0",
   },
   {
@@ -435,7 +435,7 @@ function matchPattern(filename, pattern) {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Claude AS Filesystem MCP server running on stdio");
+  console.error("SkillFoundry Filesystem MCP server running on stdio");
 }
 
 main().catch((error) => {

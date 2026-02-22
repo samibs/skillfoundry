@@ -1,5 +1,5 @@
 /**
- * Claude AS Dashboard - Main Application Logic
+ * SkillFoundry Dashboard - Main Application Logic
  */
 
 const API_BASE = '/api';

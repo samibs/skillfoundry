@@ -325,7 +325,7 @@ CONFEOF
             repo_name=$(echo "$repo_url" | sed -E 's#.*[:/]([^/]+/[^/]+?)(\.git)?$#\1#')
 
             if command -v gh >/dev/null 2>&1; then
-                if gh repo create "$repo_name" --private --description "Claude AS Knowledge Repository" 2>/dev/null; then
+                if gh repo create "$repo_name" --private --description "SkillFoundry Knowledge Repository" 2>/dev/null; then
                     echo -e "${GREEN}[OK]${NC} Created remote repo: $repo_name"
                     sleep 2
                     if git clone "$repo_url" "$local_path" 2>/dev/null; then

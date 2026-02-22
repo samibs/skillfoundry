@@ -8,7 +8,7 @@
 
 ## Overview
 
-Claude AS Framework now supports **Cursor** as a third platform alongside Claude Code and GitHub Copilot CLI. Cursor users can now leverage the same powerful agent workflows through Cursor's rule-based system.
+SkillFoundry Framework now supports **Cursor** as a third platform alongside Claude Code and GitHub Copilot CLI. Cursor users can now leverage the same powerful agent workflows through Cursor's rule-based system.
 
 ---
 
@@ -26,13 +26,13 @@ Claude AS Framework now supports **Cursor** as a third platform alongside Claude
 **Windows PowerShell**:
 ```powershell
 cd C:\DevLab\MyNewProject
-C:\DevLab\IDEA\claude_as\install.ps1 -Platform cursor
+C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform cursor
 ```
 
 **Linux/Mac (bash)**:
 ```bash
 cd ~/DevLab/MyNewProject
-~/DevLab/IDEA/claude_as/install.sh --platform=cursor
+~/DevLab/IDEA/skillfoundry/install.sh --platform=cursor
 ```
 
 ### Directory Structure

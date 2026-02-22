@@ -1,8 +1,8 @@
-# Claude AS - Comprehensive How-To Guide
+# SkillFoundry - Comprehensive How-To Guide
 
 > **Version 1.9.0.0** | Last Updated: 2026-02-07
 
-This guide covers everything you need to know to use the Claude AS framework effectively.
+This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
 ---
 
@@ -34,13 +34,13 @@ This guide covers everything you need to know to use the Claude AS framework eff
 
 ### First-Time Setup
 
-Keep `claude_as` in a central location. Never copy it into projects.
+Keep `skillfoundry` in a central location. Never copy it into projects.
 
 ```bash
 # Recommended structure
 ~/DevLab/
 ├── IDEA/
-│   └── claude_as/         ← Framework lives here (permanently)
+│   └── skillfoundry/         ← Framework lives here (permanently)
 ├── ProjectA/              ← Your projects
 ├── ProjectB/
 └── ...
@@ -54,10 +54,10 @@ mkdir ~/DevLab/MyProject
 cd ~/DevLab/MyProject
 
 # Run the installer
-~/DevLab/IDEA/claude_as/install.sh
+~/DevLab/IDEA/skillfoundry/install.sh
 
 # Or specify a path
-~/DevLab/IDEA/claude_as/install.sh /path/to/project
+~/DevLab/IDEA/skillfoundry/install.sh /path/to/project
 ```
 
 ### What Gets Installed
@@ -134,13 +134,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 
 
 ## 3. Working with Existing Projects
 
-Already have code? Here's how to integrate Claude AS into an existing project.
+Already have code? Here's how to integrate SkillFoundry into an existing project.
 
 ### Step 1: Install the Framework
 
 ```bash
 cd /your/existing/project
-bash /path/to/claude_as/install.sh
+bash /path/to/skillfoundry/install.sh
 ```
 
 This adds the `.claude/commands/`, `agents/`, and `genesis/` folders without affecting your existing code.
@@ -1356,7 +1356,7 @@ Guard added: Null check in getProfile callers
 ### Check for Updates
 
 ```bash
-~/DevLab/IDEA/claude_as/update.sh --list
+~/DevLab/IDEA/skillfoundry/update.sh --list
 
 Registered Projects:
   1. /home/user/ProjectA [v1.2.0 → v1.3.0]
@@ -1367,16 +1367,16 @@ Registered Projects:
 
 ```bash
 # Preview changes first
-~/DevLab/IDEA/claude_as/update.sh --diff /path/to/project
+~/DevLab/IDEA/skillfoundry/update.sh --diff /path/to/project
 
 # Apply update
-~/DevLab/IDEA/claude_as/update.sh /path/to/project
+~/DevLab/IDEA/skillfoundry/update.sh /path/to/project
 ```
 
 ### Update All Projects
 
 ```bash
-~/DevLab/IDEA/claude_as/update.sh --all
+~/DevLab/IDEA/skillfoundry/update.sh --all
 ```
 
 ### What Gets Updated
@@ -1394,19 +1394,19 @@ Registered Projects:
 
 ```bash
 # Register a project
-~/DevLab/IDEA/claude_as/update.sh --register /path/to/project
+~/DevLab/IDEA/skillfoundry/update.sh --register /path/to/project
 
 # Unregister
-~/DevLab/IDEA/claude_as/update.sh --unregister /path/to/project
+~/DevLab/IDEA/skillfoundry/update.sh --unregister /path/to/project
 
 # Scan for projects
-~/DevLab/IDEA/claude_as/update.sh --scan ~/DevLab
+~/DevLab/IDEA/skillfoundry/update.sh --scan ~/DevLab
 ```
 
 ### Validate CLAUDE.md Sync
 
 ```bash
-~/DevLab/IDEA/claude_as/update.sh --sync /path/to/project
+~/DevLab/IDEA/skillfoundry/update.sh --sync /path/to/project
 ```
 
 ---
@@ -1420,7 +1420,7 @@ Registered Projects:
 **Fix:**
 ```bash
 cd ~/DevLab/YourProject
-~/DevLab/IDEA/claude_as/install.sh
+~/DevLab/IDEA/skillfoundry/install.sh
 ```
 
 ### "PRD not found" error
@@ -1621,18 +1621,18 @@ git checkout -- path/to/file
 
 ```bash
 # Install to project
-~/path/to/claude_as/install.sh [project-path]
+~/path/to/skillfoundry/install.sh [project-path]
 
 # Update project
-~/path/to/claude_as/update.sh [project-path]
-~/path/to/claude_as/update.sh --all
-~/path/to/claude_as/update.sh --diff [path]
-~/path/to/claude_as/update.sh --sync [path]
+~/path/to/skillfoundry/update.sh [project-path]
+~/path/to/skillfoundry/update.sh --all
+~/path/to/skillfoundry/update.sh --diff [path]
+~/path/to/skillfoundry/update.sh --sync [path]
 
 # Manage registry
-~/path/to/claude_as/update.sh --list
-~/path/to/claude_as/update.sh --register [path]
-~/path/to/claude_as/update.sh --scan [path]
+~/path/to/skillfoundry/update.sh --list
+~/path/to/skillfoundry/update.sh --register [path]
+~/path/to/skillfoundry/update.sh --scan [path]
 ```
 
 ---

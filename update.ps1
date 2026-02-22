@@ -1,4 +1,4 @@
-# Claude AS - Framework Update Script (PowerShell)
+# SkillFoundry - Framework Update Script (PowerShell)
 # Updates existing projects with the latest framework version
 #
 # USAGE:
@@ -46,7 +46,7 @@ trap {
     # Diagnostic information
     if ($Debug) {
         Collect-Diagnostics
-        Write-ColorOutput "Diagnostics saved to: $(Join-Path $ScriptDir '.claude-as-diagnostics.log')" "Cyan"
+        Write-ColorOutput "Diagnostics saved to: $(Join-Path $ScriptDir '.skillfoundry-diagnostics.log')" "Cyan"
     }
     
     exit $exitCode
@@ -84,10 +84,10 @@ function Restore-FromBackup {
 function Collect-Diagnostics {
     param([string]$ProjectDir = "")
     
-    $diagFile = Join-Path $ScriptDir ".claude-as-diagnostics.log"
+    $diagFile = Join-Path $ScriptDir ".skillfoundry-diagnostics.log"
     
     $diagnostics = @"
-# Claude AS Framework - Update Diagnostic Information
+# SkillFoundry Framework - Update Diagnostic Information
 Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 
 ## System Information
@@ -158,7 +158,7 @@ $FrameworkDate = (Get-Item -Force $VersionFile).LastWriteTime.ToString("yyyy-MM-
 function Print-Header {
     Write-Host ""
     Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-    Write-Host "  │  Claude AS Framework — Updater                     │" -ForegroundColor Cyan
+    Write-Host "  │  SkillFoundry Framework — Updater                     │" -ForegroundColor Cyan
     Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 5 platforms             │" -ForegroundColor Cyan
     Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
     Write-Host ""
@@ -331,7 +331,7 @@ function Register-Project {
     }
     
     if (-not (Test-ValidProject $ProjectDir)) {
-        Write-ColorOutput "Error: '$ProjectDir' is not a Claude AS project." "Red"
+        Write-ColorOutput "Error: '$ProjectDir' is not a SkillFoundry project." "Red"
         Write-Host "Run install.ps1 first to set up the framework."
         exit 1
     }
@@ -422,7 +422,7 @@ function Update-Project {
     }
     
     if (-not (Test-ValidProject $ProjectDir)) {
-        Write-Error-Enhanced "Not a Claude AS project" "Project directory missing framework markers" $ProjectDir "Run install.ps1 first to set up the framework"
+        Write-Error-Enhanced "Not a SkillFoundry project" "Project directory missing framework markers" $ProjectDir "Run install.ps1 first to set up the framework"
         return $false
     }
     

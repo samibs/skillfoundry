@@ -1,5 +1,5 @@
 /**
- * Claude AS Dashboard Server
+ * SkillFoundry Dashboard Server
  * Express server for dashboard API and static files
  */
 
@@ -282,5 +282,5 @@ app.get("/api/health", (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Claude AS Dashboard running on http://localhost:${PORT}`);
+  console.log(`SkillFoundry Dashboard running on http://localhost:${PORT}`);
 });

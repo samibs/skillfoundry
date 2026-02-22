@@ -1,6 +1,6 @@
 # MCP Testing Server
 
-Claude AS Testing MCP Server - Test runner integration.
+SkillFoundry Testing MCP Server - Test runner integration.
 
 ## Installation
 
@@ -15,7 +15,7 @@ Configure in your MCP client:
 ```json
 {
   "servers": {
-    "claude-as-testing": {
+    "skillfoundry-testing": {
       "command": "node",
       "args": ["mcp-servers/testing/server.js"]
     }

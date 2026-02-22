@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Claude AS - One-Click Unified Installer
+# SkillFoundry - One-Click Unified Installer
 # Auto-detects platform and OS, installs framework with minimal user input
 #
 # USAGE:
-#   curl -fsSL https://raw.githubusercontent.com/your-repo/claude_as/main/install-unified.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/your-repo/skillfoundry/main/install-unified.sh | bash
 #   OR download and run:
 #   bash install-unified.sh
 
@@ -26,7 +26,7 @@ print_banner() {
     local dt="${2:-}"
     echo ""
     echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
-    echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— One-Click Installer${NC}           ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  ${BOLD}SkillFoundry Framework${NC} ${YELLOW}— One-Click Installer${NC}           ${CYAN}│${NC}"
     if [ -n "$ver" ]; then
         echo -e "${CYAN}│${NC}  v${ver} · ${dt} · 5 platforms             ${CYAN}│${NC}"
     fi
@@ -91,10 +91,10 @@ detect_platform() {
 get_framework_location() {
     # Try common locations
     local locations=(
-        "$HOME/DevLab/IDEA/claude_as"
-        "$HOME/dev_tools/claude_as"
-        "$HOME/claude_as"
-        "./claude_as"
+        "$HOME/DevLab/IDEA/skillfoundry"
+        "$HOME/dev_tools/skillfoundry"
+        "$HOME/skillfoundry"
+        "./skillfoundry"
     )
     
     for loc in "${locations[@]}"; do
@@ -114,10 +114,10 @@ get_framework_location() {
     read -p "Choice (1-2): " choice
     case "$choice" in
         1)
-            local clone_dir="$HOME/claude_as"
+            local clone_dir="$HOME/skillfoundry"
             if command -v git &>/dev/null; then
                 echo -e "${BLUE}Cloning from GitHub...${NC}"
-                git clone https://github.com/samibs/claude_as.git "$clone_dir" 2>/dev/null
+                git clone https://github.com/samibs/skillfoundry.git "$clone_dir" 2>/dev/null
                 if [ -d "$clone_dir" ] && [ -f "$clone_dir/install.sh" ]; then
                     echo "$clone_dir"
                     return

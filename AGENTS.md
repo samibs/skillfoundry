@@ -1,4 +1,4 @@
-# Claude AS Framework — Agent Instructions for OpenAI Codex
+# SkillFoundry Framework — Agent Instructions for OpenAI Codex
 
 **Version 1.9.0.21** | **Penta-Platform: Claude Code · Cursor · Copilot · Codex · Gemini** | **60 Skills**
 
@@ -6,7 +6,7 @@
 
 ## What This Is
 
-Claude AS (Agents & Skills) is a production-ready AI development framework with 60 specialized agents covering the full software development lifecycle. This file provides always-on context for OpenAI Codex CLI.
+SkillFoundry (Agents & Skills) is a production-ready AI development framework with 60 specialized agents covering the full software development lifecycle. This file provides always-on context for OpenAI Codex CLI.
 
 ## Philosophy
 
@@ -18,7 +18,7 @@ Claude AS (Agents & Skills) is a production-ready AI development framework with 
 
 ## How to Use Skills
 
-Each Claude AS agent is available as a Codex Skill in `.agents/skills/`. Invoke explicitly or let Codex auto-select based on your prompt.
+Each SkillFoundry agent is available as a Codex Skill in `.agents/skills/`. Invoke explicitly or let Codex auto-select based on your prompt.
 
 **Explicit invocation:**
 ```
@@ -138,4 +138,4 @@ scripts/              # Automation scripts
 
 ---
 
-*Claude AS Framework v1.9.0.21 — Penta-Platform Support*
+*SkillFoundry Framework v1.9.0.21 — Penta-Platform Support*

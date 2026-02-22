@@ -1,4 +1,4 @@
-# Start Claude AS Dashboard (PowerShell)
+# Start SkillFoundry Dashboard (PowerShell)
 
 param(
     [int]$Port = 3000
@@ -28,7 +28,7 @@ if (-not (Test-Path $NodeModulesPath)) {
 }
 
 # Start server
-Write-Host "Starting Claude AS Dashboard..."
+Write-Host "Starting SkillFoundry Dashboard..."
 Write-Host "Access at: http://localhost:$Port"
 Set-Location server
 $env:PORT = $Port

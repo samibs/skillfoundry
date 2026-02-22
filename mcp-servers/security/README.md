@@ -1,6 +1,6 @@
 # MCP Security Server
 
-Claude AS Security MCP Server - Security scanning and vulnerability detection.
+SkillFoundry Security MCP Server - Security scanning and vulnerability detection.
 
 ## Installation
 
@@ -18,7 +18,7 @@ Configure in your MCP client:
 ```json
 {
   "servers": {
-    "claude-as-security": {
+    "skillfoundry-security": {
       "command": "node",
       "args": ["mcp-servers/security/server.js"]
     }

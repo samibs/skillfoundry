@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Claude AS Database MCP Server
+ * SkillFoundry Database MCP Server
  * Provides database schema inspection and migration management
  */
 
@@ -27,7 +27,7 @@ let dbPool = null;
 
 const server = new Server(
   {
-    name: "claude-as-database",
+    name: "skillfoundry-database",
     version: "1.0.0",
   },
   {
@@ -390,7 +390,7 @@ ${down}
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Claude AS Database MCP server running on stdio");
+  console.error("SkillFoundry Database MCP server running on stdio");
 }
 
 main().catch((error) => {

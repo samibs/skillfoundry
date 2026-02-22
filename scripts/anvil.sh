@@ -14,7 +14,7 @@
 #
 # EXIT CODES: 0=pass, 1=warnings, 2=errors (blocks pipeline)
 #
-# Part of: Claude AS Framework - The Anvil (v1.9.0.13)
+# Part of: SkillFoundry Framework - The Anvil (v1.9.0.13)
 
 set -e
 set -o pipefail
@@ -528,7 +528,7 @@ case "${1:-}" in
         echo "  Imports:  Python, JavaScript/TypeScript"
         echo "  Patterns: All code files ($CODE_EXTENSIONS)"
         echo ""
-        echo "Part of: Claude AS Framework - The Anvil (v1.9.0.13)"
+        echo "Part of: SkillFoundry Framework - The Anvil (v1.9.0.13)"
         ;;
     "")
         echo "Usage: $0 <command> [target]"

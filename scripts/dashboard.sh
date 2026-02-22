@@ -128,7 +128,7 @@ render_dashboard() {
 
     echo ""
     echo -e "${BOLD}${BLUE}╔══════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${BOLD}${BLUE}║           Claude AS - Execution Dashboard               ║${NC}"
+    echo -e "${BOLD}${BLUE}║           SkillFoundry - Execution Dashboard               ║${NC}"
     echo -e "${BOLD}${BLUE}╚══════════════════════════════════════════════════════════╝${NC}"
     echo -e "  ${DIM}$ts${NC}"
     echo ""

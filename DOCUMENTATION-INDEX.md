@@ -1,4 +1,4 @@
-# Documentation Index - Claude AS Framework v1.9.0.21
+# Documentation Index - SkillFoundry Framework v1.9.0.21
 
 Complete guide to all documentation in the framework.
 

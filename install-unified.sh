@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Claude AS - One-Click Unified Installer
+# SkillFoundry - One-Click Unified Installer
 # Auto-detects platform and OS, installs framework with minimal user input
 #
 # USAGE:
-#   curl -fsSL https://raw.githubusercontent.com/your-repo/claude_as/main/install-unified.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/your-repo/skillfoundry/main/install-unified.sh | bash
 #   OR download and run:
 #   bash install-unified.sh
 
@@ -22,7 +22,7 @@ NC='\033[0m'
 # Banner
 echo -e "${CYAN}${BOLD}"
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║     Claude AS Framework - One-Click Installer             ║"
+echo "║     SkillFoundry Framework - One-Click Installer             ║"
 echo "║     Multi-Platform AI Agent & Skills Framework           ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
@@ -77,10 +77,10 @@ detect_platform() {
 get_framework_location() {
     # Try common locations
     local locations=(
-        "$HOME/DevLab/IDEA/claude_as"
-        "$HOME/dev_tools/claude_as"
-        "$HOME/claude_as"
-        "./claude_as"
+        "$HOME/DevLab/IDEA/skillfoundry"
+        "$HOME/dev_tools/skillfoundry"
+        "$HOME/skillfoundry"
+        "./skillfoundry"
     )
     
     for loc in "${locations[@]}"; do
@@ -93,7 +93,7 @@ get_framework_location() {
     # If not found, ask user
     echo ""
     echo -e "${YELLOW}Framework not found in common locations.${NC}"
-    echo -e "${CYAN}Please enter the path to your claude_as framework directory:${NC}"
+    echo -e "${CYAN}Please enter the path to your skillfoundry framework directory:${NC}"
     read -p "Path: " framework_path
     
     if [ -d "$framework_path" ] && [ -f "$framework_path/install.sh" ]; then

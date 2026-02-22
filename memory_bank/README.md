@@ -1,4 +1,4 @@
-# Memory Bank - Claude AS Framework
+# Memory Bank - SkillFoundry Framework
 
 Persistent knowledge storage for AI agents across sessions. Stores facts, decisions, errors, and preferences in append-only JSONL format with weight-based relevance ranking.
 

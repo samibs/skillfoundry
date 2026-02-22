@@ -1,8 +1,8 @@
-# Claude AS - One-Click Unified Installer (PowerShell)
+# SkillFoundry - One-Click Unified Installer (PowerShell)
 # Auto-detects platform and OS, installs framework with minimal user input
 #
 # USAGE:
-#   iwr https://raw.githubusercontent.com/your-repo/claude_as/main/install-unified.ps1 | iex
+#   iwr https://raw.githubusercontent.com/your-repo/skillfoundry/main/install-unified.ps1 | iex
 #   OR download and run:
 #   .\install-unified.ps1
 
@@ -23,7 +23,7 @@ function Write-ColorOutput {
 
 # Banner
 Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Cyan"
-Write-ColorOutput "║     Claude AS Framework - One-Click Installer             ║" "Cyan"
+Write-ColorOutput "║     SkillFoundry Framework - One-Click Installer             ║" "Cyan"
 Write-ColorOutput "║     Multi-Platform AI Agent & Skills Framework           ║" "Cyan"
 Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Cyan"
 Write-Host ""
@@ -80,10 +80,10 @@ function Detect-Platform {
 function Get-FrameworkLocation {
     # Try common locations
     $locations = @(
-        "$env:USERPROFILE\DevLab\IDEA\claude_as",
-        "$env:USERPROFILE\dev_tools\claude_as",
-        "$env:USERPROFILE\claude_as",
-        ".\claude_as"
+        "$env:USERPROFILE\DevLab\IDEA\skillfoundry",
+        "$env:USERPROFILE\dev_tools\skillfoundry",
+        "$env:USERPROFILE\skillfoundry",
+        ".\skillfoundry"
     )
     
     foreach ($loc in $locations) {
@@ -95,7 +95,7 @@ function Get-FrameworkLocation {
     # If not found, ask user
     Write-Host ""
     Write-ColorOutput "Framework not found in common locations." "Yellow"
-    Write-ColorOutput "Please enter the path to your claude_as framework directory:" "Cyan"
+    Write-ColorOutput "Please enter the path to your skillfoundry framework directory:" "Cyan"
     $frameworkPath = Read-Host "Path"
     
     if ((Test-Path $frameworkPath) -and (Test-Path (Join-Path $frameworkPath "install.ps1"))) {

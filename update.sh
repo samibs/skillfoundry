@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Claude AS - Framework Update Script
+# SkillFoundry - Framework Update Script
 # Updates existing projects with the latest framework version
 #
 # USAGE:
@@ -9,7 +9,7 @@
 #   ./update.sh --all                       # Update all registered projects
 #   ./update.sh --register .                # Register current directory
 #   ./update.sh --register /path/to/project # Register a project for updates
-#   ./update.sh --scan /path                # Find and register claude_as projects
+#   ./update.sh --scan /path                # Find and register skillfoundry projects
 #   ./update.sh --list                      # List registered projects
 #   ./update.sh --diff /path/to/project    # Show what would change
 
@@ -106,7 +106,7 @@ show_whats_new() {
 print_header() {
     echo ""
     echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
-    echo -e "${CYAN}│${NC}  ${BOLD}Claude AS Framework${NC} ${YELLOW}— Updater${NC}                     ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  ${BOLD}SkillFoundry Framework${NC} ${YELLOW}— Updater${NC}                     ${CYAN}│${NC}"
     echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 5 platforms             ${CYAN}│${NC}"
     echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
     echo ""
@@ -114,7 +114,7 @@ print_header() {
 
 is_valid_project() {
     local project_dir="$1"
-    # A valid Claude AS project has at least one platform folder
+    # A valid SkillFoundry project has at least one platform folder
     if [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ] || [ -d "$project_dir/.gemini/skills" ]; then
         return 0
     fi
@@ -290,7 +290,7 @@ register_project() {
 
     # Check if valid project
     if ! is_valid_project "$project_dir"; then
-        echo -e "${RED}Error: '$project_dir' is not a Claude AS project.${NC}"
+        echo -e "${RED}Error: '$project_dir' is not a SkillFoundry project.${NC}"
         echo "Run install.sh first to set up the framework."
         exit 1
     fi
@@ -362,7 +362,7 @@ list_projects() {
 }
 
 # ═══════════════════════════════════════════════════════════════
-# SCAN FUNCTION - Find existing claude_as projects
+# SCAN FUNCTION - Find existing skillfoundry projects
 # ═══════════════════════════════════════════════════════════════
 
 scan_projects() {
@@ -372,7 +372,7 @@ scan_projects() {
     # Convert to absolute path
     search_path="$(cd "$search_path" && pwd)"
 
-    echo -e "${BLUE}Scanning for Claude AS projects in: $search_path${NC}"
+    echo -e "${BLUE}Scanning for SkillFoundry projects in: $search_path${NC}"
     echo -e "${BLUE}Max depth: $max_depth${NC}"
     echo ""
 
@@ -434,7 +434,7 @@ scan_projects() {
 
     if [ $found -eq 0 ]; then
         echo ""
-        echo -e "${YELLOW}No Claude AS projects found.${NC}"
+        echo -e "${YELLOW}No SkillFoundry projects found.${NC}"
         echo "Make sure the projects have .claude/, .copilot/, or .cursor/ folder or CLAUDE.md file."
     fi
 }
@@ -644,7 +644,7 @@ update_project() {
 
     # Check if it's a valid project
     if ! is_valid_project "$project_dir"; then
-        echo -e "${RED}Error: '$project_dir' is not a Claude AS project.${NC}"
+        echo -e "${RED}Error: '$project_dir' is not a SkillFoundry project.${NC}"
         echo "Run install.sh first to set up the framework."
         return 1
     fi
@@ -1214,7 +1214,7 @@ case "${1:-}" in
         echo "  --yes, -y               Non-interactive mode (accept all defaults)"
         echo "  --register PATH          Register a project (use . for current dir)"
         echo "  --unregister PATH        Remove a project from registry"
-        echo "  --scan PATH              Scan directory for Claude AS projects"
+        echo "  --scan PATH              Scan directory for SkillFoundry projects"
         echo "  --list                   List registered projects"
         echo "  --diff PATH              Show what would change"
         echo "  --force PATH             Force update even if same version"

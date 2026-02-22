@@ -130,4 +130,4 @@ When activated, these rules are injected into the gate-keeper validation pipelin
 
 ---
 
-*SOC 2 Compliance Preset v1.0 - Claude AS Framework*
+*SOC 2 Compliance Preset v1.0 - SkillFoundry Framework*

@@ -85,4 +85,4 @@ layers: [backend, frontend]
 
 ---
 
-*Template: Dashboard — The Forge — Claude AS Framework*
+*Template: Dashboard — The Forge — SkillFoundry Framework*

@@ -11,7 +11,7 @@
 
 ## Description
 
-Create a PRD for a real CLI tool that will be built entirely using the Claude AS Framework. This is the "dogfood" project — proving the framework works end-to-end by building something real with it.
+Create a PRD for a real CLI tool that will be built entirely using the SkillFoundry Framework. This is the "dogfood" project — proving the framework works end-to-end by building something real with it.
 
 ---
 

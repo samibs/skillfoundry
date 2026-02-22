@@ -1,4 +1,4 @@
-# Market Comparison: Claude AS Framework vs. Leading AI Coding Tools
+# Market Comparison: SkillFoundry Framework vs. Leading AI Coding Tools
 
 **Date**: January 25, 2026  
 **Framework Version**: 1.3.2
@@ -7,11 +7,11 @@
 
 ## 🎯 Executive Summary
 
-**Claude AS Framework** is fundamentally different from market-leading AI coding tools. It's not a tool itself—it's a **framework/template** that enhances existing tools (Claude Code, GitHub Copilot CLI, Cursor) with structured, production-ready workflows.
+**SkillFoundry Framework** is fundamentally different from market-leading AI coding tools. It's not a tool itself—it's a **framework/template** that enhances existing tools (Claude Code, GitHub Copilot CLI, Cursor) with structured, production-ready workflows.
 
 ### Key Differentiator
 
-| Aspect | Market Leaders | Claude AS Framework |
+| Aspect | Market Leaders | SkillFoundry Framework |
 |--------|---------------|---------------------|
 | **Type** | Standalone tools | Framework/template |
 | **Platform** | Single platform | **Multi-platform** (3 platforms) |
@@ -52,7 +52,7 @@
 - **Tool-first**: You use the tool, it generates code
 - **Reactive**: Responds to prompts, generates code
 
-#### Claude AS Framework
+#### SkillFoundry Framework
 - **Multi-platform**: Works with Claude Code, Copilot CLI, AND Cursor
 - **Framework-first**: Install once, use across all projects
 - **Proactive**: Structured workflows (PRD → Stories → Implementation)
@@ -73,7 +73,7 @@
 
 **Typical workflow**: Prompt → Generate → Review → Iterate
 
-#### Claude AS Framework
+#### SkillFoundry Framework
 - **96 specialized agents** covering entire development lifecycle:
   - ✅ **Planning**: PRD, Stories, Architect
   - ✅ **Development**: Coder, Tester, Refactor, Performance
@@ -97,7 +97,7 @@
 - **No AI-specific patterns**: Treats AI code like human code
 - **Reactive**: Flags issues after generation
 
-#### Claude AS Framework
+#### SkillFoundry Framework
 - **AI Security Anti-Patterns**: 15 vulnerability patterns documented
 - **Top 7 Critical Issues**: Hardcoded secrets, SQL injection, XSS, etc.
 - **86% XSS failure rate prevention**: Framework prevents common AI mistakes
@@ -116,7 +116,7 @@
 - **No PRD support**: No formal requirements management
 - **No story tracking**: No structured implementation tracking
 
-#### Claude AS Framework
+#### SkillFoundry Framework
 - **PRD-First Development**: All features start with Product Requirements Documents
 - **Story-Driven**: PRDs → Stories → Implementation
 - **Genesis Workflow**: `/go` command orchestrates entire lifecycle
@@ -137,7 +137,7 @@
 | Claude Code | ✅ | ❌ | ❌ | ❌ (Terminal) |
 | Aider | ❌ | ❌ | ❌ | ❌ (CLI) |
 
-#### Claude AS Framework
+#### SkillFoundry Framework
 | Platform | Support | Installation | Update |
 |----------|---------|-------------|--------|
 | **Claude Code** | ✅ | `install.sh --platform=claude` | `update.sh` |
@@ -157,7 +157,7 @@
 - **No workflow structure**: Each developer creates own patterns
 - **Limited capabilities**: Basic autocomplete, no specialized workflows
 
-#### Claude AS Framework
+#### SkillFoundry Framework
 - **Free & Open Source**: No subscription fees
 - **Multi-platform**: Use with any supported tool
 - **Structured workflows**: Consistent patterns across team
@@ -176,7 +176,7 @@
 - **Amazon Q**: AWS enterprise integration
 - **Limitation**: Single-platform, basic workflows
 
-#### Claude AS Framework
+#### SkillFoundry Framework
 - **Multi-platform**: Works with enterprise tools (Copilot, Cursor)
 - **Security-first**: AI-specific hardening, vulnerability prevention
 - **Structured workflows**: PRD-first, story-driven, TDD-enforced
@@ -223,7 +223,7 @@
 
 ## 📈 Market Position
 
-### Where Claude AS Framework Fits
+### Where SkillFoundry Framework Fits
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -238,7 +238,7 @@
 │         └─────────────────┼──────────────────┘              │
 │                           │                                 │
 │                    ┌──────▼──────┐                         │
-│                    │ Claude AS    │                         │
+│                    │ SkillFoundry    │                         │
 │                    │ Framework    │                         │
 │                    │ (Enhances)  │                         │
 │                    └──────────────┘                         │
@@ -287,18 +287,18 @@
 1. **Native IDE Integration**
    - Cursor: Deep VS Code integration, atomic multi-file operations
    - Copilot: Seamless extension experience
-   - **Claude AS**: Requires manual installation, platform-specific setup
+   - **SkillFoundry**: Requires manual installation, platform-specific setup
 
 2. **Codebase Indexing**
    - Cursor: Comprehensive codebase understanding
    - Copilot: Context-aware suggestions
-   - **Claude AS**: Relies on underlying tool's indexing
+   - **SkillFoundry**: Relies on underlying tool's indexing
 
 3. **Real-time Autocomplete**
    - All market leaders: Real-time suggestions as you type
-   - **Claude AS**: Framework for workflows, not real-time autocomplete
+   - **SkillFoundry**: Framework for workflows, not real-time autocomplete
 
-### What Claude AS Framework Does Better
+### What SkillFoundry Framework Does Better
 
 1. **Structured Workflows**: PRD-first, story-driven (unique)
 2. **Multi-platform**: Works with multiple tools (unique)
@@ -342,7 +342,7 @@
 
 ## 📊 Competitive Matrix
 
-| Feature | GitHub Copilot | Cursor | Claude Code | Aider | **Claude AS** |
+| Feature | GitHub Copilot | Cursor | Claude Code | Aider | **SkillFoundry** |
 |---------|---------------|--------|-------------|-------|---------------|
 | **Multi-platform** | ❌ | ❌ | ❌ | ❌ | ✅ **3 platforms** |
 | **Structured workflows** | ❌ | ❌ | ❌ | ❌ | ✅ **PRD-first** |
@@ -363,7 +363,7 @@
 
 ### Market Position: **Unique Enhancement Layer**
 
-**Claude AS Framework** is not a direct competitor to market leaders—it's a **complementary framework** that enhances existing tools with:
+**SkillFoundry Framework** is not a direct competitor to market leaders—it's a **complementary framework** that enhances existing tools with:
 
 1. ✅ **Structured workflows** (PRD-first, story-driven)
 2. ✅ **Multi-platform support** (Claude Code, Copilot CLI, Cursor)
@@ -377,9 +377,9 @@
 
 ### Recommendation
 
-- **Use Claude AS Framework** if you want structured workflows, multi-platform support, and comprehensive coverage
+- **Use SkillFoundry Framework** if you want structured workflows, multi-platform support, and comprehensive coverage
 - **Use market leaders** for real-time autocomplete and native IDE integration
-- **Use both together** for maximum productivity: Market leaders for coding, Claude AS for structure
+- **Use both together** for maximum productivity: Market leaders for coding, SkillFoundry for structure
 
 ---
 

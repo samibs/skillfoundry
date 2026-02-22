@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Arena Mode Evaluation Engine
-# Orchestrates competitive agent evaluation for Claude AS Framework.
+# Orchestrates competitive agent evaluation for SkillFoundry Framework.
 # Multiple agents compete on the same story; gate-keeper selects the winner.
 #
 # USAGE:
@@ -42,7 +42,7 @@ TIMEOUT=600  # 10 minutes per contestant
 # ═══════════════════════════════════════════════════════════════
 
 show_help() {
-    echo "Arena Mode Evaluation Engine — Claude AS Framework"
+    echo "Arena Mode Evaluation Engine — SkillFoundry Framework"
     echo ""
     echo "Orchestrates competitive agent evaluation where multiple agents"
     echo "compete on the same story and gate-keeper selects the winner."

@@ -22,7 +22,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRAMEWORK_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Test directory (use mktemp for safe temp dir - avoids symlink race)
-TEST_DIR="$(mktemp -d /tmp/claude-as-version-test.XXXXXXXXXX)"
+TEST_DIR="$(mktemp -d /tmp/skillfoundry-version-test.XXXXXXXXXX)"
 
 # Test counters
 TESTS_PASSED=0
@@ -70,7 +70,7 @@ assert_file_exists() {
 }
 
 cleanup_test_dir() {
-    if [ -d "$TEST_DIR" ] && [[ "$TEST_DIR" == /tmp/claude-as-version-test.* ]]; then
+    if [ -d "$TEST_DIR" ] && [[ "$TEST_DIR" == /tmp/skillfoundry-version-test.* ]]; then
         rm -rf "$TEST_DIR"
     fi
     mkdir -p "$TEST_DIR"
@@ -331,7 +331,7 @@ test_framework_version_file() {
 main() {
     echo -e "${CYAN}"
     echo "╔═══════════════════════════════════════════════════════════════╗"
-    echo "║         Claude AS - Version System Test Suite                ║"
+    echo "║         SkillFoundry - Version System Test Suite                ║"
     echo "╚═══════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
 

@@ -1,6 +1,6 @@
 # SOC 2 Type II Compliance Profile
 
-SOC 2 Trust Services Criteria compliance checks for the Claude AS Framework.
+SOC 2 Trust Services Criteria compliance checks for the SkillFoundry Framework.
 
 ## Checks (12 total)
 

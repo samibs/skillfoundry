@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-Common issues and solutions for Claude AS Framework.
+Common issues and solutions for SkillFoundry Framework.
 
 ---
 
@@ -17,15 +17,15 @@ Common issues and solutions for Claude AS Framework.
 **Solutions**:
 
 ```bash
-# Check if you accidentally copied claude_as folder
-ls -la | grep claude_as
+# Check if you accidentally copied skillfoundry folder
+ls -la | grep skillfoundry
 
 # If found, remove it
-rm -rf claude_as
+rm -rf skillfoundry
 
 # Reinstall properly
 cd ~/your-project
-~/path/to/claude_as/install.sh --platform=claude
+~/path/to/skillfoundry/install.sh --platform=claude
 ```
 
 **Verification**:
@@ -55,7 +55,7 @@ ls -la .claude/commands/go.md  # Should exist
 cat .claude/.framework-platform  # Should be "claude" or "copilot"
 
 # Reinstall if needed
-~/path/to/claude_as/install.sh --platform=claude
+~/path/to/skillfoundry/install.sh --platform=claude
 ```
 
 ---
@@ -71,19 +71,19 @@ cat .claude/.framework-platform  # Should be "claude" or "copilot"
    # Solution: Create directory first
    mkdir -p ~/my-project
    cd ~/my-project
-   ~/path/to/claude_as/install.sh
+   ~/path/to/skillfoundry/install.sh
    ```
 
 2. **Permission denied**
    ```bash
    # Solution: Make script executable
-   chmod +x ~/path/to/claude_as/install.sh
+   chmod +x ~/path/to/skillfoundry/install.sh
    ```
 
 3. **Framework directory not found**
    ```bash
    # Solution: Use absolute path
-   ~/dev_tools_20260120_latest/claude_as/install.sh
+   ~/dev_tools_20260120_latest/skillfoundry/install.sh
    ```
 
 ---
@@ -102,13 +102,13 @@ cat .claude/.framework-platform  # Should be "claude" or "copilot"
 
 ```bash
 # Register project manually
-~/path/to/claude_as/update.sh --register /path/to/your/project
+~/path/to/skillfoundry/update.sh --register /path/to/your/project
 
 # Or scan for projects
-~/path/to/claude_as/update.sh --scan ~/DevLab
+~/path/to/skillfoundry/update.sh --scan ~/DevLab
 
 # List registered projects
-~/path/to/claude_as/update.sh --list
+~/path/to/skillfoundry/update.sh --list
 ```
 
 ---
@@ -124,10 +124,10 @@ cat .claude/.framework-platform  # Should be "claude" or "copilot"
 cat .claude/.framework-version
 
 # Check framework version
-cat ~/path/to/claude_as/.version
+cat ~/path/to/skillfoundry/.version
 
 # Force update
-~/path/to/claude_as/update.sh --force /path/to/your/project
+~/path/to/skillfoundry/update.sh --force /path/to/your/project
 ```
 
 ---
@@ -359,7 +359,7 @@ ls -la logs/
 
 ## Common Error Messages
 
-### "claude_as is a TEMPLATE - DO NOT copy it"
+### "skillfoundry is a TEMPLATE - DO NOT copy it"
 
 **Meaning**: You copied the framework folder into your project
 
@@ -399,13 +399,13 @@ ls -la logs/
 3. **Validate setup**:
    ```bash
    # Run framework tests
-   ~/path/to/claude_as/tests/run-tests.sh
+   ~/path/to/skillfoundry/tests/run-tests.sh
    ```
 
 4. **Check version compatibility**:
    ```bash
    cat .claude/.framework-version
-   cat ~/path/to/claude_as/.version
+   cat ~/path/to/skillfoundry/.version
    ```
 
 ---

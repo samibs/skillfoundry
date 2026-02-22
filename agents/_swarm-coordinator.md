@@ -322,4 +322,4 @@ fi
 
 ---
 
-*Swarm Coordination Protocol v1.0.0 - Claude AS Framework*
+*Swarm Coordination Protocol v1.0.0 - SkillFoundry Framework*

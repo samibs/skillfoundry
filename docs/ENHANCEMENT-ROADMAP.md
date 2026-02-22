@@ -1,8 +1,8 @@
-# Claude AS Enhancement Roadmap
+# SkillFoundry Enhancement Roadmap
 
 ## Current State Assessment
 
-**Claude AS v1.1.0** is a comprehensive **specification-based framework** with:
+**SkillFoundry v1.1.0** is a comprehensive **specification-based framework** with:
 - Sophisticated agent personas (11 defined)
 - PRD-first workflow (unique differentiator)
 - Three-layer enforcement (DB, Backend, Frontend)
@@ -90,7 +90,7 @@ mcp-servers/
     },
     "database": {
       "command": "npx",
-      "args": ["-y", "@claude-as/mcp-database"],
+      "args": ["-y", "@skillfoundry/mcp-database"],
       "capabilities": ["schema", "migrate", "query", "rollback"]
     },
     "git": {
@@ -100,7 +100,7 @@ mcp-servers/
     },
     "testing": {
       "command": "npx",
-      "args": ["-y", "@claude-as/mcp-testing"],
+      "args": ["-y", "@skillfoundry/mcp-testing"],
       "capabilities": ["run", "coverage", "watch"]
     }
   }
@@ -511,7 +511,7 @@ logs/
 ## Long-Term Vision
 
 ```
-Claude AS v2.0 Architecture:
+SkillFoundry v2.0 Architecture:
 
 ┌─────────────────────────────────────────────────────────────────┐
 │                         USER INTERFACE                          │
@@ -558,13 +558,13 @@ Claude AS v2.0 Architecture:
 
 ## Conclusion
 
-**Claude AS is ahead of the curve** in:
+**SkillFoundry is ahead of the curve** in:
 - PRD-first development (novel)
 - Multi-persona agent design (sophisticated)
 - Three-layer enforcement (comprehensive)
 - Security standards (production-grade)
 
-**Claude AS needs to catch up** in:
+**SkillFoundry needs to catch up** in:
 - Actual execution runtime (currently prompt-based)
 - Persistent memory (designed but not implemented)
 - MCP/tool integration (modern standard)

@@ -8,7 +8,7 @@
 
 ## Overview
 
-Phase 4 implements comprehensive observability and tracing for Claude AS Framework, providing full visibility into agent activities, decisions, metrics, and performance.
+Phase 4 implements comprehensive observability and tracing for SkillFoundry Framework, providing full visibility into agent activities, decisions, metrics, and performance.
 
 ---
 

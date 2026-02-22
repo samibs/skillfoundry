@@ -1,4 +1,4 @@
-# Strategic Improvement Plan: Making Claude AS Framework Better
+# Strategic Improvement Plan: Making SkillFoundry Framework Better
 
 **Date**: January 25, 2026  
 **Framework Version**: 1.3.2  
@@ -8,7 +8,7 @@
 
 ## 🎯 Executive Summary
 
-Based on market comparison analysis, this document outlines **strategic improvements** to enhance Claude AS Framework's competitive position while maintaining its unique value proposition as a **multi-platform enhancement layer**.
+Based on market comparison analysis, this document outlines **strategic improvements** to enhance SkillFoundry Framework's competitive position while maintaining its unique value proposition as a **multi-platform enhancement layer**.
 
 ### Current Strengths (Maintain & Amplify)
 - ✅ Multi-platform support (unique)
@@ -38,9 +38,9 @@ Based on market comparison analysis, this document outlines **strategic improvem
 
 ```bash
 # New: install-unified.sh / install-unified.ps1
-curl -fsSL https://claude-as.dev/install | bash
+curl -fsSL https://skillfoundry.dev/install | bash
 # OR
-iwr https://claude-as.dev/install.ps1 | iex
+iwr https://skillfoundry.dev/install.ps1 | iex
 ```
 
 **Implementation**:
@@ -67,7 +67,7 @@ iwr https://claude-as.dev/install.ps1 | iex
 **Solution**: Interactive wizard that guides first-time setup
 
 ```bash
-claude-as init
+skillfoundry init
 # Interactive prompts:
 # 1. Select platform (Claude Code / Copilot CLI / Cursor)
 # 2. Select project type (Web App / API / CLI / Library)
@@ -211,10 +211,10 @@ memory_bank/
 **Solution**: Standardized MCP servers for common operations
 
 **MCP Servers to Create**:
-- `mcp-claude-as-filesystem` - Safe file operations
-- `mcp-claude-as-database` - Schema inspection, migrations
-- `mcp-claude-as-testing` - Test runner integration
-- `mcp-claude-as-security` - Security scanning
+- `mcp-skillfoundry-filesystem` - Safe file operations
+- `mcp-skillfoundry-database` - Schema inspection, migrations
+- `mcp-skillfoundry-testing` - Test runner integration
+- `mcp-skillfoundry-security` - Security scanning
 
 **Benefits**:
 - Standardized tool interface

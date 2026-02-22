@@ -1,4 +1,4 @@
-# Visual Dashboard - Web UI for Claude AS
+# Visual Dashboard - Web UI for SkillFoundry
 
 **Version**: 1.0  
 **Status**: IMPLEMENTATION  
@@ -156,7 +156,7 @@ app.get('/api/metrics/summary', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Claude AS Dashboard running on http://localhost:${PORT}`);
+  console.log(`SkillFoundry Dashboard running on http://localhost:${PORT}`);
 });
 ```
 

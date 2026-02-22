@@ -87,4 +87,4 @@ scripts/preferences.sh inject           # Markdown for prompt injection
 
 ---
 
-*Preferences Protocol v1.0.0 — Claude AS Framework*
+*Preferences Protocol v1.0.0 — SkillFoundry Framework*

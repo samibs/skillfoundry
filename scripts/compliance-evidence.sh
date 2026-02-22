@@ -39,7 +39,7 @@ OUTPUT_FILE=""
 # ═══════════════════════════════════════════════════════════════
 
 show_help() {
-    echo "Compliance Evidence Collection & Packaging — Claude AS Framework"
+    echo "Compliance Evidence Collection & Packaging — SkillFoundry Framework"
     echo ""
     echo "Automates collection, hashing, and packaging of compliance evidence."
     echo "Evidence is stored in tamper-evident format with SHA-256 verification."

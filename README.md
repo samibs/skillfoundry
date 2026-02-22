@@ -1,6 +1,6 @@
-# Claude AS - Agents & Skills Framework
+# SkillFoundry - Agents & Skills Framework
 
-![CI](https://github.com/samibs/claude_as/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 
 A comprehensive AI agent and skills framework for structured, production-ready AI-assisted development. **Now supports Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, and Google Gemini** with advanced GitHub integration and AI-specific security hardening.
 
@@ -373,7 +373,7 @@ scripts/version-check.sh    # Detailed version comparison
 
 ```
 ╔═══════════════════════════════════════════════════════════════════╗
-║  claude_as is a TEMPLATE - DO NOT copy it into your projects!     ║
+║  skillfoundry is a TEMPLATE - DO NOT copy it into your projects!     ║
 ║                                                                   ║
 ║  Keep it in ONE central location and INSTALL from there.          ║
 ╚═══════════════════════════════════════════════════════════════════╝
@@ -381,15 +381,15 @@ scripts/version-check.sh    # Detailed version comparison
 
 ### First Time Setup
 
-1. **Keep claude_as in a central location** (e.g., `~/DevLab/IDEA/claude_as/`)
-2. **Never move or copy the claude_as folder into projects**
+1. **Keep skillfoundry in a central location** (e.g., `~/DevLab/IDEA/skillfoundry/`)
+2. **Never move or copy the skillfoundry folder into projects**
 
 ### Correct Structure
 
 ```
 ~/DevLab/
 ├── IDEA/
-│   └── claude_as/                    ← TEMPLATE (stays here forever)
+│   └── skillfoundry/                    ← TEMPLATE (stays here forever)
 │       ├── .claude/commands/
 │       ├── genesis/
 │       ├── install.sh
@@ -410,7 +410,7 @@ scripts/version-check.sh    # Detailed version comparison
 
 ```
 ~/DevLab/ProjectA/
-└── claude_as/                        ← WRONG! Don't copy folder into project
+└── skillfoundry/                        ← WRONG! Don't copy folder into project
     └── .claude/commands/             ← Claude can't find this
 ```
 
@@ -425,8 +425,8 @@ scripts/version-check.sh    # Detailed version comparison
 mkdir ~/DevLab/MyNewProject
 cd ~/DevLab/MyNewProject
 
-# 2. Run the installer FROM the central claude_as location
-~/DevLab/IDEA/claude_as/install.sh --platform=claude
+# 2. Run the installer FROM the central skillfoundry location
+~/DevLab/IDEA/skillfoundry/install.sh --platform=claude
 
 # 3. Start Claude Code
 claude
@@ -441,11 +441,11 @@ claude
 ```bash
 # Windows PowerShell
 cd C:\DevLab\MyNewProject
-C:\DevLab\IDEA\claude_as\install.ps1 -Platform cursor
+C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform cursor
 
 # Linux/Mac (bash)
 cd ~/DevLab/MyNewProject
-~/DevLab/IDEA/claude_as/install.sh --platform=cursor
+~/DevLab/IDEA/skillfoundry/install.sh --platform=cursor
 
 # Rules are automatically loaded by Cursor from .cursor/rules/
 # Use in Cursor chat: "use go rule" or "follow coder rule"
@@ -459,7 +459,7 @@ mkdir ~/DevLab/MyNewProject
 cd ~/DevLab/MyNewProject
 
 # 2. Install framework
-~/dev_tools_20260120_latest/claude_as/install.sh --platform=copilot
+~/dev_tools_20260120_latest/skillfoundry/install.sh --platform=copilot
 
 # 3. View available agents
 ls .copilot/custom-agents/
@@ -474,12 +474,12 @@ ls .copilot/custom-agents/
 ```bash
 # Linux/Mac (bash)
 cd /path/to/your/project
-~/path/to/claude_as/install.sh
+~/path/to/skillfoundry/install.sh
 # Choose: 1) Claude Code  2) GitHub Copilot CLI  3) Cursor  4) OpenAI Codex
 
 # Windows (PowerShell)
 cd C:\path\to\your\project
-C:\path\to\claude_as\install.ps1
+C:\path\to\skillfoundry\install.ps1
 # Choose: 1) Claude Code  2) GitHub Copilot CLI  3) Cursor  4) OpenAI Codex
 ```
 
@@ -879,11 +879,11 @@ The framework includes an **auto-update script** that keeps all your projects sy
 
 ```bash
 # Linux/Mac (bash)
-cd ~/dev_tools_20260120_latest/claude_as
+cd ~/dev_tools_20260120_latest/skillfoundry
 ./update.sh --all
 
 # Windows (PowerShell)
-cd C:\dev_tools_20260120_latest\claude_as
+cd C:\dev_tools_20260120_latest\skillfoundry
 .\update.ps1 -All
 ```
 
@@ -1082,30 +1082,30 @@ When the framework is updated, push changes to all your projects.
 
 ```bash
 # From anywhere
-~/DevLab/IDEA/claude_as/update.sh /path/to/your/project
+~/DevLab/IDEA/skillfoundry/update.sh /path/to/your/project
 
 # Preview changes first
-~/DevLab/IDEA/claude_as/update.sh --diff /path/to/your/project
+~/DevLab/IDEA/skillfoundry/update.sh --diff /path/to/your/project
 ```
 
 ### Update All Registered Projects
 
 ```bash
 # Projects are auto-registered on install
-~/DevLab/IDEA/claude_as/update.sh --all
+~/DevLab/IDEA/skillfoundry/update.sh --all
 ```
 
 ### Manage Project Registry
 
 ```bash
 # List all registered projects
-~/DevLab/IDEA/claude_as/update.sh --list
+~/DevLab/IDEA/skillfoundry/update.sh --list
 
 # Register a project manually
-~/DevLab/IDEA/claude_as/update.sh --register /path/to/project
+~/DevLab/IDEA/skillfoundry/update.sh --register /path/to/project
 
 # Unregister a project
-~/DevLab/IDEA/claude_as/update.sh --unregister /path/to/project
+~/DevLab/IDEA/skillfoundry/update.sh --unregister /path/to/project
 ```
 
 ### Update Options
@@ -1144,13 +1144,13 @@ All updates create backups in:
 
 ### `/go` command not found
 
-**Cause:** You copied the `claude_as` folder into your project instead of installing from it.
+**Cause:** You copied the `skillfoundry` folder into your project instead of installing from it.
 
 **Fix:**
 ```bash
 cd ~/DevLab/YourProject
-rm -rf claude_as              # Remove the copied folder
-~/DevLab/IDEA/claude_as/install.sh   # Install properly
+rm -rf skillfoundry              # Remove the copied folder
+~/DevLab/IDEA/skillfoundry/install.sh   # Install properly
 ```
 
 ### Skills not recognized

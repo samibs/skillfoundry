@@ -8,7 +8,7 @@
 
 ## Overview
 
-MCP (Model Context Protocol) provides a standardized way for AI agents to interact with external tools and resources. This integration enables Claude AS Framework to access databases, file systems, testing tools, and security scanners through a unified interface.
+MCP (Model Context Protocol) provides a standardized way for AI agents to interact with external tools and resources. This integration enables SkillFoundry Framework to access databases, file systems, testing tools, and security scanners through a unified interface.
 
 ---
 
@@ -38,7 +38,7 @@ mcp-servers/
 
 ## MCP Servers
 
-### 1. Filesystem Server (`mcp-claude-as-filesystem`)
+### 1. Filesystem Server (`mcp-skillfoundry-filesystem`)
 
 **Purpose**: Safe file operations with permission model
 
@@ -80,7 +80,7 @@ mcp-servers/
 
 ---
 
-### 2. Database Server (`mcp-claude-as-database`)
+### 2. Database Server (`mcp-skillfoundry-database`)
 
 **Purpose**: Database schema inspection and migration management
 
@@ -119,7 +119,7 @@ mcp-servers/
 
 ---
 
-### 3. Testing Server (`mcp-claude-as-testing`)
+### 3. Testing Server (`mcp-skillfoundry-testing`)
 
 **Purpose**: Test runner integration
 
@@ -156,7 +156,7 @@ mcp-servers/
 
 ---
 
-### 4. Security Server (`mcp-claude-as-security`)
+### 4. Security Server (`mcp-skillfoundry-security`)
 
 **Purpose**: Security scanning and vulnerability detection
 
@@ -204,7 +204,7 @@ import path from "path";
 
 const server = new Server(
   {
-    name: "claude-as-filesystem",
+    name: "skillfoundry-filesystem",
     version: "1.0.0",
   },
   {
@@ -274,7 +274,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error("Claude AS Filesystem MCP server running on stdio");
+  console.error("SkillFoundry Filesystem MCP server running on stdio");
 }
 
 main().catch(console.error);
@@ -282,7 +282,7 @@ main().catch(console.error);
 
 ---
 
-## Integration with Claude AS
+## Integration with SkillFoundry
 
 ### Configuration
 

@@ -76,4 +76,4 @@ layers: [database, backend]
 
 ---
 
-*Template: API Service — The Forge — Claude AS Framework*
+*Template: API Service — The Forge — SkillFoundry Framework*

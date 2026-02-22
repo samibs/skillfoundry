@@ -1,6 +1,6 @@
 # MCP Filesystem Server
 
-Claude AS Filesystem MCP Server - Safe file operations with permission model.
+SkillFoundry Filesystem MCP Server - Safe file operations with permission model.
 
 ## Installation
 
@@ -15,7 +15,7 @@ Configure in your MCP client:
 ```json
 {
   "servers": {
-    "claude-as-filesystem": {
+    "skillfoundry-filesystem": {
       "command": "node",
       "args": ["mcp-servers/filesystem/server.js"]
     }

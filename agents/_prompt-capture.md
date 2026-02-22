@@ -94,4 +94,4 @@ All orchestrating agents (/go, /forge, /delegate) should check capture state at 
 
 ---
 
-*Claude AS Framework — Prompt Capture Protocol*
+*SkillFoundry Framework — Prompt Capture Protocol*

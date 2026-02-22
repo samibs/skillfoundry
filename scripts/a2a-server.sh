@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# A2A Protocol Agent Cards for Claude AS Framework
+# A2A Protocol Agent Cards for SkillFoundry Framework
 # Generates A2A-compatible agent card JSON for discovery and interoperability.
 # Follows Google/Linux Foundation Agent-to-Agent (A2A) specification.
 #
@@ -34,7 +34,7 @@ VERSION_FILE="$FRAMEWORK_DIR/.version"
 # ═══════════════════════════════════════════════════════════════
 
 show_help() {
-    echo "A2A Protocol Agent Cards — Claude AS Framework"
+    echo "A2A Protocol Agent Cards — SkillFoundry Framework"
     echo ""
     echo "Generates A2A-compatible agent cards for discovery and interoperability."
     echo "Follows the Google/Linux Foundation Agent-to-Agent (A2A) specification."
@@ -263,7 +263,7 @@ generate_card() {
             --argjson skills "$skills" \
             '{
                 name: $name,
-                description: ("Claude AS agent: " + $name),
+                description: ("SkillFoundry agent: " + $name),
                 url: ("http://localhost:8080/a2a/" + $name),
                 version: $version,
                 capabilities: {streaming: false, pushNotifications: false, stateTransitionHistory: true},
@@ -344,7 +344,7 @@ cmd_cards() {
             --argjson skills "$skills" \
             '{
                 name: $name,
-                description: ("Claude AS agent: " + $name),
+                description: ("SkillFoundry agent: " + $name),
                 url: ("http://localhost:8080/a2a/" + $name),
                 version: $version,
                 capabilities: {streaming: false, pushNotifications: false, stateTransitionHistory: true},

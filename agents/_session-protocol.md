@@ -222,4 +222,4 @@ When creating or modifying agents, add this to the agent's instructions:
 
 ---
 
-*Session & Decision Logging Protocol v1.0.0 - Claude AS Framework*
+*Session & Decision Logging Protocol v1.0.0 - SkillFoundry Framework*

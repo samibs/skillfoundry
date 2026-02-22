@@ -8,7 +8,7 @@
 
 ## Overview
 
-Phase 3 implements four advanced features that transform Claude AS Framework from a structured workflow system into a comprehensive AI development platform with persistent memory, standardized tool integration, visual management, and parallel execution capabilities.
+Phase 3 implements four advanced features that transform SkillFoundry Framework from a structured workflow system into a comprehensive AI development platform with persistent memory, standardized tool integration, visual management, and parallel execution capabilities.
 
 ---
 

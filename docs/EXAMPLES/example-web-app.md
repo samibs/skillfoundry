@@ -1,6 +1,6 @@
 # Example: Building a Web Application
 
-This example walks through building a complete web application using Claude AS Framework, from PRD to deployment.
+This example walks through building a complete web application using SkillFoundry Framework, from PRD to deployment.
 
 ---
 

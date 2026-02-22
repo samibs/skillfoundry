@@ -416,4 +416,4 @@ TDD metrics feed into the main metrics system:
 
 ---
 
-*TDD Protocol v1.0.0 - Claude AS Framework*
+*TDD Protocol v1.0.0 - SkillFoundry Framework*

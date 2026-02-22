@@ -58,7 +58,7 @@ Each line in `*.jsonl` files is a JSON object with this structure:
 
 ### Facts (`facts.jsonl`)
 Verified technical information about the project or framework.
-- Example: "Claude AS uses MAJOR.FEATURE.DATABASE.ITERATION versioning"
+- Example: "SkillFoundry uses MAJOR.FEATURE.DATABASE.ITERATION versioning"
 - Weight starts at 0.5, increases with validation
 
 ### Decisions (`decisions.jsonl`)

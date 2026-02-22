@@ -105,4 +105,4 @@ The quality primer is injected at generation time, not just at gate validation t
 
 ---
 
-*Claude AS Framework — Quality-at-Generation Primer*
+*SkillFoundry Framework — Quality-at-Generation Primer*

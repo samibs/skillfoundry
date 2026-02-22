@@ -13,7 +13,7 @@ Embed machine-readable metadata in git commit messages as trailers. This creates
 
 ## Trailer Format
 
-Every commit made by a Claude AS agent MUST include these trailers:
+Every commit made by a SkillFoundry agent MUST include these trailers:
 
 ```
 feat: implement user authentication
@@ -155,4 +155,4 @@ Claude-AS-Gate: <gate_result>
 
 ---
 
-*Commit Trailer Protocol v1.0.0 - Claude AS Framework*
+*Commit Trailer Protocol v1.0.0 - SkillFoundry Framework*

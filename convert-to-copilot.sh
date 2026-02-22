@@ -202,7 +202,7 @@ These shared modules are referenced in the agent instructions and should be made
 Run the main installer with platform selection:
 
 ```bash
-~/path/to/claude_as/install.sh
+~/path/to/skillfoundry/install.sh
 # Choose: GitHub Copilot CLI when prompted
 ```
 
