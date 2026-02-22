@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://skillfoundry.work/</loc><lastmod>2026-02-22</lastmod><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://skillfoundry.work/pages/docs-agent-reference.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://skillfoundry.work/pages/docs-api-docs.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://skillfoundry.work/pages/docs-quick-start.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://skillfoundry.work/pages/docs-security-guide.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://skillfoundry.work/pages/docs-workflow-guide.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://skillfoundry.work/pages/legal-code-of-conduct.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skillfoundry.work/pages/legal-mit-license.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skillfoundry.work/pages/legal-privacy-policy.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skillfoundry.work/pages/legal-terms-of-use.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>
+  <url><loc>https://skillfoundry.work/pages/platform-claude-code.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://skillfoundry.work/pages/platform-cursor.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://skillfoundry.work/pages/platform-github-copilot.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://skillfoundry.work/pages/platform-google-gemini.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://skillfoundry.work/pages/platform-openai-codex.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://skillfoundry.work/pages/resources-changelog.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://skillfoundry.work/pages/resources-community.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://skillfoundry.work/pages/resources-examples.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://skillfoundry.work/pages/resources-github-repository.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://skillfoundry.work/pages/resources-support.html</loc><lastmod>2026-02-22</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>
+</urlset>
