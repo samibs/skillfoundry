@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenAI Codex Skills Adapter | SkillFoundry</title>
+  <meta name="description" content="Codex-native SKILL.md adapter for deterministic command routing and role-specific execution." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./shared.css" />
+</head>
+<body style="--tone-1:#2a6df4;--tone-2:#00A896">
+<header>
+  <div class="header-inner">
+    <a class="brand" href="../index.html"><span class="grad">SkillFoundry</span></a>
+    <nav class="top-nav">
+      <a href="../index.html#platforms">Platforms</a>
+      <a href="../index.html#features">Features</a>
+      <a href="../index.html#demo">Demo</a>
+      <a href="https://github.com/samibs/skillfoundry" target="_blank" rel="noreferrer">GitHub</a>
+    </nav>
+  </div>
+</header>
+<main>
+  <section class="hero">
+    <div class="hero-head">
+      <p class="kicker">Platform</p>
+      <span class="badge">CODEX • v1.9.0.21</span>
+    </div>
+    <h1>OpenAI Codex Skills Adapter</h1>
+    <p class="subtitle">Codex-native SKILL.md adapter for deterministic command routing and role-specific execution.</p>
+    <span class="icon-chip">CODEX Context Profile</span>
+    <div class="metrics">
+      <div class="metric"><strong>53</strong><span>Core agents</span></div>
+      <div class="metric"><strong>61</strong><span>Claude skills</span></div>
+      <div class="metric"><strong>64</strong><span>Copilot agents</span></div>
+      <div class="metric"><strong>60</strong><span>Cursor rules</span></div>
+      <div class="metric"><strong>60</strong><span>Codex skills</span></div>
+      <div class="metric"><strong>61</strong><span>Gemini skills</span></div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>Best For</h2>
+      <p>Best for teams requiring strict skill contracts and explicit delegation.</p>
+      <ul>
+<li>Invoke core workflows with named skills</li>
+<li>Keep role separation between orchestrator/coder/tester</li>
+<li>Verify SKILL.md parity after updates</li>
+      </ul>
+    </article>
+    <article class="card">
+      <h2>Anti-Patterns To Avoid</h2>
+      <p>These behaviors reduce framework signal and increase rework risk.</p>
+      <ul>
+<li>Using non-framework skills for core lifecycle</li>
+<li>No contract checks on skill updates</li>
+<li>Skipping specialist validation skills</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="grid playbook">
+    <article class="card">
+      <h2>Adoption Plan</h2>
+      <ol>
+<li>Install Codex adapter</li>
+<li>Run orchestration with $go/$forge</li>
+<li>Delegate via specialist skills</li>
+<li>Close with review and gate checks</li>
+      </ol>
+      <div class="code-block">~/skillfoundry/install.sh --platform=codex .
+$go
+$coder
+$tester</div>
+    </article>
+    <article class="card links">
+      <h2>Primary References</h2>
+      <ul>
+<li><a href="https://github.com/samibs/skillfoundry/blob/main/AGENTS.md" target="_blank" rel="noreferrer">AGENTS Root Context</a></li>
+<li><a href="https://github.com/samibs/skillfoundry/blob/main/.agents/skills" target="_blank" rel="noreferrer">Codex Skills</a></li>
+<li><a href="https://github.com/samibs/skillfoundry/blob/main/CHANGELOG.md" target="_blank" rel="noreferrer">Changelog</a></li>
+      </ul>
+      <h2 style="margin-top:.9rem;">Operational Checklist</h2>
+      <ul>
+        <li>Version alignment confirmed (v1.9.0.21)</li>
+        <li>Execution evidence captured in stories or PR</li>
+        <li>Gate validations completed before merge/deploy</li>
+      </ul>
+      <div class="cta-row">
+        <a class="btn btn-solid" href="https://github.com/samibs/skillfoundry" target="_blank" rel="noreferrer">Open Repository</a>
+        <a class="btn btn-ghost" href="../index.html">Back to Home</a>
+      </div>
+    </article>
+  </section>
+</main>
+<footer><div class="inner">SkillFoundry v1.9.0.21 • Platform page • differentiated content profile</div></footer>
+</body>
+</html>
