@@ -1,0 +1,29 @@
+---
+name: Version
+description: Show version information and check for updates
+---
+
+# Version Information Agent
+
+Display current version, check for updates, explain version semantics.
+
+## Version Format
+**MAJOR.FEATURE.DATABASE.ITERATION**
+- 1 = Major (breaking changes)
+- 7 = Feature (new features)
+- 0 = Database (schema changes)
+- 0 = Iteration (patches)
+
+## Current Version
+Claude AS Framework v1.7.0.0
+- 39 agents
+- Auto-remediation system
+- Triple platform support
+
+## Update Types
+- Feature update → Safe, run ./update.sh
+- Patch update → Safe, run ./update.sh
+- Database migration → Backup first, run ./update.sh --migrate
+- Major update → Backup first, run ./install.sh --force
+
+Display version banner, check for updates, recommend action.
