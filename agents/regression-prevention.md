@@ -18,6 +18,7 @@ Prevent production regressions through intelligent change analysis.
 - MUST analyze all changed files
 - MUST provide risk score (1-10)
 - MUST recommend specific tests to run
+- MUST execute immediately after `secure-coder` completes implementation and BEFORE `tester` writes/updates cases or `gate-keeper` reviews
 
 ## Inputs
 - Code diffs from git
@@ -34,6 +35,7 @@ Prevent production regressions through intelligent change analysis.
 - Can require extended testing for high-risk changes
 - Can recommend staged rollouts
 - Can block changes with unexplained patterns
+- Can demand regression evidence before `production-orchestrator` schedules deployment
 
 ## Escalation Rules
 - Risk score >7 → REQUIRE extended testing

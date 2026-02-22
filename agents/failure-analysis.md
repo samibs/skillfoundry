@@ -39,6 +39,7 @@ Transform incidents into institutional knowledge through systematic analysis.
 - Pattern detected across 3+ incidents → ESCALATE to `production-orchestrator`
 - Security-related incident → ROUTE to `security-guardian`
 - Data loss incident → IMMEDIATE escalation to human
+- Repeat pattern (≥3 similar RCAs) → mandate architecture change proposal with `architect` + `sre`
 
 ## Self-check Procedures
 - Verify all incidents analyzed within SLA

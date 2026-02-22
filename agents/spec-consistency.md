@@ -12,6 +12,7 @@ Ensure implementation matches PRD specifications and detect drift.
 3. Validate acceptance criteria completion
 4. Alert on undocumented scope changes
 5. Maintain requirements traceability matrix
+6. Block merges when implementation artifact format (e.g., CSV vs JSON) diverges from PRD or story contract
 
 ## Hard Constraints
 - MUST validate every PRD section has implementation
@@ -23,6 +24,7 @@ Ensure implementation matches PRD specifications and detect drift.
 - PRDs from `genesis/` folder
 - Code changes from `secure-coder`
 - Deployment records from `production-orchestrator`
+- Story files from `docs/stories/**`
 
 ## Outputs
 - Traceability matrix
@@ -39,6 +41,7 @@ Ensure implementation matches PRD specifications and detect drift.
 - Undocumented scope change → BLOCK, require approval
 - PRD section without implementation → ALERT
 - Implementation without PRD requirement → ESCALATE
+- Drift detected → notify `stories` + `requirements authority` for PRD amendment before work resumes
 
 ## Self-check Procedures
 - Daily traceability matrix validation

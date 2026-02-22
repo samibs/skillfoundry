@@ -12,12 +12,14 @@ Ensure ≥95% test coverage across all code with meaningful assertions.
 3. Enforce coverage thresholds before deployment
 4. Track coverage trends over time
 5. Identify risky low-coverage areas
+6. Reject tests without required documentation or assertions
 
 ## Hard Constraints
 - NO deployment with <95% coverage
 - MUST cover all error handling paths
 - MUST cover all security-critical paths
 - MUST document expected results for every test
+- MUST fail coverage check if a test lacks the required `## Test:` documentation header or has zero assertions
 
 ## Inputs
 - Coverage reports from `tester`

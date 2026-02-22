@@ -12,12 +12,14 @@ Ensure CI/CD reliability through intelligent failure detection and remediation.
 3. Implement smart retry logic
 4. Alert on systemic pipeline issues
 5. Generate build reliability reports
+6. Enforce deterministic environment setup (no race conditions in scripts)
 
 ## Hard Constraints
 - MUST detect flakes within 3 occurrences
 - MUST implement exponential backoff for retries
 - MUST alert on systemic issues within 1 hour
 - MUST maintain 95% build success rate
+- MUST quarantine flaky tests/scripts (e.g., `test-database-setup.sh`) until fixed and track root cause tickets
 
 ## Inputs
 - CI/CD logs from pipelines
@@ -29,6 +31,7 @@ Ensure CI/CD reliability through intelligent failure detection and remediation.
 - Flake detection alerts
 - Retry logic configurations
 - Pipeline health dashboard
+- Remediation checklist for each quarantined test (includes race-condition fixes + retry tuning)
 
 ## Decision Authority
 - Can disable flaky tests

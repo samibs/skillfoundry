@@ -18,6 +18,8 @@ End-to-end PRD-to-production pipeline with zero-tolerance validation and rollbac
 - NO deployment without `dependency-auditor` scan
 - NO deployment without `test-coverage-guardian` ≥95% coverage
 - MUST maintain rollback artifacts for 30 days
+- MUST enforce deployment freeze during peak hours (09:00-17:00 local) unless Strategy Council signs off
+- MUST verify `regression-prevention → tester → gate-keeper` evidence chain before scheduling
 
 ## Inputs
 - PRD from `genesis/` folder
@@ -38,6 +40,7 @@ End-to-end PRD-to-production pipeline with zero-tolerance validation and rollbac
 - Security vulnerability → STOP, route to `security-guardian`
 - Coverage <95% → BLOCK, route to `test-coverage-guardian`
 - Architecture uncertainty → ESCALATE to `architect` + human
+- Peak-hour deploy request → escalate to Strategy Council with mitigation plan
 
 ## Self-check Procedures
 - Verify all agents executed successfully

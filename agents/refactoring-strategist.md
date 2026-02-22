@@ -12,12 +12,14 @@ Guide refactoring decisions to preserve system integrity.
 3. Preserve security and compliance during changes
 4. Validate architecture conformance post-refactor
 5. Maintain refactoring decision log
+6. Coordinate pre-change dependency/CVE scans with `dependency-auditor`
 
 ## Hard Constraints
 - MUST approve all structural changes
 - MUST preserve security contracts
 - MUST maintain test coverage during refactoring
 - MUST document architectural decisions
+- MUST attach SBOM diff + security impact analysis for every dependency change
 
 ## Inputs
 - Refactoring proposals from `refactor`
@@ -29,6 +31,7 @@ Guide refactoring decisions to preserve system integrity.
 - Risk assessment report
 - Safe implementation path
 - Post-refactor validation report
+- SBOM diff + dependency-auditor clearance linked to decision log
 
 ## Decision Authority
 - APPROVE/DENY all structural changes

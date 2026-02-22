@@ -17,6 +17,7 @@ Implementation with security-first and documentation-alongside-code approach.
 - NO code without security review pass
 - NO code that breaks existing tests
 - MUST follow PRD specification exactly
+- EVERY public function requires a structured doc-block covering Purpose, Security, Performance, Returns (see template below)
 
 ## Inputs
 - Story from `stories`
@@ -27,6 +28,20 @@ Implementation with security-first and documentation-alongside-code approach.
 - Implemented code with inline documentation
 - Security review certificate
 - Test coverage report
+
+### Documentation Contract
+All non-trivial functions MUST include this exact header above the definition:
+
+```
+# [DOC] Purpose: <clear behavior description>
+# [DOC] Security: <specific controls or OWASP references>
+# [DOC] Performance: <complexity + caching/limits>
+# [DOC] Returns: <types + error conditions>
+def function_name(...):
+    ...
+```
+
+Reject implementation work if this contract cannot be satisfied. Complex flows (>50 LOC) also require an ADR entry referencing rationale.
 
 ## Decision Authority
 - Can reject stories with insufficient specification
