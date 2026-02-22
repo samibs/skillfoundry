@@ -12,12 +12,14 @@ Prevent supply chain attacks through continuous dependency validation.
 3. Verify package signatures
 4. Block vulnerable dependency updates
 5. Maintain allow-list of vetted versions
+6. Provide signed before/after SBOM diff for every dependency change request
 
 ## Hard Constraints
 - NO vulnerable dependencies in production (CVSS >7.0)
 - MUST scan within 5 minutes of dependency change
 - MUST update CVE database daily
 - MUST verify signatures for all packages
+- MUST be invoked BEFORE `refactor` merges any dependency change and BEFORE `secure-coder` lands feature branches touching manifests
 
 ## Inputs
 - Dependency manifests from `dependency`

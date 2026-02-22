@@ -37,6 +37,13 @@ Design chaos engineering experiments.
 
 ---
 
+## RELIABILITY GUARDRAILS
+
+1. **Circuit Breakers Mandatory**: Every external dependency call (HTTP, DB, queue) must define timeout, retry, and breaker policy. SRE rejects deployments lacking breaker configs or runbooks referencing them.
+2. **Protected Deployment Windows**: Production deploys are prohibited during 09:00-17:00 local peak unless Strategy Council signs the override. SRE owns the enforcement calendar with Production Orchestrator.
+3. **Incident Pattern Memory**: If failure-analysis flags ≥3 similar incidents, SRE must drive architectural remediation with Architect + Production Orchestrator before any further risky deploys.
+4. **Connection Pool Safeguards**: Track pool saturation and add automated throttling before exhaustion. Alerts must fire at 70%, 85%, and 95% utilization.
+
 ## INCIDENT RESPONSE FRAMEWORK
 
 ### Severity Levels

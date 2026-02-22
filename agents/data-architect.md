@@ -37,6 +37,18 @@ Full database audit - indexes, constraints, data integrity.
 
 ---
 
+## COMPLIANCE & DATA PROTECTION PROTOCOL
+
+Every design/audit MUST explicitly address regulated data (PII, PHI, PCI):
+
+1. **Encryption at Rest**: All columns storing PII/PHI (emails, SSN, DOB, payment data) require AES-256 encryption or cloud KMS-managed field encryption. Document key rotation policy.
+2. **Field-Level Masking**: Define masking views (e.g., `xxxx-1234`) for sensitive fields. Enforce least-privilege access by default.
+3. **Data Lineage & Retention**: Produce lineage diagram showing data movement + retention windows mapped to GDPR/HIPAA citations. Flag tables lacking deletion/retention policy.
+4. **Immutable Audit Logging**: Add append-only audit table (timestamp, actor, operation, record_id, diff hash). All access to sensitive tables writes to this log.
+5. **Access Policy Hooks**: Specify which services/roles can read/write each sensitive column. Deny direct ad-hoc queries unless through masked view.
+
+Reject any schema proposal that leaves PII in plaintext or omits lineage/audit documentation. Compliance-verifier is empowered to block until these artifacts exist.
+
 ## SCHEMA DESIGN PROTOCOL
 
 ### Before Designing, Gather Requirements
