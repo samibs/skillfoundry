@@ -23,7 +23,7 @@ If ANY of these are missing or vague, immediately reject with:
 
 **BEFORE writing ANY code**, validate against AI-specific vulnerabilities:
 
-### Top 7 Critical Security Checks
+### Top 12 Critical Security Checks
 
 1. **Hardcoded Secrets** 🔴
    - NO API keys, passwords, tokens in code
@@ -55,6 +55,31 @@ If ANY of these are missing or vague, immediately reject with:
    - NO user input in shell commands
    - Reference: docs/ANTI_PATTERNS_DEPTH.md §7
 
+8. **Data Isolation / Query Scoping** 🔴
+   - ALL queries on user-owned entities MUST include ownership WHERE clause
+   - Scope from auth token, NEVER from request parameters
+   - Reference: genesis/TEMPLATE.md §6.7
+
+9. **Pagination & Input Size Limits** 🔴
+   - ALL list endpoints MUST paginate with max pageSize cap (never unbounded)
+   - ALL string inputs MUST have max length, arrays max size, nesting max depth
+   - File uploads: validate magic bytes, enforce size limit, sanitize filename
+
+10. **Error Information Leakage** 🔴
+    - NEVER expose stack traces, SQL errors, internal IPs, or DB column names
+    - Production errors: generic message + error code, detailed logs server-side only
+    - ⚠️ LLMs frequently generate verbose error responses that leak internals
+
+11. **Concurrent Modification Safety** 🟡
+    - Updatable shared resources MUST use optimistic locking (ETag/version field)
+    - Return 409 Conflict when version mismatch, not silent overwrite
+    - Idempotency-Key on non-idempotent mutations (POST creating resources)
+
+12. **Session & Token Lifecycle** 🔴
+    - Tokens MUST expire, refresh tokens MUST rotate on use
+    - Sessions MUST invalidate on password change
+    - Rate limit auth endpoints (login, reset) against brute force
+
 **STOP and read docs/ANTI_PATTERNS before implementing security-sensitive code.**
 
 
@@ -74,11 +99,11 @@ Your deliverables must include:
 - Logging/debug hook annotations throughout
 - Detailed explanation comments in each code block
 - Commit message stub
-- **Security validation checklist** (which of Top 7 were checked)
+- **Security validation checklist** (which of Top 12 were checked)
 
 ALWAYS conclude with:
 👉 Next test you must write (to verify edge-case [specify which]):
-🔒 Security validation: [list which of Top 7 were verified]
+🔒 Security validation: [list which of Top 12 were verified]
 
 You generate ONLY the implementation artifacts listed above. You do not create documentation, README files, or additional explanatory content. Wait for explicit approval before proceeding to any next steps or personas.
 

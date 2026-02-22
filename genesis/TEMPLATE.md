@@ -107,7 +107,13 @@ layers: []            # Affected layers: [database, backend, frontend]
 | Authentication | [method: JWT, OAuth, Session] |
 | Authorization | [RBAC roles: Admin, User, etc.] |
 | Data Protection | [encryption at rest/transit, PII handling] |
-| Input Validation | [sanitization requirements] |
+| Input Validation | [sanitization, max string length, max array size, max nesting depth] |
+| Session Lifecycle | [token expiry duration, refresh token rotation, invalidation on password change] |
+| Rate Limiting | [per-endpoint limits, response on exceed: 429 + Retry-After] |
+| File Uploads | [max size, allowed types, validation method: magic bytes] |
+| Error Handling | [structured error codes, no stack traces/SQL/IPs in responses] |
+| CORS Policy | [allowed origins (specific, not *), credentials mode] |
+| Concurrent Access | [optimistic locking via ETag/version field on shared resources] |
 
 ### 4.3 Scalability
 
@@ -123,6 +129,19 @@ layers: []            # Affected layers: [database, backend, frontend]
 | Recovery Time Objective (RTO) | [X minutes/hours] |
 | Recovery Point Objective (RPO) | [X minutes/hours] |
 | Backup Strategy | [daily/hourly, retention period] |
+| Rollback Strategy | [feature flag / API versioning / migration rollback] |
+| External Service Failure | [retry with backoff / circuit breaker / graceful degradation] |
+
+### 4.5 Observability
+
+| Aspect | Requirement |
+|--------|-------------|
+| Logging Format | [structured JSON with correlation ID] |
+| PII in Logs | [must be redacted — no tokens, passwords, SSNs in logs] |
+| Health Check | [/health endpoint required] |
+| Readiness Probe | [/ready endpoint for load balancer] |
+| Audit Logging | [WHO did WHAT to WHICH resource WHEN — including failed access] |
+| Monitoring | [SLI/SLO definitions, alerting thresholds] |
 
 ---
 
@@ -185,6 +204,8 @@ graph TD
 | **Sensitive Fields** | [PII, credentials, financial - requires encryption/masking] |
 | **Retention** | [How long data is kept, deletion policy] |
 | **Audit** | [yes/no - whether changes are logged] |
+| **Data Ownership** | [Column that scopes rows to owner: user_id, tenant_id, org_id — or "system" if globally shared] |
+| **Access Scope** | [own = user sees only their rows / tenant = user sees org rows / global = all rows visible / hierarchical = user sees self + subordinates] |
 
 ### 6.2 State Transitions
 
@@ -216,15 +237,15 @@ graph TD
 
 <!-- Who can do what. Backend MUST enforce - UI only hides/disables. -->
 
-| Action | Admin | Manager | User | Guest | Notes |
-|--------|-------|---------|------|-------|-------|
-| Create | ✅ | ✅ | ✅ | ❌ | |
-| Read (own) | ✅ | ✅ | ✅ | ❌ | |
-| Read (all) | ✅ | ✅ | ❌ | ❌ | |
-| Update (own) | ✅ | ✅ | ✅ | ❌ | Only in Draft state |
-| Update (any) | ✅ | ✅ | ❌ | ❌ | |
-| Delete | ✅ | ❌ | ❌ | ❌ | Soft delete only |
-| Approve | ✅ | ✅ | ❌ | ❌ | Cannot approve own |
+| Action | Admin | Manager | User | Guest | Data Scope | Notes |
+|--------|-------|---------|------|-------|------------|-------|
+| Create | ✅ | ✅ | ✅ | ❌ | own | |
+| Read (own) | ✅ | ✅ | ✅ | ❌ | `WHERE owner_id = :userId` | |
+| Read (all) | ✅ | ✅ | ❌ | ❌ | unscoped | |
+| Update (own) | ✅ | ✅ | ✅ | ❌ | `WHERE owner_id = :userId` | Only in Draft state |
+| Update (any) | ✅ | ✅ | ❌ | ❌ | unscoped | |
+| Delete | ✅ | ❌ | ❌ | ❌ | `WHERE owner_id = :userId` | Soft delete only |
+| Approve | ✅ | ✅ | ❌ | ❌ | unscoped | Cannot approve own |
 
 ### 6.4 API Contract
 
@@ -264,9 +285,11 @@ graph TD
 | Aspect | Specification |
 |--------|---------------|
 | Auth | JWT required |
-| Query Params | `page`, `pageSize`, `sort`, `filter` |
+| Data Scope | `WHERE owner_id = :currentUser` (unless admin) |
+| Query Params | `page`, `pageSize` (max: 100, default: 20), `sort`, `filter` |
 | Success | `200` with wrapped array |
 | Errors | `401` Unauthorized, `403` Forbidden |
+| Rate Limit | [X requests/minute], `429` + `Retry-After` header |
 
 **Request Example:**
 ```http
@@ -289,10 +312,11 @@ Authorization: Bearer <token>
 | Aspect | Specification |
 |--------|---------------|
 | Auth | JWT required |
-| Headers | `Idempotency-Key` (optional) |
-| Body | See request example |
+| Headers | `Idempotency-Key` (recommended for non-idempotent ops) |
+| Body | See request example (all fields have max length/size) |
 | Success | `201` with created resource |
-| Errors | `400` Validation, `401` Unauthorized, `409` Conflict |
+| Errors | `400` Validation, `401` Unauthorized, `409` Conflict/Idempotency |
+| Rate Limit | [X requests/minute], `429` + `Retry-After` header |
 
 **Request Example:**
 ```json
@@ -336,8 +360,11 @@ Authorization: Bearer <token>
 | `NOT_FOUND` | 404 | Resource doesn't exist | Invalid ID |
 | `CONFLICT` | 409 | Duplicate or state conflict | Unique constraint, invalid transition |
 | `INVALID_STATE_TRANSITION` | 422 | State change not allowed | Violates state machine |
-| `RATE_LIMITED` | 429 | Too many requests | Rate limit exceeded |
-| `INTERNAL_ERROR` | 500 | Unexpected server error | Unhandled exception |
+| `VERSION_CONFLICT` | 409 | Resource modified by another user | ETag/version mismatch (optimistic lock) |
+| `IDEMPOTENCY_CONFLICT` | 409 | Duplicate request with different body | Idempotency-Key reused with changed payload |
+| `RATE_LIMITED` | 429 | Too many requests | Rate limit exceeded (include Retry-After) |
+| `PAYLOAD_TOO_LARGE` | 413 | Request body exceeds limit | File upload or body size exceeded |
+| `INTERNAL_ERROR` | 500 | Unexpected server error | Unhandled exception (never expose details) |
 
 ### 6.6 UI States Specification
 
@@ -352,6 +379,40 @@ Authorization: Bearer <token>
 | Success | Data loaded | Display data |
 | Submitting | Form being submitted | Disable inputs, show spinner |
 | Confirmation | Destructive action | Modal with confirm/cancel |
+
+### 6.7 Data Isolation Specification
+
+<!-- Required for any entity with Data Ownership != "system" in entity card -->
+<!-- Backend MUST enforce scoping — frontend filtering is NOT sufficient -->
+
+#### Query Scope Rules
+
+| Entity | Ownership Column | Default Scope | Unscoped Access |
+|--------|-----------------|---------------|-----------------|
+| [EntityName] | [user_id/tenant_id/org_id] | `WHERE [column] = :currentUser` | [Admin only / Never / Specific endpoint] |
+
+#### Isolation Enforcement Rules
+
+- **Every SELECT** on a scoped entity MUST include the ownership column in the WHERE clause
+- **ORM/Repository layer** must enforce scoping by default (opt-out for admin, never opt-out silently)
+- **API list endpoints** must scope to the authenticated user/tenant unless the role explicitly permits unscoped access per the Permissions Matrix
+- **JOIN queries** must not leak rows from scoped tables through unscoped joins
+- **Bulk operations** (export, report, batch update) must respect the same scope rules
+
+#### Cross-Tenant Isolation (if multi-tenant)
+
+- Tenant ID must be derived from the authenticated session, never from request parameters
+- Queries must never allow a user to specify another tenant's ID
+- Database-level Row Level Security (RLS) is recommended as defense-in-depth
+
+#### Mandatory Test Cases
+
+| Test | Expected Result |
+|------|-----------------|
+| User A queries list endpoint | Returns only User A's rows |
+| User A requests User B's resource by ID | Returns 404 (not 403, to avoid enumeration) |
+| Admin queries list endpoint | Returns all rows (if permitted by Permissions Matrix) |
+| API call with tampered tenant/user ID in body | Ignored — scope derived from auth token |
 
 ---
 
@@ -467,7 +528,8 @@ PRD CHECKLIST (remove before finalizing):
 COMPLETENESS:
 [ ] Problem clearly stated with measurable impact
 [ ] All user stories have acceptance criteria
-[ ] Security requirements defined
+[ ] Security requirements defined (auth, rate limits, input limits, CORS, session lifecycle)
+[ ] Observability requirements defined (logging, health checks, monitoring)
 [ ] Out of scope explicitly listed
 [ ] Risks identified with mitigations
 
@@ -482,8 +544,12 @@ CONTRACT SPECIFICATION (Required for API features):
 [ ] State transitions documented (if entity has status field)
 [ ] Permissions matrix completed
 [ ] API endpoints with request/response examples
-[ ] Error codes defined and stable
+[ ] Error codes defined and stable (including VERSION_CONFLICT, RATE_LIMITED)
+[ ] Pagination defined with max pageSize cap
+[ ] Rate limits defined per endpoint
+[ ] Concurrent modification strategy defined (ETag/version)
 [ ] UI states specified (loading, empty, error, success)
+[ ] Data isolation specified (ownership column, scope rules, test cases)
 [ ] Glossary includes all field names with exact code names
 
 CONTRACT FREEZE GATE:

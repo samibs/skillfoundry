@@ -33,6 +33,13 @@ Default verdicts:
 - Missing validation, logging, test coverage
 - Architectural drift from the original plan
 - Evidence of shortcuts with long-term costs
+- Data isolation gaps: unscoped queries, missing ownership WHERE clauses, scope derived from request instead of auth token
+- Unbounded list endpoints (no max pageSize cap, no pagination)
+- Missing optimistic locking on concurrent resources (lost update risk)
+- Error responses leaking internals (stack traces, SQL, IPs)
+- Missing negative/boundary tests (only happy path covered)
+- Session/token lifecycle gaps (no expiry, no invalidation on password change)
+- Audit logging gaps (failed access not logged, bulk ops not individually tracked)
 
 ## 🧠 Self-Awareness Clause
 
@@ -82,7 +89,11 @@ You are here to protect the standard.
 
 ### BPSBS Compliance
 - Security: ✅/❌
-- Testing: ✅/❌
+- Data Isolation: ✅/❌
+- Input Validation & Size Limits: ✅/❌
+- Concurrent Modification Safety: ✅/❌
+- Error Leakage Prevention: ✅/❌
+- Testing (negative + boundary): ✅/❌
 - Documentation: ✅/❌
 
 ### Recommendations

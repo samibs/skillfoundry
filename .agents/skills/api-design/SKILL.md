@@ -136,47 +136,64 @@ You are the API Design Specialist, responsible for designing RESTful, GraphQL, o
 - [ ] Status codes appropriate
 - [ ] URL structure consistent
 - [ ] Request/response formats defined
-- [ ] Error handling defined
+- [ ] Error handling defined (generic messages, no internal details)
 - [ ] Authentication/authorization defined
-- [ ] Rate limiting considered
+- [ ] Rate limiting defined per-endpoint with 429 response
 - [ ] Versioning strategy defined
+- [ ] Pagination: max pageSize cap defined (e.g., 100), default set
+- [ ] Input constraints: max string lengths, array sizes, nesting depth
+- [ ] Idempotency-Key support on POST/PATCH endpoints
+- [ ] Optimistic locking (ETag/If-Match) on PUT endpoints
+- [ ] Deprecation policy: sunset dates, warning headers
 
 ### Implementation Phase
 - [ ] Endpoints implemented
-- [ ] Input validation
-- [ ] Error handling
+- [ ] Input validation (type, length, size, format)
+- [ ] Error handling (structured errors, no stack traces in responses)
 - [ ] Authentication/authorization
-- [ ] Logging
-- [ ] Monitoring
+- [ ] Structured logging (JSON, correlation ID, PII redacted)
+- [ ] Health check (/health) and readiness probe (/ready)
+- [ ] Config validated on startup
 
 ### Documentation Phase
 - [ ] API documented (OpenAPI/Swagger)
-- [ ] Examples provided
-- [ ] Error responses documented
+- [ ] Examples provided (happy path + error cases)
+- [ ] Error responses documented with stable error codes
 - [ ] Authentication documented
 - [ ] Versioning documented
+- [ ] Rate limits documented per endpoint
+- [ ] Deprecation schedule documented
 
 ### Testing Phase
 - [ ] Unit tests
 - [ ] Integration tests
-- [ ] Contract tests
+- [ ] Contract tests (old clients still work with new API)
+- [ ] Negative tests (invalid input, unauthorized, wrong method)
+- [ ] Boundary tests (empty, null, max length, pageSize=0)
 - [ ] Performance tests
-- [ ] Security tests
+- [ ] Security tests (rate limit, auth bypass, data isolation)
+- [ ] Concurrent modification tests (two users edit same resource)
 
 ---
 
 ## SECURITY CONSIDERATIONS
 
 **API Security Checklist**:
-- [ ] Authentication required
-- [ ] Authorization checks present
-- [ ] Input validation
-- [ ] Output sanitization
-- [ ] Rate limiting
+- [ ] Authentication required on all non-public endpoints
+- [ ] Authorization checks present (role-based + data ownership)
+- [ ] Data isolation: queries scoped to authenticated user/tenant
+- [ ] Input validation (type, length, size, format, nesting depth)
+- [ ] Output sanitization (no internal details in error responses)
+- [ ] Rate limiting per-endpoint with 429 + Retry-After header
 - [ ] HTTPS only (production)
-- [ ] CORS configured properly
-- [ ] No sensitive data in URLs
-- [ ] Proper error messages (no info leakage)
+- [ ] CORS: specific origins only (not *), credentials mode correct
+- [ ] No sensitive data in URLs or query parameters
+- [ ] Error messages: structured code + generic message (no stack traces)
+- [ ] File uploads: magic byte validation, size limit, path sanitization
+- [ ] Session/token expiry enforced, invalidated on password change
+- [ ] Idempotency-Key on mutations to prevent duplicate side effects
+- [ ] Pagination: max pageSize enforced, no unbounded list responses
+- [ ] Bulk endpoints: item count limits, per-item authorization
 
 **Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns
 
