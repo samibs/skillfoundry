@@ -2,7 +2,7 @@
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-## The Forge (46 Agents)
+## The Forge (53 Core Agents / 60 Skills)
 
 ```
 LEADERSHIP     ARCHITECTURE    IMPLEMENTATION   QUALITY         SECURITY
@@ -79,6 +79,14 @@ math-check     memory
 | `/replay` | Replay Execution | Re-run last /go or /forge with same params |
 | `/analytics` | Agent Analytics | Invocation stats, success rates, trends |
 | `/anvil` | **Anvil Quality Gate** | Run 6-tier validation on changed files or specific tiers |
+
+### Agent Evolution
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 analyze
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 debate
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MaxIterations 10
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/agent-evolution.ps1 cycle -AutoFix -MinIterations 100 -MaxIterations 100
+```
 
 ---
 
