@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1] - 2026-02-23
+
+### Performance — Multi-Layer Caching
+
+Token usage and latency optimizations across the CLI provider layer.
+
+#### Anthropic Prompt Caching
+- System prompt and last tool definition now marked with `cache_control: { type: 'ephemeral' }` in both `stream()` and `streamWithTools()`
+- ~90% token discount on repeated system prompt + tool schema tokens across agentic turns
+
+#### Provider Singleton
+- Provider SDK instances cached via `useRef` — no longer reinstantiated on every `sendMessage()` call
+- Separate refs for primary and fallback providers, invalidated only when provider name changes
+
+#### In-Memory Budget Cache
+- `checkBudget()` accepts optional pre-loaded `UsageData`, eliminating `readFileSync` on every budget check
+- Budget data loaded from disk once per session, updated in-memory after each `recordUsage()` call
+- Eliminates 2+ synchronous disk reads per agentic turn
+
+#### Tool Transform Memoization
+- `toOpenAITools()` and `toGeminiTools()` results memoized by tool-name key
+- Tool schemas are identical every turn of the agentic loop — avoids redundant array mapping
+
+### Changed
+- `.version` bumped to 2.0.1 (from 2.0.0)
+- `sf_cli/package.json` version bumped to 2.0.1
+
+---
+
 ## [2.0.0] - 2026-02-23
 
 ### Added — Interactive CLI (Node.js + Ink)

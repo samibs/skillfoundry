@@ -1,7 +1,19 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-02-23T14:00:00Z
+> Last updated: 2026-02-23T15:00:00Z
 > Platform: claude-code
+
+## Performance Session — 2026-02-23
+- Task: Multi-layer caching to reduce token usage and latency
+- Files modified: 5 (provider.ts, useStream.ts, budget.ts, openai.ts, gemini.ts)
+- Tests: 211 passing (no regressions)
+- Version: 2.0.0 → 2.0.1
+
+### Caching Layers Implemented
+1. **Anthropic prompt caching**: `cache_control: { type: 'ephemeral' }` on system prompt + last tool def (~90% token discount)
+2. **Provider singleton**: SDK instances cached via `useRef`, not reinstantiated per message
+3. **In-memory budget cache**: `checkBudget()` reads disk once, reuses in-memory `UsageData` afterward
+4. **Tool transform memoization**: `toOpenAITools()` / `toGeminiTools()` cached by tool-name key
 
 ## Forge Session — 2026-02-23
 - PRDs: 8 new enhancement PRDs generated in genesis/
