@@ -25,11 +25,15 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRAMEWORK_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 REGISTRY_FILE="$FRAMEWORK_DIR/.project-registry"
 CENTRAL_KNOWLEDGE="$FRAMEWORK_DIR/memory_bank/knowledge"
+JSON_OUTPUT=false
+QUIET=false
+VERBOSE=false
 
 # Universal knowledge files
 DECISIONS_UNIVERSAL="$CENTRAL_KNOWLEDGE/decisions-universal.jsonl"
 ERRORS_UNIVERSAL="$CENTRAL_KNOWLEDGE/errors-universal.jsonl"
 PATTERNS_UNIVERSAL="$CENTRAL_KNOWLEDGE/patterns-universal.jsonl"
+PROMOTION_REVIEW_FILE="$CENTRAL_KNOWLEDGE/promotion-review.jsonl"
 
 # Ensure central knowledge directory exists
 mkdir -p "$CENTRAL_KNOWLEDGE"
@@ -38,6 +42,11 @@ mkdir -p "$CENTRAL_KNOWLEDGE"
 touch "$DECISIONS_UNIVERSAL" 2>/dev/null || true
 touch "$ERRORS_UNIVERSAL" 2>/dev/null || true
 touch "$PATTERNS_UNIVERSAL" 2>/dev/null || true
+touch "$PROMOTION_REVIEW_FILE" 2>/dev/null || true
+
+now_ts() {
+    date -u +"%Y-%m-%dT%H:%M:%SZ"
+}
 
 # ═══════════════════════════════════════════════════════════════
 # SECURITY: Knowledge Sanitization
@@ -127,17 +136,27 @@ is_duplicate() {
     # Normalize content for comparison (lowercase, trim whitespace)
     local normalized
     normalized=$(echo "$content" | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]\+/ /g' | sed 's/^ //;s/ $//')
+    local signature
+    signature=$(printf "%s" "$normalized" | sha256sum 2>/dev/null | awk '{print $1}')
+    if [ -z "$signature" ]; then
+        signature="$normalized"
+    fi
 
     # Check each line for similarity
     while IFS= read -r line; do
         if [ -n "$line" ]; then
             local existing_content
             existing_content=$(echo "$line" | jq -r '.content // ""' 2>/dev/null)
+            local existing_sig
+            existing_sig=$(echo "$line" | jq -r '.signature // ""' 2>/dev/null)
             local existing_normalized
             existing_normalized=$(echo "$existing_content" | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]\+/ /g' | sed 's/^ //;s/ $//')
+            if [ -z "$existing_sig" ]; then
+                existing_sig=$(printf "%s" "$existing_normalized" | sha256sum 2>/dev/null | awk '{print $1}')
+            fi
 
-            # Exact match
-            if [ "$normalized" = "$existing_normalized" ]; then
+            # Signature match (or fallback exact normalized content match)
+            if [ "$signature" = "$existing_sig" ] || [ "$normalized" = "$existing_normalized" ]; then
                 # Boost weight of existing entry
                 local existing_id
                 existing_id=$(echo "$line" | jq -r '.id // ""' 2>/dev/null)
@@ -153,6 +172,8 @@ is_duplicate() {
                     new_weight="1.0"
                 fi
                 local new_promo=$((promo_count + 1))
+                local source_project
+                source_project=$(echo "$line" | jq -r '.source_project // ""' 2>/dev/null)
 
                 # Update entry in-place
                 local temp_file
@@ -161,7 +182,11 @@ is_duplicate() {
                     local update_id
                     update_id=$(echo "$update_line" | jq -r '.id // ""' 2>/dev/null)
                     if [ "$update_id" = "$existing_id" ]; then
-                        echo "$update_line" | jq -c --argjson w "$new_weight" --argjson pc "$new_promo" '.weight = $w | .promotion_count = $pc' >> "$temp_file"
+                        echo "$update_line" | jq -c \
+                            --argjson w "$new_weight" \
+                            --argjson pc "$new_promo" \
+                            --arg sig "$signature" \
+                            '.weight = $w | .promotion_count = $pc | .signature = $sig' >> "$temp_file"
                     else
                         echo "$update_line" >> "$temp_file"
                     fi
@@ -195,7 +220,9 @@ harvest_project() {
         return 0
     fi
 
-    echo -e "${BLUE}[STEP 1/4]${NC} Scanning project: $(basename "$project_path")"
+    if [ "$QUIET" != "true" ] && [ "$JSON_OUTPUT" != "true" ]; then
+        echo -e "${BLUE}[STEP 1/4]${NC} Scanning project: $(basename "$project_path")"
+    fi
 
     local harvested=0
     local skipped_sensitive=0
@@ -218,7 +245,9 @@ harvest_project() {
             continue
         fi
 
-        echo -e "${BLUE}[STEP 2/4]${NC} Processing: $file_type"
+        if [ "$VERBOSE" = "true" ] && [ "$QUIET" != "true" ] && [ "$JSON_OUTPUT" != "true" ]; then
+            echo -e "${BLUE}[STEP 2/4]${NC} Processing: $file_type"
+        fi
 
         # Determine target universal file
         local target_file=""
@@ -291,6 +320,7 @@ harvest_project() {
                 --arg source "$project_path" \
                 --arg harvested_at "$timestamp" \
                 --arg promotion_status "HARVESTED" \
+                --arg sig "$(printf "%s" "$content" | tr '[:upper:]' '[:lower:]' | sed 's/[[:space:]]\+/ /g' | sed 's/^ //;s/ $//' | sha256sum 2>/dev/null | awk '{print $1}')" \
                 '{
                     id: $id,
                     type: $type,
@@ -299,6 +329,7 @@ harvest_project() {
                     tags: $tags,
                     scope: $scope,
                     source_project: $source,
+                    signature: $sig,
                     promotion_count: 1,
                     promotion_status: $promotion_status,
                     harvested_at: $harvested_at,
@@ -310,21 +341,35 @@ harvest_project() {
         done < "$source_file"
     done
 
-    echo -e "${BLUE}[STEP 3/4]${NC} Updating registry metadata"
+    if [ "$QUIET" != "true" ] && [ "$JSON_OUTPUT" != "true" ]; then
+        echo -e "${BLUE}[STEP 3/4]${NC} Updating registry metadata"
+    fi
 
     # Update registry metadata with harvest timestamp
     if [ -f "$SCRIPT_DIR/registry.sh" ]; then
         bash "$SCRIPT_DIR/registry.sh" update-meta "$project_path" --last_harvested="$timestamp" 2>/dev/null || true
     fi
 
-    echo -e "${BLUE}[STEP 4/4]${NC} Harvest complete"
-    echo ""
-    echo -e "${GREEN}[PASS]${NC} Harvest results for $(basename "$project_path")"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "  Harvested:         $harvested entries"
-    echo "  Skipped (secrets): $skipped_sensitive"
-    echo "  Skipped (dupes):   $skipped_duplicate"
-    echo "  Skipped (scope):   $skipped_scope (project-specific)"
+    if [ "$JSON_OUTPUT" = "true" ]; then
+        jq -nc \
+            --arg project "$(basename "$project_path")" \
+            --arg path "$project_path" \
+            --arg ts "$timestamp" \
+            --argjson harvested "$harvested" \
+            --argjson skipped_sensitive "$skipped_sensitive" \
+            --argjson skipped_duplicate "$skipped_duplicate" \
+            --argjson skipped_scope "$skipped_scope" \
+            '{status:"ok",project:$project,path:$path,harvested_at:$ts,harvested:$harvested,skipped:{sensitive:$skipped_sensitive,duplicate:$skipped_duplicate,scope:$skipped_scope}}'
+    elif [ "$QUIET" != "true" ]; then
+        echo -e "${BLUE}[STEP 4/4]${NC} Harvest complete"
+        echo ""
+        echo -e "${GREEN}[PASS]${NC} Harvest results for $(basename "$project_path")"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "  Harvested:         $harvested entries"
+        echo "  Skipped (secrets): $skipped_sensitive"
+        echo "  Skipped (dupes):   $skipped_duplicate"
+        echo "  Skipped (scope):   $skipped_scope (project-specific)"
+    fi
 
     return 0
 }
@@ -390,6 +435,7 @@ promote_knowledge() {
 
     local promoted=0
     local candidates=0
+    local review_queued=0
 
     for universal_file in "$DECISIONS_UNIVERSAL" "$ERRORS_UNIVERSAL" "$PATTERNS_UNIVERSAL"; do
         if [ ! -f "$universal_file" ] || [ ! -s "$universal_file" ]; then
@@ -448,6 +494,15 @@ promote_knowledge() {
                         echo "$entry" >> "$bootstrap_file"
                     fi
                 fi
+            elif [ "$status" = "CANDIDATE" ] || [ "$promo_count" -ge 2 ] 2>/dev/null; then
+                local content
+                content=$(echo "$entry" | jq -r '.content // ""' 2>/dev/null)
+                if [ -n "$content" ] && ! grep -qF "$content" "$PROMOTION_REVIEW_FILE" 2>/dev/null; then
+                    local review_entry
+                    review_entry=$(echo "$entry" | jq -c --arg queued_at "$(now_ts)" '.review_status = "PENDING" | .review_queued_at = $queued_at')
+                    echo "$review_entry" >> "$PROMOTION_REVIEW_FILE"
+                    review_queued=$((review_queued + 1))
+                fi
             fi
 
             echo "$entry" >> "$temp_file"
@@ -459,6 +514,7 @@ promote_knowledge() {
     echo -e "${GREEN}[PASS]${NC} Promotion results"
     echo "  New candidates: $candidates"
     echo "  Promoted:       $promoted"
+    echo "  Review queued:  $review_queued"
 
     # Push promoted knowledge to hub if configured
     local sync_script="$SCRIPT_DIR/knowledge-sync.sh"
@@ -476,6 +532,78 @@ promote_knowledge() {
 # ═══════════════════════════════════════════════════════════════
 
 show_status() {
+    if [ "$JSON_OUTPUT" = "true" ]; then
+        local decisions_total decisions_harvested decisions_candidate decisions_promoted
+        local errors_total errors_harvested errors_candidate errors_promoted
+        local patterns_total patterns_harvested patterns_candidate patterns_promoted
+        local bootstrap_total
+        local review_total
+
+        decisions_total=$(wc -l < "$DECISIONS_UNIVERSAL" 2>/dev/null || echo "0")
+        decisions_total=$(echo "$decisions_total" | tr -cd '0-9')
+        [ -z "$decisions_total" ] && decisions_total=0
+        decisions_harvested=$(grep -c '"HARVESTED"' "$DECISIONS_UNIVERSAL" 2>/dev/null || echo "0")
+        decisions_harvested=$(echo "$decisions_harvested" | tr -cd '0-9')
+        [ -z "$decisions_harvested" ] && decisions_harvested=0
+        decisions_candidate=$(grep -c '"CANDIDATE"' "$DECISIONS_UNIVERSAL" 2>/dev/null || echo "0")
+        decisions_candidate=$(echo "$decisions_candidate" | tr -cd '0-9')
+        [ -z "$decisions_candidate" ] && decisions_candidate=0
+        decisions_promoted=$(grep -c '"PROMOTED"' "$DECISIONS_UNIVERSAL" 2>/dev/null || echo "0")
+        decisions_promoted=$(echo "$decisions_promoted" | tr -cd '0-9')
+        [ -z "$decisions_promoted" ] && decisions_promoted=0
+
+        errors_total=$(wc -l < "$ERRORS_UNIVERSAL" 2>/dev/null || echo "0")
+        errors_total=$(echo "$errors_total" | tr -cd '0-9')
+        [ -z "$errors_total" ] && errors_total=0
+        errors_harvested=$(grep -c '"HARVESTED"' "$ERRORS_UNIVERSAL" 2>/dev/null || echo "0")
+        errors_harvested=$(echo "$errors_harvested" | tr -cd '0-9')
+        [ -z "$errors_harvested" ] && errors_harvested=0
+        errors_candidate=$(grep -c '"CANDIDATE"' "$ERRORS_UNIVERSAL" 2>/dev/null || echo "0")
+        errors_candidate=$(echo "$errors_candidate" | tr -cd '0-9')
+        [ -z "$errors_candidate" ] && errors_candidate=0
+        errors_promoted=$(grep -c '"PROMOTED"' "$ERRORS_UNIVERSAL" 2>/dev/null || echo "0")
+        errors_promoted=$(echo "$errors_promoted" | tr -cd '0-9')
+        [ -z "$errors_promoted" ] && errors_promoted=0
+
+        patterns_total=$(wc -l < "$PATTERNS_UNIVERSAL" 2>/dev/null || echo "0")
+        patterns_total=$(echo "$patterns_total" | tr -cd '0-9')
+        [ -z "$patterns_total" ] && patterns_total=0
+        patterns_harvested=$(grep -c '"HARVESTED"' "$PATTERNS_UNIVERSAL" 2>/dev/null || echo "0")
+        patterns_harvested=$(echo "$patterns_harvested" | tr -cd '0-9')
+        [ -z "$patterns_harvested" ] && patterns_harvested=0
+        patterns_candidate=$(grep -c '"CANDIDATE"' "$PATTERNS_UNIVERSAL" 2>/dev/null || echo "0")
+        patterns_candidate=$(echo "$patterns_candidate" | tr -cd '0-9')
+        [ -z "$patterns_candidate" ] && patterns_candidate=0
+        patterns_promoted=$(grep -c '"PROMOTED"' "$PATTERNS_UNIVERSAL" 2>/dev/null || echo "0")
+        patterns_promoted=$(echo "$patterns_promoted" | tr -cd '0-9')
+        [ -z "$patterns_promoted" ] && patterns_promoted=0
+
+        bootstrap_total=$(wc -l < "$CENTRAL_KNOWLEDGE/bootstrap.jsonl" 2>/dev/null || echo "0")
+        bootstrap_total=$(echo "$bootstrap_total" | tr -cd '0-9')
+        [ -z "$bootstrap_total" ] && bootstrap_total=0
+        review_total=$(wc -l < "$PROMOTION_REVIEW_FILE" 2>/dev/null || echo "0")
+        review_total=$(echo "$review_total" | tr -cd '0-9')
+        [ -z "$review_total" ] && review_total=0
+
+        jq -nc \
+            --argjson decisions_total "$decisions_total" \
+            --argjson decisions_harvested "$decisions_harvested" \
+            --argjson decisions_candidate "$decisions_candidate" \
+            --argjson decisions_promoted "$decisions_promoted" \
+            --argjson errors_total "$errors_total" \
+            --argjson errors_harvested "$errors_harvested" \
+            --argjson errors_candidate "$errors_candidate" \
+            --argjson errors_promoted "$errors_promoted" \
+            --argjson patterns_total "$patterns_total" \
+            --argjson patterns_harvested "$patterns_harvested" \
+            --argjson patterns_candidate "$patterns_candidate" \
+            --argjson patterns_promoted "$patterns_promoted" \
+            --argjson bootstrap_total "$bootstrap_total" \
+            --argjson review_total "$review_total" \
+            '{status:"ok",decisions:{total:$decisions_total,harvested:$decisions_harvested,candidate:$decisions_candidate,promoted:$decisions_promoted},errors:{total:$errors_total,harvested:$errors_harvested,candidate:$errors_candidate,promoted:$errors_promoted},patterns:{total:$patterns_total,harvested:$patterns_harvested,candidate:$patterns_candidate,promoted:$patterns_promoted},bootstrap:{total:$bootstrap_total},review:{total:$review_total}}'
+        return
+    fi
+
     echo -e "${CYAN}HARVEST STATUS${NC}"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
@@ -502,6 +630,9 @@ show_status() {
     local bootstrap="$CENTRAL_KNOWLEDGE/bootstrap.jsonl"
     if [ -f "$bootstrap" ] && [ -s "$bootstrap" ]; then
         echo "bootstrap: $(wc -l < "$bootstrap") entries"
+    fi
+    if [ -f "$PROMOTION_REVIEW_FILE" ] && [ -s "$PROMOTION_REVIEW_FILE" ]; then
+        echo "promotion-review: $(wc -l < "$PROMOTION_REVIEW_FILE") entries"
     fi
 
     echo ""
@@ -534,12 +665,23 @@ show_status() {
 # MAIN DISPATCHER
 # ═══════════════════════════════════════════════════════════════
 
-case "${1:-}" in
+PRIMARY_ARG=""
+for arg in "$@"; do
+    case "$arg" in
+        --json) JSON_OUTPUT=true ;;
+        --quiet) QUIET=true ;;
+        --verbose) VERBOSE=true ;;
+        --force) FORCE=true ;;
+        *)
+            if [ -z "$PRIMARY_ARG" ]; then
+                PRIMARY_ARG="$arg"
+            fi
+            ;;
+    esac
+done
+
+case "${PRIMARY_ARG:-}" in
     --all)
-        FORCE="${FORCE:-}"
-        if [ "${2:-}" = "--force" ]; then
-            FORCE=true
-        fi
         harvest_all
         ;;
     --promote)

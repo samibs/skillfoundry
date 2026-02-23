@@ -9,13 +9,15 @@
 #   ./parallel/swarm-queue.sh add --id=TASK_ID --story=STORY_ID [--deps=ID1,ID2] [--files=f1,f2]
 #   ./parallel/swarm-queue.sh claim --id=TASK_ID --agent=AGENT_TYPE
 #   ./parallel/swarm-queue.sh start --id=TASK_ID
-#   ./parallel/swarm-queue.sh complete --id=TASK_ID [--result=JSON]
+#   ./parallel/swarm-queue.sh complete --id=TASK_ID [--result=JSON] [--handoff-to=AGENT]
 #   ./parallel/swarm-queue.sh fail --id=TASK_ID --reason=REASON
 #   ./parallel/swarm-queue.sh block --id=TASK_ID --reason=REASON
 #   ./parallel/swarm-queue.sh unblock --id=TASK_ID
 #   ./parallel/swarm-queue.sh list [--status=STATUS] [--json]
 #   ./parallel/swarm-queue.sh status
 #   ./parallel/swarm-queue.sh pool
+#   ./parallel/swarm-queue.sh fallback [--reason=TEXT]
+#   ./parallel/swarm-queue.sh recover
 #   ./parallel/swarm-queue.sh reset [--force]
 #   ./parallel/swarm-queue.sh --help
 
@@ -36,6 +38,7 @@ QUEUE_DIR="${QUEUE_DIR:-.claude/swarm}"
 QUEUE_FILE=""
 POOL_FILE=""
 LOCK_FILE=""
+MODE_FILE=""
 MAX_CONCURRENT=5
 MAX_RETRIES=3
 FORCE="${FORCE:-false}"
@@ -63,6 +66,7 @@ show_help() {
     echo "  list                    List tasks (optionally filtered by status)"
     echo "  status                  Show queue summary statistics"
     echo "  pool                    Show agent availability pool"
+    echo "  recover                 Compact queue file and drop invalid entries"
     echo "  reset                   Clear all tasks (requires confirmation)"
     echo ""
     echo "OPTIONS:"
@@ -73,6 +77,7 @@ show_help() {
     echo "  --files=f1,f2           Comma-separated files this task will touch"
     echo "  --reason=REASON         Reason for failure or block"
     echo "  --result=JSON           Completion result as JSON string"
+    echo "  --handoff-to=AGENT      Write handoff note to scratchpad for next agent"
     echo "  --status=STATUS         Filter by status (queued, claimed, in_progress, complete, failed, blocked)"
     echo "  --dir=PATH              Queue directory (default: .claude/swarm)"
     echo "  --json                  Output in JSON format"
@@ -103,7 +108,9 @@ DEPS=""
 FILES=""
 REASON=""
 RESULT=""
+HANDOFF_TO=""
 FILTER_STATUS=""
+REASON=""
 
 for arg in "$@"; do
     case "$arg" in
@@ -115,7 +122,9 @@ for arg in "$@"; do
         --files=*) FILES="${arg#--files=}" ;;
         --reason=*) REASON="${arg#--reason=}" ;;
         --result=*) RESULT="${arg#--result=}" ;;
+        --handoff-to=*) HANDOFF_TO="${arg#--handoff-to=}" ;;
         --status=*) FILTER_STATUS="${arg#--status=}" ;;
+        --reason=*) REASON="${arg#--reason=}" ;;
         --dir=*) QUEUE_DIR="${arg#--dir=}" ;;
         --json) JSON_OUTPUT=true ;;
         --force) FORCE=true ;;
@@ -128,6 +137,7 @@ done
 QUEUE_FILE="$QUEUE_DIR/task-queue.jsonl"
 POOL_FILE="$QUEUE_DIR/agent-pool.json"
 LOCK_FILE="$QUEUE_DIR/.queue.lock"
+MODE_FILE="$QUEUE_DIR/mode.json"
 
 # ═══════════════════════════════════════════════════════════════
 # UTILITY FUNCTIONS
@@ -164,6 +174,74 @@ get_task() {
         return 0
     fi
     grep "\"id\":\"$task_id\"" "$QUEUE_FILE" 2>/dev/null | tail -1 || true
+}
+
+# Compact queue file by keeping the latest valid record per task id.
+recover_queue_file() {
+    if [ ! -f "$QUEUE_FILE" ]; then
+        return 0
+    fi
+
+    local tmp_file
+    tmp_file=$(mktemp)
+    local invalid=0
+    local duplicates=0
+
+    declare -A task_map=()
+    local ordered_ids=()
+    local line
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        if ! echo "$line" | jq -e . >/dev/null 2>&1; then
+            invalid=$((invalid + 1))
+            continue
+        fi
+        local id
+        id=$(echo "$line" | jq -r '.id // ""' 2>/dev/null)
+        if [ -z "$id" ]; then
+            invalid=$((invalid + 1))
+            continue
+        fi
+        if [ -n "${task_map[$id]+x}" ]; then
+            duplicates=$((duplicates + 1))
+        else
+            ordered_ids+=("$id")
+        fi
+        task_map["$id"]="$line"
+    done < "$QUEUE_FILE"
+
+    local id
+    for id in "${ordered_ids[@]}"; do
+        echo "${task_map[$id]}" >> "$tmp_file"
+    done
+    mv "$tmp_file" "$QUEUE_FILE"
+
+    if [ "$JSON_OUTPUT" = true ]; then
+        echo "{\"invalid_removed\":$invalid,\"duplicates_compacted\":$duplicates,\"remaining\":${#ordered_ids[@]}}"
+    else
+        echo -e "${GREEN}[PASS]${NC} Queue recovered: removed $invalid invalid line(s), compacted $duplicates duplicate record(s)"
+    fi
+}
+
+ensure_mode_file() {
+    if [ ! -f "$MODE_FILE" ]; then
+        jq -nc --arg mode "swarm" --arg ts "$(now_ts)" '{mode:$mode,last_transition_at:$ts,last_reason:""}' > "$MODE_FILE"
+    fi
+}
+
+set_mode() {
+    local mode="$1"
+    local reason="${2:-}"
+    ensure_mode_file
+    local tmp
+    tmp=$(mktemp)
+    jq --arg mode "$mode" --arg reason "$reason" --arg ts "$(now_ts)" '.mode=$mode | .last_transition_at=$ts | .last_reason=$reason' "$MODE_FILE" > "$tmp"
+    mv "$tmp" "$MODE_FILE"
+}
+
+current_mode() {
+    ensure_mode_file
+    jq -r '.mode // "swarm"' "$MODE_FILE" 2>/dev/null || echo "swarm"
 }
 
 # Update a task in the queue file (replace line matching ID)
@@ -255,6 +333,7 @@ deps_satisfied() {
 cmd_init() {
     if [ -d "$QUEUE_DIR" ] && [ -f "$QUEUE_FILE" ]; then
         echo -e "${YELLOW}[WARN]${NC} Swarm queue already initialized at $QUEUE_DIR"
+        recover_queue_file >/dev/null 2>&1 || true
         return 0
     fi
 
@@ -262,6 +341,7 @@ cmd_init() {
 
     # Create empty queue file
     touch "$QUEUE_FILE"
+    ensure_mode_file
 
     # Create agent pool file
     cat > "$POOL_FILE" << 'POOL_EOF'
@@ -302,15 +382,17 @@ cmd_add() {
         exit 1
     fi
 
-    # Check for duplicate
+    acquire_lock
+    recover_queue_file >/dev/null 2>&1 || true
+
+    # Check for duplicate under lock to prevent races.
     local existing
     existing=$(get_task "$TASK_ID")
     if [ -n "$existing" ]; then
+        release_lock
         echo -e "${YELLOW}[WARN]${NC} Task $TASK_ID already exists (status: $(json_field "$existing" "status"))"
         return 0
     fi
-
-    acquire_lock
 
     # Build dependencies array
     local deps_json="[]"
@@ -355,6 +437,7 @@ cmd_claim() {
     fi
 
     acquire_lock
+    recover_queue_file >/dev/null 2>&1 || true
 
     local task
     task=$(get_task "$TASK_ID")
@@ -420,11 +503,34 @@ cmd_claim() {
                 if [ "$overlap" = true ]; then
                     local ip_id
                     ip_id=$(json_field "$ip_task" "id")
+                    local fallback_reason
+                    fallback_reason="file conflict: $TASK_ID overlaps with in-progress $ip_id"
+                    set_mode "wave" "$fallback_reason"
                     release_lock
                     echo -e "${RED}[FAIL]${NC} File conflict with in-progress task $ip_id"
+                    echo -e "${YELLOW}[WARN]${NC} Swarm fallback activated (mode: wave)"
                     exit 1
                 fi
             done <<< "$in_progress_tasks"
+        fi
+    fi
+
+    # Register file locks in conflict detector before claiming.
+    local conflict_script
+    conflict_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/conflict-detector.sh"
+    if [ -f "$conflict_script" ] && [ -n "$task_files" ] && ! (echo "$task_files" | grep -q '"files_touched":\[\]' 2>/dev/null); then
+        local task_csv
+        task_csv=$(echo "$task_files" | grep -o '"[^"]*"' 2>/dev/null | tr -d '"' | grep -v "files_touched" | paste -sd, -)
+        if [ -n "$task_csv" ]; then
+            if ! SWARM_DIR="$QUEUE_DIR" bash "$conflict_script" register --task="$TASK_ID" --files="$task_csv" >/dev/null 2>&1; then
+                local fallback_reason
+                fallback_reason="conflict-detector register failed for $TASK_ID ($task_csv)"
+                set_mode "wave" "$fallback_reason"
+                release_lock
+                echo -e "${RED}[FAIL]${NC} Conflict detector blocked claim for $TASK_ID"
+                echo -e "${YELLOW}[WARN]${NC} Swarm fallback activated (mode: wave)"
+                exit 1
+            fi
         fi
     fi
 
@@ -447,6 +553,7 @@ cmd_start() {
     fi
 
     acquire_lock
+    recover_queue_file >/dev/null 2>&1 || true
 
     local task
     task=$(get_task "$TASK_ID")
@@ -484,6 +591,7 @@ cmd_complete() {
     fi
 
     acquire_lock
+    recover_queue_file >/dev/null 2>&1 || true
 
     local task
     task=$(get_task "$TASK_ID")
@@ -519,6 +627,38 @@ cmd_complete() {
 
     echo -e "${GREEN}[PASS]${NC} Task $TASK_ID completed"
 
+    # Optional dynamic handoff note to downstream agent.
+    if [ -n "$HANDOFF_TO" ]; then
+        local from_agent
+        from_agent=$(json_field "$task" "claimed_by")
+        [ -z "$from_agent" ] && from_agent="system"
+        local handoff_msg
+        handoff_msg="Handoff from $from_agent: task $TASK_ID completed; continue with downstream validation."
+        if [ -n "$RESULT" ]; then
+            local compact_result
+            compact_result=$(echo "$RESULT" | tr '\n' ' ' | sed 's/"/'\''/g' | cut -c1-140)
+            handoff_msg="$handoff_msg Result: $compact_result"
+        fi
+        local scratchpad_script
+        scratchpad_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/swarm-scratchpad.sh"
+        if [ -f "$scratchpad_script" ]; then
+            SWARM_DIR="$QUEUE_DIR" bash "$scratchpad_script" write \
+                --from="$from_agent" \
+                --to="$HANDOFF_TO" \
+                --task="$TASK_ID" \
+                --priority=high \
+                --msg="$handoff_msg" >/dev/null 2>&1 || true
+            echo -e "${CYAN}[INFO]${NC} Handoff note created for $HANDOFF_TO"
+        fi
+    fi
+
+    # Release conflict-detector locks held by this task.
+    local conflict_script
+    conflict_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/conflict-detector.sh"
+    if [ -f "$conflict_script" ]; then
+        SWARM_DIR="$QUEUE_DIR" bash "$conflict_script" release --task="$TASK_ID" >/dev/null 2>&1 || true
+    fi
+
     # Check if any blocked tasks can now be unblocked
     local blocked_tasks
     blocked_tasks=$(tasks_by_status "blocked")
@@ -544,6 +684,7 @@ cmd_fail() {
     fi
 
     acquire_lock
+    recover_queue_file >/dev/null 2>&1 || true
 
     local task
     task=$(get_task "$TASK_ID")
@@ -583,6 +724,13 @@ cmd_fail() {
     else
         echo -e "${RED}[FAIL]${NC} Task $TASK_ID failed: $REASON (max retries exhausted - escalate)"
     fi
+
+    # Release locks on failure; task can reacquire on retry claim.
+    local conflict_script
+    conflict_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/conflict-detector.sh"
+    if [ -f "$conflict_script" ]; then
+        SWARM_DIR="$QUEUE_DIR" bash "$conflict_script" release --task="$TASK_ID" >/dev/null 2>&1 || true
+    fi
 }
 
 cmd_block() {
@@ -596,6 +744,7 @@ cmd_block() {
     fi
 
     acquire_lock
+    recover_queue_file >/dev/null 2>&1 || true
 
     local task
     task=$(get_task "$TASK_ID")
@@ -625,6 +774,13 @@ cmd_block() {
     release_lock
 
     echo -e "${YELLOW}[WARN]${NC} Task $TASK_ID blocked: $REASON"
+
+    # Release locks when blocked to avoid deadlocks.
+    local conflict_script
+    conflict_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/conflict-detector.sh"
+    if [ -f "$conflict_script" ]; then
+        SWARM_DIR="$QUEUE_DIR" bash "$conflict_script" release --task="$TASK_ID" >/dev/null 2>&1 || true
+    fi
 }
 
 cmd_unblock() {
@@ -634,6 +790,7 @@ cmd_unblock() {
     fi
 
     acquire_lock
+    recover_queue_file >/dev/null 2>&1 || true
 
     local task
     task=$(get_task "$TASK_ID")
@@ -666,14 +823,14 @@ cmd_unblock() {
         # Increment retry count
         local new_count=$((retry_count + 1))
         local new_task
-        new_task=$(echo "$task" | sed "s/\"status\":\"failed\"/\"status\":\"queued\"/" | sed "s/\"retry_count\":$retry_count/\"retry_count\":$new_count/" | sed "s/\"claimed_by\":\"[^\"]*\"/\"claimed_by\":\"\"/" | sed "s/\"claimed_at\":\"[^\"]*\"/\"claimed_at\":\"\"/" | sed "s/\"started_at\":\"[^\"]*\"/\"started_at\":\"\"/" | sed "s/\"fail_reason\":\"[^\"]*\"/\"fail_reason\":\"\"/")
+        new_task=$(echo "$task" | sed "s/\"status\":\"failed\"/\"status\":\"queued\"/" | sed "s/\"retry_count\":$retry_count/\"retry_count\":$new_count/" | sed "s/\"claimed_by\":\"[^\"]*\"/\"claimed_by\":\"\"/" | sed "s/\"claimed_at\":\"[^\"]*\"/\"claimed_at\":\"\"/" | sed "s/\"started_at\":\"[^\"]*\"/\"started_at\":\"\"/" | sed "s/\"completed_at\":\"[^\"]*\"/\"completed_at\":\"\"/" | sed "s/\"fail_reason\":\"[^\"]*\"/\"fail_reason\":\"\"/" | sed "s/\"result\":{[^}]*}/\"result\":{}/")
         update_task "$TASK_ID" "$new_task"
         release_lock
         echo -e "${GREEN}[PASS]${NC} Task $TASK_ID re-queued for retry ($new_count/$MAX_RETRIES)"
     else
         # Blocked -> Queued
         local new_task
-        new_task=$(echo "$task" | sed "s/\"status\":\"blocked\"/\"status\":\"queued\"/" | sed "s/\"claimed_by\":\"[^\"]*\"/\"claimed_by\":\"\"/" | sed "s/\"claimed_at\":\"[^\"]*\"/\"claimed_at\":\"\"/" | sed "s/\"started_at\":\"[^\"]*\"/\"started_at\":\"\"/" | sed "s/\"block_reason\":\"[^\"]*\"/\"block_reason\":\"\"/")
+        new_task=$(echo "$task" | sed "s/\"status\":\"blocked\"/\"status\":\"queued\"/" | sed "s/\"claimed_by\":\"[^\"]*\"/\"claimed_by\":\"\"/" | sed "s/\"claimed_at\":\"[^\"]*\"/\"claimed_at\":\"\"/" | sed "s/\"started_at\":\"[^\"]*\"/\"started_at\":\"\"/" | sed "s/\"completed_at\":\"[^\"]*\"/\"completed_at\":\"\"/" | sed "s/\"block_reason\":\"[^\"]*\"/\"block_reason\":\"\"/" | sed "s/\"result\":{[^}]*}/\"result\":{}/")
         update_task "$TASK_ID" "$new_task"
         release_lock
         echo -e "${GREEN}[PASS]${NC} Task $TASK_ID unblocked and re-queued"
@@ -760,6 +917,8 @@ cmd_status() {
     fi
 
     local total queued claimed in_progress complete failed blocked
+    recover_queue_file >/dev/null 2>&1 || true
+    ensure_mode_file
     total=$(wc -l < "$QUEUE_FILE" 2>/dev/null || echo "0")
     total=$(echo "$total" | tr -d ' ')
     queued=$(count_by_status "queued")
@@ -770,7 +929,7 @@ cmd_status() {
     blocked=$(count_by_status "blocked")
 
     if [ "$JSON_OUTPUT" = true ]; then
-        echo "{\"total\":$total,\"queued\":$queued,\"claimed\":$claimed,\"in_progress\":$in_progress,\"complete\":$complete,\"failed\":$failed,\"blocked\":$blocked}"
+        echo "{\"mode\":\"$(current_mode)\",\"total\":$total,\"queued\":$queued,\"claimed\":$claimed,\"in_progress\":$in_progress,\"complete\":$complete,\"failed\":$failed,\"blocked\":$blocked}"
         return
     fi
 
@@ -784,6 +943,7 @@ cmd_status() {
     echo -e "  ${GREEN}Complete:${NC}        $complete"
     echo -e "  ${RED}Failed:${NC}          $failed"
     echo -e "  ${RED}Blocked:${NC}         $blocked"
+    echo -e "  Mode:            ${BOLD}$(current_mode)${NC}"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
     local active=$((claimed + in_progress))
@@ -801,6 +961,7 @@ cmd_pool() {
         echo -e "${CYAN}[INFO]${NC} Queue not initialized"
         return
     fi
+    recover_queue_file >/dev/null 2>&1 || true
 
     echo ""
     echo -e "${BOLD}Agent Availability Pool${NC}"
@@ -883,6 +1044,19 @@ cmd_reset() {
     echo -e "${GREEN}[PASS]${NC} Queue cleared ($total tasks removed)"
 }
 
+cmd_recover() {
+    acquire_lock
+    recover_queue_file
+    release_lock
+}
+
+cmd_fallback() {
+    acquire_lock
+    set_mode "wave" "${REASON:-manual fallback}"
+    release_lock
+    echo -e "${YELLOW}[WARN]${NC} Swarm fallback activated (mode: wave)"
+}
+
 # ═══════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════
@@ -904,6 +1078,8 @@ case "$COMMAND" in
     list) cmd_list ;;
     status) cmd_status ;;
     pool) cmd_pool ;;
+    fallback) cmd_fallback ;;
+    recover) cmd_recover ;;
     reset) cmd_reset ;;
     *)
         echo -e "${RED}[FAIL]${NC} Unknown command: $COMMAND"
