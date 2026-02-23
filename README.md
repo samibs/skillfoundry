@@ -6,7 +6,46 @@
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-> A production AI engineering framework that turns requirements into tested, reviewable code through a multi-agent pipeline. Ships with an interactive CLI, quality gates, and cost controls.
+> A production AI engineering framework that turns requirements into tested, reviewable code through a multi-agent pipeline. Works inside your existing IDE (Claude Code, Cursor, Copilot, Codex, Gemini) or through a standalone interactive CLI. Ships with quality gates, persistent memory, autonomous mode, and cost controls.
+
+---
+
+## Two Ways to Use SkillFoundry
+
+### 1. Inside Your IDE (No CLI Required)
+
+SkillFoundry installs 60 skills directly into your AI coding tool. No separate CLI needed — just use the commands your platform already supports:
+
+| Platform | How You Invoke Skills | Example |
+|----------|----------------------|---------|
+| **Claude Code** | `/command` | `/forge`, `/go`, `/review`, `/coder` |
+| **GitHub Copilot** | `@agent-name` in chat | `@forge`, `@coder`, `@tester` |
+| **Cursor** | Auto-loaded rules | Rules activate based on context |
+| **OpenAI Codex** | `$command` | `$forge`, `$go`, `$review` |
+| **Google Gemini** | Skill invocation | `forge`, `go`, `review` |
+
+Every skill — from PRD generation to code review to security scanning — works natively in your IDE. The agents, protocols, and quality gates are injected into your project during install and your AI tool reads them automatically.
+
+```bash
+# Example: using SkillFoundry in Claude Code (no sf CLI)
+/prd "add user authentication with OAuth2"
+/go                    # validates PRDs, generates stories, implements
+/forge                 # full pipeline: validate → implement → test → audit → harvest
+/review                # code review
+/memory recall "auth"  # recall lessons from previous sessions
+```
+
+### 2. The Standalone CLI (`sf`)
+
+For a dedicated terminal experience with streaming UI, agent routing, tool execution, and visual quality gates:
+
+```
+ ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+ │ ◆ SkillFoundry CLI    anthropic:claude-sonnet ● team:dev ● $0.00 ● 14.2k tok │
+ └──────────────────────────────────────────────────────────────────────────────────┘
+```
+
+The CLI adds multi-provider switching, budget controls, permission management, and a visual tool execution interface on top of the same 60 skills.
 
 ---
 
@@ -178,6 +217,107 @@ The AI executes tools with permission controls and dangerous command blocking:
 
 Permission modes: `auto` (read auto-approved, write asks), `ask` (prompt every time), `trusted` (allow all), `deny` (block all).
 
+### Persistent Memory (Lessons Learned)
+
+SkillFoundry remembers across sessions. Every decision, error, and pattern is stored in `memory_bank/` using append-only JSONL with weighted relevance ranking. Agents query this memory automatically — so they don't repeat mistakes or forget conventions.
+
+```
+memory_bank/
+├── knowledge/
+│   ├── bootstrap.jsonl          Pre-seeded framework knowledge
+│   ├── facts.jsonl              Verified technical facts
+│   ├── decisions.jsonl          Design decisions with rationale
+│   ├── errors.jsonl             Error patterns and their solutions
+│   └── preferences.jsonl        User preferences and conventions
+├── relationships/
+│   ├── knowledge-graph.json     Node/edge relationship graph
+│   └── lineage.json             Correction chains and lineage
+└── retrieval/
+    ├── query-cache.json         Recent query cache
+    └── weights.json             Weight adjustment history
+```
+
+**In the CLI:**
+```
+/memory stats                              Show memory bank statistics
+/memory recall "authentication"            Find relevant lessons
+```
+
+**In any platform (Claude Code, Cursor, etc.):**
+```
+/gohm                                     Harvest lessons from current session
+/memory recall "JWT"                       Recall what you learned about JWT
+```
+
+**Via shell scripts:**
+```bash
+scripts/memory.sh remember "Use RS256 for JWT, never HS256" decision
+scripts/memory.sh recall "database migration"
+scripts/memory.sh status
+```
+
+**Weight system:** Entries start at 0.5 weight. Validated-by-test entries gain +0.2. Retrieved-and-used entries gain +0.1. Corrected entries drop to 0.3 while the correction starts at 0.7. Higher weight = higher retrieval priority.
+
+### Knowledge Sync (Cross-Project Learning)
+
+Knowledge doesn't stay locked in one project. The sync daemon pushes lessons to a central GitHub repository and pulls global lessons back — so patterns learned in project A are available in project B.
+
+```bash
+# One-time setup: connect a global knowledge repo
+scripts/knowledge-sync.sh init https://github.com/you/dev-memory.git
+
+# Start the background sync daemon (syncs every 5 minutes)
+scripts/knowledge-sync.sh start
+
+# Manual sync
+scripts/knowledge-sync.sh sync
+
+# Promote recurring error patterns to global lessons
+scripts/knowledge-sync.sh promote
+
+# Register a new project for cross-project sync
+scripts/knowledge-sync.sh register /path/to/project
+```
+
+**Harvest engine:** After a session, `scripts/harvest.sh` extracts decisions, errors, and patterns from one or all registered projects into the central `memory_bank/knowledge/` universal files. Entries that repeat 3+ times across projects get auto-promoted to global lessons.
+
+### Autonomous Mode
+
+Toggle autonomous mode and stop typing commands — just describe what you want in plain English. SkillFoundry classifies your intent and routes to the correct pipeline automatically.
+
+```
+/autonomous on                             Enable autonomous mode
+```
+
+Once active, every message is classified and routed:
+
+| You Type | Classified As | Pipeline |
+|----------|--------------|----------|
+| "add dark mode to the dashboard" | FEATURE | Architect → Coder → Tester → Gate-Keeper |
+| "the login is broken" | BUG | Debugger → Fixer → Tester |
+| "clean up the auth module" | REFACTOR | Architect → Coder → Tester |
+| "how does the payment flow work?" | QUESTION | Explain (read-only, no file changes) |
+| "deploy to staging" | OPS | Ship / DevOps pipeline |
+| "remember: we use RS256 for JWT" | MEMORY | Write to memory_bank/ |
+
+Complex features automatically get a PRD generated in `genesis/`, stories broken out, and the full agent pipeline executed — with quality gates between every handoff.
+
+```
+/autonomous off                            Back to manual command mode
+/autonomous status                         Check if autonomous mode is active
+```
+
+### Agent Evolution
+
+Agents improve over time through a debate-implement-iterate loop:
+
+```bash
+scripts/evolve.sh debate                   Agents debate improvements
+scripts/evolve.sh implement --auto-fix     Apply winning proposals
+scripts/evolve.sh iterate                  Refine through multiple rounds
+scripts/evolve.sh run                      Full evolution cycle
+```
+
 ---
 
 ## CLI Commands
@@ -205,15 +345,15 @@ Permission modes: `auto` (read auto-approved, write asks), `ask` (prompt every t
 
 ## Supported Platforms
 
-The framework generates platform-specific configurations during install:
+The framework generates platform-specific configurations during install. Each platform gets the same 60 skills adapted to its native format:
 
-| Platform | What Gets Installed | How to Use |
-|----------|-------------------|------------|
-| **Claude Code** | `.claude/commands/` (60 skills) | `/command` in Claude Code |
-| **GitHub Copilot** | `.copilot/custom-agents/` (60 agents) | Invoke in Copilot Chat |
-| **Cursor** | `.cursor/rules/` (60 rules) | Auto-loaded in Cursor IDE |
-| **OpenAI Codex** | `.agents/skills/` (60 skills) | `$command` in Codex CLI |
-| **Google Gemini** | `.gemini/skills/` (60 skills) | Available in Gemini sessions |
+| Platform | What Gets Installed | How to Invoke | Notes |
+|----------|-------------------|---------------|-------|
+| **Claude Code** | `.claude/commands/` (60 skills) | `/command` | Slash commands in Claude Code CLI |
+| **GitHub Copilot** | `.copilot/custom-agents/` (60 agents) | `@agent` in chat | Custom agents in Copilot Chat |
+| **Cursor** | `.cursor/rules/` (60 rules) | Auto-loaded | Rules activate based on context |
+| **OpenAI Codex** | `.agents/skills/` (60 skills) | `$command` | Dollar-prefix commands in Codex CLI |
+| **Google Gemini** | `.gemini/skills/` (60 skills) | Skill invocation | Available in Gemini sessions |
 
 Install multiple platforms at once:
 
@@ -221,6 +361,8 @@ Install multiple platforms at once:
 ./install.sh --platform="claude,cursor,copilot"    # Linux/macOS
 ./install.ps1 -Platform "claude,cursor,copilot"     # Windows
 ```
+
+**All 60 skills work identically across platforms.** The installer translates agent contracts from `agents/` into each platform's native format. When you update the framework, `update.sh` / `update.ps1` regenerates all platform files.
 
 ---
 
@@ -234,16 +376,27 @@ skillfoundry/
 │   ├── src/commands/        Slash command handlers (/team, /agent, /plan, ...)
 │   └── src/hooks/           Session state and streaming hooks
 ├── agents/                  53 agent contracts and orchestration protocols
-├── .claude/commands/        Claude Code skill definitions (60 skills)
-├── .copilot/custom-agents/  GitHub Copilot agent definitions
-├── .cursor/rules/           Cursor rule definitions
-├── .agents/skills/          Codex skill definitions
-├── .gemini/skills/          Gemini skill definitions
 ├── genesis/                 PRD templates and your feature documents
-├── scripts/                 Installers, sync, anvil, cost routing, diagnostics
+├── memory_bank/             Persistent knowledge across sessions
+│   ├── knowledge/           facts, decisions, errors, preferences (JSONL)
+│   └── relationships/       Knowledge graph and lineage tracking
+├── scripts/                 Shell tooling (works without the CLI)
+│   ├── memory.sh            Remember, recall, correct knowledge
+│   ├── harvest.sh           Extract lessons from projects
+│   ├── knowledge-sync.sh    Sync daemon for cross-project learning
+│   ├── anvil.sh             Quality gate runner
+│   ├── evolve.sh            Agent evolution (debate → implement → iterate)
+│   ├── session-init.sh      Session startup (pull knowledge, start daemon)
+│   └── session-close.sh     Session teardown (harvest, sync, stop daemon)
 ├── compliance/              GDPR, HIPAA, SOC2 profiles and automated checks
-├── memory_bank/             Persistent knowledge: decisions, patterns, errors
-└── observability/           Audit logging, metrics collection, trace viewer
+├── observability/           Audit logging, metrics collection, trace viewer
+│
+│  Platform skill files (generated by installer):
+├── .claude/commands/        Claude Code (60 skills)
+├── .copilot/custom-agents/  GitHub Copilot (60 agents)
+├── .cursor/rules/           Cursor (60 rules)
+├── .agents/skills/          OpenAI Codex (60 skills)
+└── .gemini/skills/          Google Gemini (60 skills)
 ```
 
 ---
@@ -276,11 +429,18 @@ skillfoundry/
                     └──────┬──────┘
                            │
                     ┌──────▼──────┐
-                    │   Done      │  Knowledge harvested to memory_bank/
+                    │   /gohm     │  Harvest lessons → memory_bank/
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
+                    │ knowledge   │  Sync to global repo (optional)
+                    │    sync     │  Lessons available in all projects
                     └─────────────┘
 ```
 
 Or skip the steps and run `/forge` for the full pipeline in one command.
+
+**In autonomous mode**, you skip all the commands. Just type "add user authentication" and the pipeline runs end-to-end — PRD generated, stories broken out, agents dispatched, quality gates enforced, lessons harvested.
 
 ---
 
@@ -315,6 +475,9 @@ Update all registered projects at once:
 | [Quick Reference](docs/QUICK-REFERENCE.md) | Command cheat sheet |
 | [Agent Evolution](docs/AGENT-EVOLUTION.md) | How agents evolve and improve |
 | [API Reference](docs/API-REFERENCE.md) | CLI internals and extension points |
+| [Persistent Memory](memory_bank/README.md) | Memory bank schema and usage |
+| [Autonomous Mode](docs/AUTONOMOUS-EXECUTION.md) | Autonomous developer loop details |
+| [Knowledge Sync](docs/PERSISTENT-MEMORY-IMPLEMENTATION.md) | Cross-project knowledge sync |
 | [Anti-Patterns](docs/ANTI_PATTERNS_DEPTH.md) | Security anti-patterns to avoid |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
 | [Changelog](CHANGELOG.md) | Version history |
