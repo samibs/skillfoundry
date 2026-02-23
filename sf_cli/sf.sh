@@ -378,19 +378,28 @@ cmd_validate() {
   fi
 
   local missing=0
-  local checks=(
-    "^## 1\\. Overview([[:space:]].*)?$|## 1. Overview"
-    "^## 2\\. User Stories([[:space:]].*)?$|## 2. User Stories"
-    "^## 3\\. Functional Requirements([[:space:]].*)?$|## 3. Functional Requirements"
-    "^## 5\\. Non-Functional Requirements([[:space:]].*)?$|## 5. Non-Functional Requirements"
-    "^## 6\\. Technical Specifications([[:space:]].*)?$|## 6. Technical Specifications"
-    "^## 9\\. Out of Scope([[:space:]].*)?$|## 9. Out of Scope"
-    "^## 10\\. Definition of Done([[:space:]].*)?$|## 10. Definition of Done"
+  local patterns=(
+    "^## [0-9]+\\. Overview([[:space:]].*)?$"
+    "^## [0-9]+\\. User Stories([[:space:]].*)?$"
+    "^## [0-9]+\\. Functional Requirements([[:space:]].*)?$"
+    "^## [0-9]+\\. Non-Functional Requirements([[:space:]].*)?$"
+    "^## [0-9]+\\. Technical Specifications([[:space:]].*)?$"
+    "^## [0-9]+\\. (Out of Scope|Constraints[[:space:]]*&[[:space:]]*Assumptions)([[:space:]].*)?$"
+    "^## [0-9]+\\. (Definition of Done|Acceptance Criteria)([[:space:]].*)?$"
   )
-  local rule
-  for rule in "${checks[@]}"; do
-    local pattern="${rule%%|*}"
-    local label="${rule#*|}"
+  local labels=(
+    "Overview"
+    "User Stories"
+    "Functional Requirements"
+    "Non-Functional Requirements"
+    "Technical Specifications"
+    "Out of Scope / Constraints & Assumptions"
+    "Definition of Done / Acceptance Criteria"
+  )
+  local i
+  for i in "${!patterns[@]}"; do
+    local pattern="${patterns[$i]}"
+    local label="${labels[$i]}"
     if ! rg -q "$pattern" "$prd_file"; then
       echo "[BLOCK] Missing required section: $label"
       missing=$((missing + 1))
