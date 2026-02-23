@@ -4,6 +4,7 @@ import { redactText } from '../core/redact.js';
 import { ALL_TOOLS } from '../core/tools.js';
 import { executeTool } from '../core/executor.js';
 import { checkPermission, allowAlways, allowToolAlways } from '../core/permissions.js';
+import { classifyIntent } from '../core/intent.js';
 import type {
   SfConfig,
   SfPolicy,
@@ -89,6 +90,52 @@ export function useStream(
 
       try {
         const provider = createProvider(config.provider);
+
+        // Cost optimization: classify intent to decide whether tools are needed.
+        // Simple chat ("ping", "explain X") skips tool definitions, saving ~350 tokens.
+        const intent = classifyIntent(userMessage);
+
+        if (intent === 'chat') {
+          let accumulated = '';
+          const simpleMessages = anthropicMessages.map((m) => ({
+            role: m.role,
+            content: typeof m.content === 'string' ? m.content : '',
+          }));
+
+          const result = await provider.stream(
+            simpleMessages,
+            { model: config.model },
+            (chunk: string, done: boolean) => {
+              if (abortRef.current) return;
+              if (!done) {
+                accumulated += chunk;
+                const redacted = redactText(accumulated, policy.redact);
+                setStreamContent(redacted);
+              }
+            },
+          );
+
+          const redactedFinal = redactText(accumulated, policy.redact);
+          addMessage({
+            role: 'assistant',
+            content: redactedFinal,
+            metadata: {
+              provider: config.provider,
+              model: config.model,
+              inputTokens: result.inputTokens,
+              outputTokens: result.outputTokens,
+              costUsd: result.costUsd,
+              thinkingContent: result.thinkingContent,
+            },
+          });
+
+          setStreamContent('');
+          setThinkingContent('');
+          setIsStreaming(false);
+          return;
+        }
+
+        // Agent mode: full tool loop
         let turnCount = 0;
 
         // Agentic loop: keep sending until no more tool_use or max turns reached
