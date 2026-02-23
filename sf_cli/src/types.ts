@@ -22,6 +22,7 @@ export interface Message {
     outputTokens?: number;
     costUsd?: number;
     thinkingContent?: string;
+    mode?: 'chat' | 'agent';
   };
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];

@@ -11,7 +11,11 @@ export const configCommand: SlashCommand = {
   description: 'Show or update configuration',
   usage: '/config [key] [value]',
   execute: async (args: string, session: SessionContext): Promise<string> => {
-    const parts = args.trim().split(/\s+/);
+    let parts = args.trim().split(/\s+/);
+    // Support both "/config model gpt-4o" and "/config set model gpt-4o"
+    if (parts[0] === 'set' || parts[0] === 'get') {
+      parts = parts.slice(1);
+    }
     const key = parts[0];
     const value = parts.slice(1).join(' ');
 

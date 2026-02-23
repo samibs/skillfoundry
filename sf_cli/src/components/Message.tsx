@@ -44,7 +44,8 @@ export function Message({ message }: MessageProps) {
         <Text dimColor>
           {'     '}[{message.metadata.inputTokens} in /{' '}
           {message.metadata.outputTokens} out | $
-          {message.metadata.costUsd.toFixed(4)}]
+          {message.metadata.costUsd.toFixed(4)}
+          {message.metadata.mode ? ` | ${message.metadata.mode}` : ''}]
         </Text>
       )}
     </Box>
