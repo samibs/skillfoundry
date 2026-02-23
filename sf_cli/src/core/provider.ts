@@ -42,8 +42,11 @@ export class AnthropicAdapter implements ProviderAdapter {
     const stream = this.client.messages.stream({
       model,
       max_tokens: maxTokens,
-      system:
-        options.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+      system: [{
+        type: 'text',
+        text: options.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+        cache_control: { type: 'ephemeral' },
+      }] as unknown as string,
       messages: anthropicMessages,
     });
 
@@ -102,12 +105,26 @@ export class AnthropicAdapter implements ProviderAdapter {
     let outputTokens = 0;
     let thinkingContent = '';
 
+    // Mark system prompt and last tool with cache_control for Anthropic prompt caching.
+    // Saves ~90% on repeated tokens (system prompt + tool schemas are identical every turn).
+    const cachedTools = options.tools.map((t, i) => {
+      const tool = { ...t } as Record<string, unknown>;
+      if (i === options.tools.length - 1) {
+        tool.cache_control = { type: 'ephemeral' };
+      }
+      return tool;
+    });
+
     const stream = this.client.messages.stream({
       model,
       max_tokens: maxTokens,
-      system: options.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+      system: [{
+        type: 'text',
+        text: options.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+        cache_control: { type: 'ephemeral' },
+      }] as unknown as string,
       messages: messages as Anthropic.MessageParam[],
-      tools: options.tools as Anthropic.Tool[],
+      tools: cachedTools as unknown as Anthropic.Tool[],
     });
 
     const contentBlocks: ContentBlock[] = [];

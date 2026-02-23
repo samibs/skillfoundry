@@ -84,8 +84,9 @@ export function checkBudget(
   monthlyBudget: number,
   runBudget: number,
   currentRunCost: number = 0,
+  cachedUsage?: UsageData,
 ): BudgetCheck {
-  const usage = loadUsage(workDir);
+  const usage = cachedUsage || loadUsage(workDir);
   const monthKey = currentMonthKey();
   const monthlySpend = usage.monthlyTotals[monthKey] || 0;
 
