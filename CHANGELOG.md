@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.9.0.23] - 2026-02-23
+
+### Added — 53-Agent Security Evolution (Full Pipeline Hardening)
+
+Systematic audit of all 53 agents revealed that data isolation, Top 12 security checks, error leakage prevention, and version enforcement were inconsistently applied. This release hardens every agent in the pipeline.
+
+#### Top 7 → Top 12 Security Checks (Framework-Wide)
+- **All platforms updated**: `.agents/skills/`, `.claude/commands/`, `.cursor/rules/`, `.copilot/custom-agents/`, `.gemini/skills/`, `agents/`, `bpsbs.md`, `DOCUMENTATION-INDEX.md`, `docs/API-REFERENCE.md`, `docs/MARKET-COMPARISON.md`
+- **5 new checks added**: Data isolation/query scoping, pagination/input size limits, error information leakage, concurrent modification safety (optimistic locking), session/token lifecycle
+
+#### Critical Pipeline Agents
+- **blitz/SKILL.md**: Non-Negotiable Security Gate — Top 12 checks never skipped even in speed mode
+- **ship/SKILL.md**: Steps 2.5 (Data Isolation Spot-Check), 2.6 (Top 12 Security Gate), 2.7 (Version Verification)
+- **anvil/SKILL.md**: T1 expanded with data isolation + error leakage scans; T3 expanded with mandatory failure modes
+- **go/SKILL.md**: Pre-story data isolation check blocks stories missing ownership specs; project completion expanded
+- **gate-keeper/SKILL.md**: 6 new violation types (unscoped query, missing WHERE, scope from params, error leakage, missing pagination, missing idempotency)
+- **stories/SKILL.md**: Security checklist expanded (6 items), definition of done expanded, Gherkin cross-user isolation scenarios
+- **_autonomous-protocol.md**: Execution rules 7-8 (Top 12 scan, data isolation escalation), 3 new escalation triggers
+
+#### Review & Scanner Agents
+- **review/SKILL.md**: Data Isolation & Query Scoping Review section, Extended Security Review section, items 8-12 added
+- **security-scanner/SKILL.md**: Quick Scan expanded to Top 12, Prevention Mode expanded with items 8-12
+- **senior-engineer/SKILL.md**: Security checks expanded to Top 12 with descriptions
+- **forge/SKILL.md**: Phase 3 TEMPER + Phase 4 INSPECT expanded with data isolation and Top 12
+- **fixer/SKILL.md**: 6 new violation types in routing table
+
+#### Development Agents
+- **debugger/SKILL.md**: Data isolation check in root cause summary, Security-Aware Debugging Checklist
+- **refactor/SKILL.md**: Core principle 6 (Security Preservation), Security Invariants Check section
+- **migration/SKILL.md**: Data Isolation Requirements section (8 requirements)
+- **performance/SKILL.md**: Query & Pagination Safety section (7 checklist items)
+- **dependency/SKILL.md**: Package hallucination check enhanced with AI hallucination rate + backdoor checking
+
+#### Operations & Infrastructure Agents
+- **devops/SKILL.md**: Test stage + best practices expanded with Top 12, cross-user tests, observability
+- **sre/SKILL.md**: SEV1 expanded with cross-tenant exposure, Non-Negotiable Requirements section
+- **release/SKILL.md**: Pre-Release Security Gate (MANDATORY) with 8 checklist items
+- **ops/SKILL.md**: Data Isolation Monitor section, admin panel scope note
+- **health/SKILL.md**: Security configuration checks expanded (3 new items)
+- **nuke/SKILL.md**: Safety checks before nuking section (4 items)
+- **data-architect/SKILL.md** (skill): Anti-patterns expanded, requirements checklist expanded
+
+### Changed
+- `.version` bumped to 1.9.0.23
+- Version references updated in README.md, AGENTS.md, DOCUMENTATION-INDEX.md, QUICK-REFERENCE.md
+
+---
+
 ## [1.9.0.22] - 2026-02-22
 
 ### Added — Data Isolation & 27 Enforcement Gap Fixes

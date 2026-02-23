@@ -36,7 +36,7 @@ AI-generated code has distinct security weaknesses:
 
 Scan code in this priority order (based on frequency × severity):
 
-#### Priority 1: Top 7 Critical Issues (from docs/ANTI_PATTERNS_DEPTH.md)
+#### Priority 1: Top 12 Critical Issues (from docs/ANTI_PATTERNS_DEPTH.md)
 
 1. **Hardcoded Secrets**
    - API keys, passwords, tokens in code
@@ -330,7 +330,7 @@ task(
     Read docs/ANTI_PATTERNS_DEPTH.md
     
     Review PR #${prNumber} with focus on:
-    - Top 7 critical vulnerabilities
+    - Top 12 critical vulnerabilities
     - AI-specific anti-patterns
     - Secure coding practices
   `
@@ -339,7 +339,7 @@ task(
 
 ## Scan Modes
 
-### Quick Scan (Top 7 Only)
+### Quick Scan (Top 12 Only)
 
 Focus on docs/ANTI_PATTERNS_DEPTH.md critical issues:
 1. Hardcoded secrets
@@ -434,7 +434,7 @@ task(
     Read docs/ANTI_PATTERNS_DEPTH.md
     
     Scan all code in src/ for:
-    - Top 7 critical vulnerabilities
+    - Top 12 critical vulnerabilities
     - AI-specific anti-patterns
     - Zero tolerance violations
     

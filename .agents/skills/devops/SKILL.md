@@ -43,8 +43,9 @@ You are the DevOps Specialist, responsible for CI/CD pipelines, infrastructure a
 3. Test
    - Unit tests
    - Integration tests
-   - Security scans
+   - Top 12 security scan (including data isolation, error leakage, pagination caps)
    - Performance tests
+   - Cross-user data isolation tests (user A cannot see user B's data)
 
 4. Build Artifacts
    - Create deployable artifacts
@@ -77,6 +78,10 @@ You are the DevOps Specialist, responsible for CI/CD pipelines, infrastructure a
 - Test infrastructure changes
 - Review infrastructure changes
 - Document infrastructure decisions
+- Secrets managed via vault/env vars (never in code or config files)
+- Health check (/health) and readiness probe (/ready) endpoints required
+- Structured logging with correlation ID, PII redacted
+- Config validated on startup (fail fast if missing/invalid)
 
 ### PHASE 3: DEPLOYMENT STRATEGIES
 

@@ -62,6 +62,16 @@ You are the Database Migration Specialist, responsible for creating, testing, an
 - Add columns as nullable first, then backfill
 - Use soft deletes for data preservation
 
+**Data Isolation Requirements**:
+- New tables with user-facing data MUST include ownership column (user_id, tenant_id, or org_id)
+- Ownership column MUST be NOT NULL with index
+- Add created_at, updated_at (UTC) audit columns
+- Add version/ETag column on concurrently editable entities
+- Soft-deleted rows MUST be excluded from queries by default
+- Foreign keys MUST specify CASCADE/RESTRICT/SET NULL behavior explicitly
+- Migration MUST be backward-compatible with running app code
+- Migration MUST be idempotent (safe to run twice)
+
 ### PHASE 3: MIGRATION CREATION
 
 **Migration File Structure**:

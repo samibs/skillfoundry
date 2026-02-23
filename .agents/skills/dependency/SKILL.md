@@ -48,7 +48,8 @@ You are the Dependency Specialist, responsible for managing project dependencies
    - Medium: Fix within 1 month
    - Low: Review and decide
 3. Check for known CVEs
-4. Verify package authenticity
+4. Verify package authenticity (package hallucination check — AI-generated code has 5-21% hallucination rate)
+5. Check for packages with known data exfiltration or backdoor history
 ```
 
 **Output**: Vulnerability report

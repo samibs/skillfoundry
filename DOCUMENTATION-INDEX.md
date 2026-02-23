@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v1.9.0.22
+# Documentation Index - SkillFoundry Framework v1.9.0.23
 
 Complete guide to all documentation in the framework.
 
@@ -46,7 +46,7 @@ Critical security knowledge for AI-assisted development:
 | Document | Size | Purpose |
 |----------|------|---------|
 | **[docs/ANTI_PATTERNS_BREADTH.md](docs/ANTI_PATTERNS_BREADTH.md)** | 225 KB | 15 security anti-patterns (wide coverage) |
-| **[docs/ANTI_PATTERNS_DEPTH.md](docs/ANTI_PATTERNS_DEPTH.md)** | 252 KB | Top 7 critical vulnerabilities (deep dive) |
+| **[docs/ANTI_PATTERNS_DEPTH.md](docs/ANTI_PATTERNS_DEPTH.md)** | 252 KB | Top 12 critical vulnerabilities (deep dive) |
 | **[.copilot/SECURITY-INTEGRATION.md](.copilot/SECURITY-INTEGRATION.md)** | 6.4 KB | How to use security features |
 
 **Read these!** They prevent the 86% XSS failure rate and 2.74x vulnerability multiplier in AI code.
@@ -500,7 +500,7 @@ Starting points for your work:
 
 1. **[README.md](README.md)** - Start here!
 2. **[docs/V1.1.0-RELEASE-NOTES.md](docs/V1.1.0-RELEASE-NOTES.md)** - What's new
-3. **[docs/ANTI_PATTERNS_DEPTH.md](docs/ANTI_PATTERNS_DEPTH.md)** - Top 7 security issues
+3. **[docs/ANTI_PATTERNS_DEPTH.md](docs/ANTI_PATTERNS_DEPTH.md)** - Top 12 security issues
 4. **[.copilot/WORKFLOW-GUIDE.md](.copilot/WORKFLOW-GUIDE.md)** - Workflows (Copilot)
 5. **[docs/HOW-TO.md](docs/HOW-TO.md)** - Usage guide (Claude)
 

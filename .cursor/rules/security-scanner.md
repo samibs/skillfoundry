@@ -21,7 +21,7 @@ Before scanning, read:
 
 ## Scan Modes
 
-### Quick Scan (Top 7 Only)
+### Quick Scan (Top 12 Only)
 
 Focus on docs/ANTI_PATTERNS_DEPTH.md critical issues:
 1. Hardcoded secrets

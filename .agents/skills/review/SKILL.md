@@ -65,7 +65,26 @@ Review in this order:
 - [ ] No package hallucination
 ```
 
-**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Top 7 vulnerabilities
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Top 12 vulnerabilities
+
+#### 1b. Data Isolation & Query Scoping Review (MANDATORY)
+```
+- [ ] Queries on user-owned entities include ownership WHERE clause
+- [ ] Scope derived from auth token, not request parameters
+- [ ] User A cannot access User B's resources (returns 404)
+- [ ] List endpoints return only caller's rows by default
+- [ ] JOINs do not leak rows from scoped tables
+- [ ] Bulk operations respect same scope as single-record ops
+```
+
+#### 1c. Extended Security Review (MANDATORY)
+```
+- [ ] Pagination caps enforced (max pageSize)
+- [ ] Error responses sanitized (no stack traces, SQL, internal IPs)
+- [ ] Idempotency-Key supported on non-idempotent mutations
+- [ ] Optimistic locking on concurrently editable entities
+- [ ] Session/token lifecycle managed (expiry, invalidation)
+```
 
 #### 2. Functionality Review
 ```
@@ -188,7 +207,7 @@ These are suggestions for improvement, not blockers.
 
 ## SECURITY REVIEW CHECKLIST
 
-**MANDATORY** - Check against Top 7 AI Vulnerabilities:
+**MANDATORY** - Check against Top 12 AI Vulnerabilities:
 
 1. **Hardcoded Secrets** 🔴
    - Scan for API keys, passwords, tokens
@@ -226,6 +245,25 @@ These are suggestions for improvement, not blockers.
    - Verify no user input in shell commands
    - Check for exec(), system(), eval()
    - Reference: `docs/ANTI_PATTERNS_DEPTH.md §7`
+
+8. **Data Isolation / Query Scoping** 🔴
+   - ALL queries on user-owned entities include ownership WHERE clause
+   - Scope from auth token, NEVER from request parameters
+   - Reference: `genesis/TEMPLATE.md` section 6.7
+
+9. **Pagination & Input Size Limits** 🔴
+   - All list endpoints enforce max pageSize cap
+   - Request body and string field limits validated
+
+10. **Error Information Leakage** 🔴
+    - No stack traces, SQL errors, or internal IPs in responses
+    - Structured error format only
+
+11. **Concurrent Modification Safety** 🟡
+    - Optimistic locking (ETag/version) on concurrently editable entities
+
+12. **Session & Token Lifecycle** 🔴
+    - Token expiry, refresh rotation, session invalidation on password change
 
 **Security failure = IMMEDIATE REJECTION**
 
@@ -364,7 +402,7 @@ After each review, self-assess:
 - **Confidence**: How certain am I I didn't miss critical issues? (X/10)
 
 **If overall score < 7.0**: Re-review, check for missed issues  
-**If security score < 7.0**: Re-check security, verify all Top 7 vulnerabilities reviewed
+**If security score < 7.0**: Re-check security, verify all Top 12 vulnerabilities reviewed
 
 ---
 
