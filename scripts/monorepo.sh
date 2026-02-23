@@ -353,7 +353,24 @@ cmd_order() {
     packages=$(detect_packages "$ROOT_DIR")
 
     if [ -z "$packages" ]; then
-        echo -e "${CYAN}[INFO]${NC} No packages detected"
+        if [ "$JSON_OUTPUT" = true ]; then
+            echo '{"order":[],"total":0}'
+        else
+            echo -e "${CYAN}[INFO]${NC} No packages detected"
+        fi
+        return 0
+    fi
+
+    if [ "$JSON_OUTPUT" = true ]; then
+        local order_json='[]'
+        local order=1
+        for pkg in $packages; do
+            local name
+            name=$(echo "$pkg" | cut -d':' -f1)
+            order_json=$(echo "$order_json" | jq --arg name "$name" --argjson idx "$order" '. + [{index:$idx,package:$name}]')
+            order=$((order + 1))
+        done
+        echo "{\"order\":$order_json,\"total\":$(echo "$order_json" | jq 'length')}"
         return 0
     fi
 

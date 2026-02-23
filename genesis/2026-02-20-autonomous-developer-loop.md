@@ -335,3 +335,18 @@ Group B (after 001):   STORY-003
 Group C (after 004):   STORY-005, STORY-006, STORY-008
 Group D (after 005):   STORY-007, STORY-009
 ```
+
+---
+
+## 10. Acceptance Criteria
+
+| ID | Scenario | Given | When | Then |
+|----|----------|-------|------|------|
+| AC-001 | Intent routing | autonomous mode is ON | user enters a feature request in natural language | pipeline maps intent and executes the expected route without requiring explicit slash command |
+| AC-002 | Ambiguous intent safety | autonomous mode is ON and classifier confidence is below threshold | user enters ambiguous request | system requests clarification and does not execute a destructive or write pipeline |
+| AC-003 | Toggle behavior | system is running in normal mode | user runs `/autonomous on` then `/autonomous off` | `.claude/.autonomous` is created then removed, and status output reflects each state transition |
+| AC-004 | Sync daemon baseline | knowledge repo is initialized and registered | `knowledge-sync.sh start` is running with changed knowledge files | daemon performs sanitize -> commit -> push cycle and reports last sync timestamp |
+| AC-005 | Sanitization enforcement | monitored files contain secret-like patterns or absolute machine paths | sync cycle runs | secrets are redacted or skipped, paths are normalized, and invalid JSON artifacts are rejected from commit |
+| AC-006 | Session hooks | session hooks are installed | session starts then ends | start hook pulls global lessons and starts daemon; end hook harvests memory, forces final sync, and stops daemon cleanly |
+| AC-007 | Cross-project learning | at least one project has promoted lessons in global store | a different project starts a new session | global lessons are available in local memory context before first task execution |
+| AC-008 | Promotion logic | identical lesson pattern appears in at least 3 sessions/projects | promotion check runs | pattern is promoted to `global/lessons.jsonl` with source metadata and occurrence count |
