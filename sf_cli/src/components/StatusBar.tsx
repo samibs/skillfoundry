@@ -7,6 +7,8 @@ interface StatusBarProps {
   isStreaming: boolean;
   activeAgent?: string | null;
   activeTeam?: { name: string } | null;
+  streamingAgent?: string | null;
+  streamingTurnCount?: number;
 }
 
 export function StatusBar({
@@ -15,6 +17,8 @@ export function StatusBar({
   isStreaming,
   activeAgent,
   activeTeam,
+  streamingAgent,
+  streamingTurnCount = 0,
 }: StatusBarProps) {
   let dismissHint = '';
   let modeLabel = '';
@@ -26,13 +30,23 @@ export function StatusBar({
     modeLabel = `agent:${activeAgent} | `;
   }
 
+  let streamingStatus = 'ready';
+  if (isStreaming) {
+    if (streamingAgent) {
+      const turnLabel = streamingTurnCount > 1 ? ` (turn ${streamingTurnCount})` : '';
+      streamingStatus = `${streamingAgent} working${turnLabel}`;
+    } else {
+      streamingStatus = 'streaming...';
+    }
+  }
+
   return (
     <Box justifyContent="space-between" paddingX={1}>
       <Text dimColor>
         /help commands | /status info | /exit quit{dismissHint}
       </Text>
       <Text dimColor>
-        {modeLabel}mode:{permissionMode} | {isStreaming ? 'streaming...' : 'ready'}
+        {modeLabel}mode:{permissionMode} | {streamingStatus}
       </Text>
     </Box>
   );

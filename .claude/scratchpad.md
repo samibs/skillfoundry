@@ -1,7 +1,20 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-02-23T16:00:00Z
+> Last updated: 2026-02-23T17:00:00Z
 > Platform: claude-code
+
+## Agent Display & Token Usage Session — 2026-02-23
+- Task: Show active agent name and token usage in real-time during streaming
+- Files modified: 5 (useStream.ts, StreamingMessage.tsx, Header.tsx, StatusBar.tsx, app.tsx)
+- Tests: 237 passing across 20 files (no regressions)
+- Version: 2.0.2 → 2.0.3
+
+### Features
+1. **StreamingMessage agent label**: `sf:coder>` instead of generic `sf>` during streaming
+2. **Live token display**: `[turn 3 | 12.4k in / 2.1k out]` below streaming content
+3. **Header token totals**: cumulative session tokens (e.g. `14.2k tok`) in header info line
+4. **StatusBar agent indicator**: `coder working (turn 2)` replaces generic `streaming...`
+5. **Streaming metadata state**: `streamingAgent`, `streamingTurnCount`, `sessionInputTokens`, `sessionOutputTokens` exposed from `useStream`
 
 ## Team Summon Session — 2026-02-23
 - Task: Multi-agent auto-routing — summon a team once, available all session

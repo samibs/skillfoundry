@@ -44,6 +44,10 @@ export function App({ workDir }: AppProps) {
     sendMessage,
     abort,
     handlePermissionResponse,
+    streamingAgent,
+    streamingTurnCount,
+    sessionInputTokens,
+    sessionOutputTokens,
   } = useStream(config, policy, addMessage, workDir);
 
   const sessionCost = messages
@@ -89,6 +93,8 @@ export function App({ workDir }: AppProps) {
         state={state.current_state}
         activeAgent={activeAgent}
         activeTeam={activeTeam}
+        sessionInputTokens={sessionInputTokens}
+        sessionOutputTokens={sessionOutputTokens}
       />
       <Box flexDirection="column" paddingX={1} marginY={1}>
         <MessageList messages={messages} />
@@ -117,6 +123,10 @@ export function App({ workDir }: AppProps) {
             content={streamContent}
             isStreaming={isStreaming}
             thinkingContent={thinkingContent}
+            agentName={streamingAgent}
+            turnCount={streamingTurnCount}
+            sessionInputTokens={sessionInputTokens}
+            sessionOutputTokens={sessionOutputTokens}
           />
         )}
       </Box>
@@ -127,6 +137,8 @@ export function App({ workDir }: AppProps) {
         isStreaming={isStreaming}
         activeAgent={activeAgent}
         activeTeam={activeTeam}
+        streamingAgent={streamingAgent}
+        streamingTurnCount={streamingTurnCount}
       />
     </Box>
   );
