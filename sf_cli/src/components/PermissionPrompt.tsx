@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { Box, Text, useInput } from 'ink';
 import type { ToolCall } from '../types.js';
 import { formatToolCallSummary } from '../core/permissions.js';
+import { colors, symbols, borders } from '../utils/theme.js';
 
 export type PermissionResponse = 'allow' | 'deny' | 'always-allow' | 'always-allow-tool';
 
@@ -29,7 +30,6 @@ export function PermissionPrompt({ toolCall, reason, onRespond }: PermissionProm
     } else if (key.return) {
       onRespond(options[selected].value);
     } else {
-      // Check shortcut keys
       const shortcut = options.find((o) => o.key === _input.toLowerCase());
       if (shortcut) {
         onRespond(shortcut.value);
@@ -40,26 +40,34 @@ export function PermissionPrompt({ toolCall, reason, onRespond }: PermissionProm
   return (
     <Box
       flexDirection="column"
-      borderStyle="round"
-      borderColor="yellow"
+      borderStyle={borders.double}
+      borderColor={colors.borderWarning}
       paddingX={1}
       marginBottom={1}
     >
-      <Text bold color="yellow">
-        Tool requires approval
+      <Text bold color={colors.warning}>
+        {symbols.warn} Tool requires approval
       </Text>
       <Box marginTop={1}>
-        <Text>{formatToolCallSummary(toolCall)}</Text>
+        <Text color={colors.textPrimary}>{formatToolCallSummary(toolCall)}</Text>
       </Box>
       <Box marginTop={0}>
-        <Text dimColor>{reason}</Text>
+        <Text color={colors.textSecondary}>{reason}</Text>
       </Box>
-      <Box flexDirection="column" marginTop={1}>
+      <Box paddingX={0} marginTop={1} marginBottom={0}>
+        <Text color={colors.borderDim}>
+          {symbols.lineLight.repeat(40)}
+        </Text>
+      </Box>
+      <Box flexDirection="column">
         {options.map((opt, i) => (
           <Box key={opt.key}>
-            <Text color={i === selected ? 'cyan' : undefined} bold={i === selected}>
-              {i === selected ? '> ' : '  '}
-              [{opt.key}] {opt.label}
+            <Text
+              color={i === selected ? colors.accent : colors.textMuted}
+              bold={i === selected}
+            >
+              {i === selected ? symbols.chevron : symbols.promptDim}{' '}
+              <Text color={colors.accent} bold>[{opt.key}]</Text> {opt.label}
             </Text>
           </Box>
         ))}

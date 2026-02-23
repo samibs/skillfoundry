@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import { colors, symbols } from '../utils/theme.js';
 
 interface StatusBarProps {
   provider: string;
@@ -21,33 +22,70 @@ export function StatusBar({
   streamingTurnCount = 0,
 }: StatusBarProps) {
   let dismissHint = '';
-  let modeLabel = '';
   if (activeTeam) {
-    dismissHint = ' | /team off';
-    modeLabel = `team:${activeTeam.name} | `;
+    dismissHint = ` ${symbols.bullet} /team off`;
   } else if (activeAgent) {
-    dismissHint = ' | /agent off';
-    modeLabel = `agent:${activeAgent} | `;
+    dismissHint = ` ${symbols.bullet} /agent off`;
   }
 
-  let streamingStatus = 'ready';
+  let streamingStatus: React.ReactNode;
   if (isStreaming) {
     if (streamingAgent) {
       const turnLabel = streamingTurnCount > 1 ? ` (turn ${streamingTurnCount})` : '';
-      streamingStatus = `${streamingAgent} working${turnLabel}`;
+      streamingStatus = (
+        <Text color={colors.accent}>
+          {symbols.running} {streamingAgent} working{turnLabel}
+        </Text>
+      );
     } else {
-      streamingStatus = 'streaming...';
+      streamingStatus = <Text color={colors.accent}>{symbols.running} streaming</Text>;
     }
+  } else {
+    streamingStatus = <Text color={colors.textSecondary}>ready</Text>;
+  }
+
+  let modeLabel: React.ReactNode = null;
+  if (activeTeam) {
+    modeLabel = (
+      <>
+        <Text color={colors.secondary}>team:{activeTeam.name}</Text>
+        <Text color={colors.textMuted}> {symbols.bullet} </Text>
+      </>
+    );
+  } else if (activeAgent) {
+    modeLabel = (
+      <>
+        <Text color={colors.secondary}>agent:{activeAgent}</Text>
+        <Text color={colors.textMuted}> {symbols.bullet} </Text>
+      </>
+    );
   }
 
   return (
-    <Box justifyContent="space-between" paddingX={1}>
-      <Text dimColor>
-        /help commands | /status info | /exit quit{dismissHint}
-      </Text>
-      <Text dimColor>
-        {modeLabel}mode:{permissionMode} | {streamingStatus}
-      </Text>
+    <Box flexDirection="column">
+      <Box paddingX={1}>
+        <Text color={colors.borderDim}>
+          {symbols.lineLight.repeat(
+            Math.max(40, (process.stdout.columns || 80) - 2),
+          )}
+        </Text>
+      </Box>
+      <Box justifyContent="space-between" paddingX={1}>
+        <Text color={colors.textMuted}>
+          <Text color={colors.accent}>/help</Text> commands
+          <Text color={colors.textMuted}> {symbols.bullet} </Text>
+          <Text color={colors.accent}>/status</Text> info
+          <Text color={colors.textMuted}> {symbols.bullet} </Text>
+          <Text color={colors.accent}>/exit</Text> quit
+          {dismissHint}
+        </Text>
+        <Text>
+          {modeLabel}
+          <Text color={colors.textSecondary}>mode:{permissionMode}</Text>
+          <Text color={colors.textMuted}> {symbols.bullet} </Text>
+          {streamingStatus}
+        </Text>
+      </Box>
     </Box>
   );
 }

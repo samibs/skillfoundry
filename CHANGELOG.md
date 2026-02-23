@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.4] - 2026-02-23
+
+### Changed — Visual Overhaul ("Modern Hacker" Style)
+
+Full visual overhaul across all 11 CLI components. Rich Unicode borders, gradient accents, structured visual hierarchy.
+
+#### Theme System (`src/utils/theme.ts`)
+- **Color palette**: 20+ hex colors organized by role (accent, secondary, success, warning, error, text, border, role)
+- **Unicode symbols**: 30+ symbols for status, navigation, tools, pipeline, dividers — no emoji
+- **Custom borders**: 4 BoxStyle presets (header `┏━┓`, double `╔═╗`, input `╭─╮`, card `┌─┐`)
+- **Chalk wrappers**: `theme.accent()`, `theme.success()`, etc. for consistent chalk formatting
+- **Helpers**: `statusColor()`, `divider()`, `formatTokens()`
+
+#### Banner — Gradient ASCII Art
+- 3-color gradient: cyan `#00d4ff` → blue `#4488ff` → purple `#6e7dff`
+- Tagline with `●` bullet separators, amber version number
+- Heavy divider `━` below banner
+
+#### Component Visual Changes
+- **Header**: Heavy-top border `┏━━━━┓`, cyan accent top edge, `●` separators, `◆` title prefix
+- **StatusBar**: Thin divider line above, `/help` in accent color, `○` streaming indicator
+- **Input**: Round corners `╭╮╯╰`, cyan left-accent edge, `⟫` chevron prompt
+- **Message**: Left-border accent per role (cyan/green/amber/purple), `▸` prompt prefix
+- **StreamingMessage**: Green left-border accent, styled token counter, accent spinner
+- **ToolCall**: Unicode tool icons (`▸◉◈✶≣`), purple theme, left-border result containers
+- **DiffPreview**: Card border, `◆` file header, styled `+`/`-` prefixes
+- **ApprovalPrompt**: Double border `╔═╗` in green, `⟫`/`▹` selection indicators
+- **PermissionPrompt**: Double border `╔═╗` in amber, `◆` warning prefix
+- **GateTimeline**: Pipeline tree `┣━`/`┗━`, Unicode status icons `◉✗◆─○`, verdict card
+
+### Changed
+- `.version` bumped to 2.0.4 (from 2.0.3)
+- `sf_cli/package.json` version bumped to 2.0.4
+
+---
+
 ## [2.0.3] - 2026-02-23
 
 ### Added — Active Agent Display & Live Token Usage

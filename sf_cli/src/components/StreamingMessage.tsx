@@ -2,11 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import { renderMarkdown } from '../utils/markdown.js';
-
-function formatTokens(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
-}
+import { colors, symbols, borders, formatTokens } from '../utils/theme.js';
 
 interface StreamingMessageProps {
   content: string;
@@ -36,39 +32,58 @@ export function StreamingMessage({
   return (
     <Box flexDirection="column" marginBottom={1}>
       {showThinking && thinkingContent && (
-        <Box marginBottom={1}>
-          <Text dimColor italic>
+        <Box
+          marginBottom={1}
+          borderStyle={borders.card}
+          borderLeft={true}
+          borderRight={false}
+          borderTop={false}
+          borderBottom={false}
+          borderLeftColor={colors.textMuted}
+          paddingLeft={1}
+        >
+          <Text color={colors.textSecondary} italic>
             thinking: {thinkingContent.slice(-200)}
           </Text>
         </Box>
       )}
-      <Box>
-        <Text bold color="green">
-          {label}&gt;{' '}
-        </Text>
-        <Box flexDirection="column" flexShrink={1}>
-          <Text wrap="wrap">
-            {content ? renderMarkdown(content) : ''}
-          </Text>
+      <Box
+        borderStyle={borders.card}
+        borderLeft={true}
+        borderRight={false}
+        borderTop={false}
+        borderBottom={false}
+        borderLeftColor={colors.roleAssistant}
+        paddingLeft={1}
+      >
+        <Box flexDirection="column">
+          <Box>
+            <Text bold color={colors.roleAssistant}>
+              {symbols.prompt} {label}{' '}
+            </Text>
+            <Box flexDirection="column" flexShrink={1}>
+              <Text wrap="wrap">
+                {content ? renderMarkdown(content) : ''}
+              </Text>
+            </Box>
+            {isStreaming && (
+              <Text color={colors.accent}>
+                {' '}
+                <Spinner type="dots" />
+              </Text>
+            )}
+          </Box>
+          {isStreaming && (showTurn || showTokens) && (
+            <Text color={colors.textMuted}>
+              {'  '}{symbols.bullet} {showTurn ? `turn ${turnCount}` : ''}
+              {showTurn && showTokens ? ` ${symbols.bullet} ` : ''}
+              {showTokens
+                ? `${formatTokens(sessionInputTokens || 0)} in / ${formatTokens(sessionOutputTokens || 0)} out`
+                : ''}
+            </Text>
+          )}
         </Box>
-        {isStreaming && (
-          <Text color="blue">
-            {' '}
-            <Spinner type="dots" />
-          </Text>
-        )}
       </Box>
-      {isStreaming && (showTurn || showTokens) && (
-        <Text dimColor>
-          {'     '}[
-          {showTurn ? `turn ${turnCount}` : ''}
-          {showTurn && showTokens ? ' | ' : ''}
-          {showTokens
-            ? `${formatTokens(sessionInputTokens || 0)} in / ${formatTokens(sessionOutputTokens || 0)} out`
-            : ''}
-          ]
-        </Text>
-      )}
     </Box>
   );
 }

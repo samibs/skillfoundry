@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Text, useInput } from 'ink';
+import { colors, symbols, borders } from '../utils/theme.js';
 
 export type ApprovalResponse = 'approve' | 'reject' | 'edit';
 
@@ -37,30 +38,40 @@ export function ApprovalPrompt({ title, description, fileCount, onRespond }: App
   return (
     <Box
       flexDirection="column"
-      borderStyle="round"
-      borderColor="green"
+      borderStyle={borders.double}
+      borderColor={colors.borderSuccess}
       paddingX={1}
       marginY={1}
     >
-      <Text bold color="green">
-        {title}
+      <Text bold color={colors.success}>
+        {symbols.diamond} {title}
       </Text>
       {description && (
         <Box marginTop={1}>
-          <Text wrap="wrap">{description}</Text>
+          <Text color={colors.textPrimary} wrap="wrap">{description}</Text>
         </Box>
       )}
       {fileCount !== undefined && (
         <Box marginTop={0}>
-          <Text dimColor>{fileCount} file(s) will be modified</Text>
+          <Text color={colors.textSecondary}>
+            {symbols.bullet} {fileCount} file(s) will be modified
+          </Text>
         </Box>
       )}
-      <Box flexDirection="column" marginTop={1}>
+      <Box paddingX={0} marginTop={1} marginBottom={0}>
+        <Text color={colors.borderDim}>
+          {symbols.lineLight.repeat(40)}
+        </Text>
+      </Box>
+      <Box flexDirection="column">
         {options.map((opt, i) => (
           <Box key={opt.key}>
-            <Text color={i === selected ? 'cyan' : undefined} bold={i === selected}>
-              {i === selected ? '> ' : '  '}
-              [{opt.key}] {opt.label}
+            <Text
+              color={i === selected ? colors.accent : colors.textMuted}
+              bold={i === selected}
+            >
+              {i === selected ? symbols.chevron : symbols.promptDim}{' '}
+              <Text color={colors.accent} bold>[{opt.key}]</Text> {opt.label}
             </Text>
           </Box>
         ))}

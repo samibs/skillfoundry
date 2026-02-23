@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
+import { colors, symbols, borders } from '../utils/theme.js';
 
 export interface DiffLine {
   type: 'add' | 'remove' | 'context' | 'header';
@@ -52,45 +53,53 @@ export function DiffPreview({ fileName, lines, maxLines = 50 }: DiffPreviewProps
   const deletions = lines.filter((l) => l.type === 'remove').length;
 
   return (
-    <Box flexDirection="column" marginBottom={1}>
+    <Box
+      flexDirection="column"
+      marginBottom={1}
+      borderStyle={borders.card}
+      borderColor={colors.borderDim}
+      paddingX={1}
+    >
       <Box>
-        <Text bold> {fileName} </Text>
-        <Text color="green">+{additions}</Text>
-        <Text> </Text>
-        <Text color="red">-{deletions}</Text>
+        <Text bold color={colors.textPrimary}>
+          {symbols.diamond} {fileName}{' '}
+        </Text>
+        <Text color={colors.success}>+{additions}</Text>
+        <Text color={colors.textMuted}> / </Text>
+        <Text color={colors.error}>-{deletions}</Text>
       </Box>
-      <Box flexDirection="column" marginLeft={2}>
+      <Box flexDirection="column" paddingLeft={1}>
         {displayLines.map((line, i) => {
           switch (line.type) {
             case 'add':
               return (
-                <Text key={i} color="green" wrap="truncate">
+                <Text key={i} color={colors.success} wrap="truncate">
                   + {line.content}
                 </Text>
               );
             case 'remove':
               return (
-                <Text key={i} color="red" wrap="truncate">
+                <Text key={i} color={colors.error} wrap="truncate">
                   - {line.content}
                 </Text>
               );
             case 'header':
               return (
-                <Text key={i} color="cyan" dimColor wrap="truncate">
+                <Text key={i} color={colors.secondary} wrap="truncate">
                   {line.content}
                 </Text>
               );
             case 'context':
               return (
-                <Text key={i} dimColor wrap="truncate">
+                <Text key={i} color={colors.textMuted} wrap="truncate">
                   {'  '}{line.content}
                 </Text>
               );
           }
         })}
         {truncated && (
-          <Text dimColor italic>
-            ... {lines.length - maxLines} more lines
+          <Text color={colors.textMuted} italic>
+            {symbols.lineLight.repeat(20)} {lines.length - maxLines} more lines
           </Text>
         )}
       </Box>

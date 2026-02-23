@@ -1,10 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-
-function formatTokens(n: number): string {
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
-  return String(n);
-}
+import { colors, symbols, borders, formatTokens } from '../utils/theme.js';
 
 interface HeaderProps {
   provider: string;
@@ -31,30 +27,52 @@ export function Header({
   sessionInputTokens = 0,
   sessionOutputTokens = 0,
 }: HeaderProps) {
-  let agentInfo = '';
-  if (activeTeam) {
-    agentInfo = ` | team:${activeTeam.name} (${activeTeam.members.length} agents)`;
-  } else if (activeAgent) {
-    agentInfo = ` | agent:${activeAgent}`;
-  }
-
   const totalTokens = sessionInputTokens + sessionOutputTokens;
-  const tokenInfo = totalTokens > 0 ? ` | ${formatTokens(totalTokens)} tok` : '';
+  const stateColor =
+    state === 'IDLE' ? colors.success : state === 'FAILED' ? colors.error : colors.accent;
 
   return (
     <Box
       flexDirection="row"
       justifyContent="space-between"
-      borderStyle="round"
-      borderColor="blue"
+      borderStyle={borders.header}
+      borderTopColor={colors.accent}
+      borderBottomColor={colors.borderDim}
+      borderLeftColor={colors.borderDim}
+      borderRightColor={colors.borderDim}
       paddingX={1}
     >
-      <Text bold color="blue">
-        SkillFoundry CLI
+      <Text bold color={colors.accent}>
+        {symbols.diamond} SkillFoundry CLI
       </Text>
-      <Text dimColor>
-        {provider}:{model}{agentInfo} | ${costSession.toFixed(4)}/{budgetMonthly}{tokenInfo} |
-        msgs:{messageCount} | {state}
+      <Text>
+        <Text color={colors.secondary}>{provider}:{model}</Text>
+        {activeTeam && (
+          <>
+            <Text color={colors.textMuted}> {symbols.bullet} </Text>
+            <Text color={colors.accent}>team:{activeTeam.name}</Text>
+            <Text color={colors.textMuted}> ({activeTeam.members.length})</Text>
+          </>
+        )}
+        {!activeTeam && activeAgent && (
+          <>
+            <Text color={colors.textMuted}> {symbols.bullet} </Text>
+            <Text color={colors.accent}>agent:{activeAgent}</Text>
+          </>
+        )}
+        <Text color={colors.textMuted}> {symbols.bullet} </Text>
+        <Text color={colors.warning}>${costSession.toFixed(4)}</Text>
+        <Text color={colors.textMuted}>/{budgetMonthly}</Text>
+        {totalTokens > 0 && (
+          <>
+            <Text color={colors.textMuted}> {symbols.bullet} </Text>
+            <Text color={colors.textSecondary}>{formatTokens(totalTokens)} tok</Text>
+          </>
+        )}
+        <Text color={colors.textMuted}> {symbols.bullet} </Text>
+        <Text color={colors.textSecondary}>msgs:{messageCount}</Text>
+        <Text color={colors.textMuted}> {symbols.bullet} </Text>
+        <Text color={stateColor}>{state}</Text>
       </Text>
     </Box>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import Spinner from 'ink-spinner';
 import type { ToolCall as ToolCallType, ToolResult } from '../types.js';
+import { colors, symbols, borders } from '../utils/theme.js';
 
 interface ToolCallProps {
   toolCall: ToolCallType;
@@ -10,11 +11,11 @@ interface ToolCallProps {
 }
 
 const TOOL_ICONS: Record<string, string> = {
-  bash: '$',
-  read: 'R',
-  write: 'W',
-  glob: 'G',
-  grep: '?',
+  bash: symbols.bash,
+  read: symbols.read,
+  write: symbols.write,
+  glob: symbols.glob,
+  grep: symbols.grep,
 };
 
 function formatInput(toolCall: ToolCallType): string {
@@ -38,31 +39,45 @@ function formatInput(toolCall: ToolCallType): string {
 }
 
 export function ToolCallDisplay({ toolCall, result, isExecuting }: ToolCallProps) {
-  const icon = TOOL_ICONS[toolCall.name] || '>';
+  const icon = TOOL_ICONS[toolCall.name] || symbols.tool;
 
   return (
     <Box flexDirection="column" marginLeft={4} marginBottom={1}>
       <Box>
-        <Text color="magenta" bold>
+        <Text color={colors.roleTool} bold>
           [{icon}] {toolCall.name}{' '}
         </Text>
         {isExecuting && (
-          <Text color="blue">
+          <Text color={colors.accent}>
             <Spinner type="dots" />
           </Text>
         )}
-        {result && !result.isError && <Text color="green">done</Text>}
-        {result?.isError && <Text color="red">error</Text>}
+        {result && !result.isError && (
+          <Text color={colors.success}>{symbols.pass} done</Text>
+        )}
+        {result?.isError && (
+          <Text color={colors.error}>{symbols.fail} error</Text>
+        )}
       </Box>
       <Box marginLeft={4}>
-        <Text dimColor wrap="wrap">
+        <Text color={colors.textSecondary} wrap="wrap">
           {formatInput(toolCall)}
         </Text>
       </Box>
       {result && (
-        <Box marginLeft={4} marginTop={0}>
+        <Box
+          marginLeft={4}
+          marginTop={0}
+          borderStyle={borders.card}
+          borderLeft={true}
+          borderRight={false}
+          borderTop={false}
+          borderBottom={false}
+          borderLeftColor={result.isError ? colors.error : colors.borderDim}
+          paddingLeft={1}
+        >
           <Text
-            color={result.isError ? 'red' : 'gray'}
+            color={result.isError ? colors.error : colors.textMuted}
             wrap="wrap"
           >
             {result.output.slice(0, 200)}

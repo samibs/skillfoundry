@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
+import { colors, symbols, borders } from '../utils/theme.js';
 
 interface InputProps {
   onSubmit: (value: string) => void;
@@ -21,12 +22,13 @@ export function Input({ onSubmit, isDisabled }: InputProps) {
 
   return (
     <Box
-      borderStyle="round"
-      borderColor={isDisabled ? 'gray' : 'cyan'}
+      borderStyle={borders.input}
+      borderColor={isDisabled ? colors.textMuted : colors.borderDim}
+      borderLeftColor={isDisabled ? colors.textMuted : colors.accent}
       paddingX={1}
     >
-      <Text bold color="cyan">
-        you&gt;{' '}
+      <Text bold color={isDisabled ? colors.textMuted : colors.accent}>
+        {symbols.chevron}{' '}
       </Text>
       <TextInput
         value={value}
