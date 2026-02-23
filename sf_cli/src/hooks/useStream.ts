@@ -126,6 +126,7 @@ export function useStream(
               outputTokens: result.outputTokens,
               costUsd: result.costUsd,
               thinkingContent: result.thinkingContent,
+              mode: 'chat',
             },
           });
 
@@ -188,6 +189,7 @@ export function useStream(
                 outputTokens: totalOutputTokens,
                 costUsd: totalCostUsd,
                 thinkingContent: result.thinkingContent,
+                mode: 'agent',
               },
             });
             break;
