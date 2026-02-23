@@ -25,6 +25,9 @@ export interface Message {
     mode?: 'chat' | 'agent';
     activeAgent?: string;
     fallbackUsed?: string;
+    routedAgent?: string;
+    routingConfidence?: string;
+    activeTeam?: string;
   };
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
@@ -88,6 +91,15 @@ export interface SlashCommand {
   execute: (args: string, session: SessionContext) => Promise<string | void>;
 }
 
+// Team definition for multi-agent routing (imported from team-registry at runtime)
+export interface TeamDefinitionRef {
+  name: string;
+  displayName: string;
+  description: string;
+  members: string[];
+  defaultAgent: string;
+}
+
 // Session context passed to commands and hooks
 export interface SessionContext {
   config: SfConfig;
@@ -97,9 +109,11 @@ export interface SessionContext {
   permissionMode: PermissionMode;
   workDir: string;
   activeAgent: string | null;
+  activeTeam: TeamDefinitionRef | null;
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
   setState: (state: Partial<SfState>) => void;
   setActiveAgent: (name: string | null) => void;
+  setActiveTeam: (team: TeamDefinitionRef | null) => void;
 }
 
 // Provider streaming callback

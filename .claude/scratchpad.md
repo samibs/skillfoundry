@@ -1,7 +1,22 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-02-23T15:00:00Z
+> Last updated: 2026-02-23T16:00:00Z
 > Platform: claude-code
+
+## Team Summon Session — 2026-02-23
+- Task: Multi-agent auto-routing — summon a team once, available all session
+- Files created: 4 (team-registry.ts, team-router.ts, team.ts, 2 test files)
+- Files modified: 10 (types.ts, useSession.ts, useStream.ts, app.tsx, agent.ts, index.ts, Header.tsx, StatusBar.tsx, Message.tsx, CHANGELOG.md)
+- Tests: 237 passing across 20 files (26 new tests)
+- Version: 2.0.1 → 2.0.2
+
+### Features
+1. **6 preset teams**: dev, fullstack, security, ops, review, ship
+2. **Custom teams**: /team custom <agents...> (min 2)
+3. **Keyword-based auto-router**: 30+ agents with weighted regex patterns, no LLM calls
+4. **Confidence levels**: high/medium/low/fallback shown in message metadata
+5. **UI integration**: team:name in header, sf:agent> labels per message, /team off in statusbar
+6. **Mutual exclusion**: team clears single agent, agent clears team
 
 ## Performance Session — 2026-02-23
 - Task: Multi-layer caching to reduce token usage and latency

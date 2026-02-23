@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.2] - 2026-02-23
+
+### Added — Team Summon (Multi-Agent Auto-Routing)
+
+Summon a team of agents once with `/team <name>`, and every subsequent message is automatically routed to the best-matching team member via lightweight keyword scoring — no manual `/agent` switching needed.
+
+#### `/team` Command
+- **6 preset teams**: `dev`, `fullstack`, `security`, `ops`, `review`, `ship`
+- **Custom teams**: `/team custom coder tester reviewer` (min 2 agents)
+- **Subcommands**: `/team off`, `/team list`, `/team status`
+- **Mutual exclusion**: activating a team clears any single agent, and vice versa
+
+#### Keyword-Based Auto-Router
+- 30+ agents mapped to weighted regex patterns in `team-router.ts`
+- Scoring: sum matched keyword weights per team member, highest wins
+- Confidence levels: high (>=6), medium (>=3), low (>=1), fallback (0)
+- Deterministic, no LLM calls — ~300 regex tests worst case
+
+#### UI Integration
+- **Header**: shows `team:dev (5 agents)` when team active
+- **StatusBar**: shows `/team off` hint when team active
+- **Message labels**: `sf:coder>` shows which agent handled each message
+- **Metadata**: `routedAgent`, `routingConfidence`, `activeTeam` tracked per message
+
+#### Session State
+- `activeTeam` in SessionContext with mutual exclusion against `activeAgent`
+- Team routing integrated into `useStream.sendMessage()` pipeline
+
+### Changed
+- `.version` bumped to 2.0.2 (from 2.0.1)
+- `sf_cli/package.json` version bumped to 2.0.2
+- 237 tests across 20 test files (26 new: 15 router + 11 command)
+
+---
+
 ## [2.0.1] - 2026-02-23
 
 ### Performance — Multi-Layer Caching

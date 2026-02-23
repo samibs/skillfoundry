@@ -30,6 +30,7 @@ export function App({ workDir }: AppProps) {
     state,
     permissionMode,
     activeAgent,
+    activeTeam,
     addMessage,
     sessionContext,
   } = useSession(workDir);
@@ -72,9 +73,9 @@ export function App({ workDir }: AppProps) {
         return;
       }
 
-      await sendMessage(input, messages, permissionMode, activeAgent);
+      await sendMessage(input, messages, permissionMode, activeAgent, activeTeam);
     },
-    [messages, sendMessage, addMessage, sessionContext, exit, permissionMode, activeAgent],
+    [messages, sendMessage, addMessage, sessionContext, exit, permissionMode, activeAgent, activeTeam],
   );
 
   return (
@@ -87,6 +88,7 @@ export function App({ workDir }: AppProps) {
         messageCount={messages.length}
         state={state.current_state}
         activeAgent={activeAgent}
+        activeTeam={activeTeam}
       />
       <Box flexDirection="column" paddingX={1} marginY={1}>
         <MessageList messages={messages} />
@@ -124,6 +126,7 @@ export function App({ workDir }: AppProps) {
         permissionMode={permissionMode}
         isStreaming={isStreaming}
         activeAgent={activeAgent}
+        activeTeam={activeTeam}
       />
     </Box>
   );
