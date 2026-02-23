@@ -1,3 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
-bash "$(dirname "$0")/sf_cli/sf.sh" "$@"
+
+SF_ROOT="$(cd "$(dirname "$0")" && pwd)"
+export SF_FRAMEWORK_ROOT="$SF_ROOT"
+
+# Launch the Node.js interactive CLI
+exec node "$SF_ROOT/sf_cli/bin/sf.js" "$@"
