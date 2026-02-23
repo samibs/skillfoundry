@@ -33,9 +33,10 @@ export const AGENT_ROUTING_KEYWORDS: Record<string, RoutingKeyword[]> = {
     { pattern: /\b(patch|hotfix|workaround)\b/i, weight: 2 },
   ],
   review: [
-    { pattern: /\b(review|audit|check|inspect|evaluate)\b/i, weight: 3 },
+    { pattern: /\b(review|audit|inspect|evaluate)\b/i, weight: 4 },
+    { pattern: /\b(check)\b/i, weight: 2 },
     { pattern: /\b(code\s*review|PR|pull\s*request|merge\s*request)\b/i, weight: 4 },
-    { pattern: /\b(quality|smell|anti.?pattern)\b/i, weight: 2 },
+    { pattern: /\b(quality|smell|anti.?pattern|feedback|critique)\b/i, weight: 2 },
   ],
   debugger: [
     { pattern: /\b(debug|trace|stack\s*trace|breakpoint|log)\b/i, weight: 3 },
