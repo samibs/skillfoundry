@@ -100,6 +100,24 @@ export interface SessionContext {
 // Provider streaming callback
 export type StreamCallback = (chunk: string, done: boolean) => void;
 
+// Callback for when the provider returns tool_use blocks
+export type ToolUseCallback = (toolCalls: ToolCall[]) => void;
+
+// Anthropic API content block types
+export interface ContentBlockText {
+  type: 'text';
+  text: string;
+}
+
+export interface ContentBlockToolUse {
+  type: 'tool_use';
+  id: string;
+  name: string;
+  input: Record<string, unknown>;
+}
+
+export type ContentBlock = ContentBlockText | ContentBlockToolUse;
+
 // Provider adapter interface
 export interface ProviderAdapter {
   name: string;
@@ -113,4 +131,48 @@ export interface ProviderAdapter {
     costUsd: number;
     thinkingContent?: string;
   }>;
+
+  // Agentic stream: sends messages with tool definitions, returns content blocks
+  streamWithTools(
+    messages: Array<AnthropicMessage>,
+    options: {
+      model: string;
+      maxTokens?: number;
+      systemPrompt?: string;
+      tools: Array<{ name: string; description: string; input_schema: unknown }>;
+    },
+    onChunk: StreamCallback,
+  ): Promise<{
+    content: ContentBlock[];
+    inputTokens: number;
+    outputTokens: number;
+    costUsd: number;
+    stopReason: string;
+    thinkingContent?: string;
+  }>;
+}
+
+// Anthropic message format for multi-turn tool conversations
+export interface AnthropicMessage {
+  role: 'user' | 'assistant';
+  content: string | AnthropicContentBlock[];
+}
+
+export interface AnthropicContentBlock {
+  type: 'text' | 'tool_use' | 'tool_result';
+  text?: string;
+  id?: string;
+  name?: string;
+  input?: Record<string, unknown>;
+  tool_use_id?: string;
+  content?: string;
+  is_error?: boolean;
+}
+
+// Active tool execution state (for UI rendering)
+export interface ActiveToolExecution {
+  toolCall: ToolCall;
+  result?: ToolResult;
+  isExecuting: boolean;
+  permissionPending: boolean;
 }

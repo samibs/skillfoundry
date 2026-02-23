@@ -1,5 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { ProviderAdapter, StreamCallback } from '../types.js';
+import type {
+  ProviderAdapter,
+  StreamCallback,
+  ContentBlock,
+  AnthropicMessage,
+} from '../types.js';
+
+const DEFAULT_SYSTEM_PROMPT =
+  'You are SkillFoundry AI, a helpful coding assistant. Be concise and direct. You have access to tools for reading files, writing files, searching code, and running shell commands. Use them when needed to help the user.';
 
 export class AnthropicAdapter implements ProviderAdapter {
   name = 'anthropic';
@@ -34,13 +42,18 @@ export class AnthropicAdapter implements ProviderAdapter {
     const stream = this.client.messages.stream({
       model,
       max_tokens: maxTokens,
-      system: options.systemPrompt || 'You are SkillFoundry AI, a helpful coding assistant. Be concise and direct.',
+      system:
+        options.systemPrompt || DEFAULT_SYSTEM_PROMPT,
       messages: anthropicMessages,
     });
 
     for await (const event of stream) {
       if (event.type === 'content_block_delta') {
-        const delta = event.delta as { type: string; text?: string; thinking?: string };
+        const delta = event.delta as {
+          type: string;
+          text?: string;
+          thinking?: string;
+        };
         if (delta.type === 'text_delta' && delta.text) {
           onChunk(delta.text, false);
         } else if (delta.type === 'thinking_delta' && delta.thinking) {
@@ -59,6 +72,116 @@ export class AnthropicAdapter implements ProviderAdapter {
     onChunk('', true);
 
     return { inputTokens, outputTokens, costUsd, thinkingContent };
+  }
+
+  async streamWithTools(
+    messages: AnthropicMessage[],
+    options: {
+      model: string;
+      maxTokens?: number;
+      systemPrompt?: string;
+      tools: Array<{
+        name: string;
+        description: string;
+        input_schema: unknown;
+      }>;
+    },
+    onChunk: StreamCallback,
+  ): Promise<{
+    content: ContentBlock[];
+    inputTokens: number;
+    outputTokens: number;
+    costUsd: number;
+    stopReason: string;
+    thinkingContent?: string;
+  }> {
+    const model = options.model || 'claude-sonnet-4-20250514';
+    const maxTokens = options.maxTokens || 8192;
+
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let thinkingContent = '';
+
+    const stream = this.client.messages.stream({
+      model,
+      max_tokens: maxTokens,
+      system: options.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+      messages: messages as Anthropic.MessageParam[],
+      tools: options.tools as Anthropic.Tool[],
+    });
+
+    const contentBlocks: ContentBlock[] = [];
+    let currentTextBlock = '';
+    let currentBlockType: string | null = null;
+    let currentToolId = '';
+    let currentToolName = '';
+    let currentToolInput = '';
+
+    for await (const event of stream) {
+      if (event.type === 'content_block_start') {
+        const block = (event as { content_block: { type: string; id?: string; name?: string } })
+          .content_block;
+        currentBlockType = block.type;
+        if (block.type === 'tool_use') {
+          currentToolId = block.id || '';
+          currentToolName = block.name || '';
+          currentToolInput = '';
+        } else if (block.type === 'text') {
+          currentTextBlock = '';
+        }
+      } else if (event.type === 'content_block_delta') {
+        const delta = event.delta as {
+          type: string;
+          text?: string;
+          partial_json?: string;
+          thinking?: string;
+        };
+        if (delta.type === 'text_delta' && delta.text) {
+          currentTextBlock += delta.text;
+          onChunk(delta.text, false);
+        } else if (delta.type === 'input_json_delta' && delta.partial_json) {
+          currentToolInput += delta.partial_json;
+        } else if (delta.type === 'thinking_delta' && delta.thinking) {
+          thinkingContent += delta.thinking;
+        }
+      } else if (event.type === 'content_block_stop') {
+        if (currentBlockType === 'text' && currentTextBlock) {
+          contentBlocks.push({ type: 'text', text: currentTextBlock });
+        } else if (currentBlockType === 'tool_use') {
+          let parsedInput: Record<string, unknown> = {};
+          try {
+            parsedInput = JSON.parse(currentToolInput || '{}');
+          } catch {
+            // If JSON parsing fails, use empty object
+          }
+          contentBlocks.push({
+            type: 'tool_use',
+            id: currentToolId,
+            name: currentToolName,
+            input: parsedInput,
+          });
+        }
+        currentBlockType = null;
+      }
+    }
+
+    const finalMessage = await stream.finalMessage();
+    inputTokens = finalMessage.usage.input_tokens;
+    outputTokens = finalMessage.usage.output_tokens;
+    const stopReason = finalMessage.stop_reason || 'end_turn';
+
+    const costUsd = (inputTokens * 3 + outputTokens * 15) / 1_000_000;
+
+    onChunk('', true);
+
+    return {
+      content: contentBlocks,
+      inputTokens,
+      outputTokens,
+      costUsd,
+      stopReason,
+      thinkingContent,
+    };
   }
 }
 
