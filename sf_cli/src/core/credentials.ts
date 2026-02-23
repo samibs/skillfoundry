@@ -78,12 +78,14 @@ export function loadCredentials(): CredentialStore {
   }
   try {
     const stats = statSync(CREDENTIALS_FILE);
-    const mode = stats.mode & 0o777;
-    if (mode !== 0o600 && process.platform !== 'win32') {
-      console.warn(
-        `Warning: ${CREDENTIALS_FILE} has permissions ${mode.toString(8)}, expected 600. ` +
-          `Run: chmod 600 "${CREDENTIALS_FILE}"`,
-      );
+    if (process.platform !== 'win32') {
+      const mode = stats.mode & 0o777;
+      if (mode !== 0o600) {
+        console.warn(
+          `Warning: ${CREDENTIALS_FILE} has permissions ${mode.toString(8)}, expected 600. ` +
+            `Run: chmod 600 "${CREDENTIALS_FILE}"`,
+        );
+      }
     }
   } catch {
     // Stat failed — proceed anyway

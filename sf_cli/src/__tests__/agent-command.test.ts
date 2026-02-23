@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { agentCommand } from '../commands/agent.js';
 import type { SessionContext } from '../types.js';
 
@@ -32,7 +34,7 @@ function makeSession(activeAgent: string | null = null): SessionContext {
     },
     messages: [],
     permissionMode: 'ask',
-    workDir: '/tmp/test',
+    workDir: join(tmpdir(), 'sf-test'),
     activeAgent,
     addMessage: vi.fn(),
     setState: vi.fn(),
