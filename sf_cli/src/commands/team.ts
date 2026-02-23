@@ -8,8 +8,8 @@ import {
 
 export const teamCommand: SlashCommand = {
   name: 'team',
-  description: 'Summon a team of agents with auto-routing',
-  usage: '/team [preset|custom <agents...>|off|list|status]',
+  description: 'Summon a team (e.g. /team dev, /team security, /team list)',
+  usage: '/team <name>',
   execute: async (args: string, session: SessionContext): Promise<string> => {
     const parts = args.trim().split(/\s+/).filter(Boolean);
     const sub = parts[0]?.toLowerCase() || '';
