@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v1.9.0.23
+# Documentation Index - SkillFoundry Framework v2.0.0
 
 Complete guide to all documentation in the framework.
 

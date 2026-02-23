@@ -8,6 +8,7 @@ import { providerCommand } from './provider.js';
 import { configCommand } from './config.js';
 import { costCommand } from './cost.js';
 import { memoryCommand, lessonsCommand } from './memory.js';
+import { setupCommand } from './setup.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -50,4 +51,5 @@ export function initCommands(): void {
   registerCommand(costCommand);
   registerCommand(memoryCommand);
   registerCommand(lessonsCommand);
+  registerCommand(setupCommand);
 }

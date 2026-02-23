@@ -1111,6 +1111,47 @@ update_project() {
     fi
 
     # ─────────────────────────────────────────────────────────────
+    # Rebuild CLI and update wrapper (if Node.js 20+ available)
+    # ─────────────────────────────────────────────────────────────
+    echo ""
+    echo -e "${YELLOW}Rebuilding SkillFoundry CLI...${NC}"
+
+    if command -v node >/dev/null 2>&1; then
+        local node_major
+        node_major=$(node -v | sed 's/v//' | cut -d. -f1)
+        if [ "$node_major" -ge 20 ] 2>/dev/null; then
+            local sf_cli_dir="$SCRIPT_DIR/sf_cli"
+            if [ -f "$sf_cli_dir/package.json" ]; then
+                (cd "$sf_cli_dir" && npm install --production=false --silent 2>&1 && npm run build 2>&1) && {
+                    echo -e "  ${GREEN}CLI rebuilt successfully${NC}"
+
+                    # Regenerate wrapper if it exists (framework root may have moved)
+                    local sf_wrapper="${HOME}/.local/bin/sf"
+                    if [ -f "$sf_wrapper" ]; then
+                        cat > "$sf_wrapper" << WRAPPER_EOF
+#!/usr/bin/env bash
+# SkillFoundry CLI wrapper — updated by update.sh
+# Framework: ${SCRIPT_DIR}
+# Version: ${FRAMEWORK_VERSION}
+# Updated: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+export SF_FRAMEWORK_ROOT="${SCRIPT_DIR}"
+exec node "\$SF_FRAMEWORK_ROOT/sf_cli/bin/sf.js" "\$@"
+WRAPPER_EOF
+                        chmod +x "$sf_wrapper"
+                        echo -e "  ${GREEN}CLI wrapper updated${NC}"
+                    fi
+                } || {
+                    echo -e "  ${YELLOW}CLI rebuild failed (non-critical, skipping)${NC}"
+                }
+            fi
+        else
+            echo -e "  ${YELLOW}Node.js v${node_major} detected (need v20+). Skipping CLI rebuild.${NC}"
+        fi
+    else
+        echo -e "  ${YELLOW}Node.js not found. Skipping CLI rebuild.${NC}"
+    fi
+
+    # ─────────────────────────────────────────────────────────────
     # Set version marker
     # ─────────────────────────────────────────────────────────────
     set_project_version "$project_dir"

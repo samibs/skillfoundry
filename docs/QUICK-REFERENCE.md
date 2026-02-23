@@ -1,4 +1,4 @@
-# SkillFoundry v1.9.0.23 - Quick Reference Card
+# SkillFoundry v2.0.0 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -56,6 +56,8 @@ math-check     memory
 | `/explain` | Explain last agent action |
 | `/undo` | Revert last action |
 | `/cost` | Token usage report |
+| `/setup` | Configure API keys (sf setup from terminal) |
+| `/exit` | Quit the CLI |
 | `/health` | Framework self-diagnostic |
 | `companion.sh --tmux` | Open context-aware command panel |
 
@@ -600,4 +602,4 @@ your-project/
 
 ---
 
-*SkillFoundry Framework v1.9.0.23 - February 2026 - The Forge (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.0 - February 2026 - The Forge (53 Core Agents / 60 Skills)*

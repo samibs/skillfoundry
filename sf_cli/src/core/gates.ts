@@ -9,6 +9,7 @@
 import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { getFrameworkRoot } from './framework.js';
 
 export type GateStatus = 'pass' | 'fail' | 'warn' | 'skip' | 'running';
 
@@ -48,10 +49,23 @@ function runCommand(cmd: string, cwd: string, timeoutMs: number = 60_000): { ok:
 }
 
 function findAnvilScript(workDir: string): string | null {
+  // Check project-local first (if user copied scripts/ into their project)
   const candidates = [
     join(workDir, 'scripts', 'anvil.sh'),
     join(workDir, 'scripts', 'anvil'),
   ];
+
+  // Then check framework root (the canonical location)
+  try {
+    const frameworkRoot = getFrameworkRoot();
+    candidates.push(
+      join(frameworkRoot, 'scripts', 'anvil.sh'),
+      join(frameworkRoot, 'scripts', 'anvil'),
+    );
+  } catch {
+    // Framework root not available — skip framework candidates
+  }
+
   for (const path of candidates) {
     if (existsSync(path)) return path;
   }

@@ -41,7 +41,13 @@ export const providerCommand: SlashCommand = {
       // Check if API key is available
       const available = detectAvailableProviders();
       if (!available.includes(name) && name !== 'ollama') {
-        return `No API key found for ${name}. Set ${info.envKey} environment variable.`;
+        return (
+          `No API key found for ${name}.\n\n` +
+          `To configure, run one of:\n` +
+          `  sf setup --provider ${name} --key <your-key>\n` +
+          `  export ${info.envKey}=<your-key>\n` +
+          `Or use /setup ${name} <key> in this session.`
+        );
       }
 
       // Update config

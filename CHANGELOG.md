@@ -7,6 +7,117 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.0] - 2026-02-23
+
+### Added — Interactive CLI (Node.js + Ink)
+
+Major release: SkillFoundry now ships with an interactive terminal CLI (`sf`) built on Node.js + Ink (React for terminals). The CLI provides a Claude Code / Gemini CLI style experience with streaming AI responses, agentic tool execution, quality gates, and multi-provider support.
+
+#### Phase 1: Foundation MVP
+
+- **Interactive REPL** with streaming markdown rendering in the terminal
+- **Anthropic Claude adapter** with full streaming support (`content_block_start/delta/stop`)
+- **Session state machine** persisted to `.claude/state.json` (IDLE, GENERATING_STORIES, VALIDATED, EXECUTING_STORY, COMPLETED, FAILED)
+- **TOML configuration** loader for `.skillfoundry/config.toml` and `policy.toml`
+- **Secret redaction** pipeline (API keys, passwords, tokens, connection strings)
+- **Slash command system** with registry: `/help`, `/status`
+- **React terminal components**: Header, MessageList, Message, StreamingMessage, Input, StatusBar
+- **Terminal markdown** rendering via `marked` + `marked-terminal`
+- **Timeline logger** writing to `.skillfoundry/timeline.log`
+- **CLI entry point** with Commander: `sf`, `sf init`, `sf chat`
+- **23 unit tests** passing (config, redact, command parsing)
+
+#### Phase 2: Tool System
+
+- **5 tool definitions** for Anthropic tool_use API: bash, read, write, glob, grep
+- **Tool executor** with `child_process.execSync` for bash, `fs` for file operations, `glob` for pattern matching, `rg`/`grep` for content search
+- **Permission engine** with 4 modes: auto, ask, deny, trusted
+- **Dangerous command blocking** — `rm -rf /`, `mkfs`, `dd`, `curl|bash` always blocked
+- **Sensitive operation detection** — `git push`, `npm publish` always prompt
+- **Agentic loop** — up to 25 tool turns per conversation with automatic tool_use → execute → tool_result cycling
+- **ToolCall component** displaying tool execution with status spinners
+- **PermissionPrompt component** with keyboard-driven Allow/Deny/Always-allow
+- **Extended types**: ContentBlock, AnthropicMessage, AnthropicContentBlock, ActiveToolExecution
+- **42 additional tests** (tools, executor, permissions)
+
+#### Phase 3: Workflow Integration
+
+- **`/plan <task>`** — Read-only plan generation with PRD context from `genesis/`, saved to `.skillfoundry/plans/`
+- **`/apply [plan-id]`** — Plan execution with pre-apply quality gate checks, run bundles saved to `.skillfoundry/runs/`
+- **`/gates [target]`** — Independent quality gate execution
+- **`/forge`** — Full 5-phase pipeline: Ignite (PRD validation), Forge (story checks), Temper (quality gates), Inspect (security audit), Debrief (summary)
+- **Quality gate runner** wrapping `scripts/anvil.sh` with inline fallbacks:
+  - T1: Banned pattern scan (TODO/FIXME/HACK) + syntax check
+  - T2: Type check (tsc --noEmit, pyright)
+  - T3: Test suite (npm test, vitest, pytest)
+  - T4: Security scan (hardcoded secrets, eval/exec patterns)
+  - T5: Build verification (npm run build, cargo build)
+  - T6: Scope validation (changes match story)
+- **DiffPreview component** with colorized inline diff rendering
+- **GateTimeline component** with real-time gate progress display
+- **ApprovalPrompt component** for approve/reject/edit checkpoints
+- **27 additional tests** (gates, diff parsing, forge pipeline)
+
+#### Phase 4: Polish — Multi-Provider & Runtime Features
+
+- **5 AI provider adapters**:
+  - Anthropic Claude (native SDK with streaming + tool_use)
+  - OpenAI (SDK — also used for xAI and Ollama via baseURL)
+  - xAI Grok (OpenAI-compatible at api.x.ai/v1)
+  - Google Gemini (native fetch + SSE streaming)
+  - Ollama local (OpenAI-compatible at localhost:11434/v1)
+- **Provider registry** with `AVAILABLE_PROVIDERS`, `createProvider()` factory, `detectAvailableProviders()`
+- **Budget enforcement**: per-run and monthly cost caps, usage persisted to `.skillfoundry/usage.json`
+- **Memory system**: JSONL knowledge recall with relevance scoring + recency boost, capture to `memory_bank/knowledge/`
+- **`/provider [list|set <name>]`** — List available providers or switch active provider
+- **`/config [key] [value]`** — View or edit configuration with type coercion
+- **`/cost`** — Token usage and cost report with provider breakdown
+- **`/memory [stats|recall|capture]`** — Knowledge base operations
+- **`/lessons <content>`** — Quick-capture a lesson learned
+- **Model pricing tables** for cost estimation across all providers
+- **28 additional tests** (providers, budget, memory)
+
+#### Phase 5: Global Deployment & Credential Management
+
+- **Global CLI wrapper** — `install.sh` builds the CLI and creates `~/.local/bin/sf` so users can run `sf` from any project directory
+- **`SF_FRAMEWORK_ROOT` env var** — Shell wrapper sets this so the CLI finds framework resources (scripts/anvil.sh, genesis/TEMPLATE.md) regardless of CWD
+- **Framework root discovery** (`core/framework.ts`) — resolves framework location from env var or file-based detection
+- **`sf setup` CLI subcommand** — Non-interactive credential configuration: `sf setup --provider anthropic --key sk-ant-...`
+- **`/setup` slash command** — Configure API keys from within the REPL session
+- **Credential storage** at `~/.config/skillfoundry/credentials.toml` with `0600` permissions
+- **First-run setup wizard** — Interactive provider selection with API key URLs when no credentials detected
+- **`ANTHROPIC_AUTH_TOKEN`** support — Bearer token auth in addition to API key
+- **`GEMINI_API_KEY`** alt env var detection for Google Gemini
+- **Credential injection** at startup — stored keys injected into `process.env` so SDK constructors auto-discover them (env vars always take precedence)
+- **Improved auth error messages** — Auth failures now suggest `sf setup` or `/setup` instead of cryptic SDK errors
+- **ASCII art banner** on CLI startup with colored gradient
+- **`/exit` and `/quit` commands** — Clean exit from REPL (replaces Ctrl+C guidance)
+- **`update.sh` CLI rebuild** — Framework updates now rebuild the CLI and regenerate the wrapper
+- **Dynamic version** from `.version` file via `getFrameworkVersion()`
+
+#### CLI Summary
+
+- **30+ source files** across core, commands, components, hooks, utils
+- **154 tests** across 14 test files, all passing
+- **13 slash commands**: help, status, setup, plan, apply, gates, forge, provider, config, cost, memory, lessons, exit
+- **5 AI providers** supported out of the box
+- **5 tools** with permission controls and dangerous command blocking
+- **Global `sf` command** available system-wide after install
+
+### Changed
+
+- `.version` bumped to 2.0.0 (from 1.9.0.23)
+- `sf_cli/package.json` version bumped to 2.0.0
+- Version references updated in README.md, AGENTS.md, DOCUMENTATION-INDEX.md, QUICK-REFERENCE.md
+- README.md rewritten to feature the Interactive CLI prominently
+- New visual user guide: `docs/USER-GUIDE-CLI.md`
+- `install.sh` now builds CLI and deploys shell wrapper (Phase 3)
+- `update.sh` now rebuilds CLI on framework updates
+- Status bar shows `/exit quit` instead of `Ctrl+C exit`
+- Provider detection now checks alternate env vars (`ANTHROPIC_AUTH_TOKEN`, `GEMINI_API_KEY`)
+
+---
+
 ## [1.9.0.23] - 2026-02-23
 
 ### Added — 53-Agent Security Evolution (Full Pipeline Hardening)
