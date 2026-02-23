@@ -30,6 +30,18 @@ Generate user-facing release notes.
 ### `/release checklist`
 Pre-release verification checklist.
 
+### Pre-Release Security Gate (MANDATORY)
+
+Before ANY release, verify:
+- [ ] Top 12 security scan passes (all 12 items clean)
+- [ ] Data isolation verified (no unscoped queries on user-owned entities)
+- [ ] Error responses sanitized (no stack traces, SQL, IPs in production)
+- [ ] Pagination caps enforced on all list endpoints
+- [ ] Version bumped in README.md, CHANGELOG.md, and version files
+- [ ] CHANGELOG entry exists for current version
+- [ ] No banned patterns (TODO, FIXME, PLACEHOLDER, etc.)
+- [ ] All tests pass including negative tests and cross-user isolation tests
+
 ### `/release rollback [version]`
 Generate rollback plan for specific version.
 

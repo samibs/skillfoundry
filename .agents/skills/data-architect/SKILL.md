@@ -51,6 +51,9 @@ REQUIREMENTS CHECKLIST:
 □ What are the consistency requirements?
 □ Are there compliance/audit requirements?
 □ What is the backup/recovery strategy?
+□ Which entities are user-owned vs system-global?
+□ What ownership column scopes rows (user_id, tenant_id, org_id)?
+□ Are there concurrently editable entities needing optimistic locking?
 ```
 
 ### Normalization Decision Matrix
@@ -117,6 +120,9 @@ DROP TABLE ...
 | **Polymorphic Association** | No FK integrity | Separate FKs or STI |
 | **Metadata Tribbles** | created_by_user_who_was_logged_in_at | Audit table |
 | **Keyless Entry** | No primary key | Always have PK |
+| **Unscoped Query on Owned Entity** | Returns all tenants' data | Add ownership WHERE clause |
+| **Missing Ownership Column** | No way to scope rows to user/tenant | Add user_id/tenant_id/org_id NOT NULL + index |
+| **Scope from Request Params** | User can tamper with tenant_id | Derive scope from auth token only |
 | **Stringly Typed** | Everything is VARCHAR | Proper types |
 | **Fear of Joins** | Premature denormalization | Normalize first |
 | **Index Shotgun** | Index on every column | Strategic indexes |

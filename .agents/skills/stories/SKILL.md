@@ -188,6 +188,22 @@ Feature: [Feature name from PRD]
     Then [error handling expectation]
 ```
 
+**DATA ISOLATION SCENARIOS (Required for user-scoped entities):**
+
+```gherkin
+  Scenario: Cross-user data isolation
+    Given User A owns [entity] with ID [X]
+    And User B is authenticated
+    When User B requests [entity] with ID [X]
+    Then the response status is 404
+
+  Scenario: List endpoint returns only caller's data
+    Given User A owns 3 [entities]
+    And User B owns 2 [entities]
+    When User A lists [entities]
+    Then only User A's 3 [entities] are returned
+```
+
 ---
 
 ## Testing Requirements
@@ -220,6 +236,12 @@ Feature: [Feature name from PRD]
 - [ ] No sensitive data in logs
 - [ ] SQL injection prevented
 - [ ] XSS prevention applied
+- [ ] Data isolation enforced (ownership WHERE clause on all user-scoped queries)
+- [ ] Scope derived from auth token, not request parameters
+- [ ] Pagination caps enforced on list endpoints
+- [ ] Error responses sanitized (no stack traces, SQL, internal IPs)
+- [ ] Rate limiting configured for public endpoints
+- [ ] Idempotency-Key supported on non-idempotent mutations
 
 ---
 
@@ -233,6 +255,8 @@ Feature: [Feature name from PRD]
 - [ ] Code reviewed
 - [ ] Documentation updated (if public API)
 - [ ] Security checklist completed
+- [ ] Data isolation verified (cross-user access tests pass)
+- [ ] Negative tests exist (invalid input, unauthorized access, cross-user)
 
 ---
 

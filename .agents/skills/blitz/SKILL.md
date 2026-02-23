@@ -43,6 +43,27 @@ You are the Blitz Commander. When `/blitz` is invoked, execute the `/go` pipelin
 - You want TDD guarantees without sacrificing speed
 - You trust the framework to handle routine issues
 
+### Non-Negotiable Security Gate
+
+Even in blitz mode, the **Top 12 Critical Security Checks** are NEVER skipped:
+
+1. Hardcoded Secrets
+2. SQL Injection
+3. XSS
+4. Insecure Randomness
+5. Auth/Authz Flaws
+6. Package Hallucination
+7. Command Injection
+8. Data Isolation / Query Scoping
+9. Pagination & Input Size Limits
+10. Error Information Leakage
+11. Concurrent Modification Safety
+12. Session & Token Lifecycle
+
+**Speed does NOT override security.** If the Top 12 scan finds violations, blitz mode pauses until they are resolved. No exceptions.
+
+Reference: `docs/ANTI_PATTERNS_DEPTH.md`, `genesis/TEMPLATE.md` section 6.7
+
 ### Equivalent to:
 ```
 /go --mode=semi-auto --parallel --tdd

@@ -74,6 +74,14 @@ Execute only Step 4 (clean state). Skip rollback.
 
 ---
 
+## Safety Checks Before Nuking
+
+Before executing any rollback:
+- Verify no uncommitted changes would be lost (warn if dirty working tree)
+- Check if data isolation configuration would be reverted (ownership columns, access scopes)
+- Warn if rolling back would remove security fixes (Top 12 enforcement additions)
+- Preserve memory_bank entries (never delete knowledge)
+
 ## Confirmation Required
 
 This command is destructive. Per the CLI confirmation matrix:

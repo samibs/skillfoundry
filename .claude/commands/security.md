@@ -336,7 +336,7 @@ NEXT STEP: [specific action]
 
 
 **Reference**:
-- `docs/ANTI_PATTERNS_DEPTH.md` - Top 7 AI security failures
+- `docs/ANTI_PATTERNS_DEPTH.md` - Top 12 AI security failures
 - `docs/ANTI_PATTERNS_BREADTH.md` - 15 security anti-patterns
 - OWASP Top 10 (2021)
 - OWASP ASVS 4.0

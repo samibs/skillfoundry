@@ -187,7 +187,9 @@ Phase 1 Complete
 
 ### Security Validation Integration
 - **Mandatory security checks**: All code validated against ANTI_PATTERNS
-- **Top 7 vulnerabilities**: Automatic scanning during implementation
+- **Top 12 vulnerabilities**: Automatic scanning during implementation
+- **Data isolation enforcement**: Ownership column verification on all user-scoped entities
+- **Negative test requirements**: Cross-user access tests mandatory for data-bearing stories
 - **Security scanner integration**: Available for security audits
 - Reference: `docs/ANTI_PATTERNS_BREADTH.md`, `docs/ANTI_PATTERNS_DEPTH.md`
 
@@ -572,6 +574,12 @@ FOR EACH validated PRD:
            ├── Mark story IN_PROGRESS
            ├── Update scratchpad: Current Story = STORY-XXX
            │
+           ├── PRE-STORY DATA ISOLATION CHECK
+           │   └── If story affects user-owned entities:
+           │       └── Verify PRD specifies ownership column and access scope
+           │       └── Verify acceptance criteria include cross-user isolation tests
+           │       └── If missing: BLOCK story, require PRD update
+           │
            ├── Execute: Architect → ANVIL → Coder (+Shadow) → ANVIL → Tester → ANVIL → Gate-Keeper
            │   └── Each agent MUST return sub-agent format response
            │   └── See: agents/_subagent-response-format.md
@@ -722,6 +730,10 @@ THREE-LAYER STATUS:
 BANNED PATTERN SCAN: CLEAN
 
 SECURITY AUDIT: PASSED
+
+DATA ISOLATION: VERIFIED
+VERSION: BUMPED (README.md, CHANGELOG.md)
+CHANGELOG: ENTRY EXISTS
 
 PROJECT READY FOR DEPLOYMENT
 ```

@@ -76,7 +76,7 @@ EXECUTION MODES (NEW v1.7.0):
 
 ### Security Validation Integration
 - **Mandatory security checks**: All code validated against ANTI_PATTERNS
-- **Top 7 vulnerabilities**: Automatic scanning during implementation
+- **Top 12 vulnerabilities**: Automatic scanning during implementation
 - **Security scanner integration**: Available for security audits
 - Reference: `docs/ANTI_PATTERNS_BREADTH.md`, `docs/ANTI_PATTERNS_DEPTH.md`
 

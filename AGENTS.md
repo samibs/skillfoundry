@@ -1,6 +1,6 @@
 # SkillFoundry Framework — Agent Instructions for OpenAI Codex
 
-**Version 1.9.0.22** | **Penta-Platform: Claude Code · Cursor · Copilot · Codex · Gemini** | **60 Skills**
+**Version 1.9.0.23** | **Penta-Platform: Claude Code · Cursor · Copilot · Codex · Gemini** | **60 Skills**
 
 ---
 
@@ -138,4 +138,4 @@ scripts/              # Automation scripts
 
 ---
 
-*SkillFoundry Framework v1.9.0.22 — Penta-Platform Support*
+*SkillFoundry Framework v1.9.0.23 — Penta-Platform Support*

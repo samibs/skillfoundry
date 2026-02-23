@@ -437,7 +437,7 @@ Define in `.claude/gates.json`:
 
 | Mode | Coverage | Speed |
 |------|----------|-------|
-| Quick | Top 7 critical | Fast |
+| Quick | Top 12 critical | Fast |
 | Comprehensive | All 15 patterns | Slower |
 | Targeted | Specific vulnerability | Fast |
 

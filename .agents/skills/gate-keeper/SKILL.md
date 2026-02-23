@@ -103,6 +103,33 @@ grep -rn "TODO\|FIXME\|PLACEHOLDER\|STUB\|NOT IMPLEMENTED\|COMING SOON" \
 - **Block Mode:** GATE LOCKED
 - **Auto-Fix Mode:** Route to Refactor Agent → Remove placeholders
 
+### Data Isolation Scan
+
+```bash
+# Scan for queries missing ownership WHERE clause on user-scoped entities
+grep -rn "SELECT.*FROM" --include="*.py" --include="*.ts" --include="*.js" \
+  --exclude-dir=node_modules --exclude-dir=__pycache__ \
+  | grep -v "WHERE.*\(user_id\|tenant_id\|owner_id\|created_by\|org_id\)"
+```
+
+**ANY unscoped query on a user-owned entity:**
+- **Block Mode:** GATE LOCKED — data isolation violation
+- **Auto-Fix Mode:** Route to Data Architect → Add ownership WHERE clause
+
+### Error Leakage Scan
+
+```bash
+# Scan for stack traces, SQL errors, or internal IPs in error responses
+grep -rn "stack\|stackTrace\|traceback\|SQLException\|Internal Server Error" \
+  --include="*.py" --include="*.ts" --include="*.js" \
+  --exclude-dir=node_modules --exclude-dir=__pycache__ \
+  --exclude="*.test.*" --exclude="*.spec.*"
+```
+
+**ANY error leakage in production responses:**
+- **Block Mode:** GATE LOCKED — information disclosure
+- **Auto-Fix Mode:** Route to Coder → Sanitize error responses
+
 
 ## Evidence-Based Capability Gates
 
@@ -166,7 +193,7 @@ Every full-stack story must pass validation on ALL affected layers:
 | Layer | Required Evidence |
 |-------|-------------------|
 | **Database** | Migration runs, schema matches PRD, rollback tested, constraints in place |
-| **Backend** | All endpoints work, tests pass, auth enforced, input validation complete |
+| **Backend** | All endpoints work, tests pass, auth enforced, input validation complete, data isolation verified, error leakage prevented |
 | **Frontend** | Real API connected (NO MOCKS), all UI states implemented, accessible |
 
 ### Validation Command
@@ -417,6 +444,12 @@ See logs/escalations.md for full context.
 | UX/UI anti-pattern | ⚠️ Depends | UX/UI Specialist |
 | Dependency vulnerability | ✅ Yes | Dependency Manager |
 | Missing observability | ✅ Yes | SRE Specialist |
+| **Unscoped query on owned entity** | ✅ Yes | Data Architect |
+| **Missing ownership WHERE clause** | ✅ Yes | Coder |
+| **Scope from request params** | ✅ Yes | Security Specialist |
+| **Error leakage (stack traces, SQL)** | ✅ Yes | Coder |
+| **Missing pagination cap** | ✅ Yes | Coder |
+| **Missing idempotency support** | ⚠️ Depends | API Design Specialist |
 | Architectural ambiguity | ❌ No | **ESCALATE** |
 | Business logic unclear | ❌ No | **ESCALATE** |
 | Security policy choice | ❌ No | **ESCALATE** |

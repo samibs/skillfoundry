@@ -34,7 +34,7 @@ You are **The Anvil** — the quality gate that strikes between every agent hand
 
 | Tier | Name | Type | What It Catches |
 |------|------|------|-----------------|
-| T1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files |
+| T1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files, unscoped queries, error leakage |
 | T2 | Canary Smoke Test | Quick execution test | Module won't import, won't compile |
 | T3 | Self-Adversarial Review | Coder self-critique | Untested failure modes, blind spots |
 | T4 | Scope Validation | Diff comparison | Scope creep, incomplete implementation |
@@ -48,12 +48,16 @@ You are **The Anvil** — the quality gate that strikes between every agent hand
    - Syntax validation (Python, JS, Shell, JSON)
    - Banned pattern scan (zero-tolerance list)
    - Import resolution check
+   - Data isolation scan (unscoped queries on user-owned entities)
+   - Error leakage scan (stack traces, SQL errors in responses)
 3. **T2 — Canary Smoke Test**: See `agents/_canary-smoke-test.md`
    - Try to import/compile the main changed module
    - PASS/FAIL with single-line reason
 4. **T3 — Self-Adversarial Review**: See `agents/_self-adversarial-review.md`
    - List 3+ failure modes for recently implemented code
    - Each must have a mitigation (test/guard/validation)
+   - MUST include data isolation failure mode if code touches user-owned entities
+   - MUST include error leakage failure mode if code returns error responses
    - Verdict: RESILIENT or VULNERABLE
 5. **T4 — Scope Validation**: See `agents/_scope-validation.md`
    - Compare expected_changes from story vs git diff
