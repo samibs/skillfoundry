@@ -1,0 +1,4 @@
+allow_shell = false
+allow_network = false
+allow_paths = [".", "memory_bank", ".skillfoundry", "docs", "genesis"]
+redact = true

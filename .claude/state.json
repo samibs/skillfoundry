@@ -1,0 +1,12 @@
+{
+  "current_state": "IDLE",
+  "updated_at": "2026-02-23T01:18:45Z",
+  "current_prd": "",
+  "current_story": "",
+  "last_plan_id": "",
+  "last_run_id": "",
+  "recovery": {
+    "rollback_available": false,
+    "resume_point": ""
+  }
+}

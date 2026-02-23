@@ -1,0 +1,9 @@
+provider = "xai"
+engine = "api"
+model = "grok-4"
+fallback_provider = "openai"
+fallback_engine = "broker"
+monthly_budget_usd = 50
+run_budget_usd = "2"
+memory_sync_enabled = false
+memory_sync_remote = "origin"
