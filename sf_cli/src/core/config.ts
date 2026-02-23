@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import TOML from '@iarna/toml';
 import type { SfConfig, SfPolicy } from '../types.js';
+import { AVAILABLE_PROVIDERS, detectAvailableProviders } from './provider.js';
 
 const WORK_DIR = '.skillfoundry';
 const CONFIG_FILE = join(WORK_DIR, 'config.toml');
@@ -37,13 +38,31 @@ export function ensureWorkspace(workDir: string): void {
 }
 
 export function loadConfig(workDir: string): SfConfig {
+  let config: SfConfig;
   const path = join(workDir, CONFIG_FILE);
   if (!existsSync(path)) {
-    return { ...DEFAULT_CONFIG };
+    config = { ...DEFAULT_CONFIG };
+  } else {
+    const raw = readFileSync(path, 'utf-8');
+    const parsed = TOML.parse(raw);
+    config = { ...DEFAULT_CONFIG, ...parsed } as unknown as SfConfig;
   }
-  const raw = readFileSync(path, 'utf-8');
-  const parsed = TOML.parse(raw);
-  return { ...DEFAULT_CONFIG, ...parsed } as unknown as SfConfig;
+
+  // Auto-select provider: if configured provider has no credentials, pick the first available one
+  const available = detectAvailableProviders();
+  if (!available.includes(config.provider) || config.provider === 'ollama') {
+    const preferred = available.filter((p) => p !== 'ollama');
+    if (preferred.length > 0) {
+      const picked = preferred[0];
+      const info = AVAILABLE_PROVIDERS[picked];
+      if (info) {
+        config.provider = picked;
+        config.model = info.defaultModel;
+      }
+    }
+  }
+
+  return config;
 }
 
 export function loadPolicy(workDir: string): SfPolicy {
