@@ -1,6 +1,9 @@
 import type { SlashCommand } from '../types.js';
 import { helpCommand } from './help.js';
 import { statusCommand } from './status.js';
+import { planCommand } from './plan.js';
+import { applyCommand, gatesCommand } from './apply.js';
+import { forgeCommand } from './forge.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -34,4 +37,8 @@ export function parseSlashCommand(
 export function initCommands(): void {
   registerCommand(helpCommand);
   registerCommand(statusCommand);
+  registerCommand(planCommand);
+  registerCommand(applyCommand);
+  registerCommand(gatesCommand);
+  registerCommand(forgeCommand);
 }
