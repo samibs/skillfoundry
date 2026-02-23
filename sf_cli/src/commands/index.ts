@@ -4,6 +4,10 @@ import { statusCommand } from './status.js';
 import { planCommand } from './plan.js';
 import { applyCommand, gatesCommand } from './apply.js';
 import { forgeCommand } from './forge.js';
+import { providerCommand } from './provider.js';
+import { configCommand } from './config.js';
+import { costCommand } from './cost.js';
+import { memoryCommand, lessonsCommand } from './memory.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -41,4 +45,9 @@ export function initCommands(): void {
   registerCommand(applyCommand);
   registerCommand(gatesCommand);
   registerCommand(forgeCommand);
+  registerCommand(providerCommand);
+  registerCommand(configCommand);
+  registerCommand(costCommand);
+  registerCommand(memoryCommand);
+  registerCommand(lessonsCommand);
 }

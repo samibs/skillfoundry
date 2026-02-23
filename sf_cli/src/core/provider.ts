@@ -185,13 +185,45 @@ export class AnthropicAdapter implements ProviderAdapter {
   }
 }
 
+import { createOpenAIProvider, createXAIProvider, createOllamaProvider } from './providers/openai.js';
+import { createGeminiProvider } from './providers/gemini.js';
+
+export const AVAILABLE_PROVIDERS: Record<string, { name: string; envKey: string; defaultModel: string }> = {
+  anthropic: { name: 'Anthropic Claude', envKey: 'ANTHROPIC_API_KEY', defaultModel: 'claude-sonnet-4-20250514' },
+  openai: { name: 'OpenAI', envKey: 'OPENAI_API_KEY', defaultModel: 'gpt-4o' },
+  xai: { name: 'xAI Grok', envKey: 'XAI_API_KEY', defaultModel: 'grok-3' },
+  gemini: { name: 'Google Gemini', envKey: 'GOOGLE_API_KEY', defaultModel: 'gemini-2.5-flash' },
+  ollama: { name: 'Ollama (local)', envKey: 'OLLAMA_BASE_URL', defaultModel: 'llama3.1' },
+};
+
 export function createProvider(name: string): ProviderAdapter {
   switch (name) {
     case 'anthropic':
       return new AnthropicAdapter();
+    case 'openai':
+      return createOpenAIProvider();
+    case 'xai':
+      return createXAIProvider();
+    case 'gemini':
+      return createGeminiProvider();
+    case 'ollama':
+      return createOllamaProvider();
     default:
       throw new Error(
-        `Provider "${name}" not yet supported. Available: anthropic`,
+        `Provider "${name}" not supported. Available: ${Object.keys(AVAILABLE_PROVIDERS).join(', ')}`,
       );
   }
+}
+
+export function detectAvailableProviders(): string[] {
+  const available: string[] = [];
+  for (const [key, info] of Object.entries(AVAILABLE_PROVIDERS)) {
+    if (key === 'ollama') {
+      // Ollama doesn't need an API key, just check if base URL is set or use default
+      available.push(key);
+    } else if (process.env[info.envKey]) {
+      available.push(key);
+    }
+  }
+  return available;
 }
