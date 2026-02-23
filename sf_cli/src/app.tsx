@@ -3,6 +3,8 @@ import { Box, useApp } from 'ink';
 import { Header } from './components/Header.js';
 import { MessageList } from './components/MessageList.js';
 import { StreamingMessage } from './components/StreamingMessage.js';
+import { ToolCallDisplay } from './components/ToolCall.js';
+import { PermissionPrompt } from './components/PermissionPrompt.js';
 import { Input } from './components/Input.js';
 import { StatusBar } from './components/StatusBar.js';
 import { useSession } from './hooks/useSession.js';
@@ -31,8 +33,16 @@ export function App({ workDir }: AppProps) {
     sessionContext,
   } = useSession(workDir);
 
-  const { isStreaming, streamContent, thinkingContent, sendMessage } =
-    useStream(config, policy, addMessage);
+  const {
+    isStreaming,
+    streamContent,
+    thinkingContent,
+    activeTools,
+    pendingPermission,
+    sendMessage,
+    abort,
+    handlePermissionResponse,
+  } = useStream(config, policy, addMessage);
 
   const sessionCost = messages
     .filter((m) => m.metadata?.costUsd)
@@ -61,9 +71,9 @@ export function App({ workDir }: AppProps) {
         return;
       }
 
-      await sendMessage(input, messages);
+      await sendMessage(input, messages, permissionMode);
     },
-    [messages, sendMessage, addMessage, sessionContext, exit],
+    [messages, sendMessage, addMessage, sessionContext, exit, permissionMode],
   );
 
   return (
@@ -78,7 +88,27 @@ export function App({ workDir }: AppProps) {
       />
       <Box flexDirection="column" paddingX={1} marginY={1}>
         <MessageList messages={messages} />
-        {isStreaming && (
+
+        {/* Active tool executions */}
+        {activeTools.map((tool) => (
+          <ToolCallDisplay
+            key={tool.toolCall.id}
+            toolCall={tool.toolCall}
+            result={tool.result}
+            isExecuting={tool.isExecuting}
+          />
+        ))}
+
+        {/* Permission prompt */}
+        {pendingPermission && (
+          <PermissionPrompt
+            toolCall={pendingPermission.toolCall}
+            reason={pendingPermission.reason}
+            onRespond={handlePermissionResponse}
+          />
+        )}
+
+        {isStreaming && !pendingPermission && (
           <StreamingMessage
             content={streamContent}
             isStreaming={isStreaming}
