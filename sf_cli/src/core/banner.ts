@@ -1,17 +1,24 @@
 // ASCII art banner displayed on CLI startup.
 
+import chalk from 'chalk';
 import { getFrameworkVersion } from './framework.js';
+import { colors, symbols } from '../utils/theme.js';
 
-const BANNER = `
- \x1b[36m███████╗██╗  ██╗██╗██╗     ██╗     ███████╗ ██████╗ ██╗   ██╗███╗   ██╗██████╗ ██████╗ ██╗   ██╗\x1b[0m
- \x1b[36m██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔══██╗╚██╗ ██╔╝\x1b[0m
- \x1b[96m███████╗█████╔╝ ██║██║     ██║     █████╗  ██║   ██║██║   ██║██╔██╗ ██║██║  ██║██████╔╝ ╚████╔╝\x1b[0m
- \x1b[96m╚════██║██╔═██╗ ██║██║     ██║     ██╔══╝  ██║   ██║██║   ██║██║╚██╗██║██║  ██║██╔══██╗  ╚██╔╝\x1b[0m
- \x1b[34m███████║██║  ██╗██║███████╗███████╗██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║\x1b[0m
- \x1b[34m╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝\x1b[0m
-`;
+const c1 = chalk.hex(colors.accent);       // bright cyan — top
+const c2 = chalk.hex(colors.accent);
+const c3 = chalk.hex('#4488ff');            // transition blue — middle
+const c4 = chalk.hex('#4488ff');
+const c5 = chalk.hex(colors.secondary);    // muted purple — bottom
+const c6 = chalk.hex(colors.secondary);
 
-const TAGLINE = ' \x1b[90m 53 Agents  ·  60 Skills  ·  The Forge  ·  5 Platforms\x1b[0m';
+const BANNER_LINES = [
+  c1(' ███████╗██╗  ██╗██╗██╗     ██╗     ███████╗ ██████╗ ██╗   ██╗███╗   ██╗██████╗ ██████╗ ██╗   ██╗'),
+  c2(' ██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔══██╗╚██╗ ██╔╝'),
+  c3(' ███████╗█████╔╝ ██║██║     ██║     █████╗  ██║   ██║██║   ██║██╔██╗ ██║██║  ██║██████╔╝ ╚████╔╝'),
+  c4(' ╚════██║██╔═██╗ ██║██║     ██║     ██╔══╝  ██║   ██║██║   ██║██║╚██╗██║██║  ██║██╔══██╗  ╚██╔╝'),
+  c5(' ███████║██║  ██╗██║███████╗███████╗██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║'),
+  c6(' ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝'),
+];
 
 /**
  * Print the SkillFoundry ASCII banner to stdout.
@@ -24,7 +31,18 @@ export function printBanner(): void {
     // Use fallback
   }
 
-  console.log(BANNER);
-  console.log(TAGLINE + `  ·  \x1b[33mv${version}\x1b[0m`);
+  console.log('');
+  for (const line of BANNER_LINES) {
+    console.log(line);
+  }
+  console.log('');
+  console.log(
+    chalk.hex(colors.textSecondary)(
+      `  53 Agents  ${symbols.bullet}  60 Skills  ${symbols.bullet}  The Forge  ${symbols.bullet}  5 Platforms`,
+    ) +
+      '  ' +
+      chalk.hex(colors.warning)(`v${version}`),
+  );
+  console.log(chalk.hex(colors.borderDim)(' ' + symbols.lineHeavy.repeat(96)));
   console.log('');
 }
