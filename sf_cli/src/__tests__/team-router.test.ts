@@ -26,6 +26,11 @@ describe('routeToAgent', () => {
     expect(result.agent).toBe('review');
   });
 
+  it('routes "review that code for bugs" to review, not coder', () => {
+    const result = routeToAgent('review that code for bugs', DEV_MEMBERS, DEV_DEFAULT);
+    expect(result.agent).toBe('review');
+  });
+
   it('routes "debug the stack trace" to debugger', () => {
     const result = routeToAgent('debug the stack trace', DEV_MEMBERS, DEV_DEFAULT);
     expect(result.agent).toBe('debugger');
