@@ -42,6 +42,12 @@ export function useStream(
     reason: string;
     resolve: (response: PermissionResponse) => void;
   } | null>(null);
+
+  // Streaming metadata: exposed to UI for real-time display
+  const [streamingAgent, setStreamingAgent] = useState<string | null>(null);
+  const [streamingTurnCount, setStreamingTurnCount] = useState(0);
+  const [sessionInputTokens, setSessionInputTokens] = useState(0);
+  const [sessionOutputTokens, setSessionOutputTokens] = useState(0);
   const abortRef = useRef(false);
   const permissionModeRef = useRef<PermissionMode>('auto');
 
@@ -81,6 +87,8 @@ export function useStream(
       setStreamContent('');
       setThinkingContent('');
       setActiveTools([]);
+      setStreamingAgent(null);
+      setStreamingTurnCount(0);
       abortRef.current = false;
 
       if (permissionMode) {
@@ -151,6 +159,9 @@ export function useStream(
         const agentTools = resolvedAgent ? getAgentTools(resolvedAgent) : ALL_TOOLS;
         const agentPrompt = resolvedAgent ? getAgentSystemPrompt(resolvedAgent) : undefined;
 
+        // Expose active agent to UI for streaming label
+        setStreamingAgent(resolvedAgent);
+
         // Cost optimization: classify intent to decide whether tools are needed.
         // Simple chat ("ping", "explain X") skips tool definitions, saving ~350 tokens.
         // NONE-category agents always use the chat path (0 tools).
@@ -191,6 +202,10 @@ export function useStream(
             costUsd: streamResult.result.costUsd,
           });
 
+          // Update session token totals for UI
+          setSessionInputTokens((prev) => prev + streamResult.result.inputTokens);
+          setSessionOutputTokens((prev) => prev + streamResult.result.outputTokens);
+
           addMessage({
             role: 'assistant',
             content: redactedFinal,
@@ -212,6 +227,7 @@ export function useStream(
 
           setStreamContent('');
           setThinkingContent('');
+          setStreamingAgent(null);
           setIsStreaming(false);
           return;
         }
@@ -223,6 +239,7 @@ export function useStream(
         while (turnCount < MAX_TOOL_TURNS) {
           if (abortRef.current) break;
           turnCount++;
+          setStreamingTurnCount(turnCount);
 
           let accumulated = '';
 
@@ -277,6 +294,10 @@ export function useStream(
             outputTokens: result.outputTokens,
             costUsd: result.costUsd,
           });
+
+          // Update session token totals for UI
+          setSessionInputTokens((prev) => prev + result.inputTokens);
+          setSessionOutputTokens((prev) => prev + result.outputTokens);
 
           if (result.thinkingContent) {
             setThinkingContent(result.thinkingContent);
@@ -467,6 +488,8 @@ export function useStream(
 
         setStreamContent('');
         setThinkingContent('');
+        setStreamingAgent(null);
+        setStreamingTurnCount(0);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         const isAuthError =
@@ -509,5 +532,9 @@ export function useStream(
     abort,
     handlePermissionResponse,
     setPermissionMode,
+    streamingAgent,
+    streamingTurnCount,
+    sessionInputTokens,
+    sessionOutputTokens,
   };
 }

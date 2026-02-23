@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.3] - 2026-02-23
+
+### Added — Active Agent Display & Live Token Usage
+
+Real-time visibility into which agent is working and how many tokens are being consumed during streaming.
+
+#### StreamingMessage Agent Attribution
+- Shows `sf:coder>` (routed agent name) instead of generic `sf>` during streaming
+- Displays live turn count and session token totals below streaming content: `[turn 3 | 12.4k in / 2.1k out]`
+
+#### Header Token Totals
+- Cumulative session token count displayed in header info line (e.g. `14.2k tok`)
+- Formatted with `k` suffix for readability (1000+ tokens)
+
+#### StatusBar Agent Indicator
+- Shows `coder working` instead of `streaming...` when an agent is active
+- Turn indicator `(turn N)` shown for multi-turn agentic loops
+
+#### Streaming Metadata State
+- `useStream` now exposes `streamingAgent`, `streamingTurnCount`, `sessionInputTokens`, `sessionOutputTokens` as React state
+- Session token accumulators track total input/output tokens across all messages
+
+### Changed
+- `.version` bumped to 2.0.3 (from 2.0.2)
+- `sf_cli/package.json` version bumped to 2.0.3
+
+---
+
 ## [2.0.2] - 2026-02-23
 
 ### Added — Team Summon (Multi-Agent Auto-Routing)
