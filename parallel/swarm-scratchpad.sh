@@ -6,6 +6,7 @@
 #
 # USAGE:
 #   ./parallel/swarm-scratchpad.sh write --from=AGENT --to=TARGET --msg=MESSAGE [--task=TASK_ID] [--priority=normal|high]
+#   ./parallel/swarm-scratchpad.sh handoff --from=AGENT --to=TARGET --task=TASK_ID [--msg=MESSAGE]
 #   ./parallel/swarm-scratchpad.sh read [--for=AGENT] [--task=TASK_ID] [--unread]
 #   ./parallel/swarm-scratchpad.sh list [--json]
 #   ./parallel/swarm-scratchpad.sh ack --id=NOTE_ID
@@ -45,6 +46,7 @@ show_help() {
     echo ""
     echo "COMMANDS:"
     echo "  write                   Write a note to the scratchpad"
+    echo "  handoff                 Write a standardized high-priority handoff note"
     echo "  read                    Read notes (optionally filtered)"
     echo "  list                    List all notes"
     echo "  ack                     Acknowledge (mark as read) a note"
@@ -204,6 +206,26 @@ cmd_write() {
     else
         echo -e "${GREEN}[PASS]${NC} Note $note_id written: $FROM_AGENT -> $TO_TARGET"
     fi
+}
+
+cmd_handoff() {
+    if [ -z "$FROM_AGENT" ]; then
+        echo -e "${RED}[FAIL]${NC} --from is required"
+        exit 1
+    fi
+    if [ -z "$TO_TARGET" ]; then
+        echo -e "${RED}[FAIL]${NC} --to is required"
+        exit 1
+    fi
+    if [ -z "$TASK_ID" ]; then
+        echo -e "${RED}[FAIL]${NC} --task is required"
+        exit 1
+    fi
+    if [ -z "$MESSAGE" ]; then
+        MESSAGE="Task $TASK_ID handed off from $FROM_AGENT to $TO_TARGET"
+    fi
+    PRIORITY="high"
+    cmd_write
 }
 
 cmd_read() {
@@ -425,6 +447,7 @@ fi
 
 case "$COMMAND" in
     write) cmd_write ;;
+    handoff) cmd_handoff ;;
     read) cmd_read ;;
     list) cmd_list ;;
     ack) cmd_ack ;;

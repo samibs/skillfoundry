@@ -267,6 +267,21 @@ render_dashboard() {
         echo ""
     fi
 
+    # ─── ESCALATION SUMMARY ───
+    local escalation_log="logs/escalations.md"
+    local escalation_json=".claude/escalations.jsonl"
+    local escalation_count=0
+    if [ -f "$escalation_json" ] && [ -s "$escalation_json" ]; then
+        escalation_count=$(wc -l < "$escalation_json" 2>/dev/null | tr -d ' ')
+    elif [ -f "$escalation_log" ] && [ -s "$escalation_log" ]; then
+        escalation_count=$(grep -c '^## ' "$escalation_log" 2>/dev/null || true)
+        escalation_count=${escalation_count:-0}
+    fi
+    if [ "${escalation_count:-0}" -gt 0 ]; then
+        echo -e "  ${BOLD}Escalations:${NC} ${YELLOW}$escalation_count recorded${NC}"
+        echo ""
+    fi
+
     # ─── FOOTER ───
     echo -e "  ${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
     if [ "$ONCE" != true ]; then

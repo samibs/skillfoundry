@@ -17,6 +17,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 NC='\033[0m'
+FORCE="${FORCE:-false}"
 
 # Framework directory (for bootstrap data)
 FRAMEWORK_DIR="${FRAMEWORK_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)}"
@@ -68,7 +69,9 @@ EOF
         # Avoid copying file onto itself when running from framework dir
         if [ "$(realpath "$bootstrap_src" 2>/dev/null)" != "$(realpath "$bootstrap_dst" 2>/dev/null)" ]; then
             cp "$bootstrap_src" "$bootstrap_dst"
-            echo -e "${GREEN}Copied bootstrap knowledge to memory bank${NC}"
+            if [ "${MEMORY_QUIET_INIT:-false}" != "true" ]; then
+                echo -e "${GREEN}Copied bootstrap knowledge to memory bank${NC}"
+            fi
         fi
     fi
 }
@@ -375,21 +378,40 @@ case "${1:-}" in
         ;;
     sync)
         shift
-        PROJECT_DIR="${1:-.}"
+        JSON_OUTPUT=false
+        QUIET_OUTPUT=false
+        PROJECT_DIR="."
+        while [[ $# -gt 0 ]]; do
+            case "$1" in
+                --json) JSON_OUTPUT=true; shift ;;
+                --quiet) QUIET_OUTPUT=true; shift ;;
+                --force) FORCE=true; shift ;;
+                *) PROJECT_DIR="$1"; shift ;;
+            esac
+        done
         if [ "$PROJECT_DIR" = "." ]; then
             PROJECT_DIR="$(pwd)"
         fi
-        init_memory_bank
+        if [ "$JSON_OUTPUT" = "true" ] || [ "$QUIET_OUTPUT" = "true" ]; then
+            MEMORY_QUIET_INIT=true init_memory_bank
+        else
+            init_memory_bank
+        fi
 
-        echo -e "${CYAN}KNOWLEDGE SYNC${NC}"
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        echo "Project: $PROJECT_DIR"
-        echo "Framework: $FRAMEWORK_DIR"
-        echo ""
+        if [ "$JSON_OUTPUT" != "true" ] && [ "$QUIET_OUTPUT" != "true" ]; then
+            echo -e "${CYAN}KNOWLEDGE SYNC${NC}"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Project: $PROJECT_DIR"
+            echo "Framework: $FRAMEWORK_DIR"
+            echo ""
+        fi
 
         # Count entries for confirmation
         push_count=0
         pull_count=0
+        created_files=0
+        pulled_new=0
+        pulled_dup=0
 
         # Count what would be pushed (project → central)
         for file in "$KNOWLEDGE_DIR"/*.jsonl; do
@@ -409,7 +431,7 @@ case "${1:-}" in
         done
 
         # Confirmation (per CLI confirmation matrix, sync requires confirmation)
-        if [ "${FORCE:-}" != "true" ]; then
+        if [ "$FORCE" != "true" ] && [ "$JSON_OUTPUT" != "true" ] && [ "$QUIET_OUTPUT" != "true" ]; then
             echo -e "${YELLOW}Sync will push ~$push_count entries and pull ~$pull_count entries. Continue?${NC}"
             read -p "(y/N): " -n 1 -r
             echo ""
@@ -420,8 +442,9 @@ case "${1:-}" in
         fi
 
         # Phase 1: Pull (central → project)
-        echo -e "${BLUE}[STEP 1/2]${NC} Pulling universal knowledge to project..."
-        pulled=0
+        if [ "$JSON_OUTPUT" != "true" ] && [ "$QUIET_OUTPUT" != "true" ]; then
+            echo -e "${BLUE}[STEP 1/2]${NC} Pulling universal knowledge to project..."
+        fi
         for file in "$CENTRAL_KNOWLEDGE_DIR"/*-universal.jsonl "$CENTRAL_KNOWLEDGE_DIR/bootstrap.jsonl"; do
             if [ -f "$file" ] && [ -s "$file" ]; then
                 src_name=$(basename "$file")
@@ -432,7 +455,8 @@ case "${1:-}" in
                 fi
                 if [ ! -f "$dst_file" ]; then
                     cp "$file" "$dst_file"
-                    pulled=$((pulled + $(wc -l < "$file" 2>/dev/null || echo "0")))
+                    created_files=$((created_files + 1))
+                    pulled_new=$((pulled_new + $(wc -l < "$file" 2>/dev/null || echo "0")))
                 else
                     # Append only new entries (dedup by content)
                     while IFS= read -r entry; do
@@ -440,24 +464,59 @@ case "${1:-}" in
                             entry_content=$(echo "$entry" | jq -r '.content // ""' 2>/dev/null)
                             if [ -n "$entry_content" ] && ! grep -qF "$entry_content" "$dst_file" 2>/dev/null; then
                                 echo "$entry" >> "$dst_file"
-                                pulled=$((pulled + 1))
+                                pulled_new=$((pulled_new + 1))
+                            else
+                                pulled_dup=$((pulled_dup + 1))
                             fi
                         fi
                     done < "$file"
                 fi
             fi
         done
-        echo -e "  Pulled $pulled new entries"
-
-        # Phase 2: Push (project → central) via harvest
-        echo -e "${BLUE}[STEP 2/2]${NC} Harvesting project knowledge to central..."
-        HARVEST_SCRIPT="$FRAMEWORK_DIR/scripts/harvest.sh"
-        if [ -f "$HARVEST_SCRIPT" ]; then
-            bash "$HARVEST_SCRIPT" "$PROJECT_DIR"
+        if [ "$JSON_OUTPUT" != "true" ] && [ "$QUIET_OUTPUT" != "true" ]; then
+            echo -e "  Pulled $pulled_new new entries"
         fi
 
-        echo ""
-        echo -e "${GREEN}[PASS]${NC} Sync complete"
+        # Phase 2: Push (project → central) via harvest
+        if [ "$JSON_OUTPUT" != "true" ] && [ "$QUIET_OUTPUT" != "true" ]; then
+            echo -e "${BLUE}[STEP 2/2]${NC} Harvesting project knowledge to central..."
+        fi
+        HARVEST_SCRIPT="$FRAMEWORK_DIR/scripts/harvest.sh"
+        harvest_json='{"status":"ok","harvested":0,"skipped":{"sensitive":0,"duplicate":0,"scope":0}}'
+        if [ -f "$HARVEST_SCRIPT" ]; then
+            harvest_json=$(bash "$HARVEST_SCRIPT" "$PROJECT_DIR" --json --quiet 2>/dev/null || echo "$harvest_json")
+        fi
+
+        harvested_count=0
+        harvest_dup=0
+        harvest_scope=0
+        harvest_sensitive=0
+        harvested_count=$(echo "$harvest_json" | jq -r '.harvested // 0' 2>/dev/null || echo 0)
+        harvest_dup=$(echo "$harvest_json" | jq -r '.skipped.duplicate // 0' 2>/dev/null || echo 0)
+        harvest_scope=$(echo "$harvest_json" | jq -r '.skipped.scope // 0' 2>/dev/null || echo 0)
+        harvest_sensitive=$(echo "$harvest_json" | jq -r '.skipped.sensitive // 0' 2>/dev/null || echo 0)
+
+        if [ "$JSON_OUTPUT" = "true" ]; then
+            jq -nc \
+                --arg status "ok" \
+                --arg project "$PROJECT_DIR" \
+                --arg framework "$FRAMEWORK_DIR" \
+                --argjson pull_candidates "$pull_count" \
+                --argjson push_candidates "$push_count" \
+                --argjson pulled_new "$pulled_new" \
+                --argjson pulled_duplicates "$pulled_dup" \
+                --argjson files_created "$created_files" \
+                --argjson harvested "$harvested_count" \
+                --argjson harvest_skipped_duplicate "$harvest_dup" \
+                --argjson harvest_skipped_scope "$harvest_scope" \
+                --argjson harvest_skipped_sensitive "$harvest_sensitive" \
+                '{status:$status,project:$project,framework:$framework,pull:{candidates:$pull_candidates,new_entries:$pulled_new,duplicates_skipped:$pulled_duplicates,files_created:$files_created},push:{candidates:$push_candidates,harvested:$harvested,skipped:{duplicate:$harvest_skipped_duplicate,scope:$harvest_skipped_scope,sensitive:$harvest_skipped_sensitive}}}'
+        elif [ "$QUIET_OUTPUT" != "true" ]; then
+            echo ""
+            echo -e "${GREEN}[PASS]${NC} Sync complete"
+            echo -e "  Pull: $pulled_new new, $pulled_dup duplicates skipped, $created_files files created"
+            echo -e "  Push: $harvested_count harvested, $harvest_dup duplicate/$harvest_scope scope/$harvest_sensitive sensitive skipped"
+        fi
         ;;
     hub)
         shift
