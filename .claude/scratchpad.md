@@ -1,7 +1,41 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-02-16T01:15:00Z
+> Last updated: 2026-02-23T14:00:00Z
 > Platform: claude-code
+
+## Forge Session — 2026-02-23
+- PRDs: 8 new enhancement PRDs generated in genesis/
+- Stories: N/A (assessment + Tier 1 implementation)
+- Issues: 11 found (4 critical, 4 high, 3 medium), 4 auto-fixed
+- Security: HARDENED (placeholder keys removed, bash defense-in-depth, symlink blocking, extended redaction)
+- Knowledge: Audit findings documented
+- Tests: 211 passing (15 new tests added across 4 files)
+- Version: 2.0.0
+
+### Tier 1 Fixes Implemented
+1. **Budget enforcement**: checkBudget() wired into useStream.ts (pre-request + per-turn), recordUsage() after every response
+2. **Provider fallback & retry**: new retry.ts with exponential backoff (1s/2s/4s), auto-fallback to fallback_provider
+3. **Security hardening**:
+   - OpenAI/Gemini: throw on missing API key (no more placeholder)
+   - Executor: DANGEROUS_BASH_PATTERNS check at execution layer (defense-in-depth)
+   - Path validation: lstatSync symlink detection and blocking
+   - Redaction: +5 new patterns (Bearer, JWT, MongoDB, PostgreSQL, MySQL URIs)
+
+### Enhancement PRDs Generated
+1. `2026-02-23-budget-enforcement.md` — Cost guardrails (HIGH)
+2. `2026-02-23-provider-fallback-retry.md` — Retry + fallback (HIGH)
+3. `2026-02-23-security-hardening.md` — Security fixes (HIGH)
+4. `2026-02-23-session-persistence.md` — Session resume (MEDIUM)
+5. `2026-02-23-diff-preview-approval.md` — Diff before write (MEDIUM)
+6. `2026-02-23-audit-logging.md` — JSONL audit logs (MEDIUM)
+7. `2026-02-23-multi-provider-routing.md` — Smart cost routing (LOW)
+8. `2026-02-23-memory-recall-integration.md` — Agent memory context (LOW)
+
+### Per-Agent Optimization (completed earlier this session)
+- 60 agents registered with tool categories and system prompts
+- 6 tool categories: FULL(21), CODE(10), REVIEW(9), OPS(9), INSPECT(8), NONE(2)
+- /agent command: activate, deactivate, list, info
+- 65% of agents use fewer tools, saving 70-350 tokens per request
 
 ## Forge Session — 2026-02-15/16
 - PRDs: 1 processed (competitive-leap)

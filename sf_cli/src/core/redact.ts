@@ -6,6 +6,11 @@ const REDACT_PATTERNS: RegExp[] = [
   /AKIA[A-Z0-9]{12,}/g,             // AWS access keys
   /AIza[A-Za-z0-9_-]{30,}/g,        // Google API keys
   /sk-ant-[A-Za-z0-9_-]{20,}/g,     // Anthropic keys
+  /Bearer\s+[A-Za-z0-9._\-]{20,}/g, // Bearer tokens
+  /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/g, // JWT tokens
+  /mongodb(\+srv)?:\/\/[^\s]+@[^\s]+/g, // MongoDB connection URIs
+  /postgres(ql)?:\/\/[^\s]+@[^\s]+/g,   // PostgreSQL connection URIs
+  /mysql:\/\/[^\s]+@[^\s]+/g,           // MySQL connection URIs
 ];
 
 export function redactText(input: string, enabled: boolean): string {

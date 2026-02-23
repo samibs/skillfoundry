@@ -141,10 +141,14 @@ export class OpenAIAdapter implements ProviderAdapter {
   constructor(options: OpenAIAdapterOptions) {
     this.name = options.name;
     this.defaultModel = options.defaultModel;
-    // Use a placeholder key to avoid constructor validation errors.
-    // The real key is validated at request time by the API.
+    const apiKey = options.apiKey || process.env[this.getEnvKey()];
+    if (!apiKey) {
+      throw new Error(
+        `API key required for ${this.name}. Set ${this.getEnvKey()} environment variable or run: sf setup --provider ${this.name} --key <your-key>`,
+      );
+    }
     this.client = new OpenAI({
-      apiKey: options.apiKey || process.env[this.getEnvKey()] || 'sk-placeholder-configure-via-env',
+      apiKey,
       baseURL: options.baseURL,
     });
   }

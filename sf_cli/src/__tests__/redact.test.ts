@@ -44,4 +44,31 @@ describe('Redaction', () => {
     const result = redactText(input, true);
     expect(result).toBe('Keys: [REDACTED] and [REDACTED]');
   });
+
+  it('redacts Bearer tokens', () => {
+    const input = 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature';
+    const result = redactText(input, true);
+    expect(result).toContain('[REDACTED]');
+    expect(result).not.toContain('eyJhbGci');
+  });
+
+  it('redacts JWT tokens', () => {
+    const input = 'token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkw.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV';
+    const result = redactText(input, true);
+    expect(result).toContain('[REDACTED]');
+  });
+
+  it('redacts MongoDB connection URIs', () => {
+    const input = 'DB_URL=mongodb+srv://user:password@cluster0.example.net/mydb';
+    const result = redactText(input, true);
+    expect(result).toContain('[REDACTED]');
+    expect(result).not.toContain('password@cluster0');
+  });
+
+  it('redacts PostgreSQL connection URIs', () => {
+    const input = 'DATABASE_URL=postgresql://admin:secret@localhost:5432/mydb';
+    const result = redactText(input, true);
+    expect(result).toContain('[REDACTED]');
+    expect(result).not.toContain('secret@localhost');
+  });
 });

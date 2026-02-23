@@ -16,6 +16,7 @@ export function useSession(workDir: string) {
   const [policy] = useState<SfPolicy>(() => loadPolicy(workDir));
   const [state, setStateLocal] = useState<SfState>(() => loadState(workDir));
   const [permissionMode] = useState<PermissionMode>('ask');
+  const [activeAgent, setActiveAgent] = useState<string | null>(null);
   const msgCounter = useRef(0);
 
   const addMessage = useCallback(
@@ -47,8 +48,10 @@ export function useSession(workDir: string) {
     messages,
     permissionMode,
     workDir,
+    activeAgent,
     addMessage,
     setState: updateSessionState,
+    setActiveAgent,
   };
 
   return {
@@ -57,8 +60,10 @@ export function useSession(workDir: string) {
     policy,
     state,
     permissionMode,
+    activeAgent,
     addMessage,
     updateSessionState,
+    setActiveAgent,
     sessionContext,
   };
 }

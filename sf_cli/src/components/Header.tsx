@@ -8,6 +8,7 @@ interface HeaderProps {
   budgetMonthly: number;
   messageCount: number;
   state: string;
+  activeAgent?: string | null;
 }
 
 export function Header({
@@ -17,6 +18,7 @@ export function Header({
   budgetMonthly,
   messageCount,
   state,
+  activeAgent,
 }: HeaderProps) {
   return (
     <Box
@@ -30,7 +32,7 @@ export function Header({
         SkillFoundry CLI
       </Text>
       <Text dimColor>
-        {provider}:{model} | ${costSession.toFixed(4)}/${budgetMonthly} |
+        {provider}:{model}{activeAgent ? ` | agent:${activeAgent}` : ''} | ${costSession.toFixed(4)}/${budgetMonthly} |
         msgs:{messageCount} | {state}
       </Text>
     </Box>

@@ -1,5 +1,25 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AVAILABLE_PROVIDERS, detectAvailableProviders, createProvider } from '../core/provider.js';
+
+// Set test API keys for providers that now require them
+const originalEnv: Record<string, string | undefined> = {};
+beforeEach(() => {
+  for (const key of ['OPENAI_API_KEY', 'XAI_API_KEY', 'GEMINI_API_KEY', 'ANTHROPIC_API_KEY']) {
+    originalEnv[key] = process.env[key];
+    if (!process.env[key]) {
+      process.env[key] = `test-key-${key}`;
+    }
+  }
+});
+afterEach(() => {
+  for (const [key, val] of Object.entries(originalEnv)) {
+    if (val === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = val;
+    }
+  }
+});
 
 describe('AVAILABLE_PROVIDERS', () => {
   it('should define 5 providers', () => {
@@ -59,5 +79,15 @@ describe('createProvider', () => {
   it('should create ollama provider', () => {
     const provider = createProvider('ollama');
     expect(provider.name).toBe('ollama');
+  });
+
+  it('should throw when openai API key is missing', () => {
+    delete process.env.OPENAI_API_KEY;
+    expect(() => createProvider('openai')).toThrow('API key required');
+  });
+
+  it('should throw when xai API key is missing', () => {
+    delete process.env.XAI_API_KEY;
+    expect(() => createProvider('xai')).toThrow('API key required');
   });
 });
