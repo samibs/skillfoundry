@@ -642,8 +642,8 @@ fi
 # ═══════════════════════════════════════════════════════════════
 # Initialize progress counter
 # ═══════════════════════════════════════════════════════════════
-# Steps: shared dirs + shared agents + templates/docs + per-platform + registry + done
-step_init $((3 + ${#PLATFORMS[@]} + 2))
+# Steps: shared dirs + shared agents + templates/docs + per-platform + CLI build + registry + done
+step_init $((3 + ${#PLATFORMS[@]} + 3))
 
 # ═══════════════════════════════════════════════════════════════
 # PHASE 1: Shared files (copied once, not per platform)
@@ -815,6 +815,98 @@ for plat in "${PLATFORMS[@]}"; do
 done
 
 # ═══════════════════════════════════════════════════════════════
+# PHASE 3: Build and deploy SkillFoundry CLI (sf command)
+# ═══════════════════════════════════════════════════════════════
+step "Building SkillFoundry CLI..."
+SF_CLI_INSTALLED=false
+
+if command -v node >/dev/null 2>&1; then
+    NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
+    if [ "$NODE_VERSION" -ge 20 ] 2>/dev/null; then
+        echo -e "${GREEN}  Node.js v$(node -v | sed 's/v//') detected${NC}"
+
+        SF_CLI_DIR="$SCRIPT_DIR/sf_cli"
+        if [ -f "$SF_CLI_DIR/package.json" ]; then
+            echo -e "${BLUE}  Installing CLI dependencies...${NC}"
+            BUILD_OK=true
+            (cd "$SF_CLI_DIR" && npm install --production=false --silent 2>&1) || {
+                echo -e "${YELLOW}  Warning: npm install failed. Skipping CLI deployment.${NC}"
+                BUILD_OK=false
+            }
+
+            if [ "$BUILD_OK" = true ]; then
+                echo -e "${BLUE}  Compiling TypeScript...${NC}"
+                (cd "$SF_CLI_DIR" && npm run build 2>&1) || {
+                    echo -e "${YELLOW}  Warning: CLI build failed. Skipping CLI deployment.${NC}"
+                    BUILD_OK=false
+                }
+            fi
+
+            if [ "$BUILD_OK" = true ]; then
+                SF_WRAPPER_DIR="${HOME}/.local/bin"
+                SF_WRAPPER="${SF_WRAPPER_DIR}/sf"
+
+                mkdir -p "$SF_WRAPPER_DIR"
+
+                cat > "$SF_WRAPPER" << WRAPPER_EOF
+#!/usr/bin/env bash
+# SkillFoundry CLI wrapper — installed by install.sh
+# Framework: ${SCRIPT_DIR}
+# Version: ${FRAMEWORK_VERSION}
+# Installed: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+export SF_FRAMEWORK_ROOT="${SCRIPT_DIR}"
+exec node "\$SF_FRAMEWORK_ROOT/sf_cli/bin/sf.js" "\$@"
+WRAPPER_EOF
+
+                chmod +x "$SF_WRAPPER"
+                SF_CLI_INSTALLED=true
+                echo -e "${GREEN}  ✓ CLI wrapper installed: ${SF_WRAPPER}${NC}"
+
+                # Check if ~/.local/bin is on PATH
+                if echo "$PATH" | tr ':' '\n' | grep -qx "${SF_WRAPPER_DIR}"; then
+                    echo -e "${GREEN}  ✓ ${SF_WRAPPER_DIR} is on PATH${NC}"
+                else
+                    echo ""
+                    echo -e "${YELLOW}  ⚠ ${SF_WRAPPER_DIR} is not on your PATH${NC}"
+                    echo ""
+
+                    SHELL_NAME=$(basename "${SHELL:-/bin/bash}")
+                    case "$SHELL_NAME" in
+                        zsh)
+                            SHELL_RC="${HOME}/.zshrc"
+                            ;;
+                        fish)
+                            SHELL_RC="${HOME}/.config/fish/config.fish"
+                            ;;
+                        *)
+                            SHELL_RC="${HOME}/.bashrc"
+                            ;;
+                    esac
+
+                    echo -e "  Add this to ${CYAN}${SHELL_RC}${NC}:"
+                    echo ""
+                    if [ "$SHELL_NAME" = "fish" ]; then
+                        echo -e "    ${CYAN}fish_add_path ${SF_WRAPPER_DIR}${NC}"
+                    else
+                        echo -e "    ${CYAN}export PATH=\"${SF_WRAPPER_DIR}:\$PATH\"${NC}"
+                    fi
+                    echo ""
+                    echo -e "  Then restart your shell or run:"
+                    echo -e "    ${CYAN}source ${SHELL_RC}${NC}"
+                    echo ""
+                fi
+            fi
+        fi
+    else
+        echo -e "${YELLOW}  Node.js v$(node -v | sed 's/v//') detected (need v20+). Skipping CLI build.${NC}"
+        echo -e "${YELLOW}  Install Node.js 20+ to enable the 'sf' CLI command.${NC}"
+    fi
+else
+    echo -e "${YELLOW}  Node.js not found. Skipping CLI build.${NC}"
+    echo -e "${YELLOW}  Install Node.js 20+ to enable the 'sf' CLI command.${NC}"
+fi
+
+# ═══════════════════════════════════════════════════════════════
 # Auto-register project for updates
 # ═══════════════════════════════════════════════════════════════
 step "Registering project..."
@@ -882,6 +974,9 @@ for plat in "${PLATFORMS[@]}"; do
 done
 echo "    agents/                 $SHARED_COUNT shared modules"
 echo "    genesis/                PRD template"
+if [ "$SF_CLI_INSTALLED" = true ]; then
+    echo "    ~/.local/bin/sf         global CLI wrapper"
+fi
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
@@ -889,6 +984,14 @@ echo ""
 # ═══════════════════════════════════════════════════════════════
 echo -e "  ${BOLD}Quick Start:${NC}"
 echo ""
+if [ "$SF_CLI_INSTALLED" = true ]; then
+    echo -e "    ${CYAN}SkillFoundry CLI (any project):${NC}"
+    echo "      cd $TARGET_DIR && sf"
+    echo "      > /plan \"your feature\"    Plan implementation"
+    echo "      > /forge                   Full pipeline"
+    echo "      > /help                    See all commands"
+    echo ""
+fi
 for plat in "${PLATFORMS[@]}"; do
     case "$plat" in
         claude)

@@ -14,7 +14,7 @@ export function StatusBar({
 }: StatusBarProps) {
   return (
     <Box justifyContent="space-between" paddingX={1}>
-      <Text dimColor>/help commands | /status info | Ctrl+C exit</Text>
+      <Text dimColor>/help commands | /status info | /exit quit</Text>
       <Text dimColor>
         mode:{permissionMode} | {isStreaming ? 'streaming...' : 'ready'}
       </Text>

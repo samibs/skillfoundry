@@ -304,9 +304,22 @@ export function useStream(
         setThinkingContent('');
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
+        const isAuthError =
+          /authentication|api.key|unauthorized|401|auth_token|could not resolve/i.test(
+            message,
+          );
+
+        let content = `Provider error: ${message}`;
+        if (isAuthError) {
+          content +=
+            '\n\nTo configure API keys, run:\n' +
+            '  sf setup --provider <name> --key <your-key>\n' +
+            'Or use /setup inside this session.';
+        }
+
         addMessage({
           role: 'system',
-          content: `Provider error: ${message}`,
+          content,
         });
       } finally {
         setIsStreaming(false);
