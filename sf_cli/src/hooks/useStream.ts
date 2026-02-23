@@ -5,6 +5,9 @@ import { ALL_TOOLS } from '../core/tools.js';
 import { executeTool } from '../core/executor.js';
 import { checkPermission, allowAlways, allowToolAlways } from '../core/permissions.js';
 import { classifyIntent } from '../core/intent.js';
+import { getAgentTools, getAgentSystemPrompt } from '../core/agent-registry.js';
+import { checkBudget, recordUsage } from '../core/budget.js';
+import { streamWithRetry } from '../core/retry.js';
 import type {
   SfConfig,
   SfPolicy,
@@ -23,6 +26,7 @@ export function useStream(
   config: SfConfig,
   policy: SfPolicy,
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => Message,
+  workDir: string = process.cwd(),
 ) {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamContent, setStreamContent] = useState('');
@@ -60,7 +64,7 @@ export function useStream(
   );
 
   const sendMessage = useCallback(
-    async (userMessage: string, history: Message[], permissionMode?: PermissionMode) => {
+    async (userMessage: string, history: Message[], permissionMode?: PermissionMode, activeAgent?: string | null) => {
       setIsStreaming(true);
       setStreamContent('');
       setThinkingContent('');
@@ -89,11 +93,34 @@ export function useStream(
       let totalCostUsd = 0;
 
       try {
+        // Budget enforcement: block if monthly or run budget exceeded
+        const budgetCheck = checkBudget(
+          workDir,
+          config.monthly_budget_usd,
+          config.run_budget_usd,
+        );
+        if (!budgetCheck.allowed) {
+          addMessage({
+            role: 'system',
+            content: `Budget exceeded: ${budgetCheck.reason}\n\nMonthly: $${budgetCheck.monthlySpend.toFixed(4)} / $${budgetCheck.monthlyBudget.toFixed(2)}\nUse /cost to view details or adjust budget in .skillfoundry/config.toml.`,
+          });
+          setIsStreaming(false);
+          return;
+        }
+
         const provider = createProvider(config.provider);
+        const fallbackProvider = config.fallback_provider
+          ? createProvider(config.fallback_provider)
+          : null;
+
+        // Resolve per-agent tools and system prompt
+        const agentTools = activeAgent ? getAgentTools(activeAgent) : ALL_TOOLS;
+        const agentPrompt = activeAgent ? getAgentSystemPrompt(activeAgent) : undefined;
 
         // Cost optimization: classify intent to decide whether tools are needed.
         // Simple chat ("ping", "explain X") skips tool definitions, saving ~350 tokens.
-        const intent = classifyIntent(userMessage);
+        // NONE-category agents always use the chat path (0 tools).
+        const intent = agentTools.length === 0 ? 'chat' : classifyIntent(userMessage);
 
         if (intent === 'chat') {
           let accumulated = '';
@@ -102,31 +129,47 @@ export function useStream(
             content: typeof m.content === 'string' ? m.content : '',
           }));
 
-          const result = await provider.stream(
-            simpleMessages,
-            { model: config.model },
-            (chunk: string, done: boolean) => {
-              if (abortRef.current) return;
-              if (!done) {
-                accumulated += chunk;
-                const redacted = redactText(accumulated, policy.redact);
-                setStreamContent(redacted);
-              }
-            },
+          const streamResult = await streamWithRetry(
+            async (p) => p.stream(
+              simpleMessages,
+              { model: config.model, systemPrompt: agentPrompt },
+              (chunk: string, done: boolean) => {
+                if (abortRef.current) return;
+                if (!done) {
+                  accumulated += chunk;
+                  const redacted = redactText(accumulated, policy.redact);
+                  setStreamContent(redacted);
+                }
+              },
+            ),
+            provider,
+            fallbackProvider,
           );
 
           const redactedFinal = redactText(accumulated, policy.redact);
+
+          // Record usage for budget tracking
+          recordUsage(workDir, {
+            provider: streamResult.fallbackUsed || config.provider,
+            model: config.model,
+            inputTokens: streamResult.result.inputTokens,
+            outputTokens: streamResult.result.outputTokens,
+            costUsd: streamResult.result.costUsd,
+          });
+
           addMessage({
             role: 'assistant',
             content: redactedFinal,
             metadata: {
-              provider: config.provider,
+              provider: streamResult.fallbackUsed || config.provider,
               model: config.model,
-              inputTokens: result.inputTokens,
-              outputTokens: result.outputTokens,
-              costUsd: result.costUsd,
-              thinkingContent: result.thinkingContent,
+              inputTokens: streamResult.result.inputTokens,
+              outputTokens: streamResult.result.outputTokens,
+              costUsd: streamResult.result.costUsd,
+              thinkingContent: streamResult.result.thinkingContent,
               mode: 'chat',
+              activeAgent: activeAgent || undefined,
+              fallbackUsed: streamResult.fallbackUsed,
             },
           });
 
@@ -146,25 +189,56 @@ export function useStream(
 
           let accumulated = '';
 
-          const result = await provider.streamWithTools(
-            anthropicMessages,
-            {
-              model: config.model,
-              tools: ALL_TOOLS,
-            },
-            (chunk: string, done: boolean) => {
-              if (abortRef.current) return;
-              if (!done) {
-                accumulated += chunk;
-                const redacted = redactText(accumulated, policy.redact);
-                setStreamContent(redacted);
-              }
-            },
+          // Per-turn budget check: stop if run budget exceeded
+          const turnBudget = checkBudget(
+            workDir,
+            config.monthly_budget_usd,
+            config.run_budget_usd,
+            totalCostUsd,
           );
+          if (!turnBudget.allowed) {
+            addMessage({
+              role: 'system',
+              content: `Run budget exceeded after ${turnCount} turns: ${turnBudget.reason}`,
+            });
+            break;
+          }
+
+          const toolStreamResult = await streamWithRetry(
+            async (p) => p.streamWithTools(
+              anthropicMessages,
+              {
+                model: config.model,
+                tools: agentTools,
+                systemPrompt: agentPrompt,
+              },
+              (chunk: string, done: boolean) => {
+                if (abortRef.current) return;
+                if (!done) {
+                  accumulated += chunk;
+                  const redacted = redactText(accumulated, policy.redact);
+                  setStreamContent(redacted);
+                }
+              },
+            ),
+            provider,
+            fallbackProvider,
+          );
+
+          const result = toolStreamResult.result;
 
           totalInputTokens += result.inputTokens;
           totalOutputTokens += result.outputTokens;
           totalCostUsd += result.costUsd;
+
+          // Record each turn's usage
+          recordUsage(workDir, {
+            provider: toolStreamResult.fallbackUsed || config.provider,
+            model: config.model,
+            inputTokens: result.inputTokens,
+            outputTokens: result.outputTokens,
+            costUsd: result.costUsd,
+          });
 
           if (result.thinkingContent) {
             setThinkingContent(result.thinkingContent);
@@ -190,6 +264,7 @@ export function useStream(
                 costUsd: totalCostUsd,
                 thinkingContent: result.thinkingContent,
                 mode: 'agent',
+                activeAgent: activeAgent || undefined,
               },
             });
             break;

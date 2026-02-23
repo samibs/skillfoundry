@@ -23,6 +23,8 @@ export interface Message {
     costUsd?: number;
     thinkingContent?: string;
     mode?: 'chat' | 'agent';
+    activeAgent?: string;
+    fallbackUsed?: string;
   };
   toolCalls?: ToolCall[];
   toolResults?: ToolResult[];
@@ -94,8 +96,10 @@ export interface SessionContext {
   messages: Message[];
   permissionMode: PermissionMode;
   workDir: string;
+  activeAgent: string | null;
   addMessage: (msg: Omit<Message, 'id' | 'timestamp'>) => void;
   setState: (state: Partial<SfState>) => void;
+  setActiveAgent: (name: string | null) => void;
 }
 
 // Provider streaming callback

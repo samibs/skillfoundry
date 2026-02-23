@@ -29,6 +29,7 @@ export function App({ workDir }: AppProps) {
     policy,
     state,
     permissionMode,
+    activeAgent,
     addMessage,
     sessionContext,
   } = useSession(workDir);
@@ -42,7 +43,7 @@ export function App({ workDir }: AppProps) {
     sendMessage,
     abort,
     handlePermissionResponse,
-  } = useStream(config, policy, addMessage);
+  } = useStream(config, policy, addMessage, workDir);
 
   const sessionCost = messages
     .filter((m) => m.metadata?.costUsd)
@@ -71,9 +72,9 @@ export function App({ workDir }: AppProps) {
         return;
       }
 
-      await sendMessage(input, messages, permissionMode);
+      await sendMessage(input, messages, permissionMode, activeAgent);
     },
-    [messages, sendMessage, addMessage, sessionContext, exit, permissionMode],
+    [messages, sendMessage, addMessage, sessionContext, exit, permissionMode, activeAgent],
   );
 
   return (
@@ -85,6 +86,7 @@ export function App({ workDir }: AppProps) {
         budgetMonthly={config.monthly_budget_usd}
         messageCount={messages.length}
         state={state.current_state}
+        activeAgent={activeAgent}
       />
       <Box flexDirection="column" paddingX={1} marginY={1}>
         <MessageList messages={messages} />
@@ -121,6 +123,7 @@ export function App({ workDir }: AppProps) {
         provider={config.provider}
         permissionMode={permissionMode}
         isStreaming={isStreaming}
+        activeAgent={activeAgent}
       />
     </Box>
   );

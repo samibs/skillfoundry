@@ -101,7 +101,13 @@ export class GeminiAdapter implements ProviderAdapter {
   private apiKey: string;
 
   constructor() {
-    this.apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || '';
+    const apiKey = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error(
+        'API key required for gemini. Set GEMINI_API_KEY environment variable or run: sf setup --provider gemini --key <your-key>',
+      );
+    }
+    this.apiKey = apiKey;
   }
 
   async stream(

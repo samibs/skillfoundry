@@ -8,6 +8,7 @@ import {
   existsSync,
   mkdirSync,
   statSync,
+  lstatSync,
 } from 'node:fs';
 import { join, resolve, isAbsolute, dirname } from 'node:path';
 import { globSync } from 'glob';
@@ -18,6 +19,18 @@ const MAX_OUTPUT_CHARS = 30000;
 const DEFAULT_BASH_TIMEOUT = 120_000;
 const MAX_BASH_TIMEOUT = 600_000;
 const MAX_READ_LINES = 2000;
+
+// Defense-in-depth: dangerous patterns also checked at executor level
+// (primary check is in permissions.ts; this is a safety net)
+const DANGEROUS_BASH_PATTERNS = [
+  /rm\s+-rf\s+[\/~]/,
+  /mkfs/,
+  /dd\s+if=.*of=\/dev/,
+  />\s*\/dev\/sd/,
+  /chmod\s+-R\s+777/,
+  /curl.*\|\s*(ba)?sh/,
+  /wget.*\|\s*(ba)?sh/,
+];
 
 interface ExecutorContext {
   workDir: string;
@@ -34,9 +47,20 @@ function resolvePath(filePath: string, workDir: string): string {
   return resolve(workDir, filePath);
 }
 
+function isSymlink(filePath: string): boolean {
+  try {
+    return lstatSync(filePath).isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
 function isPathAllowed(filePath: string, policy: SfPolicy, workDir: string): boolean {
   const resolved = resolvePath(filePath, workDir);
   const workDirResolved = resolve(workDir);
+
+  // Block symlinks — prevents /allowed/link -> /forbidden/file traversal
+  if (isSymlink(resolved)) return false;
 
   // Always allow paths within the project root
   if (resolved.startsWith(workDirResolved)) return true;
@@ -60,6 +84,18 @@ function executeBash(
       output: 'Shell execution is disabled by policy (allow_shell = false). Change policy in .skillfoundry/policy.toml to enable.',
       isError: true,
     };
+  }
+
+  // Defense-in-depth: block dangerous patterns at executor level
+  const cmd = String(input.command || '');
+  for (const pattern of DANGEROUS_BASH_PATTERNS) {
+    if (pattern.test(cmd)) {
+      return {
+        toolCallId: '',
+        output: `Dangerous command blocked by executor: ${cmd.slice(0, 100)}`,
+        isError: true,
+      };
+    }
   }
 
   const timeout = Math.min(input.timeout || DEFAULT_BASH_TIMEOUT, MAX_BASH_TIMEOUT);
