@@ -87,6 +87,8 @@ Run the mapped pipeline **fully** without stopping for confirmation.
 4. If retry fails, STOP and present the failure to the user
 5. Maximum 3 feedback loops per story before escalating to user
 6. Always run tests before declaring success
+7. Run Top 12 security scan before declaring success — violations in items 1-8 are NEVER auto-fixed silently
+8. Data isolation violations (unscoped queries, missing ownership WHERE) require explicit escalation
 
 **Token Budget Awareness:**
 - If the task is burning excessive tokens (50%+ of context on a single story), warn the user
@@ -119,6 +121,9 @@ Autonomous Pipeline Complete
     Anvil:    [PASS/FAIL]
     Security: [CLEAN/issues]
     Layers:   [DB: N/A | BE: PASS | FE: N/A]
+    Data Isolation: [VERIFIED/N/A/VIOLATIONS]
+    Top 12 Security: [CLEAN/violations]
+    Version:  [BUMPED/N/A]
 
   Action Required:
     [ ] Review changes above
@@ -170,6 +175,9 @@ When the user rejects or modifies the autonomous pipeline's output:
 - Security audit finds a critical issue
 - Changes would affect more than 20 files
 - The change would modify CLAUDE.md, .gitignore, or CI/CD configs
+- Data isolation violation found (unscoped query on user-owned entity)
+- Top 12 security scan finds critical violations (items 1-8)
+- Version bump or CHANGELOG update is needed but not present
 
 ---
 

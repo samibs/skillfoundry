@@ -187,7 +187,7 @@ These are the subtle conceptual errors of a "slightly sloppy, hasty junior dev":
 
 **BEFORE writing ANY code**, check against AI-specific vulnerabilities:
 
-### Critical Security Checks (Top 7)
+### Critical Security Checks (Top 12)
 
 1. **Hardcoded Secrets** - Verify NO API keys, passwords, or credentials in code
 2. **SQL Injection** - Ensure parameterized queries or ORM usage
@@ -196,8 +196,13 @@ These are the subtle conceptual errors of a "slightly sloppy, hasty junior dev":
 5. **Auth/Authz Flaws** - Server-side permission checks on EVERY request
 6. **Package Hallucination** - Verify all packages exist before use
 7. **Command Injection** - NO user input in shell commands
+8. **Data Isolation / Query Scoping** - ALL queries on user-owned entities MUST include ownership WHERE clause; scope from auth token, NEVER from request parameters
+9. **Pagination & Input Size Limits** - ALL list endpoints MUST enforce max pageSize cap; request body size limits enforced
+10. **Error Information Leakage** - NO stack traces, SQL errors, or internal IPs in production responses
+11. **Concurrent Modification Safety** - Concurrently editable entities MUST use optimistic locking (ETag/version)
+12. **Session & Token Lifecycle** - Token expiry enforced, refresh rotation, session invalidated on password change
 
-**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` for detailed patterns.
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` for detailed patterns, `genesis/TEMPLATE.md` section 6.7 for data isolation.
 
 
 ## 🔍 REFLECTION PROTOCOL (MANDATORY)

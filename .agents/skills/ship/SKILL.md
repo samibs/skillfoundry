@@ -42,6 +42,30 @@ Execute these steps in order:
 - Full security scan
 - If critical vulnerabilities found, stop and report
 
+**STEP 2.5: Data Isolation Spot-Check**
+```
+/layer-check scan
+```
+- Verify no unscoped queries on user-owned entities
+- Verify ownership WHERE clauses present on all scoped queries
+- Verify scope derived from auth token, not request parameters
+- If violations found, stop and report
+
+**STEP 2.6: Top 12 Security Gate**
+- Verify all 12 critical security checks pass:
+  1-7: Standard OWASP (secrets, SQLi, XSS, randomness, auth, packages, command injection)
+  8: Data isolation / query scoping
+  9: Pagination & input size limits
+  10: Error information leakage
+  11: Concurrent modification safety
+  12: Session & token lifecycle
+- If ANY check fails, stop and report
+
+**STEP 2.7: Version Verification**
+- Verify version bumped in README.md, CHANGELOG.md, and version files
+- Verify CHANGELOG entry exists for current version
+- If missing, stop and report
+
 **STEP 3: Release Preparation**
 ```
 /release prepare [version]

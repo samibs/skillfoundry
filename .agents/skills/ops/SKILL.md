@@ -63,10 +63,17 @@ Generate an admin/monitoring panel with these components:
 - Database connection pool status
 - Cache hit/miss ratio (if applicable)
 
+**Data Isolation Monitor**:
+- Dashboard showing scoped vs unscoped queries in the application
+- Alert on any query touching user-owned entities without ownership WHERE clause
+- Cross-tenant access attempt tracking and alerting
+- Scope derivation audit (auth token vs request parameter)
+
 **Access Control**:
 - Admin panel accessible only to authenticated admin users
 - Role-based visibility (admin sees all, dev sees logs + health)
 - Session timeout enforcement
+- Admin panel queries MUST also respect data isolation (admin sees all, but through explicit scope override, not missing WHERE)
 
 ### `/ops debug`
 

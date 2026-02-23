@@ -187,7 +187,7 @@ These are the subtle conceptual errors of a "slightly sloppy, hasty junior dev":
 
 **BEFORE writing ANY code**, check against AI-specific vulnerabilities:
 
-### Critical Security Checks (Top 7)
+### Critical Security Checks (Top 12)
 
 1. **Hardcoded Secrets** - Verify NO API keys, passwords, or credentials in code
 2. **SQL Injection** - Ensure parameterized queries or ORM usage

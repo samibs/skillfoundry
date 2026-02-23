@@ -27,7 +27,7 @@ Before scanning, read:
 
 ## Scan Modes
 
-### Quick Scan (Top 7 Only)
+### Quick Scan (Top 12)
 
 Focus on docs/ANTI_PATTERNS_DEPTH.md critical issues:
 1. Hardcoded secrets
@@ -37,6 +37,11 @@ Focus on docs/ANTI_PATTERNS_DEPTH.md critical issues:
 5. Auth/authz flaws
 6. Package hallucination
 7. Command injection
+8. Data isolation / query scoping (unscoped queries on user-owned entities)
+9. Pagination & input size limits (unbounded list endpoints)
+10. Error information leakage (stack traces, SQL in responses)
+11. Concurrent modification safety (missing optimistic locking)
+12. Session & token lifecycle (missing expiry, rotation)
 
 **Use when**: PR reviews, rapid feedback
 
@@ -126,6 +131,11 @@ When working with coder agent, provide proactive guidance:
 5. Packages: Verify they exist before importing
 6. Commands: Never pass unsanitized input to shell
 7. Auth: Check permissions on every protected endpoint
+8. Data Isolation: Add ownership WHERE clause on all user-scoped queries
+9. Pagination: Enforce max pageSize cap on all list endpoints
+10. Error Responses: Never expose stack traces, SQL, or internal IPs
+11. Concurrency: Use optimistic locking (ETag/version) on editable entities
+12. Sessions: Enforce token expiry, refresh rotation, invalidation on password change
 
 ---
 
