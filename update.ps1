@@ -782,6 +782,68 @@ function Update-Project {
         }
     }
     
+    # Rebuild CLI if Node.js available
+    Write-Host ""
+    Write-ColorOutput "Rebuilding SkillFoundry CLI..." "Yellow"
+    $nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+    if ($nodeCmd) {
+        $nodeVersionRaw = (& node -v) -replace '^v', ''
+        $nodeMajor = [int]($nodeVersionRaw -split '\.')[0]
+        if ($nodeMajor -ge 20) {
+            $SF_CLI_DIR = Join-Path $ScriptDir "sf_cli"
+            if (Test-Path (Join-Path $SF_CLI_DIR "package.json")) {
+                try {
+                    Push-Location $SF_CLI_DIR
+                    & npm install --production=false --silent 2>&1 | Out-Null
+                    & npm run build 2>&1 | Out-Null
+                    if ($LASTEXITCODE -eq 0) {
+                        Write-ColorOutput "  ✓ CLI rebuilt successfully" "Green"
+
+                        # Regenerate wrappers if they exist (framework root may have moved)
+                        $SF_WRAPPER_DIR = Join-Path $env:USERPROFILE ".local\bin"
+                        $SF_WRAPPER_CMD = Join-Path $SF_WRAPPER_DIR "sf.cmd"
+                        if (Test-Path $SF_WRAPPER_CMD) {
+                            $cmdContent = @"
+@echo off
+REM SkillFoundry CLI wrapper — updated by update.ps1
+REM Framework: $ScriptDir
+REM Version: $FrameworkVersion
+REM Updated: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+set SF_FRAMEWORK_ROOT=$ScriptDir
+node "%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js" %*
+"@
+                            $cmdContent | Out-File -FilePath $SF_WRAPPER_CMD -Encoding ascii -NoNewline
+                            Write-ColorOutput "  ✓ CLI wrapper updated: $SF_WRAPPER_CMD" "Green"
+                        }
+                        $SF_WRAPPER_PS1 = Join-Path $SF_WRAPPER_DIR "sf.ps1"
+                        if (Test-Path $SF_WRAPPER_PS1) {
+                            $ps1Content = @"
+# SkillFoundry CLI wrapper — updated by update.ps1
+# Framework: $ScriptDir
+# Version: $FrameworkVersion
+# Updated: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+`$env:SF_FRAMEWORK_ROOT = "$ScriptDir"
+& node "`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js" @args
+"@
+                            $ps1Content | Out-File -FilePath $SF_WRAPPER_PS1 -Encoding utf8
+                            Write-ColorOutput "  ✓ PowerShell wrapper updated: $SF_WRAPPER_PS1" "Green"
+                        }
+                    } else {
+                        Write-ColorOutput "  ⚠ CLI build failed (non-critical)" "Yellow"
+                    }
+                } catch {
+                    Write-ColorOutput "  ⚠ CLI rebuild skipped: $($_.Exception.Message)" "Yellow"
+                } finally {
+                    Pop-Location
+                }
+            }
+        } else {
+            Write-ColorOutput "  Node.js v$nodeVersionRaw (need v20+). CLI rebuild skipped." "Yellow"
+        }
+    } else {
+        Write-ColorOutput "  Node.js not found. CLI rebuild skipped." "Yellow"
+    }
+
     # Set version marker
     Set-ProjectVersion $ProjectDir
     

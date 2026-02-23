@@ -10,8 +10,9 @@ interface PermissionResult {
   reason: string;
 }
 
-// Patterns that should never be executed
+// Patterns that should never be executed (cross-platform)
 const DANGEROUS_PATTERNS = [
+  // Unix destructive commands
   /rm\s+-rf\s+[\/~]/,           // rm -rf from root or home
   /mkfs/,                        // format filesystem
   /dd\s+if=.*of=\/dev/,         // raw disk write
@@ -19,6 +20,13 @@ const DANGEROUS_PATTERNS = [
   /chmod\s+-R\s+777/,           // open permissions recursively
   /curl.*\|\s*(ba)?sh/,         // pipe curl to shell
   /wget.*\|\s*(ba)?sh/,         // pipe wget to shell
+  // Windows destructive commands
+  /rd\s+\/s\s+\/q\s+[A-Za-z]:\\/i,   // rd /s /q C:\
+  /del\s+\/[fF]\s+\/[sS]\s+[A-Za-z]:\\/,  // del /F /S C:\
+  /format\s+[A-Za-z]:/i,        // format C:
+  /diskpart/i,                   // disk partition tool
+  /icacls\s+[A-Za-z]:\\.*\/grant.*Everyone/i, // grant everyone full access
+  /powershell.*-[Ee]nc\s/,      // encoded PowerShell (obfuscation)
 ];
 
 // Patterns that always need confirmation

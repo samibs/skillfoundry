@@ -23,6 +23,7 @@ const MAX_READ_LINES = 2000;
 // Defense-in-depth: dangerous patterns also checked at executor level
 // (primary check is in permissions.ts; this is a safety net)
 const DANGEROUS_BASH_PATTERNS = [
+  // Unix destructive commands
   /rm\s+-rf\s+[\/~]/,
   /mkfs/,
   /dd\s+if=.*of=\/dev/,
@@ -30,7 +31,17 @@ const DANGEROUS_BASH_PATTERNS = [
   /chmod\s+-R\s+777/,
   /curl.*\|\s*(ba)?sh/,
   /wget.*\|\s*(ba)?sh/,
+  // Windows destructive commands
+  /rd\s+\/s\s+\/q\s+[A-Za-z]:\\/i,
+  /del\s+\/[fF]\s+\/[sS]\s+[A-Za-z]:\\/,
+  /format\s+[A-Za-z]:/i,
+  /diskpart/i,
+  /icacls\s+[A-Za-z]:\\.*\/grant.*Everyone/i,
+  /powershell.*-[Ee]nc\s/,
 ];
+
+const IS_WINDOWS = process.platform === 'win32';
+const WHICH_CMD = IS_WINDOWS ? 'where' : 'which';
 
 interface ExecutorContext {
   workDir: string;
@@ -298,10 +309,10 @@ function executeGrep(
 
     args.push('--', input.pattern, searchPath);
 
-    // Try ripgrep first, then grep
+    // Try ripgrep first, then grep (cross-platform tool detection)
     let cmd: string;
     try {
-      execSync('which rg', { encoding: 'utf-8', stdio: 'pipe' });
+      execSync(`${WHICH_CMD} rg`, { encoding: 'utf-8', stdio: 'pipe' });
       const rgArgs: string[] = ['-n'];
       if (input.context && input.context > 0) {
         rgArgs.push(`-C${input.context}`);
@@ -312,7 +323,12 @@ function executeGrep(
       rgArgs.push('--', input.pattern, searchPath);
       cmd = `rg ${rgArgs.map((a) => JSON.stringify(a)).join(' ')}`;
     } catch {
-      cmd = `grep ${args.map((a) => JSON.stringify(a)).join(' ')}`;
+      // On Windows without rg, try findstr as last resort
+      if (IS_WINDOWS) {
+        cmd = `findstr /s /n ${JSON.stringify(input.pattern)} ${JSON.stringify(searchPath + '\\*')}`;
+      } else {
+        cmd = `grep ${args.map((a) => JSON.stringify(a)).join(' ')}`;
+      }
     }
 
     const result = execSync(cmd, {

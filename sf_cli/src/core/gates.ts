@@ -7,9 +7,13 @@
 // T6: Scope validation (anvil.sh scope)
 
 import { execSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getFrameworkRoot } from './framework.js';
+
+const IS_WINDOWS = process.platform === 'win32';
+const WHICH_CMD = IS_WINDOWS ? 'where' : 'which';
+const NULL_DEVICE = IS_WINDOWS ? 'NUL' : '/dev/null';
 
 export type GateStatus = 'pass' | 'fail' | 'warn' | 'skip' | 'running';
 
@@ -49,19 +53,24 @@ function runCommand(cmd: string, cwd: string, timeoutMs: number = 60_000): { ok:
 }
 
 function findAnvilScript(workDir: string): string | null {
+  // Extensions to check: prefer .ps1 on Windows, .sh on Unix
+  const extensions = IS_WINDOWS
+    ? ['anvil.ps1', 'anvil.cmd', 'anvil.sh', 'anvil']
+    : ['anvil.sh', 'anvil'];
+
+  const candidates: string[] = [];
+
   // Check project-local first (if user copied scripts/ into their project)
-  const candidates = [
-    join(workDir, 'scripts', 'anvil.sh'),
-    join(workDir, 'scripts', 'anvil'),
-  ];
+  for (const ext of extensions) {
+    candidates.push(join(workDir, 'scripts', ext));
+  }
 
   // Then check framework root (the canonical location)
   try {
     const frameworkRoot = getFrameworkRoot();
-    candidates.push(
-      join(frameworkRoot, 'scripts', 'anvil.sh'),
-      join(frameworkRoot, 'scripts', 'anvil'),
-    );
+    for (const ext of extensions) {
+      candidates.push(join(frameworkRoot, 'scripts', ext));
+    }
   } catch {
     // Framework root not available — skip framework candidates
   }
@@ -70,6 +79,16 @@ function findAnvilScript(workDir: string): string | null {
     if (existsSync(path)) return path;
   }
   return null;
+}
+
+function anvilCommand(anvilPath: string, args: string): string {
+  if (anvilPath.endsWith('.ps1')) {
+    return `powershell -ExecutionPolicy Bypass -File "${anvilPath}" ${args}`;
+  }
+  if (anvilPath.endsWith('.cmd')) {
+    return `"${anvilPath}" ${args}`;
+  }
+  return `bash "${anvilPath}" ${args}`;
 }
 
 function detectProjectType(workDir: string): {
@@ -94,7 +113,7 @@ function runT1(workDir: string, target: string): GateResult {
   const anvil = findAnvilScript(workDir);
 
   if (anvil) {
-    const { ok, output } = runCommand(`bash "${anvil}" check "${target}"`, workDir);
+    const { ok, output } = runCommand(anvilCommand(anvil, `check "${target}"`), workDir);
     return {
       tier: 'T1',
       name: 'Banned Patterns & Syntax',
@@ -104,12 +123,15 @@ function runT1(workDir: string, target: string): GateResult {
     };
   }
 
-  // Inline fallback: grep for banned patterns
+  // Inline fallback: search for banned patterns (cross-platform)
   const banned = ['TODO', 'FIXME', 'HACK', 'PLACEHOLDER', 'STUB', 'NOT IMPLEMENTED'];
-  const { ok, output } = runCommand(
-    `grep -rn "${banned.join('\\|')}" "${target}" --include="*.ts" --include="*.js" --include="*.py" --exclude-dir=node_modules --exclude-dir=dist 2>/dev/null || true`,
-    workDir,
-  );
+  let grepCmd: string;
+  if (IS_WINDOWS) {
+    grepCmd = `findstr /s /n "${banned.join(' ')}" "${target}\\*.ts" "${target}\\*.js" "${target}\\*.py" 2>${NULL_DEVICE} || exit /b 0`;
+  } else {
+    grepCmd = `grep -rn "${banned.join('\\|')}" "${target}" --include="*.ts" --include="*.js" --include="*.py" --exclude-dir=node_modules --exclude-dir=dist 2>/dev/null || true`;
+  }
+  const { ok, output } = runCommand(grepCmd, workDir);
 
   const hasBanned = output.trim().length > 0;
   return {
@@ -138,7 +160,7 @@ function runT2(workDir: string): GateResult {
   }
 
   if (project.hasPython) {
-    const { ok } = runCommand('which pyright', workDir);
+    const { ok } = runCommand(`${WHICH_CMD} pyright`, workDir);
     if (ok) {
       const result = runCommand('pyright 2>&1', workDir, 120_000);
       return {
@@ -169,7 +191,7 @@ function runT3(workDir: string): GateResult {
     // Check for test script in package.json
     try {
       const pkg = JSON.parse(
-        execSync('cat package.json', { cwd: workDir, encoding: 'utf-8' }),
+        readFileSync(join(workDir, 'package.json'), 'utf-8'),
       );
       if (pkg.scripts?.test && pkg.scripts.test !== 'echo "Error: no test specified" && exit 1') {
         const { ok, output } = runCommand('npm test 2>&1', workDir, 300_000);
@@ -186,7 +208,7 @@ function runT3(workDir: string): GateResult {
     }
 
     // Try vitest directly
-    const { ok: hasVitest } = runCommand('npx vitest --version 2>/dev/null', workDir);
+    const { ok: hasVitest } = runCommand(`npx vitest --version 2>${NULL_DEVICE}`, workDir);
     if (hasVitest) {
       const { ok, output } = runCommand('npx vitest run 2>&1', workDir, 300_000);
       return {
@@ -200,7 +222,8 @@ function runT3(workDir: string): GateResult {
   }
 
   if (project.hasPython) {
-    const { ok, output } = runCommand('python3 -m pytest 2>&1', workDir, 300_000);
+    const pythonCmd = IS_WINDOWS ? 'python' : 'python3';
+    const { ok, output } = runCommand(`${pythonCmd} -m pytest 2>&1`, workDir, 300_000);
     return {
       tier: 'T3',
       name: 'Tests',
@@ -225,7 +248,7 @@ function runT4(workDir: string, target: string): GateResult {
   const anvil = findAnvilScript(workDir);
 
   if (anvil) {
-    const { ok, output } = runCommand(`bash "${anvil}" patterns "${target}"`, workDir);
+    const { ok, output } = runCommand(anvilCommand(anvil, `patterns "${target}"`), workDir);
     return {
       tier: 'T4',
       name: 'Security Scan',
@@ -235,18 +258,21 @@ function runT4(workDir: string, target: string): GateResult {
     };
   }
 
-  // Inline security checks: hardcoded secrets, common vulnerabilities
+  // Inline security checks: hardcoded secrets, common vulnerabilities (cross-platform)
   const securityPatterns = [
     'password\\s*=\\s*["\'][^"\']*["\']',
     'api[_-]?key\\s*=\\s*["\']',
     'secret\\s*=\\s*["\']',
     'BEGIN (RSA |DSA |EC )?PRIVATE KEY',
   ];
-  const pattern = securityPatterns.join('\\|');
-  const { output } = runCommand(
-    `grep -rni "${pattern}" "${target}" --include="*.ts" --include="*.js" --include="*.py" --include="*.json" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true`,
-    workDir,
-  );
+  let secCmd: string;
+  if (IS_WINDOWS) {
+    secCmd = `findstr /s /n /i "password= api_key= secret= PRIVATE.KEY" "${target}\\*.ts" "${target}\\*.js" "${target}\\*.py" "${target}\\*.json" 2>${NULL_DEVICE} || exit /b 0`;
+  } else {
+    const pattern = securityPatterns.join('\\|');
+    secCmd = `grep -rni "${pattern}" "${target}" --include="*.ts" --include="*.js" --include="*.py" --include="*.json" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.git 2>/dev/null || true`;
+  }
+  const { output } = runCommand(secCmd, workDir);
 
   const hasIssues = output.trim().length > 0;
   return {
@@ -266,7 +292,7 @@ function runT5(workDir: string): GateResult {
   if (project.hasPackageJson) {
     try {
       const pkg = JSON.parse(
-        execSync('cat package.json', { cwd: workDir, encoding: 'utf-8' }),
+        readFileSync(join(workDir, 'package.json'), 'utf-8'),
       );
       if (pkg.scripts?.build) {
         const { ok, output } = runCommand('npm run build 2>&1', workDir, 120_000);
@@ -319,7 +345,7 @@ function runT6(workDir: string, storyFile?: string): GateResult {
 
   const anvil = findAnvilScript(workDir);
   if (anvil) {
-    const { ok, output } = runCommand(`bash "${anvil}" scope "${storyFile}"`, workDir);
+    const { ok, output } = runCommand(anvilCommand(anvil, `scope "${storyFile}"`), workDir);
     return {
       tier: 'T6',
       name: 'Scope Validation',

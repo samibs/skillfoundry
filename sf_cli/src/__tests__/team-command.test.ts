@@ -1,4 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { teamCommand } from '../commands/team.js';
 import type { SessionContext, TeamDefinitionRef } from '../types.js';
 import { TEAM_PRESETS } from '../core/team-registry.js';
@@ -28,7 +30,7 @@ function makeSession(overrides: Partial<SessionContext> = {}): SessionContext {
     },
     messages: [],
     permissionMode: 'ask',
-    workDir: '/tmp/test',
+    workDir: join(tmpdir(), 'sf-test'),
     activeAgent: null,
     activeTeam: null,
     addMessage: vi.fn(),

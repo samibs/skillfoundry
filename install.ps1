@@ -468,7 +468,7 @@ if ($DryRun) {
 # ═══════════════════════════════════════════════════════════════
 # Initialize progress counter
 # ═══════════════════════════════════════════════════════════════
-Initialize-Steps (3 + $Platforms.Count + 2)
+Initialize-Steps (3 + $Platforms.Count + 3)
 
 # Create directory structure — shared directories (once)
 Write-Step "Creating shared directory structure..."
@@ -611,6 +611,121 @@ if ($RegistryContent -notcontains $TargetDir) {
 }
 Write-ColorOutput "  ✓ Registered for framework updates" "Green"
 
+# ═══════════════════════════════════════════════════════════════
+# PHASE 3: Build and deploy SkillFoundry CLI (sf command)
+# ═══════════════════════════════════════════════════════════════
+Write-Step "Building SkillFoundry CLI..."
+$SF_CLI_INSTALLED = $false
+
+$nodeCmd = Get-Command node -ErrorAction SilentlyContinue
+if ($nodeCmd) {
+    $nodeVersionRaw = (& node -v) -replace '^v', ''
+    $nodeMajor = [int]($nodeVersionRaw -split '\.')[0]
+
+    if ($nodeMajor -ge 20) {
+        Write-ColorOutput "  Node.js v$nodeVersionRaw detected" "Green"
+
+        $SF_CLI_DIR = Join-Path $ScriptDir "sf_cli"
+        if (Test-Path (Join-Path $SF_CLI_DIR "package.json")) {
+            $BUILD_OK = $true
+
+            Write-ColorOutput "  Installing CLI dependencies..." "Blue"
+            try {
+                Push-Location $SF_CLI_DIR
+                $npmOutput = & npm install --production=false --silent 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-ColorOutput "  Warning: npm install failed. Skipping CLI deployment." "Yellow"
+                    $BUILD_OK = $false
+                }
+            } catch {
+                Write-ColorOutput "  Warning: npm install failed. Skipping CLI deployment." "Yellow"
+                $BUILD_OK = $false
+            } finally {
+                Pop-Location
+            }
+
+            if ($BUILD_OK) {
+                Write-ColorOutput "  Compiling TypeScript..." "Blue"
+                try {
+                    Push-Location $SF_CLI_DIR
+                    $buildOutput = & npm run build 2>&1
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-ColorOutput "  Warning: CLI build failed. Skipping CLI deployment." "Yellow"
+                        $BUILD_OK = $false
+                    }
+                } catch {
+                    Write-ColorOutput "  Warning: CLI build failed. Skipping CLI deployment." "Yellow"
+                    $BUILD_OK = $false
+                } finally {
+                    Pop-Location
+                }
+            }
+
+            if ($BUILD_OK) {
+                # Create wrapper directory
+                $SF_WRAPPER_DIR = Join-Path $env:USERPROFILE ".local\bin"
+                if (-not (Test-Path $SF_WRAPPER_DIR)) {
+                    New-Item -ItemType Directory -Force -Path $SF_WRAPPER_DIR | Out-Null
+                }
+
+                # Create .cmd wrapper (works in cmd.exe and PowerShell)
+                $SF_WRAPPER_CMD = Join-Path $SF_WRAPPER_DIR "sf.cmd"
+                $cmdContent = @"
+@echo off
+REM SkillFoundry CLI wrapper — installed by install.ps1
+REM Framework: $ScriptDir
+REM Version: $FrameworkVersion
+REM Installed: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+set SF_FRAMEWORK_ROOT=$ScriptDir
+node "%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js" %*
+"@
+                $cmdContent | Out-File -FilePath $SF_WRAPPER_CMD -Encoding ascii -NoNewline
+                Write-ColorOutput "  ✓ CLI wrapper installed: $SF_WRAPPER_CMD" "Green"
+
+                # Create .ps1 wrapper (for PowerShell direct invocation)
+                $SF_WRAPPER_PS1 = Join-Path $SF_WRAPPER_DIR "sf.ps1"
+                $ps1Content = @"
+# SkillFoundry CLI wrapper — installed by install.ps1
+# Framework: $ScriptDir
+# Version: $FrameworkVersion
+# Installed: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
+`$env:SF_FRAMEWORK_ROOT = "$ScriptDir"
+& node "`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js" @args
+"@
+                $ps1Content | Out-File -FilePath $SF_WRAPPER_PS1 -Encoding utf8
+                Write-ColorOutput "  ✓ PowerShell wrapper installed: $SF_WRAPPER_PS1" "Green"
+
+                $SF_CLI_INSTALLED = $true
+
+                # Check if wrapper dir is on PATH
+                $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+                if ($userPath -split ';' | Where-Object { $_ -eq $SF_WRAPPER_DIR }) {
+                    Write-ColorOutput "  ✓ $SF_WRAPPER_DIR is on PATH" "Green"
+                } else {
+                    Write-Host ""
+                    Write-ColorOutput "  ⚠ $SF_WRAPPER_DIR is not on your PATH" "Yellow"
+                    Write-Host ""
+                    Write-Host "  To add it permanently, run (as your user):"
+                    Write-Host ""
+                    Write-ColorOutput "    [Environment]::SetEnvironmentVariable('Path', `"$SF_WRAPPER_DIR;`$([Environment]::GetEnvironmentVariable('Path','User'))`", 'User')" "Cyan"
+                    Write-Host ""
+                    Write-Host "  Or add to your PowerShell profile ($PROFILE):"
+                    Write-ColorOutput "    `$env:Path = `"$SF_WRAPPER_DIR;`$env:Path`"" "Cyan"
+                    Write-Host ""
+                    Write-Host "  Then restart your terminal."
+                    Write-Host ""
+                }
+            }
+        }
+    } else {
+        Write-ColorOutput "  Node.js v$nodeVersionRaw detected (need v20+). Skipping CLI build." "Yellow"
+        Write-ColorOutput "  Install Node.js 20+ to enable the 'sf' CLI command." "Yellow"
+    }
+} else {
+    Write-ColorOutput "  Node.js not found. Skipping CLI build." "Yellow"
+    Write-ColorOutput "  Install Node.js 20+ to enable the 'sf' CLI command." "Yellow"
+}
+
 Write-Step "Done!"
 
 $Elapsed = Get-ElapsedSeconds
@@ -637,6 +752,11 @@ foreach ($plat in $Platforms) {
 }
 Write-Host "    agents/                 $SharedCount shared modules"
 Write-Host "    genesis/                PRD template"
+if ($SF_CLI_INSTALLED) {
+    Write-Host "    sf CLI                  ✓ installed (sf.cmd + sf.ps1)"
+} else {
+    Write-Host "    sf CLI                  - skipped (Node.js 20+ required)"
+}
 Write-Host ""
 
 # Compact Quick Start
