@@ -49,17 +49,20 @@ Execute these phases in order:
 ```
 /layer-check
 ```
-- Database: migrations, constraints, rollback
-- Backend: endpoints, auth, tests
+- Database: migrations, constraints, rollback, ownership columns
+- Backend: endpoints, auth, tests, data isolation, error leakage prevention
 - Frontend: real API, all states, accessible
+- Data Isolation: ownership WHERE clauses, scope from auth token, cross-user tests
 
 **PHASE 4: INSPECT** — Security audit
 ```
 /security audit
 ```
-- OWASP top 10 scan
+- Top 12 security scan (OWASP + data isolation + pagination + error leakage + concurrency + sessions)
 - Banned pattern detection
 - Credential exposure check
+- Unscoped query detection on user-owned entities
+- Version bump and CHANGELOG verification
 
 **PHASE 5: REMEMBER** — Harvest knowledge
 ```

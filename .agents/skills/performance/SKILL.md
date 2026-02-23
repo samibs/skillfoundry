@@ -55,6 +55,17 @@ BEFORE optimizing, verify:
 - [ ] Are there constraints? (CPU, memory, network)
 ```
 
+### 4. Query & Pagination Safety
+```
+- [ ] All list endpoints enforce max pageSize cap (e.g., 100)
+- [ ] No unbounded SELECT * queries without LIMIT
+- [ ] Queries on user-owned entities include ownership WHERE clause (data isolation)
+- [ ] Indexes exist on ownership columns (user_id, tenant_id)
+- [ ] N+1 query patterns eliminated
+- [ ] Connection pooling configured
+- [ ] Slow query logging enabled
+```
+
 ---
 
 ## PERFORMANCE ANALYSIS WORKFLOW

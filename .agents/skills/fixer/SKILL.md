@@ -63,6 +63,11 @@ description: >-
 | **UX/UI anti-pattern** | UX/UI Specialist | ⚠️ Depends |
 | **Dependency vulnerability** | Dependency Manager | ✅ Yes |
 | **Missing observability** | SRE Specialist | ✅ Yes |
+| **Unscoped query on owned entity** | Data Architect | ✅ Yes |
+| **Missing ownership WHERE clause** | Coder | ✅ Yes |
+| **Error leakage (stack traces, SQL)** | Coder | ✅ Yes |
+| **Missing pagination cap** | Coder | ✅ Yes |
+| **Missing idempotency support** | API Design Specialist | ⚠️ Depends |
 | **Architectural ambiguity** | Tech Lead | ❌ Escalate |
 | **Business logic unclear** | N/A | ❌ Escalate |
 | **Security policy choice** | N/A | ❌ Escalate |

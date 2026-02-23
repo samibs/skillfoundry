@@ -21,7 +21,7 @@ Added comprehensive AI-specific security anti-pattern detection to the framework
    - Edge cases and mitigation strategies
    - Focus: Comprehensive understanding of critical issues
 
-### Top 7 Critical Vulnerabilities
+### Top 12 Critical Vulnerabilities
 
 Based on weighted scoring (Frequency × 2 + Severity × 2 + Detectability):
 
@@ -56,7 +56,7 @@ Comprehensive security scanning agent that:
 - Integrates with other agents (coder, pr-review)
 
 **Scan Modes**:
-- **Quick Scan**: Top 7 critical issues only
+- **Quick Scan**: Top 12 critical issues only
 - **Comprehensive Scan**: All 15 patterns
 - **Targeted Scan**: Deep dive on specific vulnerability
 
@@ -217,7 +217,7 @@ project/
 ### For Projects
 - **Production-ready**: Security-vetted code
 - **Compliance**: Security standards enforced
-- **Risk reduction**: Top 7 critical issues prevented
+- **Risk reduction**: Top 12 critical issues prevented
 
 ## Next Steps
 

@@ -261,7 +261,7 @@ task(
     Read docs/ANTI_PATTERNS_DEPTH.md
     
     Scan entire codebase for:
-    1. Top 7 critical vulnerabilities:
+    1. Top 12 critical vulnerabilities:
        - Hardcoded secrets
        - SQL injection
        - XSS

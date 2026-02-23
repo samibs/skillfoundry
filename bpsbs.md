@@ -141,11 +141,11 @@ Every repo must include the following folders:
 
 #### 📚 Security Knowledge Base
 - **docs/ANTI_PATTERNS_BREADTH.md** - 15 security anti-patterns (225 KB, all languages)
-- **docs/ANTI_PATTERNS_DEPTH.md** - Top 7 critical vulnerabilities (252 KB, detailed)
+- **docs/ANTI_PATTERNS_DEPTH.md** - Top 12 critical vulnerabilities (252 KB, detailed)
 
 **ALL CODE MUST BE VALIDATED** against these documents before implementation.
 
-#### ⚠️ Top 7 Critical AI Vulnerabilities (by Priority)
+#### ⚠️ Top 12 Critical AI Vulnerabilities (by Priority)
 
 1. **Hardcoded Secrets** 🔴
    - ❌ NEVER hardcode API keys, passwords, tokens, or credentials

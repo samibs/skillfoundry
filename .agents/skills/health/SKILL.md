@@ -62,6 +62,9 @@ Check that all critical files exist:
 - Check if docs/ANTI_PATTERNS files exist
 - Check if autonomous execution hooks are configured
 - Check if `.gitignore` covers sensitive files
+- Check if data isolation is specified in PRD template (genesis/TEMPLATE.md section 6.7)
+- Check if Top 12 security checks are referenced in coder/SKILL.md
+- Check if version bump enforcement exists in layer-check/SKILL.md
 
 #### 7. PRD Status
 - Check genesis/ for PRD files

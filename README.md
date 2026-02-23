@@ -84,7 +84,7 @@ Or run the full shortcut pipeline:
 
 ## Versioning and Releases
 
-Current framework line: `v1.9.0.22`
+Current framework line: `v1.9.0.23`
 
 Detailed release notes are maintained in:
 - `CHANGELOG.md`

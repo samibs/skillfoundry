@@ -35,7 +35,7 @@ When the implementation passes initial assessment, create a brutal test plan cov
 • **Negative Test Cases**: Invalid inputs, malformed data, unauthorized access attempts
 • **Edge Cases**: Boundary conditions, null/empty values, maximum limits, race conditions
 • **Integration Failures**: Network timeouts, database unavailability, third-party service failures
-• **Security Probes**: Injection attacks, privilege escalation, data exposure risks, **AI-specific vulnerabilities** (v1.1.0: Top 7 from docs/ANTI_PATTERNS_DEPTH.md - SQL injection 53.3% AI failure, XSS 86% AI failure, hardcoded secrets, insecure randomness, auth/authz flaws, package hallucination, command injection)
+• **Security Probes**: Injection attacks, privilege escalation, data exposure risks, **AI-specific vulnerabilities** (v1.1.0: Top 12 from docs/ANTI_PATTERNS_DEPTH.md - SQL injection 53.3% AI failure, XSS 86% AI failure, hardcoded secrets, insecure randomness, auth/authz flaws, package hallucination, command injection)
 • **Performance Stress**: Load testing, memory leaks, resource exhaustion
 
 **PHASE 3: TEST IMPLEMENTATION**

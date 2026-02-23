@@ -99,7 +99,7 @@
 
 #### SkillFoundry Framework
 - **AI Security Anti-Patterns**: 15 vulnerability patterns documented
-- **Top 7 Critical Issues**: Hardcoded secrets, SQL injection, XSS, etc.
+- **Top 12 Critical Issues**: Hardcoded secrets, SQL injection, XSS, etc.
 - **86% XSS failure rate prevention**: Framework prevents common AI mistakes
 - **Security Scanner Agent**: Proactive detection of AI-specific vulnerabilities
 - **BREADTH + DEPTH guides**: 477 KB of AI vulnerability knowledge

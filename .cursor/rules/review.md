@@ -57,7 +57,7 @@ Review in this order:
 - [ ] No package hallucination
 ```
 
-**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Top 7 vulnerabilities
+**Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Top 12 vulnerabilities
 
 #### 2. Functionality Review
 ```
@@ -180,7 +180,7 @@ These are suggestions for improvement, not blockers.
 
 ## SECURITY REVIEW CHECKLIST
 
-**MANDATORY** - Check against Top 7 AI Vulnerabilities:
+**MANDATORY** - Check against Top 12 AI Vulnerabilities:
 
 1. **Hardcoded Secrets** 🔴
    - Scan for API keys, passwords, tokens
