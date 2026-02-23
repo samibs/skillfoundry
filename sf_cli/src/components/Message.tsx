@@ -23,7 +23,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 export function Message({ message }: MessageProps) {
   const color = ROLE_COLORS[message.role] || 'white';
-  const label = ROLE_LABELS[message.role] || message.role;
+  // Show routed agent name when team routing occurred
+  const label = message.role === 'assistant' && message.metadata?.routedAgent
+    ? `sf:${message.metadata.routedAgent}`
+    : (ROLE_LABELS[message.role] || message.role);
 
   const content =
     message.role === 'assistant'
@@ -45,7 +48,8 @@ export function Message({ message }: MessageProps) {
           {'     '}[{message.metadata.inputTokens} in /{' '}
           {message.metadata.outputTokens} out | $
           {message.metadata.costUsd.toFixed(4)}
-          {message.metadata.mode ? ` | ${message.metadata.mode}` : ''}]
+          {message.metadata.mode ? ` | ${message.metadata.mode}` : ''}
+          {message.metadata.routedAgent ? ` | routed:${message.metadata.routingConfidence}` : ''}]
         </Text>
       )}
     </Box>

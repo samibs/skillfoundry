@@ -6,6 +6,7 @@ interface StatusBarProps {
   permissionMode: string;
   isStreaming: boolean;
   activeAgent?: string | null;
+  activeTeam?: { name: string } | null;
 }
 
 export function StatusBar({
@@ -13,15 +14,25 @@ export function StatusBar({
   permissionMode,
   isStreaming,
   activeAgent,
+  activeTeam,
 }: StatusBarProps) {
+  let dismissHint = '';
+  let modeLabel = '';
+  if (activeTeam) {
+    dismissHint = ' | /team off';
+    modeLabel = `team:${activeTeam.name} | `;
+  } else if (activeAgent) {
+    dismissHint = ' | /agent off';
+    modeLabel = `agent:${activeAgent} | `;
+  }
+
   return (
     <Box justifyContent="space-between" paddingX={1}>
       <Text dimColor>
-        /help commands | /status info | /exit quit
-        {activeAgent ? ` | /agent off` : ''}
+        /help commands | /status info | /exit quit{dismissHint}
       </Text>
       <Text dimColor>
-        {activeAgent ? `agent:${activeAgent} | ` : ''}mode:{permissionMode} | {isStreaming ? 'streaming...' : 'ready'}
+        {modeLabel}mode:{permissionMode} | {isStreaming ? 'streaming...' : 'ready'}
       </Text>
     </Box>
   );

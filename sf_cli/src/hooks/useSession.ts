@@ -6,6 +6,7 @@ import type {
   SfState,
   SessionContext,
   PermissionMode,
+  TeamDefinitionRef,
 } from '../types.js';
 import { loadConfig, loadPolicy } from '../core/config.js';
 import { loadState, updateState } from '../core/session.js';
@@ -16,7 +17,8 @@ export function useSession(workDir: string) {
   const [policy] = useState<SfPolicy>(() => loadPolicy(workDir));
   const [state, setStateLocal] = useState<SfState>(() => loadState(workDir));
   const [permissionMode] = useState<PermissionMode>('ask');
-  const [activeAgent, setActiveAgent] = useState<string | null>(null);
+  const [activeAgent, setActiveAgentRaw] = useState<string | null>(null);
+  const [activeTeam, setActiveTeamRaw] = useState<TeamDefinitionRef | null>(null);
   const msgCounter = useRef(0);
 
   const addMessage = useCallback(
@@ -41,6 +43,17 @@ export function useSession(workDir: string) {
     [workDir],
   );
 
+  // Mutual exclusion: activating an agent clears the team, and vice versa
+  const setActiveAgent = useCallback((name: string | null) => {
+    setActiveAgentRaw(name);
+    if (name) setActiveTeamRaw(null);
+  }, []);
+
+  const setActiveTeam = useCallback((team: TeamDefinitionRef | null) => {
+    setActiveTeamRaw(team);
+    if (team) setActiveAgentRaw(null);
+  }, []);
+
   const sessionContext: SessionContext = {
     config,
     policy,
@@ -49,9 +62,11 @@ export function useSession(workDir: string) {
     permissionMode,
     workDir,
     activeAgent,
+    activeTeam,
     addMessage,
     setState: updateSessionState,
     setActiveAgent,
+    setActiveTeam,
   };
 
   return {
@@ -61,9 +76,11 @@ export function useSession(workDir: string) {
     state,
     permissionMode,
     activeAgent,
+    activeTeam,
     addMessage,
     updateSessionState,
     setActiveAgent,
+    setActiveTeam,
     sessionContext,
   };
 }

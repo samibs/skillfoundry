@@ -9,6 +9,7 @@ interface HeaderProps {
   messageCount: number;
   state: string;
   activeAgent?: string | null;
+  activeTeam?: { name: string; members: string[] } | null;
 }
 
 export function Header({
@@ -19,7 +20,15 @@ export function Header({
   messageCount,
   state,
   activeAgent,
+  activeTeam,
 }: HeaderProps) {
+  let agentInfo = '';
+  if (activeTeam) {
+    agentInfo = ` | team:${activeTeam.name} (${activeTeam.members.length} agents)`;
+  } else if (activeAgent) {
+    agentInfo = ` | agent:${activeAgent}`;
+  }
+
   return (
     <Box
       flexDirection="row"
@@ -32,7 +41,7 @@ export function Header({
         SkillFoundry CLI
       </Text>
       <Text dimColor>
-        {provider}:{model}{activeAgent ? ` | agent:${activeAgent}` : ''} | ${costSession.toFixed(4)}/${budgetMonthly} |
+        {provider}:{model}{agentInfo} | ${costSession.toFixed(4)}/${budgetMonthly} |
         msgs:{messageCount} | {state}
       </Text>
     </Box>

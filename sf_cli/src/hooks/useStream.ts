@@ -7,6 +7,9 @@ import { executeTool } from '../core/executor.js';
 import { checkPermission, allowAlways, allowToolAlways } from '../core/permissions.js';
 import { classifyIntent } from '../core/intent.js';
 import { getAgentTools, getAgentSystemPrompt } from '../core/agent-registry.js';
+import { routeToAgent } from '../core/team-router.js';
+import type { RoutingResult } from '../core/team-router.js';
+import type { TeamDefinitionRef } from '../types.js';
 import { checkBudget, recordUsage, loadUsage } from '../core/budget.js';
 import type { UsageData } from '../core/budget.js';
 import { streamWithRetry } from '../core/retry.js';
@@ -73,7 +76,7 @@ export function useStream(
   );
 
   const sendMessage = useCallback(
-    async (userMessage: string, history: Message[], permissionMode?: PermissionMode, activeAgent?: string | null) => {
+    async (userMessage: string, history: Message[], permissionMode?: PermissionMode, activeAgent?: string | null, activeTeam?: TeamDefinitionRef | null) => {
       setIsStreaming(true);
       setStreamContent('');
       setThinkingContent('');
@@ -136,9 +139,17 @@ export function useStream(
         }
         const fallbackProvider = fbName ? fallbackProviderRef.current!.instance : null;
 
-        // Resolve per-agent tools and system prompt
-        const agentTools = activeAgent ? getAgentTools(activeAgent) : ALL_TOOLS;
-        const agentPrompt = activeAgent ? getAgentSystemPrompt(activeAgent) : undefined;
+        // Resolve per-agent tools and system prompt (team routing > single agent > default)
+        let resolvedAgent: string | null = activeAgent || null;
+        let routingResult: RoutingResult | null = null;
+
+        if (!resolvedAgent && activeTeam) {
+          routingResult = routeToAgent(userMessage, activeTeam.members, activeTeam.defaultAgent);
+          resolvedAgent = routingResult.agent;
+        }
+
+        const agentTools = resolvedAgent ? getAgentTools(resolvedAgent) : ALL_TOOLS;
+        const agentPrompt = resolvedAgent ? getAgentSystemPrompt(resolvedAgent) : undefined;
 
         // Cost optimization: classify intent to decide whether tools are needed.
         // Simple chat ("ping", "explain X") skips tool definitions, saving ~350 tokens.
@@ -191,7 +202,10 @@ export function useStream(
               costUsd: streamResult.result.costUsd,
               thinkingContent: streamResult.result.thinkingContent,
               mode: 'chat',
-              activeAgent: activeAgent || undefined,
+              activeAgent: resolvedAgent || undefined,
+              routedAgent: routingResult?.agent,
+              routingConfidence: routingResult?.confidence,
+              activeTeam: activeTeam?.name,
               fallbackUsed: streamResult.fallbackUsed,
             },
           });
@@ -288,7 +302,10 @@ export function useStream(
                 costUsd: totalCostUsd,
                 thinkingContent: result.thinkingContent,
                 mode: 'agent',
-                activeAgent: activeAgent || undefined,
+                activeAgent: resolvedAgent || undefined,
+                routedAgent: routingResult?.agent,
+                routingConfidence: routingResult?.confidence,
+                activeTeam: activeTeam?.name,
               },
             });
             break;
