@@ -1,12 +1,14 @@
 import { useState, useCallback, useRef } from 'react';
 import { createProvider } from '../core/provider.js';
+import type { ProviderAdapter } from '../types.js';
 import { redactText } from '../core/redact.js';
 import { ALL_TOOLS } from '../core/tools.js';
 import { executeTool } from '../core/executor.js';
 import { checkPermission, allowAlways, allowToolAlways } from '../core/permissions.js';
 import { classifyIntent } from '../core/intent.js';
 import { getAgentTools, getAgentSystemPrompt } from '../core/agent-registry.js';
-import { checkBudget, recordUsage } from '../core/budget.js';
+import { checkBudget, recordUsage, loadUsage } from '../core/budget.js';
+import type { UsageData } from '../core/budget.js';
 import { streamWithRetry } from '../core/retry.js';
 import type {
   SfConfig,
@@ -39,6 +41,13 @@ export function useStream(
   } | null>(null);
   const abortRef = useRef(false);
   const permissionModeRef = useRef<PermissionMode>('auto');
+
+  // Provider singleton: avoid SDK reinstantiation per message
+  const providerRef = useRef<{ name: string; instance: ProviderAdapter } | null>(null);
+  const fallbackProviderRef = useRef<{ name: string; instance: ProviderAdapter } | null>(null);
+
+  // In-memory budget cache: avoid readFileSync on every checkBudget call
+  const budgetCacheRef = useRef<UsageData | null>(null);
 
   const setPermissionMode = useCallback((mode: PermissionMode) => {
     permissionModeRef.current = mode;
@@ -93,11 +102,18 @@ export function useStream(
       let totalCostUsd = 0;
 
       try {
+        // Load budget cache from disk once per session, reuse in-memory afterward
+        if (!budgetCacheRef.current) {
+          budgetCacheRef.current = loadUsage(workDir);
+        }
+
         // Budget enforcement: block if monthly or run budget exceeded
         const budgetCheck = checkBudget(
           workDir,
           config.monthly_budget_usd,
           config.run_budget_usd,
+          0,
+          budgetCacheRef.current,
         );
         if (!budgetCheck.allowed) {
           addMessage({
@@ -108,10 +124,17 @@ export function useStream(
           return;
         }
 
-        const provider = createProvider(config.provider);
-        const fallbackProvider = config.fallback_provider
-          ? createProvider(config.fallback_provider)
-          : null;
+        // Provider singleton: reuse existing instance if same provider name
+        if (!providerRef.current || providerRef.current.name !== config.provider) {
+          providerRef.current = { name: config.provider, instance: createProvider(config.provider) };
+        }
+        const provider = providerRef.current.instance;
+
+        const fbName = config.fallback_provider || '';
+        if (fbName && (!fallbackProviderRef.current || fallbackProviderRef.current.name !== fbName)) {
+          fallbackProviderRef.current = { name: fbName, instance: createProvider(fbName) };
+        }
+        const fallbackProvider = fbName ? fallbackProviderRef.current!.instance : null;
 
         // Resolve per-agent tools and system prompt
         const agentTools = activeAgent ? getAgentTools(activeAgent) : ALL_TOOLS;
@@ -148,8 +171,8 @@ export function useStream(
 
           const redactedFinal = redactText(accumulated, policy.redact);
 
-          // Record usage for budget tracking
-          recordUsage(workDir, {
+          // Record usage for budget tracking and update in-memory cache
+          budgetCacheRef.current = recordUsage(workDir, {
             provider: streamResult.fallbackUsed || config.provider,
             model: config.model,
             inputTokens: streamResult.result.inputTokens,
@@ -189,12 +212,13 @@ export function useStream(
 
           let accumulated = '';
 
-          // Per-turn budget check: stop if run budget exceeded
+          // Per-turn budget check: stop if run budget exceeded (use cached data)
           const turnBudget = checkBudget(
             workDir,
             config.monthly_budget_usd,
             config.run_budget_usd,
             totalCostUsd,
+            budgetCacheRef.current || undefined,
           );
           if (!turnBudget.allowed) {
             addMessage({
@@ -231,8 +255,8 @@ export function useStream(
           totalOutputTokens += result.outputTokens;
           totalCostUsd += result.costUsd;
 
-          // Record each turn's usage
-          recordUsage(workDir, {
+          // Record each turn's usage and update in-memory cache
+          budgetCacheRef.current = recordUsage(workDir, {
             provider: toolStreamResult.fallbackUsed || config.provider,
             model: config.model,
             inputTokens: result.inputTokens,

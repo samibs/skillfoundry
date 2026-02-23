@@ -45,11 +45,21 @@ function toOpenAIMessages(
   return result;
 }
 
-// Convert tool definitions to OpenAI format
+// Tool transform cache: tool schemas are identical every turn of the agentic loop.
+// Cache by a key derived from tool names to avoid re-mapping on every call.
+let _cachedToolKey = '';
+let _cachedTools: OpenAI.ChatCompletionTool[] = [];
+
+// Convert tool definitions to OpenAI format (cached)
 function toOpenAITools(
   tools: Array<{ name: string; description: string; input_schema: unknown }>,
 ): OpenAI.ChatCompletionTool[] {
-  return tools.map((t) => ({
+  const key = tools.map((t) => t.name).join(',');
+  if (key === _cachedToolKey && _cachedTools.length > 0) {
+    return _cachedTools;
+  }
+  _cachedToolKey = key;
+  _cachedTools = tools.map((t) => ({
     type: 'function' as const,
     function: {
       name: t.name,
@@ -57,6 +67,7 @@ function toOpenAITools(
       parameters: t.input_schema as Record<string, unknown>,
     },
   }));
+  return _cachedTools;
 }
 
 // Convert AnthropicMessage format to OpenAI messages for tool conversations

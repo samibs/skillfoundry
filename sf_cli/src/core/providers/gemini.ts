@@ -84,16 +84,26 @@ function toGeminiToolMessages(messages: AnthropicMessage[]): GeminiContent[] {
   return result;
 }
 
+// Tool transform cache: tool schemas are identical every turn of the agentic loop.
+let _cachedGeminiToolKey = '';
+let _cachedGeminiTools: Array<{ functionDeclarations: Array<{ name: string; description: string; parameters: unknown }> }> = [];
+
 function toGeminiTools(
   tools: Array<{ name: string; description: string; input_schema: unknown }>,
 ): Array<{ functionDeclarations: Array<{ name: string; description: string; parameters: unknown }> }> {
-  return [{
+  const key = tools.map((t) => t.name).join(',');
+  if (key === _cachedGeminiToolKey && _cachedGeminiTools.length > 0) {
+    return _cachedGeminiTools;
+  }
+  _cachedGeminiToolKey = key;
+  _cachedGeminiTools = [{
     functionDeclarations: tools.map((t) => ({
       name: t.name,
       description: t.description,
       parameters: t.input_schema,
     })),
   }];
+  return _cachedGeminiTools;
 }
 
 export class GeminiAdapter implements ProviderAdapter {
