@@ -23,9 +23,9 @@ function Write-ColorOutput {
 
 # Banner
 Write-Host ""
-Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-Write-Host "  │  SkillFoundry Framework — One-Click Installer          │" -ForegroundColor Cyan
-Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
+Write-Host "  |  SkillFoundry Framework -- One-Click Installer          |" -ForegroundColor Cyan
+Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
 Write-Host ""
 
 # Detect platforms (Claude Code, Copilot CLI, Cursor, Codex, Gemini)
@@ -35,14 +35,14 @@ function Detect-Platform {
     # Check for Claude Code
     if (Get-Command claude -ErrorAction SilentlyContinue) {
         $platforms += "claude"
-        Write-ColorOutput "✓ Detected: Claude Code" "Green"
+        Write-ColorOutput "[OK] Detected: Claude Code" "Green"
     }
 
     # Check for GitHub Copilot CLI
     if ((Get-Command github-copilot-cli -ErrorAction SilentlyContinue) -or
         (Get-Command copilot -ErrorAction SilentlyContinue)) {
         $platforms += "copilot"
-        Write-ColorOutput "✓ Detected: GitHub Copilot CLI" "Green"
+        Write-ColorOutput "[OK] Detected: GitHub Copilot CLI" "Green"
     }
 
     # Check for Cursor
@@ -62,18 +62,18 @@ function Detect-Platform {
 
     if ($cursorFound -or (Get-Command cursor -ErrorAction SilentlyContinue)) {
         $platforms += "cursor"
-        Write-ColorOutput "✓ Detected: Cursor" "Green"
+        Write-ColorOutput "[OK] Detected: Cursor" "Green"
     }
 
     # Check for OpenAI Codex CLI
     if (Get-Command codex -ErrorAction SilentlyContinue) {
         $platforms += "codex"
-        Write-ColorOutput "✓ Detected: OpenAI Codex" "Green"
+        Write-ColorOutput "[OK] Detected: OpenAI Codex" "Green"
     }
     # Check for Google Gemini CLI
     if (Get-Command gemini -ErrorAction SilentlyContinue) {
         $platforms += "gemini"
-        Write-ColorOutput "✓ Detected: Google Gemini" "Green"
+        Write-ColorOutput "[OK] Detected: Google Gemini" "Green"
     }
 
     return ,$platforms
@@ -125,10 +125,10 @@ function Get-TargetDirectory {
     }
     
     if ($isProject) {
-        Write-ColorOutput "✓ Detected project directory: $(Split-Path $target -Leaf)" "Green"
+        Write-ColorOutput "[OK] Detected project directory: $(Split-Path $target -Leaf)" "Green"
         return $target
     } else {
-        Write-ColorOutput "⚠ Not in a project directory. Install to current directory?" "Yellow"
+        Write-ColorOutput "[!] Not in a project directory. Install to current directory?" "Yellow"
         $response = Read-Host "Continue? (y/N)"
         if ($response -notmatch "^[Yy]$") {
             $target = Read-Host "Enter project directory path"
@@ -180,12 +180,12 @@ function Select-PlatformsFromMenu {
 # Main installation flow
 function Main {
     Write-ColorOutput "Step 1: Detecting environment..." "Blue"
-    Write-ColorOutput "✓ OS: Windows" "Green"
+    Write-ColorOutput "[OK] OS: Windows" "Green"
 
     $detected = Detect-Platform
 
     if ($detected.Count -eq 0) {
-        Write-ColorOutput "⚠ No AI platform detected automatically." "Yellow"
+        Write-ColorOutput "[!] No AI platform detected automatically." "Yellow"
         $platforms = Select-PlatformsFromMenu
     } else {
         $detectedList = $detected -join ", "
@@ -206,25 +206,25 @@ function Main {
     }
 
     $platformsList = $platforms -join ", "
-    Write-ColorOutput "✓ Platforms: $platformsList" "Green"
+    Write-ColorOutput "[OK] Platforms: $platformsList" "Green"
 
     Write-Host ""
     Write-ColorOutput "Step 2: Locating framework..." "Blue"
     $frameworkDir = Get-FrameworkLocation
-    Write-ColorOutput "✓ Framework: $frameworkDir" "Green"
+    Write-ColorOutput "[OK] Framework: $frameworkDir" "Green"
 
     Write-Host ""
     Write-ColorOutput "Step 3: Selecting target project..." "Blue"
     $targetDir = Get-TargetDirectory
-    Write-ColorOutput "✓ Target: $targetDir" "Green"
+    Write-ColorOutput "[OK] Target: $targetDir" "Green"
 
     Write-Host ""
     Write-ColorOutput "Installation Summary:" "Cyan"
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Host "===================================================="
     Write-Host "  Platforms: $platformsList"
     Write-Host "  Framework: $frameworkDir"
     Write-Host "  Target: $targetDir"
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Host "===================================================="
     Write-Host ""
 
     if (-not $Silent) {
@@ -243,7 +243,7 @@ function Main {
     & "$frameworkDir\install.ps1" -Platform $platformCsv -TargetDir $targetDir -Yes
 
     Write-Host ""
-    Write-ColorOutput "✓ Installation Complete!" "Green"
+    Write-ColorOutput "[OK] Installation Complete!" "Green"
     Write-Host ""
     Write-Host "Next steps:"
     foreach ($plat in $platforms) {
