@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.5] - 2026-02-24
+
+### Changed — Agent Quality Enhancement Sweep
+
+Comprehensive quality upgrade across 10 specialist agents. Every enhanced agent now has numbered phases, concrete code examples (good vs bad), structured output formats, reflection protocols, integration maps, and peer improvement signals.
+
+#### Agents Enhanced (Major Rewrite)
+
+| Agent | Before | After | Key Additions |
+|-------|--------|-------|---------------|
+| **devops** | 190 lines | 510 | 8 phases: git workflows, GitHub ops, Azure DevOps, CI/CD, IaC, backup/DR, cleanup, monitoring |
+| **tester** | 85 lines | 236 | New Phase 3: mandatory test documentation (WHAT/WHY/WHERE/HOW/HOW COME), Arrange/Act/Assert, behavior-driven naming |
+| **analytics** | 83 lines | 569 | 4 phases: data collection, analysis with trend detection, ASCII visualizations, pattern-based recommendations |
+| **explain** | 65 lines | 553 | 4 phases: context gathering from 9 sources, trace reconstruction, 3 explanation levels (quick/verbose/story), impact assessment |
+| **architect** | 97 lines | 524 | 5 phases: requirements interrogation, design patterns catalog, ADR format, persona chain with handoff format, validation checklist |
+| **bpsbs** | 73 lines | 543 | 4 phases: scope assessment, rule-by-rule audit with BAD/GOOD code examples, severity classification, remediation guidance |
+| **delegate** | 140 lines | 525 | 5 phases: complexity classification, agent selection matrix, concrete workflow examples, failure recovery, progress reporting |
+| **security-scanner** | 127 lines | 566 | 5 phases: grep patterns per vulnerability, data flow tracing, severity with SLAs, remediation fix patterns per language, verification re-scan |
+| **standards** | 190 lines | 727 | 4 phases: scope identification with applicability matrix, pillar-by-pillar with violation/compliant examples, language-specific standards (Rust/TS/Python/C#), weighted scoring |
+| **learn** | 223 lines | 584 | 4 phases: needs assessment, resource curation, guided practice with exercises, knowledge verification (Feynman technique) |
+
+#### Cross-Platform Sync
+
+All 10 agents updated across all 5 platforms:
+- Claude Code (`.claude/commands/`)
+- OpenAI Codex (`.agents/skills/`)
+- GitHub Copilot (`.copilot/custom-agents/`)
+- Cursor (`.cursor/rules/`)
+- Google Gemini (`.gemini/skills/`)
+
+**Total: 50 files updated, ~20K lines added**
+
+#### Quality Standards Now Enforced
+
+Every specialist agent now includes:
+- **Numbered PHASES** with clear workflow steps
+- **Concrete examples** (code blocks, command examples, BAD vs GOOD patterns)
+- **Structured OUTPUT FORMAT** with copy-paste templates
+- **Reflection Protocol** (pre/post self-assessment, self-score)
+- **Integration with Other Agents** (handoff matrix, data flow)
+- **Peer Improvement Signals** (upstream/downstream reviewers)
+
+### Fixed
+
+- PowerShell Windows compatibility: replaced here-strings with string concatenation for LF line ending compatibility
+- PowerShell Windows compatibility: replaced all Unicode characters with ASCII equivalents across 6 `.ps1` files (fixes parse errors on Windows PowerShell 5.1 where UTF-8 multi-byte chars corrupt under Windows-1252 encoding)
+- Added `.gitattributes` to force CRLF for `.ps1`/`.cmd` files
+
+### Added
+
+- README: "Two Ways to Use SkillFoundry" section (IDE-native vs CLI usage)
+- README: "Persistent Memory (Lessons Learned)" section with memory_bank structure
+- README: "Knowledge Sync (Cross-Project Learning)" section
+- README: "Autonomous Mode" section with intent classification table
+- README: "Agent Evolution" section
+
+---
+
 ## [2.0.4] - 2026-02-23
 
 ### Changed — Visual Overhaul ("Modern Hacker" Style)
