@@ -86,32 +86,31 @@ function Collect-Diagnostics {
     
     $diagFile = Join-Path $ScriptDir ".skillfoundry-diagnostics.log"
     
-    $diagnostics = @"
-# SkillFoundry Framework - Update Diagnostic Information
-Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-
-## System Information
-OS: $($env:OS)
-PowerShell Version: $($PSVersionTable.PSVersion)
-User: $($env:USERNAME)
-Computer: $($env:COMPUTERNAME)
-
-## Framework Information
-Framework Version: $FrameworkVersion
-Framework Path: $ScriptDir
-Project Path: $ProjectDir
-
-## Disk Space
-$(Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize | Out-String)
-
-## Permissions
-Framework Directory: $(if (Test-Path $ScriptDir) { (Get-Acl $ScriptDir).AccessToString } else { "N/A" })
-Project Directory: $(if ($ProjectDir -and (Test-Path $ProjectDir)) { (Get-Acl $ProjectDir).AccessToString } else { "N/A" })
-
-## Update Status
-Projects Processed: $(if ($updated) { $updated } else { "N/A" })
-Projects Failed: $(if ($failed) { $failed } else { "N/A" })
-"@
+    $nl = [Environment]::NewLine
+    $diskInfo = Get-PSDrive -PSProvider FileSystem | Format-Table -AutoSize | Out-String
+    $fwPerms = if (Test-Path $ScriptDir) { (Get-Acl $ScriptDir).AccessToString } else { "N/A" }
+    $projPerms = if ($ProjectDir -and (Test-Path $ProjectDir)) { (Get-Acl $ProjectDir).AccessToString } else { "N/A" }
+    $projProcessed = if ($updated) { $updated } else { "N/A" }
+    $projFailed = if ($failed) { $failed } else { "N/A" }
+    $diagnostics = "# SkillFoundry Framework - Update Diagnostic Information" + $nl +
+        "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" + $nl + $nl +
+        "## System Information" + $nl +
+        "OS: $($env:OS)" + $nl +
+        "PowerShell Version: $($PSVersionTable.PSVersion)" + $nl +
+        "User: $($env:USERNAME)" + $nl +
+        "Computer: $($env:COMPUTERNAME)" + $nl + $nl +
+        "## Framework Information" + $nl +
+        "Framework Version: $FrameworkVersion" + $nl +
+        "Framework Path: $ScriptDir" + $nl +
+        "Project Path: $ProjectDir" + $nl + $nl +
+        "## Disk Space" + $nl +
+        $diskInfo + $nl +
+        "## Permissions" + $nl +
+        "Framework Directory: $fwPerms" + $nl +
+        "Project Directory: $projPerms" + $nl + $nl +
+        "## Update Status" + $nl +
+        "Projects Processed: $projProcessed" + $nl +
+        "Projects Failed: $projFailed"
     
     $diagnostics | Out-File -FilePath $diagFile -Encoding UTF8
 }
@@ -803,28 +802,26 @@ function Update-Project {
                         $SF_WRAPPER_DIR = Join-Path $env:USERPROFILE ".local\bin"
                         $SF_WRAPPER_CMD = Join-Path $SF_WRAPPER_DIR "sf.cmd"
                         if (Test-Path $SF_WRAPPER_CMD) {
-                            $cmdContent = @"
-@echo off
-REM SkillFoundry CLI wrapper — updated by update.ps1
-REM Framework: $ScriptDir
-REM Version: $FrameworkVersion
-REM Updated: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
-set SF_FRAMEWORK_ROOT=$ScriptDir
-node "%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js" %*
-"@
+                            $updatedAt = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+                            $cmdContent = "@echo off`r`n" +
+                                "REM SkillFoundry CLI wrapper -- updated by update.ps1`r`n" +
+                                "REM Framework: $ScriptDir`r`n" +
+                                "REM Version: $FrameworkVersion`r`n" +
+                                "REM Updated: $updatedAt`r`n" +
+                                "set SF_FRAMEWORK_ROOT=$ScriptDir`r`n" +
+                                "node `"%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js`" %*`r`n"
                             $cmdContent | Out-File -FilePath $SF_WRAPPER_CMD -Encoding ascii -NoNewline
                             Write-ColorOutput "  ✓ CLI wrapper updated: $SF_WRAPPER_CMD" "Green"
                         }
                         $SF_WRAPPER_PS1 = Join-Path $SF_WRAPPER_DIR "sf.ps1"
                         if (Test-Path $SF_WRAPPER_PS1) {
-                            $ps1Content = @"
-# SkillFoundry CLI wrapper — updated by update.ps1
-# Framework: $ScriptDir
-# Version: $FrameworkVersion
-# Updated: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
-`$env:SF_FRAMEWORK_ROOT = "$ScriptDir"
-& node "`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js" @args
-"@
+                            $updatedAt2 = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+                            $ps1Content = "# SkillFoundry CLI wrapper -- updated by update.ps1`r`n" +
+                                "# Framework: $ScriptDir`r`n" +
+                                "# Version: $FrameworkVersion`r`n" +
+                                "# Updated: $updatedAt2`r`n" +
+                                "`$env:SF_FRAMEWORK_ROOT = `"$ScriptDir`"`r`n" +
+                                "& node `"`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js`" @args`r`n"
                             $ps1Content | Out-File -FilePath $SF_WRAPPER_PS1 -Encoding utf8
                             Write-ColorOutput "  ✓ PowerShell wrapper updated: $SF_WRAPPER_PS1" "Green"
                         }
