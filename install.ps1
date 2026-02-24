@@ -32,14 +32,14 @@ trap {
     $exitCode = $_.Exception.HResult
     if ($exitCode -eq 0) { $exitCode = 1 }
     
-    Write-ColorOutput "`n╔═══════════════════════════════════════════════════════════╗" "Red"
-    Write-ColorOutput "║                    ERROR OCCURRED                          ║" "Red"
-    Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Red"
+    Write-ColorOutput "`n+===========================================================+" "Red"
+    Write-ColorOutput "|                    ERROR OCCURRED                          |" "Red"
+    Write-ColorOutput "+===========================================================+" "Red"
     Write-ColorOutput "Error: Installation failed" "Red"
     Write-ColorOutput "  Reason: $($_.Exception.Message)" "Yellow"
     Write-ColorOutput "  Location: $($_.InvocationInfo.ScriptLineNumber)" "Yellow"
     
-    # Rollback if partial installation — but NEVER rollback the source framework itself
+    # Rollback if partial installation -- but NEVER rollback the source framework itself
     $resolvedTarget = if ($TargetDir) { (Resolve-Path $TargetDir -ErrorAction SilentlyContinue).Path } else { $null }
     if ($resolvedTarget -and $resolvedTarget -ne $ScriptDir -and (Test-Path $resolvedTarget)) {
         if ((Test-Path (Join-Path $resolvedTarget ".claude")) -or
@@ -219,7 +219,7 @@ function Show-WhatsNew {
 
     Write-Host ""
     Write-Host "  What's New in v$Ver" -ForegroundColor Cyan
-    Write-Host "  $(('─' * 40))" -ForegroundColor Cyan
+    Write-Host "  $(('-' * 40))" -ForegroundColor Cyan
 
     $inBlock = $false
     $lineCount = 0
@@ -231,7 +231,7 @@ function Show-WhatsNew {
         if ($inBlock) {
             if ($line -match '^## \[' -or $line -match '^---$') { break }
             if ($line -match '^### (.+)') {
-                $heading = $Matches[1] -replace ' —.*', ''
+                $heading = $Matches[1] -replace ' --.*', ''
                 Write-Host "    $heading" -ForegroundColor Yellow
             } elseif ($line -match '^- (.+)' -and $lineCount -lt 10) {
                 $bullet = $Matches[1]
@@ -259,10 +259,10 @@ if (Test-Path $TargetDir) {
 }
 
 Write-Host ""
-Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-Write-Host "  │  SkillFoundry Framework — Installer                    │" -ForegroundColor Cyan
-Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 5 platforms             │" -ForegroundColor Cyan
-Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
+Write-Host "  |  SkillFoundry Framework -- Installer                    |" -ForegroundColor Cyan
+Write-Host "  |  v$FrameworkVersion * $FrameworkDate * 5 platforms             |" -ForegroundColor Cyan
+Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
 Write-Host ""
 
 # Platform selection if not specified
@@ -329,9 +329,9 @@ Write-Host ""
 
 # Check if user accidentally copied skillfoundry into their project
 if (Test-Path (Join-Path $TargetDir "skillfoundry")) {
-    Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Red"
-    Write-ColorOutput "║  ERROR: Found 'skillfoundry' folder in target directory!     ║" "Red"
-    Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Red"
+    Write-ColorOutput "+===========================================================+" "Red"
+    Write-ColorOutput "|  ERROR: Found 'skillfoundry' folder in target directory!     |" "Red"
+    Write-ColorOutput "+===========================================================+" "Red"
     Write-Host ""
     Write-ColorOutput "You should NOT copy the skillfoundry folder into your project." "Yellow"
     Write-Host ""
@@ -362,9 +362,9 @@ if (Test-Path (Join-Path $TargetDir "skillfoundry")) {
 
 # Check if installing into the skillfoundry source folder itself
 if ($TargetDir -eq $ScriptDir) {
-    Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Red"
-    Write-ColorOutput "║  ERROR: Cannot install into the source folder itself!     ║" "Red"
-    Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Red"
+    Write-ColorOutput "+===========================================================+" "Red"
+    Write-ColorOutput "|  ERROR: Cannot install into the source folder itself!     |" "Red"
+    Write-ColorOutput "+===========================================================+" "Red"
     Write-Host ""
     Write-Host "You're trying to install into the skillfoundry template folder."
     Write-Host ""
@@ -414,14 +414,14 @@ foreach ($plat in $Platforms) {
     }
 }
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # DRY-RUN: Preview what would be installed, then exit
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 if ($DryRun) {
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-    Write-Host "  │  Dry Run — No files will be modified               │" -ForegroundColor Cyan
-    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
+    Write-Host "  |  Dry Run -- No files will be modified               |" -ForegroundColor Cyan
+    Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
     Write-Host ""
     Write-Host "  Target:     $TargetDir"
     Write-Host "  Platforms:  $PlatformDisplay"
@@ -463,12 +463,12 @@ if ($DryRun) {
     exit 0
 }
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # Initialize progress counter
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 Initialize-Steps (3 + $Platforms.Count + 3)
 
-# Create directory structure — shared directories (once)
+# Create directory structure -- shared directories (once)
 Write-Step "Creating shared directory structure..."
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "agents") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir "genesis") | Out-Null
@@ -500,7 +500,7 @@ foreach ($plat in $Platforms) {
         Copy-Item -Path "$ScriptDir\.claude\commands\*" -Destination "$TargetDir\.claude\commands\" -Recurse -Force
         $count = (Get-ChildItem -Path "$TargetDir\.claude\commands\*.md" -ErrorAction SilentlyContinue).Count
         $PlatformCounts["claude"] = $count
-        Write-ColorOutput "  ✓ Claude skills installed ($count skills)" "Green"
+        Write-ColorOutput "  [OK] Claude skills installed ($count skills)" "Green"
     } elseif ($plat -eq "copilot") {
         Copy-Item -Path "$ScriptDir\.copilot\custom-agents\*" -Destination "$TargetDir\.copilot\custom-agents\" -Recurse -Force
         if (Test-Path "$ScriptDir\.copilot\helper.sh") {
@@ -511,32 +511,32 @@ foreach ($plat in $Platforms) {
         }
         $count = (Get-ChildItem -Path "$TargetDir\.copilot\custom-agents\*.md" -ErrorAction SilentlyContinue).Count
         $PlatformCounts["copilot"] = $count
-        Write-ColorOutput "  ✓ Copilot custom agents installed ($count agents)" "Green"
-        Write-ColorOutput "  ✓ Copilot helper and workflow guide installed" "Green"
+        Write-ColorOutput "  [OK] Copilot custom agents installed ($count agents)" "Green"
+        Write-ColorOutput "  [OK] Copilot helper and workflow guide installed" "Green"
     } elseif ($plat -eq "codex") {
         Copy-Item -Path "$ScriptDir\.agents\skills\*" -Destination "$TargetDir\.agents\skills\" -Recurse -Force
         Copy-Item -Path "$ScriptDir\AGENTS.md" -Destination "$TargetDir\AGENTS.md" -Force
         $count = (Get-ChildItem -Path "$TargetDir\.agents\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
         $PlatformCounts["codex"] = $count
-        Write-ColorOutput "  ✓ Codex skills installed ($count skills)" "Green"
-        Write-ColorOutput "  ✓ AGENTS.md installed" "Green"
+        Write-ColorOutput "  [OK] Codex skills installed ($count skills)" "Green"
+        Write-ColorOutput "  [OK] AGENTS.md installed" "Green"
     } elseif ($plat -eq "gemini") {
         Copy-Item -Path "$ScriptDir\.gemini\skills\*" -Destination "$TargetDir\.gemini\skills\" -Recurse -Force
         $count = (Get-ChildItem -Path "$TargetDir\.gemini\skills\*.md" -ErrorAction SilentlyContinue).Count
         $PlatformCounts["gemini"] = $count
-        Write-ColorOutput "  ✓ Gemini skills installed ($count skills)" "Green"
+        Write-ColorOutput "  [OK] Gemini skills installed ($count skills)" "Green"
     } elseif ($plat -eq "cursor") {
         Copy-Item -Path "$ScriptDir\.cursor\rules\*" -Destination "$TargetDir\.cursor\rules\" -Recurse -Force
         $count = (Get-ChildItem -Path "$TargetDir\.cursor\rules\*.md" -ErrorAction SilentlyContinue).Count
         $PlatformCounts["cursor"] = $count
-        Write-ColorOutput "  ✓ Cursor rules installed ($count rules)" "Green"
+        Write-ColorOutput "  [OK] Cursor rules installed ($count rules)" "Green"
     }
 }
 
 Write-Step "Installing shared agent modules..."
 Copy-Item -Path "$ScriptDir\agents\*" -Destination "$TargetDir\agents\" -Recurse -Force
 $SharedCount = (Get-ChildItem -Path "$TargetDir\agents\*.md" -ErrorAction SilentlyContinue).Count
-Write-ColorOutput "  ✓ Shared agent modules installed ($SharedCount modules)" "Green"
+Write-ColorOutput "  [OK] Shared agent modules installed ($SharedCount modules)" "Green"
 
 Write-Step "Installing templates and documentation..."
 
@@ -545,41 +545,41 @@ if (Test-Path (Join-Path $TargetDir "CLAUDE.md")) {
     Write-ColorOutput "  CLAUDE.md already exists." "Yellow"
     if ($Yes) {
         Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination "$TargetDir\CLAUDE.md" -Force
-        Write-ColorOutput "  ✓ CLAUDE.md updated (-Yes)" "Green"
+        Write-ColorOutput "  [OK] CLAUDE.md updated (-Yes)" "Green"
     } else {
         $response = Read-Host "  Overwrite? (y/N)"
         if ($response -match "^[Yy]$") {
             Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination "$TargetDir\CLAUDE.md" -Force
-            Write-ColorOutput "  ✓ CLAUDE.md updated" "Green"
+            Write-ColorOutput "  [OK] CLAUDE.md updated" "Green"
         } else {
-            Write-ColorOutput "  → Keeping existing CLAUDE.md" "Yellow"
+            Write-ColorOutput "  -> Keeping existing CLAUDE.md" "Yellow"
         }
     }
 } else {
     Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination "$TargetDir\CLAUDE.md" -Force
-    Write-ColorOutput "  ✓ CLAUDE.md installed" "Green"
+    Write-ColorOutput "  [OK] CLAUDE.md installed" "Green"
 }
 
 # Copy PRD template
 Copy-Item -Path "$ScriptDir\genesis\TEMPLATE.md" -Destination "$TargetDir\genesis\" -Force
-Write-ColorOutput "  ✓ PRD template installed to genesis/" "Green"
+Write-ColorOutput "  [OK] PRD template installed to genesis/" "Green"
 
 # Copy security anti-pattern documents to docs/
 if (-not (Test-Path (Join-Path $TargetDir "docs\ANTI_PATTERNS_BREADTH.md"))) {
     Copy-Item -Path "$ScriptDir\docs\ANTI_PATTERNS_BREADTH.md" -Destination (Join-Path $TargetDir "docs\") -Force
-    Write-ColorOutput "  ✓ docs/ANTI_PATTERNS_BREADTH.md installed" "Green"
+    Write-ColorOutput "  [OK] docs/ANTI_PATTERNS_BREADTH.md installed" "Green"
 }
 
 if (-not (Test-Path (Join-Path $TargetDir "docs\ANTI_PATTERNS_DEPTH.md"))) {
     Copy-Item -Path "$ScriptDir\docs\ANTI_PATTERNS_DEPTH.md" -Destination (Join-Path $TargetDir "docs\") -Force
-    Write-ColorOutput "  ✓ docs/ANTI_PATTERNS_DEPTH.md installed" "Green"
+    Write-ColorOutput "  [OK] docs/ANTI_PATTERNS_DEPTH.md installed" "Green"
 }
 
 # Copy knowledge bootstrap for memory/harvest system
 $BootstrapTarget = Join-Path $TargetDir "memory_bank\knowledge\bootstrap.jsonl"
 if (-not (Test-Path $BootstrapTarget)) {
     Copy-Item -Path "$ScriptDir\memory_bank\knowledge\bootstrap.jsonl" -Destination $BootstrapTarget -Force
-    Write-ColorOutput "  ✓ memory_bank/knowledge/ initialized with bootstrap" "Green"
+    Write-ColorOutput "  [OK] memory_bank/knowledge/ initialized with bootstrap" "Green"
 }
 
 # Set framework version markers
@@ -597,7 +597,7 @@ foreach ($plat in $Platforms) {
     $FrameworkDate | Out-File -FilePath (Join-Path $TargetDir "$platDir\.framework-updated") -Encoding utf8 -NoNewline
     $plat | Out-File -FilePath (Join-Path $TargetDir "$platDir\.framework-platform") -Encoding utf8 -NoNewline
 }
-Write-ColorOutput "  ✓ Framework version: v$FrameworkVersion (Platform(s): $PlatformDisplay)" "Green"
+Write-ColorOutput "  [OK] Framework version: v$FrameworkVersion (Platform(s): $PlatformDisplay)" "Green"
 
 $RegistryFile = Join-Path $ScriptDir ".project-registry"
 $RegistryContent = @()
@@ -607,11 +607,11 @@ if (Test-Path $RegistryFile) {
 if ($RegistryContent -notcontains $TargetDir) {
     Add-Content -Path $RegistryFile -Value $TargetDir
 }
-Write-ColorOutput "  ✓ Registered for framework updates" "Green"
+Write-ColorOutput "  [OK] Registered for framework updates" "Green"
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # PHASE 3: Build and deploy SkillFoundry CLI (sf command)
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 Write-Step "Building SkillFoundry CLI..."
 $SF_CLI_INSTALLED = $false
 
@@ -677,7 +677,7 @@ if ($nodeCmd) {
                     "set SF_FRAMEWORK_ROOT=$ScriptDir`r`n" +
                     "node `"%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js`" %*`r`n"
                 $cmdContent | Out-File -FilePath $SF_WRAPPER_CMD -Encoding ascii -NoNewline
-                Write-ColorOutput "  ✓ CLI wrapper installed: $SF_WRAPPER_CMD" "Green"
+                Write-ColorOutput "  [OK] CLI wrapper installed: $SF_WRAPPER_CMD" "Green"
 
                 # Create .ps1 wrapper (for PowerShell direct invocation)
                 $SF_WRAPPER_PS1 = Join-Path $SF_WRAPPER_DIR "sf.ps1"
@@ -689,17 +689,17 @@ if ($nodeCmd) {
                     "`$env:SF_FRAMEWORK_ROOT = `"$ScriptDir`"`r`n" +
                     "& node `"`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js`" @args`r`n"
                 $ps1Content | Out-File -FilePath $SF_WRAPPER_PS1 -Encoding utf8
-                Write-ColorOutput "  ✓ PowerShell wrapper installed: $SF_WRAPPER_PS1" "Green"
+                Write-ColorOutput "  [OK] PowerShell wrapper installed: $SF_WRAPPER_PS1" "Green"
 
                 $SF_CLI_INSTALLED = $true
 
                 # Check if wrapper dir is on PATH
                 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
                 if ($userPath -split ';' | Where-Object { $_ -eq $SF_WRAPPER_DIR }) {
-                    Write-ColorOutput "  ✓ $SF_WRAPPER_DIR is on PATH" "Green"
+                    Write-ColorOutput "  [OK] $SF_WRAPPER_DIR is on PATH" "Green"
                 } else {
                     Write-Host ""
-                    Write-ColorOutput "  ⚠ $SF_WRAPPER_DIR is not on your PATH" "Yellow"
+                    Write-ColorOutput "  [!] $SF_WRAPPER_DIR is not on your PATH" "Yellow"
                     Write-Host ""
                     Write-Host "  To add it permanently, run (as your user):"
                     Write-Host ""
@@ -727,9 +727,9 @@ Write-Step "Done!"
 $Elapsed = Get-ElapsedSeconds
 
 Write-Host ""
-Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Green
-Write-Host "  │  Installation Complete                              │" -ForegroundColor Green
-Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Green
+Write-Host "  +-----------------------------------------------------+" -ForegroundColor Green
+Write-Host "  |  Installation Complete                              |" -ForegroundColor Green
+Write-Host "  +-----------------------------------------------------+" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Project:    $TargetDir"
 Write-Host "  Version:    v$FrameworkVersion"
@@ -749,7 +749,7 @@ foreach ($plat in $Platforms) {
 Write-Host "    agents/                 $SharedCount shared modules"
 Write-Host "    genesis/                PRD template"
 if ($SF_CLI_INSTALLED) {
-    Write-Host "    sf CLI                  ✓ installed (sf.cmd + sf.ps1)"
+    Write-Host "    sf CLI                  [OK] installed (sf.cmd + sf.ps1)"
 } else {
     Write-Host "    sf CLI                  - skipped (Node.js 20+ required)"
 }
@@ -769,7 +769,7 @@ foreach ($plat in $Platforms) {
         }
         "cursor" {
             Write-Host "    Cursor:" -ForegroundColor Cyan
-            Write-Host "      Open project in Cursor — rules auto-load from .cursor/rules/"
+            Write-Host "      Open project in Cursor -- rules auto-load from .cursor/rules/"
             Write-Host "      Create PRDs in genesis/ using genesis/TEMPLATE.md"
             Write-Host ""
         }

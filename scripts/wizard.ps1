@@ -26,10 +26,10 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ScriptDir = Split-Path -Parent $ScriptDir
 
 # Banner
-Write-ColorOutput "╔═══════════════════════════════════════════════════════════╗" "Cyan"
-Write-ColorOutput "║        SkillFoundry Framework - Quick Start Wizard          ║" "Cyan"
-Write-ColorOutput "║        Get started in 5 minutes!                         ║" "Cyan"
-Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Cyan"
+Write-ColorOutput "+===========================================================+" "Cyan"
+Write-ColorOutput "|        SkillFoundry Framework - Quick Start Wizard          |" "Cyan"
+Write-ColorOutput "|        Get started in 5 minutes!                         |" "Cyan"
+Write-ColorOutput "+===========================================================+" "Cyan"
 Write-Host ""
 
 # Step 1: Platform Selection
@@ -261,7 +261,7 @@ Build a $ProjectType using $TechStack to solve the problem described above.
 "@
     
     $prdContent | Out-File -FilePath $prdFile -Encoding UTF8
-    Write-ColorOutput "✓ Created starter PRD: $prdFile" "Green"
+    Write-ColorOutput "[OK] Created starter PRD: $prdFile" "Green"
     return $prdFile
 }
 
@@ -273,11 +273,11 @@ function Main {
     
     Write-Host ""
     Write-ColorOutput "Summary:" "Cyan"
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Host "===================================================="
     Write-Host "  Platform: $platform"
     Write-Host "  Project Type: $projectType"
     Write-Host "  Tech Stack: $techStack"
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Host "===================================================="
     Write-Host ""
     
     if (-not $Silent) {
@@ -297,7 +297,7 @@ function Main {
     $prdFile = Generate-StarterPRD $projectType $techStack
     
     Write-Host ""
-    Write-ColorOutput "✓ Setup Complete!" "Green"
+    Write-ColorOutput "[OK] Setup Complete!" "Green"
     Write-Host ""
     Write-Host "Next steps:"
     Write-Host "  1. Review PRD: Get-Content $prdFile"
