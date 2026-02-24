@@ -138,7 +138,7 @@ function Remember-Knowledge {
     $entry | ConvertTo-Json -Compress | Add-Content -Path $file
     
     Write-Host "MEMORY STORED" -ForegroundColor Green
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Host "===================================================="
     Write-Host "ID: $id"
     Write-Host "Type: $Type"
     Write-Host "Content: $($Content.Substring(0, [Math]::Min(100, $Content.Length)))..."
@@ -163,7 +163,7 @@ function Recall-Knowledge {
     Initialize-MemoryBank
     
     Write-Host "MEMORY SEARCH: `"$Query`"" -ForegroundColor Cyan
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Host "===================================================="
     
     $files = @()
     if ([string]::IsNullOrWhiteSpace($Type)) {
@@ -317,9 +317,9 @@ function Correct-Knowledge {
     $newEntry | ConvertTo-Json -Compress | Add-Content -Path $oldFile
     
     Write-Host "KNOWLEDGE CORRECTED" -ForegroundColor Green
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    Write-Host "===================================================="
     Write-Host "Old Entry: [ID: $OldId]"
-    Write-Host "  Weight: $oldWeight → $newWeight (reduced)"
+    Write-Host "  Weight: $oldWeight -> $newWeight (reduced)"
     Write-Host ""
     Write-Host "New Entry: [ID: $newId]"
     Write-Host "  Weight: 0.7 (initial)"
@@ -340,7 +340,7 @@ switch ($Command) {
     "status" {
         Initialize-MemoryBank
         Write-Host "MEMORY STATUS" -ForegroundColor Cyan
-        Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        Write-Host "===================================================="
         foreach ($file in (Get-ChildItem -Path $KnowledgeDir -Filter "*.jsonl")) {
             $count = (Get-Content $file.FullName | Where-Object { $_ -and $_.Trim() }).Count
             $name = $file.BaseName

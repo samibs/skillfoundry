@@ -30,9 +30,9 @@ trap {
     $exitCode = $_.Exception.HResult
     if ($exitCode -eq 0) { $exitCode = 1 }
     
-    Write-ColorOutput "`n╔═══════════════════════════════════════════════════════════╗" "Red"
-    Write-ColorOutput "║                    ERROR OCCURRED                          ║" "Red"
-    Write-ColorOutput "╚═══════════════════════════════════════════════════════════╝" "Red"
+    Write-ColorOutput "`n+===========================================================+" "Red"
+    Write-ColorOutput "|                    ERROR OCCURRED                          |" "Red"
+    Write-ColorOutput "+===========================================================+" "Red"
     Write-ColorOutput "Error: Update failed" "Red"
     Write-ColorOutput "  Reason: $($_.Exception.Message)" "Yellow"
     Write-ColorOutput "  Location: $($_.InvocationInfo.ScriptLineNumber)" "Yellow"
@@ -150,16 +150,16 @@ if (-not (Test-Path $VersionFile)) {
 $FrameworkVersion = (Get-Content $VersionFile -Raw).Trim()
 $FrameworkDate = (Get-Item -Force $VersionFile).LastWriteTime.ToString("yyyy-MM-dd")
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # HELPER FUNCTIONS
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 function Print-Header {
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Cyan
-    Write-Host "  │  SkillFoundry Framework — Updater                     │" -ForegroundColor Cyan
-    Write-Host "  │  v$FrameworkVersion · $FrameworkDate · 5 platforms             │" -ForegroundColor Cyan
-    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
+    Write-Host "  |  SkillFoundry Framework -- Updater                     |" -ForegroundColor Cyan
+    Write-Host "  |  v$FrameworkVersion * $FrameworkDate * 5 platforms             |" -ForegroundColor Cyan
+    Write-Host "  +-----------------------------------------------------+" -ForegroundColor Cyan
     Write-Host ""
 }
 
@@ -184,7 +184,7 @@ function Show-WhatsNew {
 
     Write-Host ""
     Write-Host "  What's New in v$Ver" -ForegroundColor Cyan
-    Write-Host "  $(('─' * 40))" -ForegroundColor Cyan
+    Write-Host "  $(('-' * 40))" -ForegroundColor Cyan
 
     $inBlock = $false
     $lineCount = 0
@@ -196,7 +196,7 @@ function Show-WhatsNew {
         if ($inBlock) {
             if ($line -match '^## \[' -or $line -match '^---$') { break }
             if ($line -match '^### (.+)') {
-                $heading = $Matches[1] -replace ' —.*', ''
+                $heading = $Matches[1] -replace ' --.*', ''
                 Write-Host "    $heading" -ForegroundColor Yellow
             } elseif ($line -match '^- (.+)' -and $lineCount -lt 10) {
                 $bullet = $Matches[1]
@@ -316,9 +316,9 @@ function Backup-File {
     return $null
 }
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # REGISTRY FUNCTIONS
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 function Register-Project {
     param([string]$ProjectDir)
@@ -401,9 +401,9 @@ function Show-ProjectList {
     Write-ColorOutput "Framework version: $FrameworkVersion" "Cyan"
 }
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # UPDATE FUNCTION
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 function Update-Project {
     param(
@@ -435,7 +435,7 @@ function Update-Project {
     Start-Timer
 
     Write-ColorOutput "Updating: $ProjectDir" "Blue"
-    Write-ColorOutput "  Current: v$currentVersion → Target: v$FrameworkVersion" "Blue"
+    Write-ColorOutput "  Current: v$currentVersion -> Target: v$FrameworkVersion" "Blue"
     Write-Host ""
     
     # Create backup directory
@@ -454,7 +454,7 @@ function Update-Project {
     Write-ColorOutput "Detected platforms: $($platforms -join ', ')" "Cyan"
     Write-Host ""
 
-    # ── Per-platform updates (loop) ──────────────────────────────
+    # -- Per-platform updates (loop) ------------------------------
     foreach ($plat in $platforms) {
         Write-ColorOutput "Updating platform: $plat" "Blue"
 
@@ -650,7 +650,7 @@ function Update-Project {
         Write-Host ""
     }
 
-    # ── Shared updates (once) ────────────────────────────────────
+    # -- Shared updates (once) ------------------------------------
 
     # Update shared agents
     Write-Host ""
@@ -674,7 +674,7 @@ function Update-Project {
             if ($sourceContent.Hash -ne $targetContent.Hash) {
                 Backup-File $target | Out-Null
                 Copy-Item -Path $agent.FullName -Destination $target -Force
-                Write-ColorOutput "  ↑ Updated: $agentName" "Cyan"
+                Write-ColorOutput "  ^ Updated: $agentName" "Cyan"
                 $agentsUpdated++
             }
         }
@@ -714,17 +714,17 @@ function Update-Project {
             switch ($choice) {
                 "1" {
                     Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination (Join-Path $ProjectDir "CLAUDE.md") -Force
-                    Write-ColorOutput "  ✓ CLAUDE.md overwritten (backup saved)" "Green"
+                    Write-ColorOutput "  [OK] CLAUDE.md overwritten (backup saved)" "Green"
                 }
                 "2" {
-                    Write-ColorOutput "  → Keeping current CLAUDE.md" "Yellow"
+                    Write-ColorOutput "  -> Keeping current CLAUDE.md" "Yellow"
                 }
                 "3" {
                     Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination (Join-Path $ProjectDir "CLAUDE.md.new") -Force
-                    Write-ColorOutput "  → Saved as CLAUDE.md.new - merge manually" "Cyan"
+                    Write-ColorOutput "  -> Saved as CLAUDE.md.new - merge manually" "Cyan"
                 }
                 default {
-                    Write-ColorOutput "  → Keeping current CLAUDE.md" "Yellow"
+                    Write-ColorOutput "  -> Keeping current CLAUDE.md" "Yellow"
                 }
             }
         } else {
@@ -732,7 +732,7 @@ function Update-Project {
         }
     } else {
         Copy-Item -Path "$ScriptDir\CLAUDE.md" -Destination (Join-Path $ProjectDir "CLAUDE.md") -Force
-        Write-ColorOutput "  ✓ CLAUDE.md installed" "Green"
+        Write-ColorOutput "  [OK] CLAUDE.md installed" "Green"
     }
     
     # Update templates and security documents
@@ -752,7 +752,7 @@ function Update-Project {
             if ($sourceHash -ne $targetHash) {
                 Backup-File $templateTarget | Out-Null
                 Copy-Item -Path "$ScriptDir\genesis\TEMPLATE.md" -Destination $templateTarget -Force
-                Write-ColorOutput "  ↑ Updated: genesis/TEMPLATE.md" "Cyan"
+                Write-ColorOutput "  ^ Updated: genesis/TEMPLATE.md" "Cyan"
             }
         }
     }
@@ -775,7 +775,7 @@ function Update-Project {
                 if ($sourceHash -ne $targetHash) {
                     Backup-File $docTarget | Out-Null
                     Copy-Item -Path $sourcePath -Destination $docTarget -Force
-                    Write-ColorOutput "  ↑ Updated: $doc" "Cyan"
+                    Write-ColorOutput "  ^ Updated: $doc" "Cyan"
                 }
             }
         }
@@ -796,7 +796,7 @@ function Update-Project {
                     & npm install --production=false --silent 2>&1 | Out-Null
                     & npm run build 2>&1 | Out-Null
                     if ($LASTEXITCODE -eq 0) {
-                        Write-ColorOutput "  ✓ CLI rebuilt successfully" "Green"
+                        Write-ColorOutput "  [OK] CLI rebuilt successfully" "Green"
 
                         # Regenerate wrappers if they exist (framework root may have moved)
                         $SF_WRAPPER_DIR = Join-Path $env:USERPROFILE ".local\bin"
@@ -811,7 +811,7 @@ function Update-Project {
                                 "set SF_FRAMEWORK_ROOT=$ScriptDir`r`n" +
                                 "node `"%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js`" %*`r`n"
                             $cmdContent | Out-File -FilePath $SF_WRAPPER_CMD -Encoding ascii -NoNewline
-                            Write-ColorOutput "  ✓ CLI wrapper updated: $SF_WRAPPER_CMD" "Green"
+                            Write-ColorOutput "  [OK] CLI wrapper updated: $SF_WRAPPER_CMD" "Green"
                         }
                         $SF_WRAPPER_PS1 = Join-Path $SF_WRAPPER_DIR "sf.ps1"
                         if (Test-Path $SF_WRAPPER_PS1) {
@@ -823,13 +823,13 @@ function Update-Project {
                                 "`$env:SF_FRAMEWORK_ROOT = `"$ScriptDir`"`r`n" +
                                 "& node `"`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js`" @args`r`n"
                             $ps1Content | Out-File -FilePath $SF_WRAPPER_PS1 -Encoding utf8
-                            Write-ColorOutput "  ✓ PowerShell wrapper updated: $SF_WRAPPER_PS1" "Green"
+                            Write-ColorOutput "  [OK] PowerShell wrapper updated: $SF_WRAPPER_PS1" "Green"
                         }
                     } else {
-                        Write-ColorOutput "  ⚠ CLI build failed (non-critical)" "Yellow"
+                        Write-ColorOutput "  [!] CLI build failed (non-critical)" "Yellow"
                     }
                 } catch {
-                    Write-ColorOutput "  ⚠ CLI rebuild skipped: $($_.Exception.Message)" "Yellow"
+                    Write-ColorOutput "  [!] CLI rebuild skipped: $($_.Exception.Message)" "Yellow"
                 } finally {
                     Pop-Location
                 }
@@ -853,13 +853,13 @@ function Update-Project {
     $elapsed = Get-ElapsedSeconds
 
     Write-Host ""
-    Write-Host "  ┌─────────────────────────────────────────────────────┐" -ForegroundColor Green
-    Write-Host "  │  Update Complete                                    │" -ForegroundColor Green
-    Write-Host "  └─────────────────────────────────────────────────────┘" -ForegroundColor Green
+    Write-Host "  +-----------------------------------------------------+" -ForegroundColor Green
+    Write-Host "  |  Update Complete                                    |" -ForegroundColor Green
+    Write-Host "  +-----------------------------------------------------+" -ForegroundColor Green
     Write-Host ""
     Write-Host "  Project:    $ProjectDir"
     Write-Host "  Platforms:  $($platforms -join ', ')"
-    Write-Host "  Version:    v$currentVersion → v$FrameworkVersion"
+    Write-Host "  Version:    v$currentVersion -> v$FrameworkVersion"
     Write-Host "  Duration:   ${elapsed}s"
     Write-Host "  Backup:     $backupDir"
     Write-Host ""
@@ -907,14 +907,14 @@ function Update-AllProjects {
     }
     
     Write-Host ""
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
+    Write-ColorOutput "===========================================================" "Cyan"
     Write-ColorOutput "Summary: $total total, $updated updated, $failed failed" "Cyan"
-    Write-ColorOutput "═══════════════════════════════════════════════════════════" "Cyan"
+    Write-ColorOutput "===========================================================" "Cyan"
 }
 
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 # MAIN
-# ═══════════════════════════════════════════════════════════════
+# ===============================================================
 
 Print-Header
 
