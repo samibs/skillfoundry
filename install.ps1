@@ -94,35 +94,33 @@ function Rollback-Installation {
 function Collect-Diagnostics {
     $diagFile = Join-Path $TargetDir ".skillfoundry-diagnostics.log"
     
-    $diagnostics = @"
-# SkillFoundry Framework - Diagnostic Information
-Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-
-## System Information
-OS: $($env:OS)
-Version: [System.Environment]::OSVersion.VersionString
-PowerShell Version: $($PSVersionTable.PSVersion)
-User: $($env:USERNAME)
-Home: $($env:USERPROFILE)
-
-## Framework Information
-Framework Version: $((Get-Content (Join-Path $ScriptDir ".version") -ErrorAction SilentlyContinue) -join "")
-Framework Path: $ScriptDir
-Project Path: $TargetDir
-
-## Disk Space
-$(Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Root -like "*$($TargetDir.Substring(0,1))*" } | Format-Table -AutoSize | Out-String)
-
-## Permissions
-Project Directory: $(if (Test-Path $TargetDir) { (Get-Acl $TargetDir).AccessToString } else { "N/A" })
-Framework Directory: $(if (Test-Path $ScriptDir) { (Get-Acl $ScriptDir).AccessToString } else { "N/A" })
-
-## Environment
-PATH: $($env:PATH)
-PWD: $(Get-Location)
-Platform: $Platform
-Debug Mode: $Debug
-"@
+    $nl = [Environment]::NewLine
+    $fwVer = (Get-Content (Join-Path $ScriptDir ".version") -ErrorAction SilentlyContinue) -join ""
+    $diskInfo = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Root -like "*$($TargetDir.Substring(0,1))*" } | Format-Table -AutoSize | Out-String
+    $projPerms = if (Test-Path $TargetDir) { (Get-Acl $TargetDir).AccessToString } else { "N/A" }
+    $fwPerms = if (Test-Path $ScriptDir) { (Get-Acl $ScriptDir).AccessToString } else { "N/A" }
+    $diagnostics = "# SkillFoundry Framework - Diagnostic Information" + $nl +
+        "Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" + $nl + $nl +
+        "## System Information" + $nl +
+        "OS: $($env:OS)" + $nl +
+        "Version: $([System.Environment]::OSVersion.VersionString)" + $nl +
+        "PowerShell Version: $($PSVersionTable.PSVersion)" + $nl +
+        "User: $($env:USERNAME)" + $nl +
+        "Home: $($env:USERPROFILE)" + $nl + $nl +
+        "## Framework Information" + $nl +
+        "Framework Version: $fwVer" + $nl +
+        "Framework Path: $ScriptDir" + $nl +
+        "Project Path: $TargetDir" + $nl + $nl +
+        "## Disk Space" + $nl +
+        $diskInfo + $nl +
+        "## Permissions" + $nl +
+        "Project Directory: $projPerms" + $nl +
+        "Framework Directory: $fwPerms" + $nl + $nl +
+        "## Environment" + $nl +
+        "PATH: $($env:PATH)" + $nl +
+        "PWD: $(Get-Location)" + $nl +
+        "Platform: $Platform" + $nl +
+        "Debug Mode: $Debug"
     
     $diagnostics | Out-File -FilePath $diagFile -Encoding UTF8
 }
@@ -670,28 +668,26 @@ if ($nodeCmd) {
 
                 # Create .cmd wrapper (works in cmd.exe and PowerShell)
                 $SF_WRAPPER_CMD = Join-Path $SF_WRAPPER_DIR "sf.cmd"
-                $cmdContent = @"
-@echo off
-REM SkillFoundry CLI wrapper — installed by install.ps1
-REM Framework: $ScriptDir
-REM Version: $FrameworkVersion
-REM Installed: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
-set SF_FRAMEWORK_ROOT=$ScriptDir
-node "%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js" %*
-"@
+                $installedAt = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+                $cmdContent = "@echo off`r`n" +
+                    "REM SkillFoundry CLI wrapper -- installed by install.ps1`r`n" +
+                    "REM Framework: $ScriptDir`r`n" +
+                    "REM Version: $FrameworkVersion`r`n" +
+                    "REM Installed: $installedAt`r`n" +
+                    "set SF_FRAMEWORK_ROOT=$ScriptDir`r`n" +
+                    "node `"%SF_FRAMEWORK_ROOT%\sf_cli\bin\sf.js`" %*`r`n"
                 $cmdContent | Out-File -FilePath $SF_WRAPPER_CMD -Encoding ascii -NoNewline
                 Write-ColorOutput "  ✓ CLI wrapper installed: $SF_WRAPPER_CMD" "Green"
 
                 # Create .ps1 wrapper (for PowerShell direct invocation)
                 $SF_WRAPPER_PS1 = Join-Path $SF_WRAPPER_DIR "sf.ps1"
-                $ps1Content = @"
-# SkillFoundry CLI wrapper — installed by install.ps1
-# Framework: $ScriptDir
-# Version: $FrameworkVersion
-# Installed: $(Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
-`$env:SF_FRAMEWORK_ROOT = "$ScriptDir"
-& node "`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js" @args
-"@
+                $installedAt2 = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ"
+                $ps1Content = "# SkillFoundry CLI wrapper -- installed by install.ps1`r`n" +
+                    "# Framework: $ScriptDir`r`n" +
+                    "# Version: $FrameworkVersion`r`n" +
+                    "# Installed: $installedAt2`r`n" +
+                    "`$env:SF_FRAMEWORK_ROOT = `"$ScriptDir`"`r`n" +
+                    "& node `"`$env:SF_FRAMEWORK_ROOT\sf_cli\bin\sf.js`" @args`r`n"
                 $ps1Content | Out-File -FilePath $SF_WRAPPER_PS1 -Encoding utf8
                 Write-ColorOutput "  ✓ PowerShell wrapper installed: $SF_WRAPPER_PS1" "Green"
 
