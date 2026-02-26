@@ -195,3 +195,80 @@ export interface ActiveToolExecution {
   isExecuting: boolean;
   permissionPending: boolean;
 }
+
+// ── AI Runner types (standalone agentic loop) ──────────────────────
+
+export interface RunnerCallbacks {
+  onStreamChunk?: (chunk: string) => void;
+  onToolStart?: (toolCall: ToolCall) => void;
+  onToolComplete?: (toolCall: ToolCall, result: ToolResult) => void;
+  onTurnComplete?: (turn: number, tokens: { input: number; output: number; cost: number }) => void;
+  requestPermission?: (toolCall: ToolCall, reason: string) => Promise<'allow' | 'deny'>;
+}
+
+export interface RunnerOptions {
+  config: SfConfig;
+  policy: SfPolicy;
+  systemPrompt?: string;
+  tools?: Array<{ name: string; description: string; input_schema: unknown }>;
+  maxTurns?: number;
+  workDir?: string;
+  abortSignal?: { aborted: boolean };
+}
+
+export interface RunnerResult {
+  content: string;
+  turnCount: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCostUsd: number;
+  aborted: boolean;
+}
+
+// ── Pipeline types (forge execution engine) ────────────────────────
+
+export type PipelinePhaseStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
+
+export interface PipelinePhase {
+  name: string;
+  status: PipelinePhaseStatus;
+  durationMs: number;
+  detail?: string;
+}
+
+export interface PipelineCallbacks {
+  onPhaseStart?: (phase: string, detail?: string) => void;
+  onPhaseComplete?: (phase: string, status: PipelinePhaseStatus) => void;
+  onStoryStart?: (story: string, index: number, total: number) => void;
+  onStoryComplete?: (story: string, passed: boolean, cost: number) => void;
+  onGateResult?: (tier: string, status: string) => void;
+  requestPermission?: (toolCall: ToolCall, reason: string) => Promise<'allow' | 'deny'>;
+}
+
+export interface PipelineOptions {
+  config: SfConfig;
+  policy: SfPolicy;
+  workDir: string;
+  prdFilter?: string;
+  callbacks?: PipelineCallbacks;
+}
+
+export interface StoryExecution {
+  storyFile: string;
+  status: 'pending' | 'running' | 'completed' | 'failed';
+  turnCount: number;
+  costUsd: number;
+  fixerAttempts: number;
+}
+
+export interface PipelineResult {
+  runId: string;
+  phases: PipelinePhase[];
+  storiesTotal: number;
+  storiesCompleted: number;
+  storiesFailed: number;
+  gateVerdict: string;
+  totalCostUsd: number;
+  totalTokens: { input: number; output: number };
+  durationMs: number;
+}

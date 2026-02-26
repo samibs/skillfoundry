@@ -1,7 +1,7 @@
 # SkillFoundry
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.9-blue)
+![Version](https://img.shields.io/badge/version-2.0.10-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
@@ -30,7 +30,8 @@ Every skill — from PRD generation to code review to security scanning — work
 # Example: using SkillFoundry in Claude Code (no sf CLI)
 /prd "add user authentication with OAuth2"
 /go                    # validates PRDs, generates stories, implements
-/forge                 # full pipeline: validate → implement → test → audit → harvest
+/forge                 # real AI pipeline: PRDs → stories → implement → gates → report
+/forge --dry-run       # read-only scan: check PRDs, stories, and gates without executing
 /review                # code review
 /memory recall "auth"  # recall lessons from previous sessions
 ```
@@ -59,7 +60,7 @@ The CLI adds multi-provider switching, budget controls, permission management, a
  ███████║██║  ██╗██║███████╗███████╗██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║
  ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝
 
-  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms                         v2.0.9
+  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms                         v2.0.10
  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -170,7 +171,8 @@ Every non-trivial feature starts with a Product Requirements Document. No PRD = 
 ```
 /prd "user authentication with OAuth2"     → Creates genesis/2026-02-23-auth.md
 /go                                        → Validates PRDs → generates stories → implements
-/forge                                     → Full pipeline: validate → implement → test → audit → harvest
+/forge                                     → Real AI pipeline: PRDs → stories → implement → gates → report
+/forge --dry-run                           → Read-only scan (no AI execution)
 ```
 
 ### Multi-Provider Support
@@ -332,7 +334,8 @@ scripts/evolve.sh run                      Full evolution cycle
 | `/plan <task>` | Generate a read-only implementation plan |
 | `/apply [plan-id]` | Execute a plan with quality gate enforcement |
 | `/gates [target]` | Run The Anvil quality gates (T1-T6) |
-| `/forge` | Full pipeline: validate, implement, test, audit, harvest |
+| `/forge` | Real AI pipeline: PRDs → stories → implement → gates → report |
+| `/forge --dry-run` | Read-only scan: check PRDs, stories, and gates |
 | `/prd "idea"` | Create a Product Requirements Document |
 | `/go` | Orchestrate implementation from PRDs |
 | `/provider [set <name>]` | Switch AI providers |
@@ -438,7 +441,7 @@ skillfoundry/
                     └─────────────┘
 ```
 
-Or skip the steps and run `/forge` for the full pipeline in one command.
+Or skip the steps and run `/forge` for the full pipeline in one command. The Forge drives real AI execution: it discovers PRDs, generates stories, implements each story using the agentic tool-use loop, runs T1-T6 quality gates (with auto-fixer retries), and persists run metadata. Use `/forge --dry-run` for a read-only scan.
 
 **In autonomous mode**, you skip all the commands. Just type "add user authentication" and the pipeline runs end-to-end — PRD generated, stories broken out, agents dispatched, quality gates enforced, lessons harvested.
 

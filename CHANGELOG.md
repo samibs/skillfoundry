@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.10] - 2026-02-26
+
+### Added — The Forge Pipeline Engine
+
+The `/forge` command is now a real executable pipeline. Previously it was a read-only scanner that reported PRD/story status and gate results. Now it drives the full development lifecycle: discover PRDs, generate stories via AI, implement each story with tools, run quality gates, and produce working code.
+
+#### New: Standalone Agentic Loop (`src/core/ai-runner.ts`)
+- Extracted the multi-turn tool-use loop from `useStream.ts` into a standalone module
+- Zero React dependencies — can be called from both interactive mode and batch pipelines
+- Supports callbacks for streaming, tool execution, permissions, and turn progress
+- Budget enforcement per-turn, abort signal support, retry with fallback provider
+
+#### New: Pipeline Execution Engine (`src/core/pipeline.ts`)
+- 6-phase pipeline: IGNITE → PLAN → FORGE → TEMPER → INSPECT → DEBRIEF
+- **IGNITE**: Discovers and validates PRDs from `genesis/`
+- **PLAN**: Generates stories from PRDs via AI (or reuses existing stories)
+- **FORGE**: Implements each story sequentially via the agentic loop (25 turns max per story)
+- **TEMPER**: Runs T1-T6 quality gates
+- **INSPECT**: Isolates T4 security results
+- **DEBRIEF**: Persists run metadata to `.skillfoundry/runs/{runId}.json`
+- Auto-fixer: if T1 gate fails after story implementation, routes to fixer agent (max 2 retries)
+- Real-time progress callbacks for UI integration
+
+#### Refactored: useStream.ts
+- The inline while-loop replaced with a call to `runAgentLoop()`
+- All interactive behavior preserved — same tools, budget, permissions, streaming
+- React state updates via callbacks (onStreamChunk, onToolStart, onToolComplete, etc.)
+
+#### Updated: `/forge` Command
+- `/forge` — Executes the full pipeline (AI-powered)
+- `/forge --dry-run` — Read-only scan (backward compatible with pre-2.0.10 behavior)
+- `/forge <prd-file>` — Filter to a specific PRD
+- Real-time progress messages during pipeline execution
+
+#### New Types
+- `RunnerCallbacks`, `RunnerOptions`, `RunnerResult` — Agentic loop interfaces
+- `PipelineCallbacks`, `PipelineOptions`, `PipelineResult` — Pipeline interfaces
+- `StoryExecution`, `PipelinePhase`, `PipelinePhaseStatus` — Execution tracking
+
+#### Tests
+- `ai-runner.test.ts`: 8 test cases (single-turn, multi-turn, budget, permissions, abort, callbacks)
+- `pipeline.test.ts`: 12 test cases (PRD scan, story generation, execution, fixer retry, persistence, callbacks)
+- Total: 258 tests passing (20 new, 0 regressions)
+
+---
+
 ## [2.0.9] - 2026-02-26
 
 ### Added — Reflection Protocols for 5 Key Orchestrators

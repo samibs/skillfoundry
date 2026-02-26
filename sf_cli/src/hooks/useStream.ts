@@ -3,8 +3,7 @@ import { createProvider } from '../core/provider.js';
 import type { ProviderAdapter } from '../types.js';
 import { redactText } from '../core/redact.js';
 import { ALL_TOOLS } from '../core/tools.js';
-import { executeTool } from '../core/executor.js';
-import { checkPermission, allowAlways, allowToolAlways } from '../core/permissions.js';
+import { allowAlways, allowToolAlways } from '../core/permissions.js';
 import { classifyIntent } from '../core/intent.js';
 import { getAgentTools, getAgentSystemPrompt } from '../core/agent-registry.js';
 import { routeToAgent } from '../core/team-router.js';
@@ -13,15 +12,16 @@ import type { TeamDefinitionRef } from '../types.js';
 import { checkBudget, recordUsage, loadUsage } from '../core/budget.js';
 import type { UsageData } from '../core/budget.js';
 import { streamWithRetry } from '../core/retry.js';
+import { runAgentLoop } from '../core/ai-runner.js';
 import type {
   SfConfig,
   SfPolicy,
   Message,
   PermissionMode,
   AnthropicMessage,
-  AnthropicContentBlock,
   ActiveToolExecution,
   ToolCall,
+  RunnerCallbacks,
 } from '../types.js';
 import type { PermissionResponse } from '../components/PermissionPrompt.js';
 
@@ -232,258 +232,94 @@ export function useStream(
           return;
         }
 
-        // Agent mode: full tool loop
-        let turnCount = 0;
-
-        // Agentic loop: keep sending until no more tool_use or max turns reached
-        while (turnCount < MAX_TOOL_TURNS) {
-          if (abortRef.current) break;
-          turnCount++;
-          setStreamingTurnCount(turnCount);
-
-          let accumulated = '';
-
-          // Per-turn budget check: stop if run budget exceeded (use cached data)
-          const turnBudget = checkBudget(
-            workDir,
-            config.monthly_budget_usd,
-            config.run_budget_usd,
-            totalCostUsd,
-            budgetCacheRef.current || undefined,
-          );
-          if (!turnBudget.allowed) {
-            addMessage({
-              role: 'system',
-              content: `Run budget exceeded after ${turnCount} turns: ${turnBudget.reason}`,
-            });
-            break;
-          }
-
-          const toolStreamResult = await streamWithRetry(
-            async (p) => p.streamWithTools(
-              anthropicMessages,
-              {
-                model: config.model,
-                tools: agentTools,
-                systemPrompt: agentPrompt,
-              },
-              (chunk: string, done: boolean) => {
-                if (abortRef.current) return;
-                if (!done) {
-                  accumulated += chunk;
-                  const redacted = redactText(accumulated, policy.redact);
-                  setStreamContent(redacted);
-                }
-              },
-            ),
-            provider,
-            fallbackProvider,
-          );
-
-          const result = toolStreamResult.result;
-
-          totalInputTokens += result.inputTokens;
-          totalOutputTokens += result.outputTokens;
-          totalCostUsd += result.costUsd;
-
-          // Record each turn's usage and update in-memory cache
-          budgetCacheRef.current = recordUsage(workDir, {
-            provider: toolStreamResult.fallbackUsed || config.provider,
-            model: config.model,
-            inputTokens: result.inputTokens,
-            outputTokens: result.outputTokens,
-            costUsd: result.costUsd,
-          });
-
-          // Update session token totals for UI
-          setSessionInputTokens((prev) => prev + result.inputTokens);
-          setSessionOutputTokens((prev) => prev + result.outputTokens);
-
-          if (result.thinkingContent) {
-            setThinkingContent(result.thinkingContent);
-          }
-
-          // Check if response contains tool_use blocks
-          const toolUseBlocks = result.content.filter((b) => b.type === 'tool_use');
-          const textBlocks = result.content.filter((b) => b.type === 'text');
-
-          if (toolUseBlocks.length === 0 || result.stopReason !== 'tool_use') {
-            // No tool calls — final response
-            const finalText = textBlocks.map((b) => b.text).join('');
-            const redactedFinal = redactText(finalText, policy.redact);
-
-            addMessage({
-              role: 'assistant',
-              content: redactedFinal,
-              metadata: {
-                provider: config.provider,
-                model: config.model,
-                inputTokens: totalInputTokens,
-                outputTokens: totalOutputTokens,
-                costUsd: totalCostUsd,
-                thinkingContent: result.thinkingContent,
-                mode: 'agent',
-                activeAgent: resolvedAgent || undefined,
-                routedAgent: routingResult?.agent,
-                routingConfidence: routingResult?.confidence,
-                activeTeam: activeTeam?.name,
-              },
-            });
-            break;
-          }
-
-          // Build the assistant content blocks for the conversation
-          const assistantContent: AnthropicContentBlock[] = result.content.map((block) => {
-            if (block.type === 'text') {
-              return { type: 'text' as const, text: block.text };
-            }
-            return {
-              type: 'tool_use' as const,
-              id: block.id,
-              name: block.name,
-              input: block.input,
-            };
-          });
-
-          // Add assistant message with tool_use to the conversation
-          anthropicMessages.push({
-            role: 'assistant',
-            content: assistantContent,
-          });
-
-          // Execute each tool call
-          const toolResults: AnthropicContentBlock[] = [];
-
-          for (const block of toolUseBlocks) {
-            if (abortRef.current) break;
-
-            const toolCall: ToolCall = {
-              id: block.id!,
-              name: block.name!,
-              input: block.input!,
-            };
-
-            // Set tool as executing in UI
+        // Agent mode: delegate to standalone agentic loop
+        const runnerCallbacks: RunnerCallbacks = {
+          onStreamChunk: (chunk) => {
+            if (!abortRef.current) setStreamContent(chunk);
+          },
+          onToolStart: (toolCall) => {
             setActiveTools((prev) => [
               ...prev,
               { toolCall, isExecuting: true, permissionPending: false },
             ]);
-
-            // Check permissions
-            const permission = checkPermission(
-              toolCall,
-              policy,
-              permissionModeRef.current,
-            );
-
-            if (permission.decision === 'deny') {
-              const denyResult = {
-                toolCallId: toolCall.id,
-                output: `Permission denied: ${permission.reason}`,
-                isError: true,
-              };
-
-              setActiveTools((prev) =>
-                prev.map((t) =>
-                  t.toolCall.id === toolCall.id
-                    ? { ...t, result: denyResult, isExecuting: false }
-                    : t,
-                ),
-              );
-
-              toolResults.push({
-                type: 'tool_result',
-                tool_use_id: toolCall.id,
-                content: denyResult.output,
-                is_error: true,
-              });
-              continue;
-            }
-
-            if (permission.decision === 'ask') {
-              // Set permission pending in UI
-              setActiveTools((prev) =>
-                prev.map((t) =>
-                  t.toolCall.id === toolCall.id
-                    ? { ...t, permissionPending: true, isExecuting: false }
-                    : t,
-                ),
-              );
-
-              const response = await requestPermission(toolCall, permission.reason);
-
-              if (response === 'deny') {
-                const denyResult = {
-                  toolCallId: toolCall.id,
-                  output: 'User denied permission',
-                  isError: true,
-                };
-
-                setActiveTools((prev) =>
-                  prev.map((t) =>
-                    t.toolCall.id === toolCall.id
-                      ? { ...t, result: denyResult, isExecuting: false, permissionPending: false }
-                      : t,
-                  ),
-                );
-
-                toolResults.push({
-                  type: 'tool_result',
-                  tool_use_id: toolCall.id,
-                  content: denyResult.output,
-                  is_error: true,
-                });
-                continue;
-              }
-
-              if (response === 'always-allow') {
-                allowAlways(toolCall);
-              } else if (response === 'always-allow-tool') {
-                allowToolAlways(toolCall.name);
-              }
-
-              // Permission granted — continue to execution
-              setActiveTools((prev) =>
-                prev.map((t) =>
-                  t.toolCall.id === toolCall.id
-                    ? { ...t, permissionPending: false, isExecuting: true }
-                    : t,
-                ),
-              );
-            }
-
-            // Execute the tool
-            const execResult = executeTool(toolCall.name, toolCall.input, {
-              workDir: config.provider ? process.cwd() : process.cwd(),
-              policy,
-            });
-            execResult.toolCallId = toolCall.id;
-
-            // Update UI with result
+          },
+          onToolComplete: (toolCall, result) => {
             setActiveTools((prev) =>
               prev.map((t) =>
                 t.toolCall.id === toolCall.id
-                  ? { ...t, result: execResult, isExecuting: false }
+                  ? { ...t, result, isExecuting: false, permissionPending: false }
+                  : t,
+              ),
+            );
+          },
+          onTurnComplete: (turn, tokens) => {
+            setStreamingTurnCount(turn);
+            setSessionInputTokens((prev) => prev + tokens.input);
+            setSessionOutputTokens((prev) => prev + tokens.output);
+            setStreamContent('');
+          },
+          requestPermission: async (toolCall, reason) => {
+            // Set permission pending in UI
+            setActiveTools((prev) =>
+              prev.map((t) =>
+                t.toolCall.id === toolCall.id
+                  ? { ...t, permissionPending: true, isExecuting: false }
                   : t,
               ),
             );
 
-            toolResults.push({
-              type: 'tool_result',
-              tool_use_id: toolCall.id,
-              content: execResult.output,
-              is_error: execResult.isError,
-            });
-          }
+            const response = await requestPermission(toolCall, reason);
 
-          // Add tool results as a user message
-          anthropicMessages.push({
-            role: 'user',
-            content: toolResults,
+            if (response === 'always-allow') {
+              allowAlways(toolCall);
+            } else if (response === 'always-allow-tool') {
+              allowToolAlways(toolCall.name);
+            }
+
+            // Update UI after permission decision
+            setActiveTools((prev) =>
+              prev.map((t) =>
+                t.toolCall.id === toolCall.id
+                  ? { ...t, permissionPending: false, isExecuting: response !== 'deny' }
+                  : t,
+              ),
+            );
+
+            return response === 'deny' ? 'deny' : 'allow';
+          },
+        };
+
+        const runnerResult = await runAgentLoop(
+          anthropicMessages,
+          {
+            config,
+            policy,
+            systemPrompt: agentPrompt,
+            tools: agentTools,
+            maxTurns: MAX_TOOL_TURNS,
+            workDir,
+            abortSignal: { get aborted() { return abortRef.current; } },
+          },
+          runnerCallbacks,
+        );
+
+        if (runnerResult.content) {
+          addMessage({
+            role: 'assistant',
+            content: runnerResult.content,
+            metadata: {
+              provider: config.provider,
+              model: config.model,
+              inputTokens: runnerResult.totalInputTokens,
+              outputTokens: runnerResult.totalOutputTokens,
+              costUsd: runnerResult.totalCostUsd,
+              mode: 'agent',
+              activeAgent: resolvedAgent || undefined,
+              routedAgent: routingResult?.agent,
+              routingConfidence: routingResult?.confidence,
+              activeTeam: activeTeam?.name,
+            },
           });
-
-          // Reset stream content for next turn
-          setStreamContent('');
         }
 
         setStreamContent('');

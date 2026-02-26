@@ -1,9 +1,20 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-02-26T14:00:00Z
+> Last updated: 2026-02-26T15:30:00Z
 > Platform: claude-code
 
-## Forge Session — 2026-02-26
+## Forge Pipeline Engine Session — 2026-02-26
+- Task: Made The Forge (`/forge`) a real executable pipeline (was read-only scanner)
+- Created: `sf_cli/src/core/ai-runner.ts` — standalone agentic loop (zero React deps)
+- Created: `sf_cli/src/core/pipeline.ts` — 6-phase pipeline engine (IGNITE→PLAN→FORGE→TEMPER→INSPECT→DEBRIEF)
+- Refactored: `sf_cli/src/hooks/useStream.ts` — replaced inline while-loop with runAgentLoop()
+- Rewritten: `sf_cli/src/commands/forge.ts` — wired to pipeline, added --dry-run flag
+- Updated: `sf_cli/src/types.ts` — added Runner/Pipeline/StoryExecution types
+- Tests: `ai-runner.test.ts` (8 tests), `pipeline.test.ts` (12 tests)
+- Total: 258 tests passing (20 new, 0 regressions), build clean
+- Version: 2.0.9 → 2.0.10
+
+## Forge Session — 2026-02-26 (v2.0.9)
 - Task 1: Added reflection protocols to 5 key orchestrators (auto, context, fixer, gate-keeper, go)
 - Task 2: Visual overhaul verified complete — all 11 components using theme.ts
 - Task 3: Built knowledge promotion pipeline (scripts/promote-knowledge.sh)

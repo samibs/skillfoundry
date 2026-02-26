@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.9 - Quick Reference Card
+# SkillFoundry v2.0.10 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -69,7 +69,8 @@ math-check     memory
 
 | Shortcut | Name | What it does |
 |----------|------|--------------|
-| `/forge` | **Summon The Forge** | Full pipeline: validate + implement + test + audit + harvest + debrief |
+| `/forge` | **Summon The Forge** | Real AI pipeline: PRDs → stories → implement (agentic loop) → T1-T6 gates → report |
+| `/forge --dry-run` | Forge Dry Run | Read-only scan: check PRDs, stories, and gates without AI execution |
 | `/gosm` | Go Semi-Auto | `/go --mode=semi-auto` (recommended) |
 | `/goma` | Go Autonomous | `/go --mode=autonomous` |
 | `/blitz` | Blitz Mode | Parallel + TDD + semi-auto for max speed |
@@ -268,14 +269,35 @@ Architect → T1 → Coder (+T6) → T1+T2+T3 → Tester → T1 → Gate-Keeper 
 Quick-start templates in `genesis/TEMPLATES/`: API service, CLI tool, full-stack feature, dashboard.
 
 ### Forge Phase 6: Debrief
-`/forge` now auto-writes a scratchpad summary after completion.
+`/forge` auto-writes a scratchpad summary and persists run metadata to `.skillfoundry/runs/`.
+
+---
+
+## New in v2.0.10: The Forge Pipeline Engine
+
+### The Forge — Now a Real AI Pipeline
+As of v2.0.10, `/forge` is no longer a read-only scanner. It drives real AI execution through 6 phases:
+
+1. **IGNITE**: Discovers and validates PRDs from `genesis/`
+2. **PLAN**: Generates stories from PRDs via AI (or reuses existing stories in `docs/stories/`)
+3. **FORGE**: Implements each story sequentially using the standalone agentic loop (`ai-runner.ts`) — up to 25 tool-use turns per story, with auto-fixer retries on T1 gate failures
+4. **TEMPER**: Runs T1-T6 quality gates
+5. **INSPECT**: Isolates T4 security results
+6. **DEBRIEF**: Persists run metadata to `.skillfoundry/runs/{runId}.json`
+
+Use `--dry-run` for the old read-only scan behavior. Use `--prd-file` to filter to a specific PRD.
+
+### Architecture
+- `src/core/ai-runner.ts` — Standalone multi-turn tool-use loop (zero React dependencies)
+- `src/core/pipeline.ts` — 6-phase pipeline engine
+- `src/commands/forge.ts` — CLI command wired to the pipeline
 
 ---
 
 ## New in v1.9.0.11: Shortcut Commands + The Forge
 
-### The Forge
-The 46-agent team is now called **The Forge** — cold-blooded agents forging production code. `/forge` invokes the full pipeline: validate PRDs, implement stories (semi-auto + parallel), layer-check, security audit, and harvest memory.
+### The Forge (Original)
+The 46-agent team was originally called **The Forge** — cold-blooded agents forging production code. Starting from v2.0.10, `/forge` executes the full AI-powered pipeline end-to-end.
 
 ### Quick-Access Shortcuts
 7 new shortcut commands eliminate common flag combinations. `/gosm` replaces `/go --mode=semi-auto`, `/blitz` combines parallel + TDD + semi-auto, and `/ship` chains layer-check + security + release.
@@ -602,4 +624,4 @@ your-project/
 
 ---
 
-*SkillFoundry Framework v2.0.9 - February 2026 - The Forge (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.10 - February 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
