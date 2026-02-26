@@ -67,25 +67,6 @@ Review in this order:
 
 **Reference**: `docs/ANTI_PATTERNS_DEPTH.md` - Top 12 vulnerabilities
 
-#### 1b. Data Isolation & Query Scoping Review (MANDATORY)
-```
-- [ ] Queries on user-owned entities include ownership WHERE clause
-- [ ] Scope derived from auth token, not request parameters
-- [ ] User A cannot access User B's resources (returns 404)
-- [ ] List endpoints return only caller's rows by default
-- [ ] JOINs do not leak rows from scoped tables
-- [ ] Bulk operations respect same scope as single-record ops
-```
-
-#### 1c. Extended Security Review (MANDATORY)
-```
-- [ ] Pagination caps enforced (max pageSize)
-- [ ] Error responses sanitized (no stack traces, SQL, internal IPs)
-- [ ] Idempotency-Key supported on non-idempotent mutations
-- [ ] Optimistic locking on concurrently editable entities
-- [ ] Session/token lifecycle managed (expiry, invalidation)
-```
-
 #### 2. Functionality Review
 ```
 - [ ] Logic is correct
@@ -245,25 +226,6 @@ These are suggestions for improvement, not blockers.
    - Verify no user input in shell commands
    - Check for exec(), system(), eval()
    - Reference: `docs/ANTI_PATTERNS_DEPTH.md §7`
-
-8. **Data Isolation / Query Scoping** 🔴
-   - ALL queries on user-owned entities include ownership WHERE clause
-   - Scope from auth token, NEVER from request parameters
-   - Reference: `genesis/TEMPLATE.md` section 6.7
-
-9. **Pagination & Input Size Limits** 🔴
-   - All list endpoints enforce max pageSize cap
-   - Request body and string field limits validated
-
-10. **Error Information Leakage** 🔴
-    - No stack traces, SQL errors, or internal IPs in responses
-    - Structured error format only
-
-11. **Concurrent Modification Safety** 🟡
-    - Optimistic locking (ETag/version) on concurrently editable entities
-
-12. **Session & Token Lifecycle** 🔴
-    - Token expiry, refresh rotation, session invalidation on password change
 
 **Security failure = IMMEDIATE REJECTION**
 
@@ -452,43 +414,3 @@ Don't focus on:
 - `CLAUDE.md` - Code quality standards
 - `agents/_tdd-protocol.md` - Test requirements
 - `.copilot/custom-agents/pr-review.md` - GitHub PR review (Copilot)
-
-## Peer Improvement Signals
-
-- Upstream peer reviewer: replay
-- Downstream peer reviewer: security
-- Required challenge request: ask both peers to critique one assumption and one failure mode.
-- Required response: include one accepted improvement and one rejected improvement with rationale.
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after implementation updates.
-- Log at least one concrete weakness and one concrete mitigation for each substantial change.
-- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
-- Escalate unresolved architectural conflicts to orchestrator-class agents.
-- Reference: agents/_reflection-protocol.md
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

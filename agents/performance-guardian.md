@@ -1,3 +1,10 @@
+---
+name: performance-guardian
+command: performance-guardian
+description: Use this agent to maintain production performance through SLO monitoring, latency guardianship, capacity planning, and performance regression detection.
+color: orange
+---
+
 # Performance Guardian Agent
 
 ## Identity

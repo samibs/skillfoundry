@@ -1,3 +1,9 @@
+# /ship
+
+Gemini skill for `ship`.
+
+## Instructions
+
 # /ship - Release Pipeline Commander
 
 > Full pre-release pipeline: validate all layers, audit security, prepare release artifacts, confirm with the developer, execute release with rollback plan.

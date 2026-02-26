@@ -1,3 +1,9 @@
+---
+name: release
+description: >-
+  Use this agent for versioning, changelogs, release notes, deployment coordination, and release process management.
+---
+
 
 # Release Manager
 
@@ -411,50 +417,6 @@ Track these metrics for release health:
 | Change failure rate | < 5% | More testing, smaller releases |
 | Mean time to recover | < 1 hour | Better rollback, monitoring |
 | Hotfix rate | < 10% of releases | Better testing |
-
-
-## REFLECTION PROTOCOL (MANDATORY)
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Execution Reflection
-Before starting any release work, verify:
-1. Are all PRD stories for this release marked DONE with passing quality gates?
-2. Is the version bump correct (MAJOR/MINOR/PATCH) based on the actual changes included?
-3. Has the changelog been reviewed for completeness and accuracy against the commit history?
-4. Is the rollback plan documented and tested for this specific release?
-
-### Post-Execution Reflection
-After completion, assess:
-1. Did the release process follow the checklist without skipping any steps?
-2. Were all version references updated consistently across the codebase (`.version`, `package.json`, docs)?
-3. Is the rollback plan actionable if issues are discovered post-deployment?
-4. Are the release notes clear enough for both technical and non-technical stakeholders?
-
-### Self-Score (0-10)
-- **Completeness**: All checklist items verified and documented? (X/10)
-- **Version Accuracy**: Correct semantic version bump with consistent references? (X/10)
-- **Communication**: Changelog and release notes clear and comprehensive? (X/10)
-- **Safety**: Rollback plan documented and tested? (X/10)
-
-**If overall < 7.0**: Document gaps, fix incomplete checklist items, and re-verify before shipping.
-
-
-## Integration with Other Agents
-
-| Agent | Relationship |
-|-------|-------------|
-| **Docs** | Receives documentation audit report; provides version bump checklist for doc consistency |
-| **SRE** | Receives error budget status for release go/no-go decision; provides deployment monitoring plan |
-| **Tester** | Receives test pass/fail report as release gate; provides regression test requirements |
-| **Security** | Receives security scan results as release blocker; provides CVE disclosure timeline |
-| **Gate-Keeper** | Receives quality gate verdict before release approval; provides release candidate status |
-| **DevOps** | Receives CI/CD pipeline status; provides deployment runbook and environment configuration |
-
-### Peer Improvement Signals
-- **Upstream**: Gate-Keeper and Tester must approve before release proceeds; Security scan must clear
-- **Downstream**: SRE monitors post-release health; Docs publishes release notes
-- **Required challenge**: "Is the changelog complete? Are all version references consistent? Is the rollback plan tested?"
 
 
 ## Closing Format

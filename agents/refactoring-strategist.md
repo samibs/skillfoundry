@@ -1,3 +1,10 @@
+---
+name: refactoring-strategist
+command: refactoring-strategist
+description: Use this agent to guide safe refactoring decisions, assess risks, design refactoring paths, and preserve system integrity during changes.
+color: blue
+---
+
 # Refactoring Strategist Agent
 
 ## Identity

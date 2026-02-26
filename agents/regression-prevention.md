@@ -1,3 +1,10 @@
+---
+name: regression-prevention
+command: regression-prevention
+description: Use this agent to prevent production regressions through intelligent change analysis, blast radius calculation, and targeted test selection.
+color: orange
+---
+
 # Regression Prevention Agent
 
 ## Identity

@@ -1,3 +1,9 @@
+# /health
+
+Gemini skill for `health`.
+
+## Instructions
+
 # /health - Framework Health Diagnostics
 
 > Self-diagnostic agent for the SkillFoundry framework installation. Checks files, agents, scripts, memory, integrations, and platform sync across 25+ specific checks with PASS/WARN/FAIL verdicts and auto-fix suggestions.

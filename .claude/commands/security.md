@@ -49,7 +49,8 @@ For every feature, enumerate threats using STRIDE:
 │                      │ → Audit logs, signing, non-repudiation          │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ I - INFO DISCLOSURE  │ Can attacker access unauthorized data?          │
-│                      │ → Data leaks, error messages, timing attacks    │
+│                      │ → Data leaks, error messages, timing attacks,   │
+│                      │   cross-user/cross-tenant data exposure         │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ D - DENIAL OF SERVICE│ Can attacker make system unavailable?           │
 │                      │ → Resource exhaustion, rate limiting, loops     │
@@ -81,6 +82,9 @@ For every feature, enumerate threats using STRIDE:
   - Missing function-level access control
   - CORS misconfiguration
   - Path traversal
+  - Unscoped queries returning other users'/tenants' data
+  - Missing ownership WHERE clause on user-owned entities
+  - Scope derived from request parameters instead of auth token
 
 □ A02:2021 - Cryptographic Failures
   - Weak algorithms (MD5, SHA1, DES)
@@ -97,16 +101,22 @@ For every feature, enumerate threats using STRIDE:
 
 □ A04:2021 - Insecure Design
   - Missing threat modeling
-  - No rate limiting
-  - Missing input validation
+  - No rate limiting (per-endpoint, with 429 response)
+  - Missing input validation (string length, array size, nesting depth)
   - Trust boundary violations
+  - No optimistic locking on concurrent resources (lost updates)
+  - Unbounded list endpoints (no max pageSize cap)
+  - Missing idempotency on non-idempotent mutations
 
 □ A05:2021 - Security Misconfiguration
   - Default credentials
   - Unnecessary features enabled
   - Missing security headers
-  - Verbose error messages
+  - Verbose error messages (stack traces, SQL errors, internal IPs)
   - Outdated software
+  - CORS: wildcard (*) origin with credentials enabled
+  - No config validation on startup (invalid config discovered at runtime)
+  - Secrets in config files instead of env vars/vault
 
 □ A06:2021 - Vulnerable Components
   - Known CVEs in dependencies
@@ -118,6 +128,11 @@ For every feature, enumerate threats using STRIDE:
   - Missing MFA
   - Session fixation
   - Credential stuffing vulnerable
+  - No token/session expiration enforcement
+  - Sessions not invalidated on password change
+  - No refresh token rotation (reuse allows session hijacking)
+  - No concurrent session limits
+  - Auth endpoints not rate-limited (brute force)
 
 □ A08:2021 - Data Integrity Failures
   - Insecure deserialization
@@ -125,9 +140,14 @@ For every feature, enumerate threats using STRIDE:
   - CI/CD pipeline security
 
 □ A09:2021 - Logging Failures
-  - Missing audit logs
-  - Sensitive data in logs
+  - Missing audit logs (WHO did WHAT to WHICH resource WHEN)
+  - Failed access attempts not logged
+  - Sensitive data in logs (PII, tokens, passwords)
   - No alerting on security events
+  - No correlation ID across service calls
+  - Unstructured log format (not machine-parseable)
+  - Audit logs mutable (can be deleted/modified after write)
+  - Bulk operations not individually logged
 
 □ A10:2021 - SSRF
   - Unvalidated URL fetching
@@ -320,34 +340,6 @@ if (!API_KEY) throw new Error('API_KEY not configured');
 - **DevOps**: Security in CI/CD pipeline
 - **Architect**: Secure architecture design
 - **Dependency**: Vulnerability scanning
-
-
-## REFLECTION PROTOCOL (MANDATORY)
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Execution Reflection
-Before starting any security work, verify:
-1. What is the threat surface for this target (internet-facing, internal, API, authentication system)?
-2. Have recent changes (new endpoints, dependency updates, config changes) been reviewed for security impact?
-3. Is the OWASP Top 10 checklist being applied systematically rather than spot-checking?
-4. Are there compliance requirements (GDPR, HIPAA, SOC2) that impose additional security constraints?
-
-### Post-Execution Reflection
-After completion, assess:
-1. Were all STRIDE categories evaluated with specific mitigations (not just "N/A")?
-2. Did the vulnerability report include actionable remediation steps with priority ordering?
-3. Were dependency CVEs checked against the actual dependency versions in use (not just latest)?
-4. Is the security posture measurably improved with evidence (scan results, test output, header checks)?
-
-### Self-Score (0-10)
-- **OWASP Coverage**: All 10 categories systematically checked? (X/10)
-- **STRIDE Completeness**: All 6 threat categories evaluated with specific evidence? (X/10)
-- **Remediation Quality**: Fixes are actionable, prioritized, and include verification steps? (X/10)
-- **Evidence**: Vulnerability claims backed by proof/PoC, not just assertions? (X/10)
-
-**If overall < 7.0**: Expand OWASP/STRIDE coverage, add missing evidence, and re-scan before closing.
-**If any dimension < 5.0**: BLOCK the security review as incomplete -- do not approve release.
 
 
 ## Closing Format

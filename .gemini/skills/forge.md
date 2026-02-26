@@ -1,3 +1,9 @@
+# /forge
+
+Gemini skill for `forge`.
+
+## Instructions
+
 # /forge - Summon The Forge
 
 > The full pipeline: validate, implement, test, audit, and harvest — all in one command.

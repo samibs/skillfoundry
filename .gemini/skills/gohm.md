@@ -1,3 +1,9 @@
+# /gohm
+
+Gemini skill for `gohm`.
+
+## Instructions
+
 # /gohm - Go Harvest Memory (Knowledge Harvester)
 
 > Scan the current session for decisions, corrections, patterns, and errors. Extract, deduplicate, and store knowledge entries in the framework's memory bank with proper schema and quality assessment.

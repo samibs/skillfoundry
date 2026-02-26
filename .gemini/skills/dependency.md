@@ -1,6 +1,6 @@
 # /dependency
 
-Gemini skill for $cmd.
+Gemini skill for `dependency`.
 
 ## Instructions
 

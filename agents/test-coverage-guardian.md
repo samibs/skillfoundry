@@ -1,3 +1,10 @@
+---
+name: test-coverage-guardian
+command: test-coverage-guardian
+description: Use this agent to enforce test coverage thresholds, analyze coverage gaps, generate tests for uncovered code paths, and track coverage trends.
+color: green
+---
+
 # Test Coverage Guardian Agent
 
 ## Identity

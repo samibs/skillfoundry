@@ -1,3 +1,9 @@
+---
+name: anvil
+description: >-
+  /anvil - The Anvil Quality Gate
+---
+
 # /anvil - The Anvil Quality Gate
 
 > 6-tier validation system that catches issues between every agent phase.

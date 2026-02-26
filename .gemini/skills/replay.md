@@ -1,3 +1,9 @@
+# /replay
+
+Gemini skill for `replay`.
+
+## Instructions
+
 # /replay - Replay & Session Viewer
 
 > Re-run the last `/go` or `/forge` execution, or view past session timelines.

@@ -1,3 +1,10 @@
+---
+name: agent-index-v2
+command: agent-index
+description: Reference index of the 53-agent enterprise architecture with tier hierarchy, governance model, and escalation protocols.
+color: gray
+---
+
 # Agent Index v2.0
 
 ## 53-Agent Enterprise Architecture

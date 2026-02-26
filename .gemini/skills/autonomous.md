@@ -1,6 +1,6 @@
 # /autonomous
 
-Gemini skill for $cmd.
+Gemini skill for `autonomous`.
 
 ## Instructions
 

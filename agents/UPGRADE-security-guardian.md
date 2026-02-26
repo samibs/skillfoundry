@@ -1,3 +1,10 @@
+---
+name: upgrade-security-guardian
+command: upgrade-security-guardian
+description: Upgrade documentation for the security-guardian agent, detailing the evolution from security-specialist to continuous security validation with runtime monitoring and SBOM generation.
+color: gray
+---
+
 # UPGRADE: security-guardian (from security-specialist)
 
 ## Previous State: security-specialist

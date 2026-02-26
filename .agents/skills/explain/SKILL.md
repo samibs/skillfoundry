@@ -111,6 +111,7 @@ For every action, reconstruct the complete trace:
 
 ```
 TRACE: Session abc-123 | 2026-02-24T14:22:00Z
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 TRIGGER: /go 2026-02-15-competitive-leap.md
 STORY:   STORY-003 (GitHub Actions CI pipeline)
@@ -175,9 +176,9 @@ FINAL OUTCOME: SUCCESS
 ### Agent Handoff Chain Visualization
 
 ```
-  orchestrate --> architect --> coder --> tester --> fixer --> tester --> gate-keeper
-       |              |          |         |         |         |          |
-       dispatch       ADR-003    3 files   1 fail    fix      12 pass    PASSED
+  orchestrate ─→ architect ─→ coder ─→ tester ─→ fixer ─→ tester ─→ gate-keeper
+       │              │          │         │         │         │          │
+       └ dispatch     └ ADR-003  └ 3 files └ 1 fail  └ fix    └ 12 pass └ PASSED
 ```
 
 ### Trace Reconstruction from Incomplete Data
@@ -206,6 +207,7 @@ CONFIDENCE: PARTIAL (3 of 7 sources available)
 
 ```
 Last Action: coder implemented STORY-003 (GitHub Actions CI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 What happened:
   - Coder rewrote .github/workflows/ci.yml with matrix builds
@@ -228,18 +230,19 @@ Full trace with file changes, decision rationale, and before/after diffs.
 
 ```
 Last Action: coder implemented STORY-003 (GitHub Actions CI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Mode: VERBOSE
 
 TRIGGER
   Command: /go 2026-02-15-competitive-leap.md
   PRD: competitive-leap (17 stories, 5 waves)
-  Story: STORY-003 -- GitHub Actions CI pipeline
+  Story: STORY-003 — GitHub Actions CI pipeline
   Wave: 3 (dependencies STORY-001, STORY-002 completed)
 
 AGENT CHAIN
-  orchestrate --> architect --> coder --> tester --> fixer --> tester --> gate-keeper
-       |              |          |         |         |         |          |
-       dispatch       ADR-003    3 files   1 fail    fix      12 pass    PASSED
+  orchestrate ─→ architect ─→ coder ─→ tester ─→ fixer ─→ tester ─→ gate-keeper
+       │              │          │         │         │         │          │
+       └ dispatch     └ ADR-003  └ 3 files └ 1 fail  └ fix    └ 12 pass └ PASSED
 
 DECISION LOG
   architect: Chose matrix build strategy over sequential builds.
@@ -290,12 +293,14 @@ GATE-KEEPER VERDICT: PASSED
 All actions for a story in chronological order, across sessions.
 
 ```
-Story Trace: STORY-003 -- GitHub Actions CI Pipeline
+Story Trace: STORY-003 — GitHub Actions CI Pipeline
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 PRD: 2026-02-15-competitive-leap.md
 Status: COMPLETED
 Sessions: 2
 
 SESSION 1: abc-122 (2026-02-23T16:00:00Z)
+──────────────────────────────────────────────────
   16:00:00  orchestrate   Dispatched STORY-003 in wave 3
   16:00:02  architect     Generated ADR-003 (matrix CI strategy)
   16:00:10  coder         Wrote ci.yml, deploy.yml, smoke-test.sh
@@ -304,6 +309,7 @@ SESSION 1: abc-122 (2026-02-23T16:00:00Z)
   16:00:53  [SESSION END] User closed session before fix
 
 SESSION 2: abc-123 (2026-02-24T14:20:00Z)
+──────────────────────────────────────────────────
   14:20:00  orchestrate   Resumed STORY-003 from last checkpoint
   14:22:00  coder         Re-read previous output, confirmed state
   14:22:05  fixer         Auto-fixed artifact dependency (+8 lines)
@@ -317,8 +323,8 @@ FILES CREATED: 2 new, 1 modified
 TESTS WRITTEN: 12
 
 AGENT HANDOFFS (all sessions):
-  orchestrate --> architect --> coder --> tester --> [session break]
-                                          --> coder --> fixer --> tester --> gate-keeper
+  orchestrate ──→ architect ──→ coder ──→ tester ──→ [session break]
+                                          ──→ coder ──→ fixer ──→ tester ──→ gate-keeper
 ```
 
 ---
@@ -331,6 +337,7 @@ For every explained action, assess the impact:
 
 ```
 IMPACT ASSESSMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 FILES MODIFIED
   .github/workflows/ci.yml        +42 / -18 lines  (pipeline config)
@@ -392,7 +399,7 @@ LAST ACTION EXPLAINED (Quick)
 ==================================================
 
 Agent: [name]
-Story: [STORY-XXX] -- [title]
+Story: [STORY-XXX] — [title]
 Time: [timestamp] ([duration])
 Outcome: [SUCCESS/FAILURE/REJECTED/ESCALATED]
 
@@ -432,7 +439,7 @@ IMPACT:
 
 ```
 ==================================================
-STORY TRACE: STORY-XXX -- [Title]
+STORY TRACE: STORY-XXX — [Title]
 ==================================================
 
 [Full story trace as shown in Phase 3 story example]
@@ -455,33 +462,33 @@ SUMMARY:
 
 Simple linear chain:
 ```
-  architect --> coder --> tester --> gate-keeper
-     |           |         |          |
-     ADR-003     3 files   12 tests   PASSED
+  architect ─→ coder ─→ tester ─→ gate-keeper
+     │           │         │          │
+     └ ADR-003   └ 3 files └ 12 tests └ PASSED
 ```
 
 Chain with rework loop:
 ```
-  architect --> coder --> tester --> fixer --> tester --> gate-keeper
-     |           |         |         |         |          |
-     ADR-003     3 files   1 FAIL    fix      12 pass    PASSED
-                            |                    ^
-                            -- rework loop ------+
+  architect ─→ coder ─→ tester ─→ fixer ─→ tester ─→ gate-keeper
+     │           │         │         │         │          │
+     └ ADR-003   └ 3 files └ 1 FAIL  └ fix    └ 12 pass └ PASSED
+                            │                    ^
+                            └── rework loop ─────┘
 ```
 
 Chain with escalation:
 ```
-  architect --> coder --> tester --> debugger --> [USER]
-     |           |         |          |           |
-     ADR-003     3 files   3 FAIL     unclear     ESCALATED
+  architect ─→ coder ─→ tester ─→ debugger ─→ [USER]
+     │           │         │          │           │
+     └ ADR-003   └ 3 files └ 3 FAIL   └ unclear  └ ESCALATED
                                                     (awaiting input)
 ```
 
 Parallel dispatch (swarm mode):
 ```
-  orchestrate -+-> coder (STORY-001) --> tester --> gate-keeper --> DONE
-               +-> coder (STORY-002) --> tester --> gate-keeper --> DONE
-               +-> coder (STORY-003) --> tester --> fixer --> tester --> gate-keeper --> DONE
+  orchestrate ─┬→ coder (STORY-001) ─→ tester ─→ gate-keeper ─→ DONE
+               ├→ coder (STORY-002) ─→ tester ─→ gate-keeper ─→ DONE
+               └→ coder (STORY-003) ─→ tester ─→ fixer ─→ tester ─→ gate-keeper ─→ DONE
 ```
 
 ---
@@ -532,13 +539,13 @@ Apply `agents/_reflection-protocol.md` before and after each explanation.
 
 ```
 Developer: "What just happened?"
-  --> /explain (quick summary)
-      --> "That looks wrong" -> /undo (reverse it)
-      --> "Why did it fail?" -> /debugger (investigate)
-      --> "Show me everything" -> /explain --verbose
-      --> "Show the whole story" -> /explain --story STORY-XXX
-      --> "Show the full session" -> /replay
-      --> "Is this a pattern?" -> /analytics agent <name>
+  └→ /explain (quick summary)
+      └→ "That looks wrong" → /undo (reverse it)
+      └→ "Why did it fail?" → /debugger (investigate)
+      └→ "Show me everything" → /explain --verbose
+      └→ "Show the whole story" → /explain --story STORY-XXX
+      └→ "Show the full session" → /replay
+      └→ "Is this a pattern?" → /analytics agent <name>
 ```
 
 ---
@@ -550,43 +557,3 @@ This command is read-only. No mutations. No confirmation required.
 ---
 
 *Execution Explainer - SkillFoundry Framework*
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after implementation updates.
-- Log at least one concrete weakness and one concrete mitigation for each substantial change.
-- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
-- Escalate unresolved architectural conflicts to orchestrator-class agents.
-- Reference: agents/_reflection-protocol.md
-
-## Peer Improvement Signals
-
-- Upstream peer reviewer: evaluator
-- Downstream peer reviewer: fixer
-- Required challenge request: ask both peers to critique one assumption and one failure mode.
-- Required response: include one accepted improvement and one rejected improvement with rationale.
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents
