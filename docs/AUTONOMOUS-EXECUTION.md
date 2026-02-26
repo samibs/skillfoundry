@@ -353,5 +353,5 @@ Permission management is handled through the GitHub Copilot CLI configuration. T
 
 ---
 
-**Last Updated**: February 7, 2026
+**Last Updated**: February 26, 2026
 **Version**: 1.7.0.2

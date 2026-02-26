@@ -1,7 +1,7 @@
 # Escalation Criteria Matrix
 
 **Version:** 1.0.0
-**Last Updated:** 2026-02-05
+**Last Updated:** 2026-02-26
 **Purpose:** Define when to auto-fix violations vs. escalate to user
 
 ---

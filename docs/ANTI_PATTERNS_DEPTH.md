@@ -121,7 +121,7 @@ Priority scores calculated using: `(Frequency x 2) + (Severity x 2) + Detectabil
 ---
 
 *Document Version: 1.0.0*
-*Last Updated: 2026-01-18*
+*Last Updated: 2026-02-26*
 *Based on research from: GitHub security advisories, USENIX studies, Veracode reports, CWE Top 25 (2025), OWASP guidelines*
 
 ---
@@ -7606,7 +7606,7 @@ Use the breadth document for quick reference across many patterns. Use this dept
 
 **Document:** AI Code Security Anti-Patterns: Depth Version
 **Version:** 1.0.0
-**Last Updated:** 2026-01-18
+**Last Updated:** 2026-02-26
 **Patterns Covered:** 6 (Hardcoded Secrets, SQL/Command Injection, XSS, Authentication/Session, Cryptography, Input Validation)
 
 ## Change Log

@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v2.0.0
+# Documentation Index - SkillFoundry Framework v2.0.6
 
 Complete guide to all documentation in the framework.
 
@@ -512,8 +512,8 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 1.9.0.20
-**Documentation Updated**: February 22, 2026
+**Framework Version**: 2.0.6
+**Documentation Updated**: February 26, 2026
 **Total Agents**: 53 core agents / 60 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
 **Total Documentation Size**: ~700 KB

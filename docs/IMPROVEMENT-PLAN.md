@@ -503,5 +503,5 @@ If self-score < 7: Request peer review before proceeding
 
 ---
 
-**Last Updated**: January 25, 2026  
+**Last Updated**: February 26, 2026  
 **Next Review**: February 1, 2026

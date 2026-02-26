@@ -242,5 +242,5 @@ Open browser to `http://localhost:3000`
 
 ---
 
-**Last Updated**: January 25, 2026  
+**Last Updated**: February 26, 2026  
 **Version**: 1.0

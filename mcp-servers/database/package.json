@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/mcp-database",
-  "version": "1.0.0",
+  "version": "2.0.6",
   "description": "SkillFoundry Database MCP Server - Schema inspection and migrations",
   "type": "module",
   "main": "server.js",
