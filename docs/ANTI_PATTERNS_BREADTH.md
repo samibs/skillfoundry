@@ -7266,7 +7266,7 @@ END FUNCTION
 |-------|-------|
 | **Version** | 1.0.0 |
 | **Created** | 2026-01-18 |
-| **Last Updated** | 2026-01-18 |
+| **Last Updated** | 2026-02-26 |
 | **Coverage** | 10 security domains, 50+ anti-patterns |
 | **Format** | Language-agnostic pseudocode |
 | **License** | MIT |

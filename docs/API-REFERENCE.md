@@ -501,5 +501,5 @@ GET  /api/metrics/export/:format
 
 ---
 
-**Last Updated**: 2026-01-25  
+**Last Updated**: 2026-02-26  
 **Version**: 1.3.1

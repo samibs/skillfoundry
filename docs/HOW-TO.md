@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 1.9.0.0** | Last Updated: 2026-02-07
+> **Version 2.0.6** | Last Updated: 2026-02-26
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -1721,4 +1721,4 @@ Compliance presets are additive - they add gate-keeper rules without weakening e
 ---
 
 *Created by SBS with Claude Code*
-*Framework Version: 1.9.0.0*
+*Framework Version: 2.0.6*

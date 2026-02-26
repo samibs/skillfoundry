@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/dashboard",
-  "version": "1.0.0",
+  "version": "2.0.6",
   "description": "SkillFoundry Visual Dashboard - Web UI for project management",
   "main": "server/index.js",
   "scripts": {

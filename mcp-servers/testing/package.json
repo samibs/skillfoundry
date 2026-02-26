@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/mcp-testing",
-  "version": "1.0.0",
+  "version": "2.0.6",
   "description": "SkillFoundry Testing MCP Server - Test runner integration",
   "type": "module",
   "main": "server.js",
