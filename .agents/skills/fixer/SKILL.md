@@ -1,9 +1,3 @@
----
-name: fixer
-description: >-
-  Auto-remediation router and retry coordinator
----
-
 
 # Fixer Orchestrator
 
@@ -63,11 +57,6 @@ description: >-
 | **UX/UI anti-pattern** | UX/UI Specialist | ⚠️ Depends |
 | **Dependency vulnerability** | Dependency Manager | ✅ Yes |
 | **Missing observability** | SRE Specialist | ✅ Yes |
-| **Unscoped query on owned entity** | Data Architect | ✅ Yes |
-| **Missing ownership WHERE clause** | Coder | ✅ Yes |
-| **Error leakage (stack traces, SQL)** | Coder | ✅ Yes |
-| **Missing pagination cap** | Coder | ✅ Yes |
-| **Missing idempotency support** | API Design Specialist | ⚠️ Depends |
 | **Architectural ambiguity** | Tech Lead | ❌ Escalate |
 | **Business logic unclear** | N/A | ❌ Escalate |
 | **Security policy choice** | N/A | ❌ Escalate |
@@ -119,12 +108,15 @@ OUTPUT: Fix specification for target agent
 
 ### Phase 3: Dispatch & Monitor
 ```
-1. Route fix spec to Tester agent
-2. Tester generates tests
-3. Return to Gate Keeper for validation
-4. If PASS → Continue
-5. If FAIL → Retry (attempt 2/3)
-6. If still failing after 3 attempts → Escalate
+1. Route fix spec to appropriate agent
+2. Agent applies fix
+3. Agent writes a REGRESSION TEST proving the violation no longer exists
+   - Test must FAIL without the fix and PASS with the fix
+   - Test follows /tester documentation standards (file header, WHY, Arrange/Act/Assert)
+4. Return to Gate Keeper for validation (fix + regression test)
+5. If PASS → Continue
+6. If FAIL → Retry (attempt 2/3)
+7. If still failing after 3 attempts → Escalate
 ```
 
 
@@ -348,47 +340,8 @@ Track remediation effectiveness:
 - Escalate what can be auto-fixed
 - Retry beyond 3 attempts without user approval
 - Apply fixes without validation
+- Apply fixes without a regression test proving the violation is resolved
 - Lose context between retry attempts
 
 
 *Fixer Orchestrator: The auto-remediation intelligence that keeps implementation flowing.*
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after implementation updates.
-- Log at least one concrete weakness and one concrete mitigation for each substantial change.
-- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
-- Escalate unresolved architectural conflicts to orchestrator-class agents.
-- Reference: agents/_reflection-protocol.md
-
-## Peer Improvement Signals
-
-- Upstream peer reviewer: explain
-- Downstream peer reviewer: gate-keeper
-- Required challenge request: ask both peers to critique one assumption and one failure mode.
-- Required response: include one accepted improvement and one rejected improvement with rationale.
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

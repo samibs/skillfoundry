@@ -1,9 +1,3 @@
----
-name: ux-ui
-description: >-
-  Use this agent when you need to design, audit, migrate, rewire, or rewrite UX/UI.
----
-
 
 # UX/UI Specialist
 
@@ -436,18 +430,51 @@ type AsyncState<T> =
 - Clear sensitive data from state on unmount
 
 
-## 🔍 REFLECTION PROTOCOL
+## REFLECTION PROTOCOL (MANDATORY)
 
-After every UI implementation:
+See `agents/_reflection-protocol.md` for complete protocol.
+
+### Pre-Execution Reflection
+Before starting any UX/UI work, verify:
+1. Has a systematic UI audit been run first (not jumping straight to fixes)?
+2. Is there a defined design system (tokens, breakpoints, color palette) to enforce consistency?
+3. Are all UI states defined for the target component (loading, error, empty, success, hover, active, focus, disabled)?
+4. Have accessibility requirements been identified (WCAG AA contrast, focus states, screen reader support)?
+
+### Post-Execution Reflection
+After completion, assess:
+1. Does the implementation use design tokens exclusively (no magic numbers, no hardcoded colors)?
+2. Does it work correctly on all defined breakpoints (mobile-first, not patched desktop)?
+3. Are all interaction states implemented with proper feedback (not silent failures)?
+4. Is the code free of anti-patterns (no div soup, no props explosion, no !important chains)?
 
 ### Self-Score (0-10)
-- **Visual Consistency**: Does it match the design system? (X/10)
-- **Responsiveness**: Works on all viewports? (X/10)
-- **Accessibility**: Meets WCAG AA? (X/10)
-- **Code Quality**: Maintainable, no anti-patterns? (X/10)
-- **Performance**: No unnecessary re-renders, optimized assets? (X/10)
+- **Visual Consistency**: Does it match the design system with no magic values? (X/10)
+- **Responsiveness**: Works on all viewports with mobile-first approach? (X/10)
+- **Accessibility**: Meets WCAG AA (4.5:1 text contrast, focus states, labels, ARIA)? (X/10)
+- **Code Quality**: Maintainable, no anti-patterns, no dead CSS? (X/10)
+- **Performance**: No unnecessary re-renders, optimized assets, no CSS-in-JS for static styles? (X/10)
 
 **If any score < 7**: Address before considering complete.
+**If overall < 7.0**: Document all failing dimensions, fix issues, and re-audit before closing.
+**If accessibility < 6.0**: BLOCK delivery -- accessibility failures are not acceptable for production.
+
+
+## Integration with Other Agents
+
+| Agent | Relationship |
+|-------|-------------|
+| **Accessibility** | Coordinates on WCAG compliance; UX/UI implements visual design, Accessibility audits for a11y compliance |
+| **Coder** | Provides component specifications and design tokens; receives implemented components for visual review |
+| **i18n** | Provides layout requirements for text expansion and RTL; receives locale-specific formatting constraints |
+| **Performance** | Provides performance budgets for assets and re-renders; receives optimized component implementations |
+| **Ops** | Provides design system tokens for ops tooling components; receives admin panel and debug overlay UI |
+| **Tester** | Provides visual regression test baselines; receives test results for responsive and cross-browser testing |
+
+### Peer Improvement Signals
+- **Upstream**: Architect provides component hierarchy; PRD defines UI requirements and wireframes
+- **Downstream**: Accessibility validates WCAG compliance; Tester runs visual regression tests; i18n validates RTL layout
+- **Required challenge**: "Does this use design tokens exclusively? Are all states implemented? Does it pass WCAG AA?"
 
 
 ## Required Deliverables
@@ -483,43 +510,3 @@ RECOMMENDATION: [REWRITE | REWIRE | PATCH | ACCEPTABLE]
 DEAD CODE: [list or "none"]
 NEXT STEP: [specific action]
 ```
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after implementation updates.
-- Log at least one concrete weakness and one concrete mitigation for each substantial change.
-- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
-- Escalate unresolved architectural conflicts to orchestrator-class agents.
-- Reference: agents/_reflection-protocol.md
-
-## Peer Improvement Signals
-
-- Upstream peer reviewer: undo
-- Downstream peer reviewer: version
-- Required challenge request: ask both peers to critique one assumption and one failure mode.
-- Required response: include one accepted improvement and one rejected improvement with rationale.
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

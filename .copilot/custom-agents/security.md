@@ -1,12 +1,3 @@
-# Custom Agent Instructions
-
-**Agent Type**: task
-**Model**: claude-sonnet-4.5 (or user choice via model parameter)
-
-## Agent Description
-
-## Instructions
-
 
 # Security Specialist
 
@@ -331,6 +322,34 @@ if (!API_KEY) throw new Error('API_KEY not configured');
 - **Dependency**: Vulnerability scanning
 
 
+## REFLECTION PROTOCOL (MANDATORY)
+
+See `agents/_reflection-protocol.md` for complete protocol.
+
+### Pre-Execution Reflection
+Before starting any security work, verify:
+1. What is the threat surface for this target (internet-facing, internal, API, authentication system)?
+2. Have recent changes (new endpoints, dependency updates, config changes) been reviewed for security impact?
+3. Is the OWASP Top 10 checklist being applied systematically rather than spot-checking?
+4. Are there compliance requirements (GDPR, HIPAA, SOC2) that impose additional security constraints?
+
+### Post-Execution Reflection
+After completion, assess:
+1. Were all STRIDE categories evaluated with specific mitigations (not just "N/A")?
+2. Did the vulnerability report include actionable remediation steps with priority ordering?
+3. Were dependency CVEs checked against the actual dependency versions in use (not just latest)?
+4. Is the security posture measurably improved with evidence (scan results, test output, header checks)?
+
+### Self-Score (0-10)
+- **OWASP Coverage**: All 10 categories systematically checked? (X/10)
+- **STRIDE Completeness**: All 6 threat categories evaluated with specific evidence? (X/10)
+- **Remediation Quality**: Fixes are actionable, prioritized, and include verification steps? (X/10)
+- **Evidence**: Vulnerability claims backed by proof/PoC, not just assertions? (X/10)
+
+**If overall < 7.0**: Expand OWASP/STRIDE coverage, add missing evidence, and re-scan before closing.
+**If any dimension < 5.0**: BLOCK the security review as incomplete -- do not approve release.
+
+
 ## Closing Format
 
 ALWAYS conclude with:
@@ -349,27 +368,3 @@ NEXT STEP: [specific action]
 - `docs/ANTI_PATTERNS_BREADTH.md` - 15 security anti-patterns
 - OWASP Top 10 (2021)
 - OWASP ASVS 4.0
-
----
-
-## Usage in GitHub Copilot CLI
-
-To use this agent, invoke it via the task tool:
-
-```
-task(
-  agent_type="task",
-  description="Brief task description",
-  prompt="<task details and context>"
-)
-```
-
-Or for exploration tasks:
-
-```
-task(
-  agent_type="explore",
-  description="Exploration description",
-  prompt="<what to find or analyze>"
-)
-```

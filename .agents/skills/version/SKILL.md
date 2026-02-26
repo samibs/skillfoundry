@@ -1,11 +1,5 @@
 ---
 name: version
-description: >-
-  Version Format
----
-
----
-name: version
 description: Show version information and check for updates
 ---
 
@@ -257,42 +251,158 @@ New features added. Run ./update.sh to update.
 - Provide actionable next steps if update available
 - Show risk level for updates
 
-## Continuous Improvement Contract
+---
 
-- Run self-critique before handoff and after implementation updates.
-- Log at least one concrete weakness and one concrete mitigation for each substantial change.
-- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
-- Escalate unresolved architectural conflicts to orchestrator-class agents.
-- Reference: agents/_reflection-protocol.md
+## NUMBERED PHASES
 
-## Peer Improvement Signals
+### PHASE 1: DETECT
+Read version from the platform-specific location and the framework `.version` file.
 
-- Upstream peer reviewer: ux-ui
-- Downstream peer reviewer: workflow
-- Required challenge request: ask both peers to critique one assumption and one failure mode.
-- Required response: include one accepted improvement and one rejected improvement with rationale.
+### PHASE 2: PARSE
+Split version strings into MAJOR.FEATURE.DATABASE.ITERATION components. Handle legacy 3-component versions by appending `.0`.
 
-## Responsibilities
+### PHASE 3: COMPARE
+Determine update type (up-to-date, patch, feature, database migration, major, downgrade).
 
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
+### PHASE 4: DISPLAY
+Show formatted version banner with status and recommended action.
 
-## Workflow
+### PHASE 5: ADVISE
+Provide risk-assessed next steps based on comparison result.
 
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
+---
 
-## Inputs
+## STALE VERSION DETECTION
 
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
+Detect and warn when the installed version falls behind by more than one feature release:
 
-## Outputs
+```
+⚠️ STALE VERSION DETECTED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents
+  Installed: 1.5.0.0
+  Available: 1.8.0.0
+  Behind by: 3 feature releases
+
+  You are missing:
+  - v1.6.0.0: The Dream Team (38+2 agents)
+  - v1.7.0.0: Auto-remediation & autonomous execution
+  - v1.8.0.0: [latest features]
+
+  Risk: Running a stale version may cause compatibility
+  issues with newer PRD formats and agent protocols.
+
+  Recommended: Run ./update.sh to update.
+```
+
+### Stale Thresholds
+
+| Gap | Status | Action |
+|-----|--------|--------|
+| 0 releases behind | UP TO DATE | None |
+| 1 release behind | SLIGHTLY BEHIND | Update when convenient |
+| 2-3 releases behind | STALE | Update recommended |
+| 4+ releases behind | CRITICALLY STALE | Update urgently, check migration notes |
+
+---
+
+## BAD vs GOOD Examples
+
+### BAD: Vague version output with no actionable guidance
+```
+/version
+
+Version: 1.7.0.0
+
+You may need to update.
+```
+Problem: No comparison performed. No risk assessment. No next steps. User doesn't know if they should update or what changed.
+
+### GOOD: Complete version report with context and action
+```
+/version
+
+╔═══════════════════════════════════════════════════════════════╗
+║                  Claude AS Framework                          ║
+║  Version: 1.7.0.0                                             ║
+╚═══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+  VERSION INFORMATION
+═══════════════════════════════════════════════════════════════
+
+  Installed Version: 1.7.0.0
+  Available Version: 1.8.0.0
+
+  ⚠ Feature update available
+
+  New in v1.8.0.0:
+  - Enhanced parallel execution
+  - New compliance pipeline
+
+  Risk Level: LOW (safe update)
+  Run: ./update.sh
+
+  Platform: Claude Code
+  41 agents ready to assist
+═══════════════════════════════════════════════════════════════
+```
+
+---
+
+## ERROR HANDLING
+
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| Version file not found | Framework not installed or path incorrect | Run `./install.sh` |
+| Cannot parse version | Malformed version string in `.version` file | Check `.version` file format (MAJOR.FEATURE.DATABASE.ITERATION) |
+| Platform not detected | Not running in Claude Code, Copilot, or Cursor | Manually specify platform or check installation |
+| Network unreachable | Cannot check remote version | Show installed version only, note check failed |
+| Downgrade detected | Installed version newer than available | Warn user; likely on a development branch |
+
+---
+
+## REFLECTION PROTOCOL
+
+### Pre-Execution Reflection
+Before running version check, answer:
+- Which platform am I running on?
+- Where is the version file for this platform?
+- Can I access both installed and available version files?
+
+### Post-Execution Reflection
+After displaying version info, evaluate:
+- Did I successfully compare both versions?
+- Did I provide clear, actionable next steps?
+- Did I correctly assess the risk level?
+- Did I detect staleness if applicable?
+
+### Self-Score (1-10)
+| Dimension | Score | Criteria |
+|-----------|-------|----------|
+| Accuracy | [1-10] | Were version numbers correctly parsed and compared? |
+| Clarity | [1-10] | Was the output easy to understand? |
+| Actionability | [1-10] | Did I provide clear next steps? |
+| Completeness | [1-10] | Did I cover all version scenarios? |
+
+**Threshold**: If any dimension scores below 6, re-run the version check with additional diagnostic output.
+
+---
+
+## INTEGRATION WITH OTHER AGENTS
+
+| Agent | Interaction |
+|-------|------------|
+| `/health` | Version status is a component of overall health check |
+| `/status` | Includes version in project status dashboard |
+| `/go` | Checks version compatibility before PRD execution |
+| `/update` | Triggered when version agent recommends update |
+| `/forge` | Verifies framework version before pipeline execution |
+| `/metrics` | Tracks version across executions for compatibility analysis |
+
+### Peer Improvement Signals
+
+- **From `/health`**: If health check detects version-related issues, recommend `/version --check`
+- **From `/go`**: If PRD execution fails due to missing features, check if version is stale
+- **To `/status`**: Provide version status for inclusion in project dashboard
+- **To `/metrics`**: Report version information as metadata on execution records

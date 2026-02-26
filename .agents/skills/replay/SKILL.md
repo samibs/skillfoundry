@@ -1,9 +1,3 @@
----
-name: replay
-description: >-
-  /replay - Replay & Session Viewer
----
-
 # /replay - Replay & Session Viewer
 
 > Re-run the last `/go` or `/forge` execution, or view past session timelines.
@@ -131,44 +125,176 @@ This command executes code. Requires confirmation before proceeding.
 
 ---
 
+## SAFETY CHECKS (Before Replay)
+
+Before executing any replay, validate:
+
+1. **State file integrity**: Verify `.claude/dispatch-state.json` exists and is valid JSON
+2. **File existence**: Confirm all files referenced in the previous execution still exist
+3. **Git state clean**: Check `git status` for uncommitted changes that could conflict
+4. **Dependency check**: Ensure stories being replayed don't depend on stories not being replayed
+5. **Version match**: Confirm framework version hasn't changed since original execution
+
+```
+PRE-REPLAY VALIDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  State file:     ✓ Valid
+  Referenced files: ✓ All exist (12/12)
+  Git state:      ✓ Clean working tree
+  Dependencies:   ✓ No broken deps
+  Version:        ✓ Same framework version
+
+  Proceed with replay? (y/N)
+```
+
+**If any check fails:**
+```
+⚠️ REPLAY BLOCKED
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  FAILED CHECKS:
+  ✗ Git state: 3 uncommitted files detected
+  ✗ Referenced files: src/auth/jwt.ts no longer exists
+
+  OPTIONS:
+  1. Fix issues and retry
+  2. Use --from=<phase> to skip past problematic phase
+  3. Run /go fresh instead of replaying
+```
+
+---
+
+## BAD vs GOOD Examples
+
+### BAD: Replaying without validation
+```
+/replay
+
+> Replaying last execution...
+> Running STORY-003...
+> ERROR: src/auth/jwt.ts not found
+> ERROR: STORY-001 dependency not met
+> 3 stories failed, 45K tokens wasted
+```
+Problem: No pre-flight checks. Blindly re-ran stale state against changed codebase.
+
+### GOOD: Replay with validation and targeted scope
+```
+/replay --failed
+
+> Pre-replay validation...
+>   State file: ✓ Valid
+>   Git state: ✓ Clean
+>   Dependencies: ✓ Resolved
+>
+> Replay Plan:
+>   Last command: /forge
+>   Will re-run: 2 failed stories (STORY-004, STORY-007)
+>   Skipping: 5 completed stories
+>
+> Replay this execution? (y/N) y
+>
+> STORY-004: ✓ Passed (fix applied from previous feedback)
+> STORY-007: ✓ Passed
+>
+> Replay Complete — 2/2 stories succeeded
+```
+
+---
+
+## OUTPUT FORMAT
+
+```
+REPLAY RESULT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Command Replayed:  /forge
+  Mode:              semi-auto + parallel
+  PRD:               genesis/my-feature.md
+
+  Stories Replayed:  [N]
+  ├── Succeeded:     [N]
+  ├── Failed:        [N]
+  └── Skipped:       [N]
+
+  Duration:          [Xm Ys]
+  Tokens Used:       ~[X]K
+
+  Phase Summary:
+  ├── Ignite:    ✓ PRDs validated
+  ├── Forge:     ✓/✗ [N]/[M] stories
+  ├── Temper:    ✓/✗ Layer checks
+  ├── Inspect:   ✓/✗ Security audit
+  ├── Remember:  ✓ Knowledge harvested
+  └── Debrief:   ✓ Scratchpad updated
+
+  Overall: SUCCESS / PARTIAL / FAILED
+  Next Step: [specific recommendation]
+```
+
+---
+
+## ERROR HANDLING
+
+| Error | Cause | Resolution |
+|-------|-------|------------|
+| No execution history | No previous `/go` or `/forge` run | Run `/go` or `/forge` first |
+| State file corrupted | Malformed JSON in dispatch-state | Run `/go --clean` then `/go` |
+| Referenced file missing | File deleted since last execution | Use `--from=<phase>` to skip, or run fresh |
+| Dependency chain broken | Completed story was rolled back | Replay full chain, not just failed |
+| Git conflict detected | Working tree has uncommitted changes | Commit or stash changes first |
+| Version mismatch | Framework updated since last run | Run fresh with `/go` instead |
+
+---
+
+## REFLECTION PROTOCOL
+
+### Pre-Execution Reflection
+Before replaying, answer:
+- Is this replay necessary, or should I run `/go` fresh?
+- Are the failure conditions from the last run still present?
+- Will the same inputs produce different outputs this time?
+- Have files changed since the original execution?
+
+### Post-Execution Reflection
+After replay completes, evaluate:
+- Did the replayed stories pass that previously failed?
+- Were there new failures not present in the original run?
+- Was the replay more efficient than running fresh?
+- Should the state file be updated or cleared?
+
+### Self-Score (1-10)
+| Dimension | Score | Criteria |
+|-----------|-------|----------|
+| Safety | [1-10] | Were all pre-flight checks performed? |
+| Efficiency | [1-10] | Did we avoid re-running unnecessary stories? |
+| Completeness | [1-10] | Were all failed stories addressed? |
+| Recovery | [1-10] | Did we handle errors gracefully? |
+
+**Threshold**: If any dimension scores below 6, escalate to user with explanation before proceeding.
+
+---
+
+## INTEGRATION WITH OTHER AGENTS
+
+| Agent | Interaction |
+|-------|------------|
+| `/go` | Source of execution state; replay re-runs `/go` pipeline |
+| `/forge` | Source of execution state; replay re-runs `/forge` pipeline |
+| `/fixer` | Failed stories may need fixer intervention before replay |
+| `/anvil` | Quality gates re-run during replay |
+| `/status` | Shows replay-eligible sessions |
+| `/context` | Budget check before replay to avoid token waste |
+| `/memory` | Replay outcomes recorded to memory bank |
+
+### Peer Improvement Signals
+
+- **From `/go`**: If `/go` reports repeated failures on same story, suggest `/replay --failed` with targeted fixes
+- **From `/fixer`**: If fixer resolved issues, recommend replay to verify fixes
+- **To `/metrics`**: Report replay success rates for trend analysis
+- **To `/memory`**: Record what changed between original run and replay
+
+---
+
 *Replay Manager - The Forge - Claude AS Framework*
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after implementation updates.
-- Log at least one concrete weakness and one concrete mitigation for each substantial change.
-- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
-- Escalate unresolved architectural conflicts to orchestrator-class agents.
-- Reference: agents/_reflection-protocol.md
-
-## Peer Improvement Signals
-
-- Upstream peer reviewer: release
-- Downstream peer reviewer: review
-- Required challenge request: ask both peers to critique one assumption and one failure mode.
-- Required response: include one accepted improvement and one rejected improvement with rationale.
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

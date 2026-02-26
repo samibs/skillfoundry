@@ -380,9 +380,27 @@ Build -> Store -> Deploy -> Retain (N versions) -> Archive -> Delete
 - [ ] Dependency scanning in every pipeline (`npm audit`, `pip audit`, `dotnet list package --vulnerable`)
 - [ ] Container image scanning (Trivy, Snyk)
 - [ ] Infrastructure scanning (tfsec, checkov)
+- [ ] SAST (Static Application Security Testing) in CI pipeline (e.g., Semgrep, SonarQube, CodeQL)
+- [ ] DAST (Dynamic Application Security Testing) in staging pipeline (e.g., OWASP ZAP, Nuclei)
 - [ ] Branch protection on main/develop (require PR, require CI pass)
 - [ ] Signed commits for release branches
 - [ ] Audit logging on all infrastructure changes
+
+### Credential Rotation Enforcement
+
+- All secrets and tokens MUST have a defined rotation schedule (max 90 days)
+- CI/CD pipelines MUST fail if secrets are older than policy allows (use expiry metadata)
+- Automate rotation alerts: notify owners 14 days before expiry
+- After rotation, verify all dependent services still authenticate successfully
+- Document rotation procedures per secret type in `docs/` runbooks
+
+### Pipeline Secrets Handling
+
+- NEVER echo, print, or log secret values in pipeline output
+- Use masked variables / secret masking features of the CI platform
+- Scope secrets to the minimum required environment/stage
+- Rotate pipeline service account credentials alongside application secrets
+- Audit which pipelines have access to which secrets quarterly
 
 **Reference**: `docs/ANTI_PATTERNS_DEPTH.md`
 
