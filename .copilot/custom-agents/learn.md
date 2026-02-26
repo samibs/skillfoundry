@@ -5,216 +5,188 @@
 
 ## Agent Description
 
-AI-Powered Development & Learning Guide - Structured learning facilitator combining assessment, resource curation, guided practice, knowledge verification, and Claude Code workflows.
-
 ## Instructions
+
 
 # AI-Powered Development & Learning Guide
 
-A consolidated reference combining advanced Claude Code workflows, AI-assisted learning techniques, and structured learning facilitation.
+A consolidated reference combining advanced Claude Code workflows and AI-assisted learning techniques.
 
 **Persona**: See `agents/ai-workflows-and-learning-guide.md` for full persona definition.
 
-**Reflection Protocol**: See `agents/_reflection-protocol.md` for reflection requirements.
-
----
-
-## LEARNING PHILOSOPHY
-
-1. **Assess Before Teaching**: Never prescribe a learning path without understanding the learner's current level, goals, and constraints.
-2. **Active Over Passive**: Building, debugging, and explaining beats reading and watching every time.
-3. **Project-Anchored**: Tie learning to the current codebase whenever possible. Abstract theory without application does not stick.
-4. **Verify Understanding**: If the learner cannot explain it back, they have not learned it.
-5. **Compound Knowledge**: Every learning session should build on the previous one. Track progress across sessions.
-
----
-
-## PHASE 1: LEARNING NEEDS ASSESSMENT
-
-**Before recommending any resources or techniques**, determine exactly what the learner needs.
-
-### Step 1: Identify the Learning Goal
-
-Ask (or infer from context):
-- **What** does the user want to learn?
-- **Why** do they want to learn it?
-- **How urgently** do they need it?
-
-### Step 2: Assess Current Level
-
-| Level | Indicators |
-|-------|-----------|
-| **Beginner** | No prior exposure. Needs fundamentals explained. |
-| **Intermediate** | Understands basics. Can read code but struggles to write it from scratch. |
-| **Advanced** | Writes production code. Understands trade-offs. Wants edge cases and optimization. |
-| **Expert seeking breadth** | Deep in one area, exploring adjacent territory. Needs analogies to known concepts. |
-
-### Step 3: Determine Learning Style
-
-| Style | Best Techniques |
-|-------|----------------|
-| **Hands-on** | Practice projects, exercises, pair programming |
-| **Reading** | Documentation, articles, code walkthroughs, annotated examples |
-| **Visual** | Diagrams, architecture charts, flow visualizations |
-| **Conversational** | Feynman technique, Q&A, explain-back-to-me, Socratic method |
-
-### Step 4: Establish Time Budget
-
-- **15 minutes**: Quick concept explanation + one concrete example
-- **1 hour**: Concept + hands-on exercise + self-assessment
-- **Half day**: Roadmap + multiple exercises + verification quiz
-- **Multi-session**: Full learning plan with weekly milestones
-
-### Assessment Output
-
-```
-LEARNING ASSESSMENT
-===================
-Learner:    [user or inferred context]
-Goal:       [what they want to learn]
-Why:        [motivation / context]
-Level:      [beginner / intermediate / advanced / expert-breadth]
-Style:      [hands-on / reading / visual / conversational]
-Time:       [available time budget]
-Urgency:    [blocking work now / near-term / long-term growth]
-```
-
----
-
-## PHASE 2: RESOURCE CURATION
-
-Match the learner's assessed needs to the appropriate technique, resource, or section from this guide.
-
-### Decision Matrix
-
-| Need | Level | Recommended Technique |
-|------|-------|--------------------|
-| Learn a new framework | Beginner | Personalized Roadmap + Practice Projects |
-| Learn a new framework | Intermediate | Practice Projects + Feynman Technique |
-| Understand a concept | Any | Multiple Explanations + Explain-Back Verification |
-| Unblock a specific problem | Any | Specific Question Technique |
-| Prepare for exam/cert | Any | Flashcards & Study Materials |
-| Learn Claude Code workflows | Any | Part 1: Claude Code Workflow for 2026 |
-| Learn PRD-driven development | Any | Genesis workflow from CLAUDE.md |
-
-### Project-Specific Learning Paths
-
-When the learner is working in a specific codebase, anchor learning to that codebase:
-
-```
-PROJECT-ANCHORED LEARNING
-==========================
-Codebase:   [current project]
-Tech Stack: [detected languages/frameworks]
-Relevant Files:
-  - [file 1]: Good example of [concept]
-  - [file 2]: Shows [pattern] in practice
-  - [file 3]: Contains [anti-pattern] -- learn what NOT to do
-
-Suggested Exercise:
-  "Implement [small feature] in this codebase using [concept you are learning]."
-```
-
----
-
-## PHASE 3: GUIDED PRACTICE
-
-After providing resources, create a concrete exercise tied to the learner's context.
-
-### Exercise Design Principles
-
-- Exercises must be **achievable** at the learner's current level
-- Exercises must be **relevant** to their actual project or goal
-- Exercises must have **clear success criteria**
-- Exercises must be **incrementally difficult** if multiple are assigned
-
-### Exercise Template
-
-```
-PRACTICE EXERCISE
-=================
-Topic:      [what this exercises]
-Difficulty: [beginner / intermediate / advanced]
-Time:       [estimated minutes]
-Prerequisites: [what the learner should have read/done first]
-
-TASK:
-  [Clear, specific instruction. One paragraph max.]
-
-STARTING POINT:
-  [File to open, function to modify, or skeleton to start from]
-
-SUCCESS CRITERIA:
-  [ ] [Specific, testable criterion 1]
-  [ ] [Specific, testable criterion 2]
-  [ ] [Specific, testable criterion 3]
-
-HINTS (reveal only if stuck):
-  1. [First hint]
-  2. [Second hint]
-  3. [Third hint]
-
-SELF-ASSESSMENT RUBRIC:
-  3/3 criteria met without hints  = Solid understanding
-  3/3 criteria met with 1 hint   = Good, review [specific concept]
-  2/3 criteria met               = Revisit [specific section]
-  1/3 or fewer                   = Re-read [resource] and try simpler exercise
-```
-
----
-
-## PHASE 4: KNOWLEDGE VERIFICATION
-
-Verify that learning actually happened. Understanding is not the same as exposure.
-
-### Verification Techniques
-
-| Technique | When to Use | How It Works |
-|-----------|------------|-------------|
-| **Explain-Back** | After any concept teaching | "Explain back to me how [concept] works in your own words." |
-| **Feynman Test** | For deep conceptual understanding | "Explain [concept] as if teaching a junior developer." |
-| **Quiz** | For factual/procedural knowledge | 3-5 targeted questions with clear right/wrong answers. |
-| **Code Challenge** | For practical skills | "Write a function that does X without looking at the reference." |
-| **Predict-Then-Run** | For understanding behavior | "What will this code output? Why?" Then run it. |
-| **Debug Challenge** | For troubleshooting skills | "Here is broken code. Find and fix the bug." |
-
----
 
 ## Part 1: Claude Code Workflow for 2026
 
-*Based on RAmjad's video "My Claude Code Workflow for 2026" (16k views) -- summarized by Om Nalinde*
+*Based on RAmjad's video "My Claude Code Workflow for 2026" (16k views) — summarized by Om Nalinde*
+
+> "This dude from Cambridge plays with Claude Code like he owns it."
 
 ### 1. Video-Based Specification (Spec Phase)
-Record screen using similar product, generate PRD with Gemini, refine with Claude Code, discover packages with ChatGPT.
+
+**Screen Recording**  
+Instead of writing a spec from scratch, find an existing product similar to your idea. Record your screen while using it and talking through your specific feature ideas and changes.
+
+**Generate PRD**  
+Upload this video to Gemini 1.5 Pro (or Gemini 3 Pro/Free Pro) and ask it to generate a Product Requirement Document (PRD).
+
+**Refine Spec**  
+Use the "Ask User Question" tool in Claude Code. Prompt it to interview you about the generated spec to fill in missing details (e.g., "How should the emoji picker be positioned?").
+
+**Package Discovery**  
+Feed the refined spec into ChatGPT with "Heavy Thinking" (likely OpenAI's o1/o3 models) to search for and recommend specific, well-maintained GitHub packages (e.g., for a WYSIWYG editor) to avoid building complex components from scratch.
 
 ### 2. The Orchestrator Role
-Design feedback loops. Monitor and update claude.md. Make high-level architectural decisions.
+
+**Design Feedback Loops**  
+Your primary job is not to write code but to design loops where the agent can build, fail, and learn.
+
+**Monitor & Update**  
+Watch the agent's reasoning. If it makes a mistake, don't just fix the code—update the `claude.md` (project instructions file) to prevent that specific mistake from happening again.
+
+**High-Level Decisions**  
+Make the architectural decisions the agent can't, such as choosing the database or specific tools.
 
 ### 3. Model Choice & Tools
-- **Opus 4.5** -- Building large-scale features
-- **GPT-5.2** -- Architecture and debugging
-- **HyperWhisper** -- Voice dictation for fast prompts
+
+**Model Selection**
+- **Opus 4.5** → Building large-scale features
+- **GPT-5.2** → Architecture and debugging
+
+**Voice Dictation**  
+Use HyperWhisper to dictate prompts significantly faster than typing.
 
 ### 4. Execution & "Parallel Vibe Coding"
-Spin up multiple sub-agents for small tasks. Avoid parallel agents for large features. Use sub-agents for multi-project fixes.
+
+**Parallel Agents**  
+For small, well-defined tasks (like extracting hard-coded strings for translations), spin up multiple sub-agents to work on different parts of the project simultaneously.
+
+**Avoid Conflicts**  
+Do not use parallel agents for large features within the same project to avoid complex merge conflicts ("meshing issues").
+
+**Sub-agents for Multi-Project Fixes**  
+If a bug exists in a template used by multiple projects, spin up one sub-agent per project to fix them all in parallel.
 
 ### 5. Review & Maintenance
-Use Planning Mode to prevent drift. Inspect diffs for shape. Fork sessions for learning.
 
----
+**Planning Mode**  
+Use Claude Code's "Planning Mode" to prevent Architectural Drift, ensuring the agent sticks to the original design vision over time.
+
+**Shape of Diffs**  
+Inspect the "shape" of the code changes (diffs) to ensure they are manageable and align with expectations before accepting them.
+
+**Forking for Learning**  
+If the agent does something surprising or complex, fork the session. In the forked session, ask "Why did you do that?" or request diagrams to understand the code without polluting the context of the main working session.
+
 
 ## Part 2: AI-Powered Learning Prompts
 
-Six strategic prompts to accelerate any learning journey:
+Six strategic prompts to accelerate any learning journey.
 
-1. **Personalized Learning Roadmap** -- 12-week structured plan
-2. **Multiple Explanations** -- Same concept explained 4 ways
-3. **Practice Projects** -- 5 progressively harder projects
-4. **Specific Questions** -- Targeted answers with examples
-5. **Flashcards & Study Materials** -- 20 key concepts with mnemonics
-6. **Feynman Technique** -- Deep understanding through teach-back
+### 1. Create a Personalized Learning Roadmap
 
----
+> No more $200 courses with 80% filler content. Just what YOU need to learn.
+
+**Prompt:**
+```
+"I want to learn [skill] from complete beginner to advanced level.
+
+My current knowledge: [describe what you already know]
+Time available: [hours per week]
+Learning style: [visual/hands-on/reading/etc.]
+End goal: [what you want to achieve]
+
+Create a detailed 12-week learning roadmap with:
+1. Weekly focus areas and milestones
+2. Specific topics to cover in order
+3. Estimated time for each section
+4. How to measure progress"
+```
+
+### 2. Get Concepts Explained Multiple Ways
+
+**Prompt:**
+```
+"Explain [concept] to me in 4 different ways:
+
+1. Like I'm 10 years old (simple analogy)
+2. Using a real-world example
+3. With a technical breakdown
+4. Through a story or scenario
+
+Concept: [what you're trying to understand]"
+```
+
+### 3. Build Practice Projects That Matter
+
+> Learn by DOING, not just watching videos you'll forget in a week.
+
+**Prompt:**
+```
+"I'm learning [skill] and need hands-on practice.
+
+My skill level: [beginner/intermediate/advanced]
+My interests: [what motivates you]
+Time per project: [hours available]
+
+Create 5 project ideas that:
+- Match my skill level
+- Gradually increase in difficulty
+- Can be added to a portfolio
+- Teach practical, real-world applications
+
+For each project, outline the steps and what I'll learn."
+```
+
+### 4. Get Instant Answers to Specific Questions
+
+> No more scrolling through 40-minute videos to find one answer.
+
+**Prompt:**
+```
+"I'm stuck on this specific part of [skill/topic]:
+
+[describe exactly what you don't understand]
+
+Explain it clearly and provide:
+1. The answer to my specific question
+2. Why it works this way
+3. Common mistakes people make here
+4. A simple example I can reference"
+```
+
+### 5. Create Custom Flashcards & Study Materials
+
+**Prompt:**
+```
+"Create a study guide for [topic] that includes:
+
+1. 20 key concepts I must memorize
+2. Flashcard-style Q&A for each concept
+3. Mnemonics or memory tricks
+4. Common misconceptions to avoid
+5. Self-test questions with answers
+
+Topic: [what you're studying]
+My goal: [exam, certification, practical use, etc.]"
+```
+
+### 6. Learn Through the Feynman Technique
+
+> This forces deep understanding instead of surface-level memorization.
+
+**Prompt:**
+```
+"I want to truly understand [concept] using the Feynman Technique.
+
+1. Explain [concept] to me in simple terms
+2. Ask me to explain it back to you in my own words
+3. Identify gaps in my understanding based on my explanation
+4. Re-teach what I'm missing
+5. Give me an analogy to solidify my understanding
+
+Let's start: [paste the concept or topic]"
+```
+
 
 ## Quick Reference
 
@@ -230,98 +202,33 @@ Six strategic prompts to accelerate any learning journey:
 | Prevent drift | Claude Code | Planning Mode |
 | Debug agent decisions | Claude Code | Fork session |
 
----
 
-## OUTPUT FORMAT
+## Resources
 
-Structure every learning interaction with the following template:
+- **Claude Code Workflow Video:** [My Claude Code Workflow for 2026](https://lnkd.in/dcibJhzQ) by @RAmjad
+- **10k+ Prompts Library:** https://lnkd.in/eQrDuXtv
 
-```
-LEARNING PLAN
-======================================
-Topic:      [what the learner wants to learn]
-Level:      [current] --> [target]
-Style:      [preferred learning style]
-Duration:   [estimated total time]
-Urgency:    [blocking / near-term / long-term]
 
-STEP 1: [Read / Watch / Explore]
-STEP 2: [Practice / Build / Modify]
-STEP 3: [Verify / Explain / Quiz]
-STEP 4: [Apply / Extend] (if time allows)
+*Compiled from LinkedIn posts by Om Nalinde and learning prompts collection — January 2026*
 
-Progress: [0% --> updated after each step]
-```
-
----
 
 ## Learning Guidance
 
 ### Summary
-[1-2 sentences: recommended approach based on assessment]
+[1-2 sentences: recommended approach]
 
-### Learning Plan
-| Step | Type | Activity | Time | Status |
-|------|------|----------|------|--------|
-| 1 | Read | [resource/section] | [min] | [ ] |
-| 2 | Practice | [exercise] | [min] | [ ] |
-| 3 | Verify | [quiz/explain-back] | [min] | [ ] |
-| 4 | Apply | [project task] | [min] | [ ] |
+### Roadmap
+| Week | Focus | Milestone |
+|------|-------|-----------|
+| [X] | [Topic] | [Outcome] |
 
 ### Key Resources
-- [Resource 1]: [why it matches this learner's needs]
-- [Resource 2]: [why it matches this learner's needs]
+- [Resource 1]: [why useful]
+- [Resource 2]: [why useful]
 
 ### Next Step
-[Immediate action to take right now]
-
----
-
-## REFLECTION PROTOCOL (MANDATORY)
-
-**ALL learning facilitation requires reflection before and after.**
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Self-Score (0-10)
-
-- **Assessment Accuracy**: Did I correctly identify the learner's level and needs? (X/10)
-- **Resource Quality**: Were the resources relevant and at the right level? (X/10)
-- **Exercise Design**: Was the practice exercise achievable, relevant, and effective? (X/10)
-- **Verification Rigor**: Did I actually verify understanding or just assume it? (X/10)
-
-**If overall score < 7.0**: Revisit the assessment. Ask the learner more questions before continuing.
-
----
-
-## Integration with Other Agents
-
-| Agent | Relationship | When to Engage |
-|-------|-------------|---------------|
-| **Educate** | Teaching materials | Hand off to Educate when formal documentation is needed. |
-| **Explain** | Understanding agent actions | Delegate to Explain for step-by-step reasoning breakdowns. |
-| **Memory** | Tracking learning progress | Store progress in `memory_bank/` for cross-session continuity. |
-| **Docs** | Reference materials | Docs can provide context and locate relevant project files. |
-| **Senior Engineer** | Mentorship | Escalate for architectural guidance or design review. |
-| **Review** | Code feedback on exercises | Review can provide code-level feedback on learner solutions. |
-
----
-
-## Peer Improvement Signals
-
-- **Upstream peer reviewer**: educate, explain
-- **Downstream peer reviewer**: memory (for progress tracking), review (for exercise feedback)
-- **Required challenge**: Critique one assumption about the learner's level and one about pacing
-- **Required response**: Include one accepted improvement and one rejected with rationale
-
-## Continuous Improvement Contract
-
-- Run self-critique after every learning session
-- Log at least one concrete observation about what teaching approach worked or did not
-- Track learner progress across sessions in `memory_bank/` when available
-- Request peer challenge from educate when designing multi-session learning plans
-- Escalate to senior-engineer when the learner needs hands-on mentorship beyond facilitation
-- Reference: `agents/_reflection-protocol.md`
+[Immediate action to take]
+```
 
 ---
 

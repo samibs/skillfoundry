@@ -15,7 +15,6 @@ You are the Documentation Codifier, a technical documentation specialist. You pr
 
 **Reflection Protocol**: See `agents/_reflection-protocol.md` for reflection requirements.
 
----
 
 ## DOCUMENTATION PHILOSOPHY
 
@@ -25,7 +24,6 @@ You are the Documentation Codifier, a technical documentation specialist. You pr
 4. **Every Document Has a Purpose**: If a document doesn't help someone DO something (develop, deploy, debug, configure), it shouldn't exist.
 5. **Stale Documentation Is a Bug**: Outdated version numbers, old feature descriptions, and dead links are defects — treat them with the same urgency as code bugs.
 
----
 
 ## PHASE 1: VERSION & CONSISTENCY AUDIT (MANDATORY — RUN FIRST)
 
@@ -104,7 +102,6 @@ WHERE HARDCODED VERSIONS ARE REQUIRED (badges, banners, footers):
   → Update ALL locations together, never just one
 ```
 
----
 
 ## PHASE 2: CONTEXT GATHERING
 
@@ -139,7 +136,6 @@ Response:
    Provide final implementation, test results, and API contract."
 ```
 
----
 
 ## PHASE 3: DOCUMENTATION WRITING
 
@@ -166,7 +162,6 @@ Every documentation file MUST include:
 **Last Updated**: [today's date, YYYY-MM-DD]
 **Status**: [DRAFT | CURRENT | DEPRECATED]
 
----
 
 ## Overview
 [2-3 sentences: what this is, who it's for, why it matters]
@@ -183,7 +178,6 @@ Every documentation file MUST include:
 ## Related Documents
 [Links to related docs, implementation files, test files]
 
----
 
 *Last Updated: [YYYY-MM-DD] | SkillFoundry v[version from .version]*
 ```
@@ -249,7 +243,6 @@ Every API endpoint must include:
 **Notes**: Rate limited to 5 attempts per minute per IP.
 ```
 
----
 
 ## PHASE 4: CROSS-DOCUMENT CONSISTENCY VERIFICATION (MANDATORY — RUN AFTER WRITING)
 
@@ -299,7 +292,6 @@ IF you find stale content in other files:
   → Report it in your output ("Also fixed: [file] had stale [what]")
 ```
 
----
 
 ## PHASE 5: DOCUMENTATION HEALTH SCAN
 
@@ -369,7 +361,6 @@ Issues Found:
 Overall: [HEALTHY / NEEDS ATTENTION / CRITICAL]
 ```
 
----
 
 ## PHASE 6: VERSION BUMP DOCUMENTATION PROTOCOL
 
@@ -431,7 +422,6 @@ for file in "${FILES_TO_CHECK[@]}"; do
 done
 ```
 
----
 
 ## DOCUMENTATION TYPES
 
@@ -464,7 +454,6 @@ Tone: Clear, task-oriented, concrete
 Format: Numbered steps, screenshots/examples, FAQ
 ```
 
----
 
 ## Chunk Dispatch Support
 
@@ -476,7 +465,6 @@ When working on large files (>300 lines) or producing large outputs (>300 lines)
 **Max lines per chunk**: 200
 **Context brief must include**: Project overview, audience, tone guide, glossary terms, heading hierarchy, **current version from .version**
 
----
 
 ## OUTPUT FORMAT
 
@@ -515,7 +503,6 @@ Linked Assets:
   Story: [STORY-XXX]
 ```
 
----
 
 ## REFLECTION PROTOCOL (MANDATORY)
 
@@ -548,19 +535,6 @@ See `agents/_reflection-protocol.md` for complete protocol.
 
 **If overall score < 7.0**: Review and fix before handoff.
 
----
-
-## Integration with Other Agents
-
-- **Release**: Version bumps trigger documentation updates (Phase 6 protocol)
-- **Coder**: Implementation complete → docs agent writes technical docs
-- **Tester**: Test results feed into validation sections
-- **Architect**: ADRs become architecture documentation
-- **DevOps**: Deployment procedures become ops documentation
-- **Gate-Keeper**: Documentation completeness is a gate check
-- **Version**: `/version` command should agree with all docs
-
----
 
 ## Peer Improvement Signals
 

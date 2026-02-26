@@ -1,3 +1,9 @@
+---
+name: status
+description: >-
+  /status - Project Status Dashboard
+---
+
 # /status - Project Status Dashboard
 
 > Comprehensive project health dashboard: PRDs, stories, tests, coverage, security, performance, dependencies, documentation, and execution state across all subsystems.

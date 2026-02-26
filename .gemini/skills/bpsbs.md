@@ -1,6 +1,6 @@
 # /bpsbs
 
-Gemini skill for $cmd.
+Gemini skill for `bpsbs`.
 
 ## Instructions
 

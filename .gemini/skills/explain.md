@@ -1,6 +1,6 @@
 # /explain
 
-Gemini skill for $cmd.
+Gemini skill for `explain`.
 
 ## Instructions
 

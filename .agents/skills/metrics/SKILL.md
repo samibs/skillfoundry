@@ -1,3 +1,9 @@
+---
+name: metrics
+description: >-
+  Metrics Dashboard
+---
+
 # Metrics Dashboard
 
 View and analyze execution metrics for the Claude AS framework.

@@ -192,6 +192,7 @@ When `/analytics` is invoked:
 
 ```
 Top Agents by Invocations (last 30 days)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   coder        ████████████████████████████████████  45  (96% ok)
   tester       ███████████████████████████████       38  (92% ok)
@@ -209,6 +210,7 @@ Top Agents by Invocations (last 30 days)
 
 ```
 Invocations Timeline (last 7 days)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Feb 18  ██████████████████████████  26  (2 failures)
   Feb 19  ████████████████████████████████  32  (1 failure)
@@ -226,6 +228,7 @@ Invocations Timeline (last 7 days)
 
 ```
 Agent Activity Heatmap (invocations per story)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
               STORY-001  STORY-002  STORY-003  STORY-004  STORY-005
   architect      2          1          1          2          1
@@ -245,6 +248,7 @@ Agent Activity Heatmap (invocations per story)
 
 ```
 Failure Waterfall (cascading impact)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   STORY-003 failure chain:
   coder (compile error)
@@ -268,8 +272,10 @@ Failure Waterfall (cascading impact)
 
 ```
 Agent Trend Analysis (this week vs last week)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Agent          This Week    Last Week    Trend
+  ─────────────  ──────────   ──────────   ────────────────
   coder          8% fail      14% fail     IMPROVING (-6%)
   tester         12% fail     6% fail      DEGRADING (+6%)
   gate-keeper    0% fail      0% fail      STABLE
@@ -369,6 +375,7 @@ Data range: 2026-01-25 to 2026-02-24 (30 days)
 Corrupted lines skipped: 0
 
 SUMMARY
+──────────────────────────────────────────────────
   Total invocations:      342
   Unique agents:          14
   Global success rate:    91.2%
@@ -379,6 +386,7 @@ SUMMARY
   Pipeline rework cycles: 6
 
 TOP AGENTS
+──────────────────────────────────────────────────
   1. coder          89 invocations  (94% ok)  avg 42s
   2. tester         76 invocations  (88% ok)  avg 51s
   3. gate-keeper    62 invocations  (98% ok)  avg 12s
@@ -386,7 +394,9 @@ TOP AGENTS
   5. security       24 invocations  (100% ok) avg 18s
 
 FAILURE HOTSPOTS
+──────────────────────────────────────────────────
   Agent          Fail%   Top Error Type     Worst Story
+  ─────────────  ──────  ─────────────────  ───────────
   fixer          40%     compile            STORY-003
   tester         12%     test               STORY-007
   debugger       10%     timeout            STORY-012
@@ -394,17 +404,20 @@ FAILURE HOTSPOTS
   architect      5%      rejection          STORY-001
 
 TRENDS (this week vs last week)
+──────────────────────────────────────────────────
   coder:       IMPROVING (-6% failure rate)
   tester:      DEGRADING (+6% failure rate)
   gate-keeper: STABLE
   fixer:       DEGRADING (+5% failure rate)
 
 MOST-REWORKED STORIES
+──────────────────────────────────────────────────
   STORY-003:  9 rework invocations across 4 agents
   STORY-004:  6 rework invocations across 2 agents
   STORY-007:  4 rework invocations across 3 agents
 
 RECOMMENDATIONS
+──────────────────────────────────────────────────
   [CRITICAL] fixer has 40% failure rate -- review fixer
   logic or escalate to coder for manual fix instead.
 
@@ -426,6 +439,7 @@ AGENT DETAIL: coder
 Generated: 2026-02-24T14:30:00Z
 
 OVERVIEW
+──────────────────────────────────────────────────
   Total invocations:   89
   Success rate:        94.4%
   Avg duration:        42.3s
@@ -434,29 +448,34 @@ OVERVIEW
   Escalation rate:     1.1%
 
 FAILURE BREAKDOWN
+──────────────────────────────────────────────────
   compile errors:    2  (40% of failures)
   rejection:         2  (40% of failures)
   timeout:           1  (20% of failures)
 
 STORY PERFORMANCE
+──────────────────────────────────────────────────
   STORY-001:  12 invocations  100% success  avg 38s
   STORY-002:   8 invocations  100% success  avg 35s
   STORY-003:  14 invocations   79% success  avg 61s  <-- HOTSPOT
   STORY-004:  11 invocations   82% success  avg 55s  <-- HOTSPOT
 
 TREND (last 4 weeks)
+──────────────────────────────────────────────────
   Week 1:  8% failure rate
   Week 2:  14% failure rate
   Week 3:  10% failure rate
   Week 4:  6% failure rate   <-- IMPROVING
 
 DOWNSTREAM IMPACT
+──────────────────────────────────────────────────
   When coder fails, these agents are blocked:
     tester:       5 times blocked
     gate-keeper:  5 times blocked
     fixer:        3 times auto-invoked
 
 RECOMMENDATIONS
+──────────────────────────────────────────────────
   - STORY-003 and STORY-004 account for 80% of coder failures.
     Both are auth-related. Pair with security-scanner.
   - P95 duration (98s) is 2.3x the average (42s). Investigate
@@ -512,13 +531,13 @@ Apply `agents/_reflection-protocol.md` before and after each analytics run.
 ### Data Flow
 
 ```
-All agents --(append events)--> agent-stats.jsonl
-                                      |
+All agents ──(append events)──> agent-stats.jsonl
+                                      │
                               /analytics reads
-                                      |
-                    +------------------+------------------+
-                    v                  v                  v
-              memory agent       orchestrate          metrics
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    v                 v                  v
+              memory agent      orchestrate         metrics
           (store insights)    (route decisions)   (display KPIs)
 ```
 
@@ -554,28 +573,3 @@ Type "CONFIRM RESET" to proceed.
 ---
 
 *Agent Analytics Engine - SkillFoundry Framework*
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

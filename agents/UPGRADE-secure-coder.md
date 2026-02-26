@@ -1,3 +1,10 @@
+---
+name: upgrade-secure-coder
+command: upgrade-secure-coder
+description: Upgrade documentation for the secure-coder agent, detailing the evolution from ruthless-coder to security-first implementation with mandatory security review and auto-documentation.
+color: gray
+---
+
 # UPGRADE: secure-coder (from ruthless-coder)
 
 ## Previous State: ruthless-coder

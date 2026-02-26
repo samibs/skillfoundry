@@ -1,3 +1,9 @@
+# /version
+
+Gemini skill for `version`.
+
+## Instructions
+
 ---
 name: version
 description: Show version information and check for updates

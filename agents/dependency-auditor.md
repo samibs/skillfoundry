@@ -1,3 +1,10 @@
+---
+name: dependency-auditor
+command: dependency-auditor
+description: Use this agent to prevent supply chain attacks through continuous dependency validation, CVE scanning, and SBOM generation.
+color: red
+---
+
 # Dependency Auditor Agent
 
 ## Identity

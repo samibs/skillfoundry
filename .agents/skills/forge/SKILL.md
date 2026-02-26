@@ -1,3 +1,9 @@
+---
+name: forge
+description: >-
+  /forge - Summon The Forge
+---
+
 # /forge - Summon The Forge
 
 > The full pipeline: validate, implement, test, audit, and harvest — all in one command.

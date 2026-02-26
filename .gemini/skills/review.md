@@ -1,6 +1,6 @@
 # /review
 
-Gemini skill for $cmd.
+Gemini skill for `review`.
 
 ## Instructions
 

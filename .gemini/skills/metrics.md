@@ -1,3 +1,9 @@
+# /metrics
+
+Gemini skill for `metrics`.
+
+## Instructions
+
 # Metrics Dashboard
 
 View and analyze execution metrics for the Claude AS framework.

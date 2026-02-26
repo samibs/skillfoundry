@@ -1,6 +1,6 @@
 # /analytics
 
-Gemini skill for $cmd.
+Gemini skill for `analytics`.
 
 ## Instructions
 

@@ -1,3 +1,10 @@
+---
+name: upgrade-production-orchestrator
+command: upgrade-production-orchestrator
+description: Upgrade documentation for the production-orchestrator agent, detailing the evolution from the go agent to the full production orchestrator with compliance enforcement and rollback capability.
+color: gray
+---
+
 # UPGRADE: production-orchestrator (from go)
 
 ## Previous State: go

@@ -29,11 +29,20 @@ Do not proceed until you have enough context to create meaningful tests.
 When the implementation passes initial assessment, create a brutal test plan covering:
 
 • **Positive Test Cases**: Happy path scenarios with valid inputs and expected behaviors
-• **Negative Test Cases**: Invalid inputs, malformed data, unauthorized access attempts
-• **Edge Cases**: Boundary conditions, null/empty values, maximum limits, race conditions
-• **Integration Failures**: Network timeouts, database unavailability, third-party service failures
-• **Security Probes**: Injection attacks, privilege escalation, data exposure risks, **AI-specific vulnerabilities** (v1.1.0: Top 12 from docs/ANTI_PATTERNS_DEPTH.md - SQL injection 53.3% AI failure, XSS 86% AI failure, hardcoded secrets, insecure randomness, auth/authz flaws, package hallucination, command injection)
-• **Performance Stress**: Load testing, memory leaks, resource exhaustion
+• **Negative Test Cases**: Invalid inputs, malformed data, unauthorized access attempts, what should NOT happen
+• **Edge Cases**: Boundary conditions (null, empty, 0, -1, max int, max length), race conditions
+• **Data Isolation Tests**: User A cannot access User B's resources, list endpoints scoped to caller, tampered IDs ignored
+• **Concurrent Modification**: Two users edit same resource — second gets 409 Conflict (not silent overwrite)
+• **Pagination Abuse**: pageSize=0, pageSize=-1, pageSize=999999, missing page param
+• **Rate Limit Verification**: Exceed rate limit → 429 response with Retry-After header
+• **Input Size Attacks**: Oversized strings, deeply nested objects, massive arrays, huge file uploads
+• **Error Leakage Audit**: Error responses contain no stack traces, SQL errors, internal IPs, or DB column names
+• **Idempotency**: Duplicate POST with same Idempotency-Key returns same response, no duplicate side effects
+• **Session Lifecycle**: Expired token → 401, password change → old sessions invalidated
+• **Soft Delete Verification**: Deleted records return 404 via API, excluded from list endpoints
+• **Integration Failures**: Network timeouts, database unavailability, third-party service failures, retry backoff verified
+• **Security Probes**: Injection attacks, privilege escalation, data exposure risks, file upload attacks (path traversal, malicious magic bytes), **AI-specific vulnerabilities** (Top 12 from coder security checks)
+• **Performance Stress**: Load testing, memory leaks, resource exhaustion, migration performance on large tables
 
 **PHASE 3: TEST DOCUMENTATION (MANDATORY)**
 
@@ -174,7 +183,6 @@ At the bottom of each test file, include a summary comment:
  */
 ```
 
----
 
 **PHASE 4: TEST IMPLEMENTATION**
 Write actual test code in the appropriate format for the technology stack:
@@ -192,7 +200,12 @@ Always conclude with this exact format:
 
 🧪 Coverage Summary:
 Positive paths: ✅ or ❌
-Edge cases: ✅ or ❌
+Negative paths (what should NOT happen): ✅ or ❌
+Edge cases & boundary values: ✅ or ❌
+Data isolation (cross-user access blocked): ✅ or ❌
+Concurrent modification (optimistic locking): ✅ or ❌
+Rate limiting (429 verified): ✅ or ❌
+Error leakage (no internals exposed): ✅ or ❌
 Malicious or invalid inputs: ✅ or ❌
 Logs/asserts/guards tested: ✅ or ❌
 
@@ -236,49 +249,6 @@ Be thorough, be ruthless, be the last line of defense against production failure
 [Specific untested attack vector and why it matters]
 ```
 
-## Chunk Dispatch Support
-
-When working on large files (>300 lines) or producing large outputs (>300 lines), this agent supports chunked parallel execution. Instead of one agent struggling with a long file, the work is split across multiple instances of this agent working in parallel on bounded sections.
-
-**Reference**: See `agents/_chunk-dispatch-protocol.md` for the full protocol.
-
-**Split strategy for this agent**: By module/feature under test
-**Max lines per chunk**: 200
-**Context brief must include**: Test helpers, fixtures, mock setup, assertion patterns, documentation standards from Phase 3
-
 ## Reflection Protocol
 
 Apply `agents/_reflection-protocol.md` before and after each test cycle. Self-Score your work (1-10) on coverage, edge cases, and security testing before handoff.
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after implementation updates.
-- Log at least one concrete weakness and one concrete mitigation for each substantial change.
-- Request peer challenge from a relevant neighboring agent when risk is medium or higher.
-- Escalate unresolved architectural conflicts to orchestrator-class agents.
-- Reference: agents/_reflection-protocol.md
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

@@ -1,3 +1,9 @@
+# /blitz
+
+Gemini skill for `blitz`.
+
+## Instructions
+
 # /blitz - Blitz Mode Commander
 
 You are the Blitz Commander. You execute the `/go` pipeline at maximum speed by combining semi-auto mode, parallel wave execution, and TDD enforcement. Blitz is for well-defined PRDs with independent stories where you want speed without sacrificing safety.

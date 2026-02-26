@@ -523,25 +523,25 @@ test_performance_file_count() {
     COPILOT_FILES=$(find "$FRAMEWORK_DIR/.copilot/custom-agents" -name "*.md" 2>/dev/null | wc -l)
     CURSOR_FILES=$(find "$FRAMEWORK_DIR/.cursor/rules" -name "*.md" 2>/dev/null | wc -l)
     
-    # Should have reasonable number of agents (20-80 per platform)
-    if [ $CLAUDE_FILES -ge 20 ] && [ $CLAUDE_FILES -le 80 ]; then
+    # Should have reasonable number of agents (20-100 per platform)
+    if [ $CLAUDE_FILES -ge 20 ] && [ $CLAUDE_FILES -le 100 ]; then
         log_success "Claude agents count reasonable: $CLAUDE_FILES"
     else
-        log_failure "Claude agents count unexpected: $CLAUDE_FILES (expected 20-80)"
+        log_failure "Claude agents count unexpected: $CLAUDE_FILES (expected 20-100)"
         return 1
     fi
 
-    if [ $COPILOT_FILES -ge 20 ] && [ $COPILOT_FILES -le 80 ]; then
+    if [ $COPILOT_FILES -ge 20 ] && [ $COPILOT_FILES -le 100 ]; then
         log_success "Copilot agents count reasonable: $COPILOT_FILES"
     else
-        log_failure "Copilot agents count unexpected: $COPILOT_FILES (expected 20-80)"
+        log_failure "Copilot agents count unexpected: $COPILOT_FILES (expected 20-100)"
         return 1
     fi
 
-    if [ $CURSOR_FILES -ge 20 ] && [ $CURSOR_FILES -le 80 ]; then
+    if [ $CURSOR_FILES -ge 20 ] && [ $CURSOR_FILES -le 100 ]; then
         log_success "Cursor rules count reasonable: $CURSOR_FILES"
     else
-        log_failure "Cursor rules count unexpected: $CURSOR_FILES (expected 20-80)"
+        log_failure "Cursor rules count unexpected: $CURSOR_FILES (expected 20-100)"
         return 1
     fi
     

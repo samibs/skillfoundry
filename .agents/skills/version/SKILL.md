@@ -1,5 +1,11 @@
 ---
 name: version
+description: >-
+  Version Format
+---
+
+---
+name: version
 description: Show version information and check for updates
 ---
 

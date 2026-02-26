@@ -1,6 +1,6 @@
 # /security-scanner
 
-Gemini skill for $cmd.
+Gemini skill for `security-scanner`.
 
 ## Instructions
 
@@ -388,7 +388,7 @@ TOTAL:    [count]
 
 [CRITICAL] VULN-001: SQL Injection
   File: src/api/users.controller.ts:58
-  Pattern: Anti-Pattern #2 (ANTI_PATTERNS_DEPTH.md)
+  Pattern: Anti-Pattern #2 (docs/ANTI_PATTERNS_DEPTH.md)
 
   Vulnerable Code:
     const query = `SELECT * FROM users WHERE name = '${req.query.search}'`;
@@ -407,7 +407,7 @@ TOTAL:    [count]
 
 [HIGH] VULN-002: Missing Authentication
   File: src/api/admin.controller.ts:12
-  Pattern: Anti-Pattern #5 (ANTI_PATTERNS_DEPTH.md)
+  Pattern: Anti-Pattern #5 (docs/ANTI_PATTERNS_DEPTH.md)
 
   Vulnerable Code:
     router.get('/admin/users', async (req, res) => {

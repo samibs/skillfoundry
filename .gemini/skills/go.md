@@ -1,3 +1,9 @@
+# /go
+
+Gemini skill for `go`.
+
+## Instructions
+
 # Project Kickstart - PRD-First Orchestrator
 
 You are the Project Kickstart agent. Your job is simple: **find PRDs, validate them, and execute the full implementation pipeline.**

@@ -60,10 +60,10 @@ For each BPSBS domain, audit the code against specific rules. Every finding incl
 **Rules**: No tokens in localStorage/sessionStorage. No hardcoded secrets. No plaintext passwords. No stack traces in production. No HS256 JWT with client-accessible secrets. HttpOnly cookies for refresh tokens. Rate limiting on auth endpoints. CSRF protection required.
 
 ```javascript
-// BAD -- token in localStorage (XSS vulnerable: any injected script can steal it)
+// BAD — token in localStorage (XSS vulnerable: any injected script can steal it)
 localStorage.setItem('token', jwt);
 
-// GOOD -- HttpOnly cookie (not accessible via JavaScript, immune to XSS theft)
+// GOOD — HttpOnly cookie (not accessible via JavaScript, immune to XSS theft)
 res.cookie('token', jwt, {
   httpOnly: true,
   secure: true,
@@ -73,11 +73,11 @@ res.cookie('token', jwt, {
 ```
 
 ```python
-# BAD -- hardcoded secret in source code
+# BAD — hardcoded secret in source code
 SECRET_KEY = "super-secret-key-12345"
 db_password = "admin123"
 
-# GOOD -- loaded from environment, validated on startup
+# GOOD — loaded from environment, validated on startup
 SECRET_KEY = os.environ["SECRET_KEY"]  # Fails fast if missing
 db_password = os.environ["DB_PASSWORD"]
 if not SECRET_KEY or len(SECRET_KEY) < 32:
@@ -85,20 +85,20 @@ if not SECRET_KEY or len(SECRET_KEY) < 32:
 ```
 
 ```javascript
-// BAD -- JWT with HS256 and client-accessible secret
+// BAD — JWT with HS256 and client-accessible secret
 const token = jwt.sign(payload, 'shared-secret', { algorithm: 'HS256' });
 
-// GOOD -- JWT with RS256 asymmetric key
+// GOOD — JWT with RS256 asymmetric key
 const token = jwt.sign(payload, privateKey, { algorithm: 'RS256' });
-// Client only has public key -- cannot forge tokens
+// Client only has public key — cannot forge tokens
 ```
 
 ```python
-# BAD -- plaintext password stored in database
+# BAD — plaintext password stored in database
 user.password = request.form["password"]
 db.session.commit()
 
-# GOOD -- hashed + salted with bcrypt
+# GOOD — hashed + salted with bcrypt
 from bcrypt import hashpw, gensalt
 user.password_hash = hashpw(request.form["password"].encode(), gensalt()).decode()
 db.session.commit()
@@ -109,10 +109,10 @@ db.session.commit()
 **Rules**: Always verify current working directory. Never assume file/folder existence. Use absolute or project-root-relative paths. Verify file sizes before claiming limitations.
 
 ```bash
-# BAD -- assumes folder exists, blindly executes
+# BAD — assumes folder exists, blindly executes
 cd backend && python main.py
 
-# GOOD -- validates before executing
+# GOOD — validates before executing
 if [ -d "./backend" ]; then
   cd backend && python main.py
 else
@@ -122,11 +122,11 @@ fi
 ```
 
 ```python
-# BAD -- assumes file exists, crashes with unhandled FileNotFoundError
+# BAD — assumes file exists, crashes with unhandled FileNotFoundError
 with open("config/settings.json") as f:
     config = json.load(f)
 
-# GOOD -- checks existence, provides clear error
+# GOOD — checks existence, provides clear error
 config_path = Path("config/settings.json")
 if not config_path.exists():
     raise FileNotFoundError(f"Config file not found: {config_path.resolve()}")
@@ -135,10 +135,10 @@ with open(config_path) as f:
 ```
 
 ```bash
-# BAD -- relative path that depends on where the script is called from
+# BAD — relative path that depends on where the script is called from
 source ./helpers.sh
 
-# GOOD -- absolute path relative to script location
+# GOOD — absolute path relative to script location
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/helpers.sh"
 ```
@@ -148,18 +148,18 @@ source "${SCRIPT_DIR}/helpers.sh"
 **Rules**: 80%+ coverage for business logic. 100% endpoint hit via test client. All required form fields and edge paths tested. All auth roles and token expiry tested.
 
 ```python
-# BAD -- zero test coverage for business logic
+# BAD — zero test coverage for business logic
 class PayrollService:
     def calculate_salary(self, employee_id: int, month: int) -> Decimal:
         # Complex tax calculation, overtime, deductions...
-        return total  # 0% coverage -- shipping untested financial logic
+        return total  # 0% coverage — shipping untested financial logic
 
-# GOOD -- comprehensive tests with edge cases
+# GOOD — comprehensive tests with edge cases
 class PayrollService:
     def calculate_salary(self, employee_id: int, month: int) -> Decimal:
         ...
 
-# test_payroll.py -- covers:
+# test_payroll.py — covers:
 # - Standard salary calculation (happy path)
 # - Overtime at 1.5x and 2.0x rates
 # - Negative hours (rejected with ValueError)
@@ -170,11 +170,11 @@ class PayrollService:
 ```
 
 ```typescript
-// BAD -- endpoint exists but no test hits it
+// BAD — endpoint exists but no test hits it
 app.post('/api/orders', createOrder);
 // No test file. No coverage. Ships to production untested.
 
-// GOOD -- every endpoint hit via test client
+// GOOD — every endpoint hit via test client
 describe('POST /api/orders', () => {
   it('creates order with valid data and returns 201', async () => { ... });
   it('rejects order with missing items and returns 400', async () => { ... });
@@ -189,25 +189,25 @@ describe('POST /api/orders', () => {
 **Rules**: Check for duplicate code before suggesting changes. If context is lost, reload CLAUDE.md, README.md, and last touched files. Wrap modifications with AI MOD markers. Never destroy user-authored content. If repeating broken logic twice, output Suggest Human Review block.
 
 ```javascript
-// BAD -- AI generates duplicate function (already exists in utils.js)
+// BAD — AI generates duplicate function (already exists in utils.js)
 // auth.js
 function formatDate(date) {     // DUPLICATE: already in utils.js line 42
   return date.toISOString();
 }
 
-// GOOD -- AI checks for existing code before generating
+// GOOD — AI checks for existing code before generating
 // auth.js
 import { formatDate } from './utils.js';  // Reuses existing function
 ```
 
 ```python
-# BAD -- AI silently overwrites user's custom implementation
+# BAD — AI silently overwrites user's custom implementation
 class AuthService:
     def authenticate(self, credentials):
-        # User's carefully tuned OAuth2 flow -- DESTROYED by AI rewrite
+        # User's carefully tuned OAuth2 flow — DESTROYED by AI rewrite
         return self._generic_login(credentials)
 
-# GOOD -- AI wraps modifications, preserves original
+# GOOD — AI wraps modifications, preserves original
 class AuthService:
     def authenticate(self, credentials):
         # AI MOD START - Added rate limiting check before auth
@@ -222,12 +222,12 @@ class AuthService:
 ```
 
 ```
-# BAD -- AI repeats the same broken approach a third time
-Attempt 1: TypeError on line 45 -- wrong argument type
-Attempt 2: TypeError on line 45 -- same wrong argument type
-Attempt 3: TypeError on line 45 -- STILL the same wrong argument type
+# BAD — AI repeats the same broken approach a third time
+Attempt 1: TypeError on line 45 — wrong argument type
+Attempt 2: TypeError on line 45 — same wrong argument type
+Attempt 3: TypeError on line 45 — STILL the same wrong argument type
 
-# GOOD -- AI recognizes the loop and escalates
+# GOOD — AI recognizes the loop and escalates
 ## Suggest Human Review
 Repeated failure: TypeError on line 45 in auth_service.py
 Attempted fix 2 times with same result.
@@ -240,11 +240,11 @@ Recommended human action: [specific suggestion]
 **Rules**: Every public method must have description, parameters, return type, and exceptions. Required files: README.md, troubleshooting.md, api_reference.md.
 
 ```python
-# BAD -- undocumented public method
+# BAD — undocumented public method
 def process_payment(amount, currency, user_id):
     ...
 
-# GOOD -- fully documented public method
+# GOOD — fully documented public method
 def process_payment(amount: Decimal, currency: str, user_id: int) -> PaymentResult:
     """Process a payment transaction for a user.
 
@@ -270,13 +270,13 @@ def process_payment(amount: Decimal, currency: str, user_id: int) -> PaymentResu
 **Rules**: Never silently fail. All warnings/errors must be logged. Provide retry options on failures. Use spinners/status bars for long operations.
 
 ```python
-# BAD -- silently swallows the error
+# BAD — silently swallows the error
 try:
     result = external_api.call()
 except Exception:
     pass  # Silent failure: nobody will ever know this broke
 
-# GOOD -- logs, provides context, enables recovery
+# GOOD — logs, provides context, enables recovery
 try:
     result = external_api.call()
 except ConnectionError as e:
@@ -291,12 +291,12 @@ except ValidationError as e:
 ```
 
 ```javascript
-// BAD -- stack trace exposed in production response
+// BAD — stack trace exposed in production response
 app.use((err, req, res, next) => {
   res.status(500).json({ error: err.stack });  // Leaks internals to client
 });
 
-// GOOD -- safe error response with internal logging
+// GOOD — safe error response with internal logging
 app.use((err, req, res, next) => {
   const errorId = crypto.randomUUID();
   logger.error({ errorId, err, path: req.path, method: req.method });
@@ -325,16 +325,16 @@ Every violation is classified by severity. Severity determines whether the code 
 
 ```
 Is it a security vulnerability?
-  YES -> CRITICAL
-  NO  ->
+  YES → CRITICAL
+  NO  →
     Does it affect correctness or reliability?
-      YES -> Can it cause data loss or silent failures?
-        YES -> HIGH
-        NO  -> MEDIUM
-      NO  ->
+      YES → Can it cause data loss or silent failures?
+        YES → HIGH
+        NO  → MEDIUM
+      NO  →
         Does it affect maintainability or developer experience?
-          YES -> MEDIUM
-          NO  -> LOW
+          YES → MEDIUM
+          NO  → LOW
 ```
 
 ---
@@ -427,22 +427,22 @@ PASSED RULES
 VIOLATIONS
 --------------------------------------------------
 
-[1] CRITICAL -- Token stored in localStorage
+[1] CRITICAL — Token stored in localStorage
     File: src/auth/login.ts:47
     Found: localStorage.setItem('accessToken', response.data.token)
     Fix: Use HttpOnly cookie set by backend (see remediation above)
 
-[2] HIGH -- No tests for PayrollService.calculateNetSalary()
+[2] HIGH — No tests for PayrollService.calculateNetSalary()
     File: src/services/payroll.service.ts:23
     Found: 0% test coverage on financial logic
     Fix: Create payroll.service.spec.ts (see remediation above)
 
-[3] MEDIUM -- Missing JSDoc on public method processRefund()
+[3] MEDIUM — Missing JSDoc on public method processRefund()
     File: src/services/refund.service.ts:15
     Found: export function processRefund(orderId, reason) { ... }
     Fix: Add JSDoc with @param, @returns, @throws annotations
 
-[4] LOW -- Inconsistent naming: camelCase mixed with snake_case
+[4] LOW — Inconsistent naming: camelCase mixed with snake_case
     File: src/utils/helpers.ts:8
     Found: const user_name = getUserName()
     Fix: const userName = getUserName()
@@ -547,28 +547,3 @@ See `agents/_reflection-protocol.md` for complete protocol.
 > "A mock is a lie. A TODO is a promise to fail. Zero tolerance."
 
 **If you (AI agent) forget project context, reload CLAUDE.md first.**
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

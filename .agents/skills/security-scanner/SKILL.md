@@ -186,15 +186,16 @@ For every confirmed vulnerability, produce a trace:
 
 ```
 VULNERABILITY TRACE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ID: VULN-001
 Type: SQL Injection
 Severity: CRITICAL
 File: src/api/users.controller.ts
 
 Source:  req.query.search (user input, line 45)
-  | passed to: buildQuery(search) (no sanitization, line 52)
-  | concatenated: `SELECT * FROM users WHERE name = '${search}'` (line 55)
-  | executed: db.query(unsafeQuery) (SQL injection, line 58)
+  ↓ passed to: buildQuery(search) (no sanitization, line 52)
+  ↓ concatenated: `SELECT * FROM users WHERE name = '${search}'` (line 55)
+  ↓ executed: db.query(unsafeQuery) (SQL injection, line 58)
 
 Attack Scenario:
   Input: ?search=' OR '1'='1' --
@@ -202,13 +203,14 @@ Attack Scenario:
 
 Secure Fix:
   Line 58: db.query('SELECT * FROM users WHERE name = ?', [search])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ### Data Flow Diagram
 
 ```
-[User Input] -> [Validation?] -> [Sanitization?] -> [Encoding?] -> [Sink]
-                   | NO           | NO               | NO
+[User Input] → [Validation?] → [Sanitization?] → [Encoding?] → [Sink]
+                   ↓ NO           ↓ NO               ↓ NO
               VULNERABILITY    VULNERABILITY      VULNERABILITY
 ```
 
@@ -337,6 +339,7 @@ After fixes are applied, re-scan to confirm resolution.
 
 ```
 VERIFICATION RESULT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Original Finding: VULN-001 (SQL Injection in users.controller.ts:58)
 Fix Applied: Parameterized query with db.query('...?', [search])
 
@@ -353,6 +356,7 @@ Recommended Test:
   });
 
 Status: RESOLVED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
@@ -372,7 +376,7 @@ Date: [timestamp]
 Files Scanned: [count]
 Lines Analyzed: [count]
 
----- FINDINGS SUMMARY ----
+━━━━ FINDINGS SUMMARY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 CRITICAL: [count]
 HIGH:     [count]
@@ -380,11 +384,11 @@ MEDIUM:   [count]
 LOW:      [count]
 TOTAL:    [count]
 
----- DETAILED FINDINGS ----
+━━━━ DETAILED FINDINGS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 [CRITICAL] VULN-001: SQL Injection
   File: src/api/users.controller.ts:58
-  Pattern: Anti-Pattern #2 (ANTI_PATTERNS_DEPTH.md)
+  Pattern: Anti-Pattern #2 (docs/ANTI_PATTERNS_DEPTH.md)
 
   Vulnerable Code:
     const query = `SELECT * FROM users WHERE name = '${req.query.search}'`;
@@ -399,9 +403,11 @@ TOTAL:    [count]
       [req.query.search]
     );
 
+──────────────────────────────────────────────────
+
 [HIGH] VULN-002: Missing Authentication
   File: src/api/admin.controller.ts:12
-  Pattern: Anti-Pattern #5 (ANTI_PATTERNS_DEPTH.md)
+  Pattern: Anti-Pattern #5 (docs/ANTI_PATTERNS_DEPTH.md)
 
   Vulnerable Code:
     router.get('/admin/users', async (req, res) => {
@@ -414,6 +420,8 @@ TOTAL:    [count]
   Fix:
     router.get('/admin/users', authMiddleware, requireRole('admin'), async (req, res) => {
       const users = await userService.getAll();
+
+──────────────────────────────────────────────────
 
 [MEDIUM] VULN-003: Information Disclosure
   File: src/middleware/error-handler.ts:15
@@ -430,7 +438,7 @@ TOTAL:    [count]
     logger.error({ correlationId, error: err });
     res.status(500).json({ error: 'Internal server error', correlationId });
 
----- RECOMMENDATIONS ----
+━━━━ RECOMMENDATIONS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Immediate (block release):
   - Fix VULN-001: Parameterize all SQL queries in users.controller.ts
@@ -450,7 +458,7 @@ Process improvements:
   - Require security review for any code touching auth, payments, or user data
   - Schedule quarterly comprehensive scans
 
----- SCAN METADATA ----
+━━━━ SCAN METADATA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Scanner: security-scanner agent
 References: docs/ANTI_PATTERNS_DEPTH.md, docs/ANTI_PATTERNS_BREADTH.md
@@ -482,10 +490,10 @@ Chain with other agents for end-to-end security:
 
 | From security-scanner | To Agent | Context Provided |
 |----------------------|----------|------------------|
-| -> coder | "Fix these vulnerabilities" | Finding details, exact line numbers, copy-paste fixes |
-| -> gate-keeper | "Security scan results" | Scan report, pass/fail, remaining risks |
-| -> devops | "Add scanning to pipeline" | Recommended CI security steps |
-| -> architect | "Design has security flaw" | Vulnerability trace, architectural fix suggestion |
+| → coder | "Fix these vulnerabilities" | Finding details, exact line numbers, copy-paste fixes |
+| → gate-keeper | "Security scan results" | Scan report, pass/fail, remaining risks |
+| → devops | "Add scanning to pipeline" | Recommended CI security steps |
+| → architect | "Design has security flaw" | Vulnerability trace, architectural fix suggestion |
 
 ---
 
@@ -562,28 +570,3 @@ See `agents/_reflection-protocol.md` for complete protocol.
 ---
 
 *Load `docs/ANTI_PATTERNS_DEPTH.md` and `docs/ANTI_PATTERNS_BREADTH.md` before executing scans.*
-
-## Responsibilities
-
-- Define clear scope boundaries for this agent's tasks.
-- Produce deterministic outputs that downstream agents can validate.
-- Surface assumptions, risks, and explicit failure signals.
-
-## Workflow
-
-1. Analyze inputs, constraints, and success criteria.
-2. Produce implementation artifacts with explicit guardrails.
-3. Run self-critique and peer challenge integration.
-4. Emit a handoff payload with risks and next actions.
-
-## Inputs
-
-- Task objective
-- Constraints and policies
-- Upstream artifacts required for execution
-
-## Outputs
-
-- Primary deliverable artifact
-- Risk and failure report
-- Handoff payload for downstream agents

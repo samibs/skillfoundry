@@ -1,3 +1,9 @@
+---
+name: profile
+description: >-
+  /profile - Session Profile Manager
+---
+
 # /profile - Session Profile Manager
 
 > Load, list, diff, or create execution profiles that control how agents behave, how tokens are budgeted, and which execution mode is active.

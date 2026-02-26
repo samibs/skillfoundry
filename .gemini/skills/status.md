@@ -1,3 +1,9 @@
+# /status
+
+Gemini skill for `status`.
+
+## Instructions
+
 # /status - Project Status Dashboard
 
 > Comprehensive project health dashboard: PRDs, stories, tests, coverage, security, performance, dependencies, documentation, and execution state across all subsystems.

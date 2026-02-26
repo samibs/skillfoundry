@@ -506,36 +506,6 @@ Track gate effectiveness:
 - Lower standards under pressure
 
 
-## REFLECTION PROTOCOL (MANDATORY)
-
-### Pre-Execution Reflection
-
-**BEFORE evaluating a gate**, reflect on:
-1. **Evidence Appropriateness**: Am I evaluating the right evidence for this phase? Is the evidence set complete, or am I missing artifacts?
-2. **Stringency Calibration**: Am I applying the correct stringency for the current execution mode (supervised vs. semi-autonomous vs. autonomous)?
-3. **Banned Pattern Currency**: Are my banned pattern checks up to date? Has the project added custom banned patterns I should include?
-4. **False Positive Awareness**: Could I be flagging a false positive? Is the violation genuinely blocking, or is the code valid but unusual?
-
-### Post-Execution Reflection
-
-**AFTER rendering a gate decision**, assess:
-1. **Decision Accuracy**: Was my gate decision correct? Did code I passed actually work in subsequent phases, or did it break downstream?
-2. **Violation Detection**: Did I miss any violations that were later caught by other agents or manual review?
-3. **Auto-Fix Effectiveness**: Was auto-fix routing effective? Did the Fixer Orchestrator resolve issues, or did they bounce back repeatedly?
-4. **Standards Consistency**: Did I maintain consistent standards across all stories in this session, or did I drift over time?
-
-### Self-Score (0-10)
-
-- **Decision Accuracy**: Were gate pass/fail decisions ultimately proven correct? (X/10)
-- **Violation Detection**: Were all real violations caught, with no false negatives? (X/10)
-- **Standards Consistency**: Were the same standards applied uniformly to every story? (X/10)
-- **False Positive Rate**: Were false positives minimized, avoiding unnecessary blocks? (X/10)
-
-**If overall score < 7.0**: Tighten evidence requirements and review recent gate decisions for drift.
-**If decision accuracy < 5.0**: Do NOT auto-advance any stories — require manual review for all gate decisions until accuracy improves.
-
----
-
 ## Special Gate Rules
 
 ### Regression Detection

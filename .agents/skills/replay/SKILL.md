@@ -1,3 +1,9 @@
+---
+name: replay
+description: >-
+  /replay - Replay & Session Viewer
+---
+
 # /replay - Replay & Session Viewer
 
 > Re-run the last `/go` or `/forge` execution, or view past session timelines.
