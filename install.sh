@@ -602,7 +602,7 @@ if [ "$DRY_RUN" = true ]; then
     echo -e "  ${BOLD}Source:${NC}     $SCRIPT_DIR"
     echo ""
     echo -e "  ${BOLD}Would install:${NC}"
-    echo "    agents/               $(ls -1 "$SCRIPT_DIR/agents/"*.md 2>/dev/null | wc -l) shared modules"
+    echo "    agents/               $(ls -1 "$SCRIPT_DIR/agents/"*.md 2>/dev/null | wc -l | tr -d ' ') shared modules"
     echo "    genesis/TEMPLATE.md   PRD template"
     echo "    docs/                 Security anti-pattern docs"
     echo "    memory_bank/          Knowledge bootstrap"
@@ -610,26 +610,26 @@ if [ "$DRY_RUN" = true ]; then
     for plat in "${PLATFORMS[@]}"; do
         case "$plat" in
             claude)
-                local_count=$(ls -1 "$SCRIPT_DIR/.claude/commands/"*.md 2>/dev/null | wc -l)
-                local_hooks=$(ls -1 "$SCRIPT_DIR/.claude/hooks/"*.sh 2>/dev/null | wc -l)
+                local_count=$(ls -1 "$SCRIPT_DIR/.claude/commands/"*.md 2>/dev/null | wc -l | tr -d ' ')
+                local_hooks=$(ls -1 "$SCRIPT_DIR/.claude/hooks/"*.sh 2>/dev/null | wc -l | tr -d ' ')
                 echo "    .claude/commands/     $local_count skills"
                 echo "    .claude/hooks/        $local_hooks hooks"
                 echo "    .claude/settings.json permission profile"
                 ;;
             copilot)
-                local_count=$(ls -1 "$SCRIPT_DIR/.copilot/custom-agents/"*.md 2>/dev/null | wc -l)
+                local_count=$(ls -1 "$SCRIPT_DIR/.copilot/custom-agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
                 echo "    .copilot/custom-agents/ $local_count agents"
                 ;;
             cursor)
-                local_count=$(ls -1 "$SCRIPT_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l)
+                local_count=$(ls -1 "$SCRIPT_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l | tr -d ' ')
                 echo "    .cursor/rules/        $local_count rules"
                 ;;
             codex)
-                local_count=$(find "$SCRIPT_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l)
+                local_count=$(find "$SCRIPT_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
                 echo "    .agents/skills/       $local_count skills"
                 ;;
             gemini)
-                local_count=$(ls -1 "$SCRIPT_DIR/.gemini/skills/"*.md 2>/dev/null | wc -l)
+                local_count=$(ls -1 "$SCRIPT_DIR/.gemini/skills/"*.md 2>/dev/null | wc -l | tr -d ' ')
                 echo "    .gemini/skills/       $local_count skills"
                 ;;
         esac
@@ -657,7 +657,7 @@ mkdir -p "$TARGET_DIR/memory_bank/knowledge"
 # Copy shared agent modules (all platforms need these)
 step "Installing shared agent modules..."
 cp -r "$SCRIPT_DIR/agents/"* "$TARGET_DIR/agents/"
-SHARED_COUNT=$(ls -1 "$TARGET_DIR/agents/"*.md 2>/dev/null | wc -l)
+SHARED_COUNT=$(ls -1 "$TARGET_DIR/agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
 echo -e "${GREEN}  ✓ Shared agent modules installed ($SHARED_COUNT modules)${NC}"
 
 step "Installing templates and documentation..."
@@ -740,7 +740,7 @@ install_platform() {
     case "$plat" in
         claude)
             cp -r "$SCRIPT_DIR/.claude/commands/"* "$TARGET_DIR/.claude/commands/"
-            _count=$(ls -1 "$TARGET_DIR/.claude/commands/"*.md 2>/dev/null | wc -l)
+            _count=$(ls -1 "$TARGET_DIR/.claude/commands/"*.md 2>/dev/null | wc -l | tr -d ' ')
             eval "PLAT_SKILL_COUNT_${plat}=${_count}"
             echo -e "${GREEN}    ✓ Claude skills installed (${_count} skills)${NC}"
 
@@ -752,7 +752,7 @@ install_platform() {
             if [ -d "$SCRIPT_DIR/.claude/hooks" ]; then
                 cp -r "$SCRIPT_DIR/.claude/hooks/"* "$TARGET_DIR/.claude/hooks/" 2>/dev/null || true
                 chmod +x "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null || true
-                _count=$(ls -1 "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null | wc -l)
+                _count=$(ls -1 "$TARGET_DIR/.claude/hooks/"*.sh 2>/dev/null | wc -l | tr -d ' ')
                 eval "PLAT_HOOK_COUNT_${plat}=${_count}"
                 echo -e "${GREEN}    ✓ Safety hooks installed (${_count} hooks)${NC}"
             fi
@@ -765,7 +765,7 @@ install_platform() {
             # Make helper executable
             [ -f "$TARGET_DIR/.copilot/helper.sh" ] && chmod +x "$TARGET_DIR/.copilot/helper.sh"
 
-            _count=$(ls -1 "$TARGET_DIR/.copilot/custom-agents/"*.md 2>/dev/null | wc -l)
+            _count=$(ls -1 "$TARGET_DIR/.copilot/custom-agents/"*.md 2>/dev/null | wc -l | tr -d ' ')
             eval "PLAT_AGENT_COUNT_${plat}=${_count}"
             echo -e "${GREEN}    ✓ Copilot custom agents installed (${_count} agents)${NC}"
             echo -e "${GREEN}    ✓ Copilot helper and workflow guide installed${NC}"
@@ -774,19 +774,19 @@ install_platform() {
             cp -r "$SCRIPT_DIR/.agents/skills/"* "$TARGET_DIR/.agents/skills/"
             # Copy AGENTS.md to target
             [ -f "$SCRIPT_DIR/AGENTS.md" ] && cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"
-            _count=$(find "$TARGET_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l)
+            _count=$(find "$TARGET_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
             eval "PLAT_SKILL_COUNT_${plat}=${_count}"
             echo -e "${GREEN}    ✓ Codex skills installed (${_count} skills)${NC}"
             ;;
         gemini)
             cp -r "$SCRIPT_DIR/.gemini/skills/"* "$TARGET_DIR/.gemini/skills/"
-            _count=$(ls -1 "$TARGET_DIR/.gemini/skills/"*.md 2>/dev/null | wc -l)
+            _count=$(ls -1 "$TARGET_DIR/.gemini/skills/"*.md 2>/dev/null | wc -l | tr -d ' ')
             eval "PLAT_SKILL_COUNT_${plat}=${_count}"
             echo -e "${GREEN}    ✓ Gemini skills installed (${_count} skills)${NC}"
             ;;
         cursor)
             cp -r "$SCRIPT_DIR/.cursor/rules/"* "$TARGET_DIR/.cursor/rules/"
-            _count=$(ls -1 "$TARGET_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l)
+            _count=$(ls -1 "$TARGET_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l | tr -d ' ')
             eval "PLAT_RULE_COUNT_${plat}=${_count}"
             echo -e "${GREEN}    ✓ Cursor rules installed (${_count} rules)${NC}"
             ;;
