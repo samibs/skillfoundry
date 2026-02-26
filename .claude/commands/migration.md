@@ -102,13 +102,20 @@ def downgrade():
 1. UP migration runs successfully
 2. DOWN migration runs successfully
 3. Schema matches expected state
-4. Data integrity preserved
+4. Data integrity preserved (row counts, column values, FK constraints)
 5. No data loss
 6. Performance acceptable
-7. Rollback tested
+7. Rollback tested — schema returns to EXACT pre-migration state
+8. Automated test file created (e.g., test_migration_YYYYMMDD.py)
 ```
 
-**Output**: Test results
+**Automated Test Requirements:**
+- Every migration MUST produce a corresponding test file following project naming conventions (`test_*.py`, `*.spec.ts`, `*Tests.cs`).
+- Tests MUST assert: schema state after UP, data integrity after UP, schema state after DOWN (matches original).
+- Tests MUST run against a real database (not mocked).
+- Hand off to `/tester` for validation of migration test coverage.
+
+**Output**: Test results + test file path
 
 ### PHASE 5: DEPLOYMENT
 
@@ -144,10 +151,12 @@ def downgrade():
 ### Testing
 - [ ] UP migration tested
 - [ ] DOWN migration tested
-- [ ] Data integrity verified
+- [ ] Data integrity verified (row counts, values, constraints)
 - [ ] Performance tested
-- [ ] Edge cases tested
-- [ ] Rollback tested
+- [ ] Edge cases tested (empty tables, large datasets, null values)
+- [ ] Rollback tested — schema matches pre-migration snapshot exactly
+- [ ] Automated test file created and passes green
+- [ ] Hand off to `/tester` for migration test review
 
 ### Deployment
 - [ ] Backup created

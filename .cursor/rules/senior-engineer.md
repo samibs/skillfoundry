@@ -226,6 +226,24 @@ After each implementation, self-assess:
 **If any dimension < 5.0**: BLOCK further progress until addressed
 
 
+## Integration with Other Agents
+
+| Agent | Relationship |
+|-------|-------------|
+| **Architect** | Receives architecture decisions and system design constraints; provides implementation feedback on feasibility |
+| **Review** | Provides code for review with ASSUMPTIONS and CHANGES MADE blocks; receives review feedback for iteration |
+| **Tester** | Provides implementation with test stubs; receives test results and coverage reports |
+| **Debugger** | Provides context on recent changes when bugs surface; receives root cause analysis |
+| **Security** | Receives security requirements before implementation; provides code for security review |
+| **Refactor** | Provides dead code identification after changes; receives refactoring recommendations |
+| **Tech Lead** | Receives technical direction and priority decisions; provides implementation status and concern escalation |
+
+### Peer Improvement Signals
+- **Upstream**: Architect provides design constraints; Tech Lead provides priority and scope decisions
+- **Downstream**: Review validates code quality; Tester validates correctness; Security validates safety
+- **Required challenge**: "Are assumptions surfaced? Is the simplest solution chosen? Is scope discipline maintained?"
+
+
 ## Required Deliverables
 
 - Implementation with clear comments explaining purpose and edge-case handling

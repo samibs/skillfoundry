@@ -7,6 +7,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.8] - 2026-02-26
+
+### Changed — Self-Introspection: Full Agent Quality Overhaul
+
+Comprehensive self-introspection cycle across all 60 agents. Each agent audited itself for quality gaps, then specialist agents cross-reviewed and corrected each other. The largest single improvement in framework history.
+
+#### Phase 1: IGNITE — Full Audit
+- All 60 agents scored against 7 quality dimensions (Structure, Examples, Output, Reflection, Integration, Specificity, Completeness)
+- 8 Gold (60+), 23 Silver (50-59), 14 Bronze (35-49), 15 Failing (<35)
+- Weakest dimensions framework-wide: Reflection (75% scored 0), Integration (38% operated as islands)
+
+#### Phase 2: FORGE — Self-Improvement (45 agents modified, +8,830 lines)
+
+**Full Rewrites (15 agents, score < 35):**
+- `gosm` (18→359), `goma` (17→383), `blitz` (21→463), `cost` (22→365), `undo` (20→431)
+- `profile` (26→382), `status` (28→393), `health` (30→362), `ship` (27→485), `gohm` (30→383)
+- `evaluator` (30→371), `workflow` (32→371), `nuke` (33→361), `debugger` (34→456), `swarm` (34→522)
+
+**Major Enhancements (14 agents, score 35-49):**
+- `coder`, `forge`, `anvil`, `metrics`, `context`, `replay`, `version`
+- `performance`, `api-design`, `accessibility`, `ops`, `tech-lead`, `auto`, `dependency`
+
+**Reflection/Integration Added (16 agents, score 50-59):**
+- `i18n`, `sre`, `release`, `math-check`, `educate`, `layer-check`, `security`
+- `data-architect`, `senior-engineer`, `prd`, `orchestrate`, `memory`, `stories`, `ux-ui`, `migration`
+
+#### Phase 3: TEMPER — Cross-Agent Peer Review
+
+**Security Agent reviewed 5 agents (12 fixes):**
+- `devops`: SAST/DAST checklist, credential rotation, pipeline secrets handling
+- `api-design`: Default-deny auth policy, CORS configuration guidance, request body limits
+- `ops`: Admin access hardening, audit logging, file upload security
+- `sre`: Security incident response, security monitoring signals, security SLIs
+
+**Tester Agent reviewed 5 agents (8 fixes):**
+- `coder`: Phase 4 rewrite mandating test execution, deliverables upgrade
+- `refactor`: Coverage comparison before/after refactoring
+- `migration`: Automated test file mandate, testing checklist expansion
+- `fixer`: Regression test requirement for all fix types
+- `debugger`: Tester documentation standards for regression tests
+
+**Architect Agent reviewed 5 agents (8 fixes):**
+- `data-architect`: Architect approval gate, scalability patterns, ADR checklist
+- `api-design`: ADR requirement, backwards compatibility enforcement protocol
+- `tech-lead`: Architect escalation rule for boundary decisions
+- `coder`: Architect approval check in Phase 1 validation
+- `delegate`: Selection Rule 6 for implicit architectural decisions
+
+**Evaluator reviewed 15 agents (22 fixes):**
+- 2 Output Format expansions (blitz, swarm)
+- 5 Integration table restructures (profile, status, health, ship, gohm)
+- 15 Required Challenge additions (all 15 rewritten agents)
+
+#### Phase 4: INSPECT — Quality Gate
+- Zero banned pattern violations
+- All 45 modified agents verified for structural integrity
+- Reflection, Integration, and Output sections present in all improved agents
+
+### Changed
+- `.version` bumped to 2.0.8 (from 2.0.7)
+- `sf_cli/package.json` version bumped to 2.0.8
+- All agents synced across 5 platforms (Claude, Codex, Copilot, Cursor, Gemini)
+
+---
+
 ## [2.0.7] - 2026-02-26
 
 ### Changed — Documentation Agent Rewrite & Release Version Protocol

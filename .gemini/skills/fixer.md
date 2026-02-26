@@ -1,9 +1,3 @@
-# /fixer
-
-Gemini skill for $cmd.
-
-## Instructions
-
 
 # Fixer Orchestrator
 
@@ -114,12 +108,15 @@ OUTPUT: Fix specification for target agent
 
 ### Phase 3: Dispatch & Monitor
 ```
-1. Route fix spec to Tester agent
-2. Tester generates tests
-3. Return to Gate Keeper for validation
-4. If PASS → Continue
-5. If FAIL → Retry (attempt 2/3)
-6. If still failing after 3 attempts → Escalate
+1. Route fix spec to appropriate agent
+2. Agent applies fix
+3. Agent writes a REGRESSION TEST proving the violation no longer exists
+   - Test must FAIL without the fix and PASS with the fix
+   - Test follows /tester documentation standards (file header, WHY, Arrange/Act/Assert)
+4. Return to Gate Keeper for validation (fix + regression test)
+5. If PASS → Continue
+6. If FAIL → Retry (attempt 2/3)
+7. If still failing after 3 attempts → Escalate
 ```
 
 
@@ -343,6 +340,7 @@ Track remediation effectiveness:
 - Escalate what can be auto-fixed
 - Retry beyond 3 attempts without user approval
 - Apply fixes without validation
+- Apply fixes without a regression test proving the violation is resolved
 - Lose context between retry attempts
 
 

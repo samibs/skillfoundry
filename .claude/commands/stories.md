@@ -445,6 +445,119 @@ Before finalizing stories, verify:
 
 ---
 
+## REFLECTION PROTOCOL (MANDATORY)
+
+See `agents/_reflection-protocol.md` for complete protocol.
+
+### Pre-Execution Reflection
+Before generating stories from a PRD, verify:
+1. Has the PRD passed its quality gates (no TBD markers, all user stories have acceptance criteria)?
+2. Are the functional requirements specific enough to decompose into implementable stories?
+3. Have I analyzed the existing codebase to align technical approach with existing patterns?
+4. Are dependencies between stories clear enough to establish a valid DAG (no cycles)?
+
+### Post-Execution Reflection
+After completion, assess:
+1. Is each story truly self-contained (a developer can implement it without referencing the PRD)?
+2. Are acceptance criteria in Gherkin format and testable (not vague "it should work")?
+3. Are the Expected Changes (Anvil T4) sections populated with specific file paths?
+4. Is the story dependency graph valid (no cycles, critical path identified, parallelizable work marked)?
+
+### Self-Score (0-10)
+- **Self-Containment**: Stories include all context needed for isolated implementation? (X/10)
+- **Testability**: Acceptance criteria are Gherkin format and directly automatable? (X/10)
+- **Granularity**: Each story completable in one focused session (not too large, not too small)? (X/10)
+- **Dependency Accuracy**: DAG is valid, critical path correct, parallel work identified? (X/10)
+
+**If overall < 7.0**: Expand incomplete stories, fix dependency cycles, and ensure self-containment before closing.
+
+
+## BAD vs GOOD Story Examples
+
+### BAD Story (vague, not self-contained, untestable)
+
+```markdown
+# Story: STORY-001 Add Authentication
+
+## Context
+We need auth for the app.
+
+## Implementation Requirements
+- Add login
+- Add logout
+- Make it secure
+
+## Acceptance Criteria
+- Users can log in
+- Users can log out
+```
+
+**Why it fails**: No technical approach, no specific files to create/modify, no Gherkin acceptance criteria, no security checklist, no API specification. A developer must ask 10+ clarifying questions.
+
+### GOOD Story (self-contained, testable, implementation-ready)
+
+```markdown
+# Story: STORY-001 Setup Auth Models and Database Schema
+
+**PRD Reference:** 2026-02-10-user-authentication.md
+**Priority:** MUST
+**Phase:** 1
+**Status:** TODO
+
+## Context
+
+### Why This Story Exists
+The application has no authentication system. Users access all features
+without identity verification, creating security and audit trail gaps.
+
+### What Success Looks Like
+User, Role, and Session tables exist with proper constraints, and the
+ORM models match the schema with all relationships defined.
+
+### Dependencies
+- **Requires:** None (first story in chain)
+- **Blocks:** STORY-002 (Login API), STORY-003 (Logout API)
+
+## Implementation Requirements
+
+### Technical Approach
+
+#### Architecture
+Create models in `backend/models/auth.py` and migration in
+`backend/migrations/001_auth_tables.sql`.
+
+#### Key Implementation Details
+1. User table: id (UUID PK), email (UNIQUE NOT NULL), password_hash, created_at, updated_at
+2. Role table: id (INT PK), name (UNIQUE), permissions (JSONB)
+3. user_roles junction table for M:N relationship
+4. Session table: id (UUID PK), user_id (FK), token_hash, expires_at, created_at
+
+## Acceptance Criteria
+
+```gherkin
+Feature: Auth database schema
+
+  Scenario: Migration creates all required tables
+    Given a clean database
+    When I run the auth migration
+    Then tables "users", "roles", "user_roles", "sessions" exist
+    And users.email has a UNIQUE constraint
+    And users.password_hash is NOT NULL
+
+  Scenario: Rollback removes all auth tables
+    Given the auth migration has been applied
+    When I run the rollback migration
+    Then tables "users", "roles", "user_roles", "sessions" do not exist
+```
+
+## Expected Changes (Anvil T4)
+- **Create**: [`backend/models/auth.py`, `backend/migrations/001_auth_tables.sql`]
+- **Modify**: [`backend/models/__init__.py`]
+```
+
+**Why it works**: Self-contained with all context, specific file paths, Gherkin acceptance criteria, clear dependencies, technical approach specified.
+
+
 ## INTEGRATION WITH /auto
 
 When `/auto` receives a PRD:
