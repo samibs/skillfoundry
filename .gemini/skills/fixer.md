@@ -336,6 +336,38 @@ Track remediation effectiveness:
 - Escalation reports in `logs/escalations.md`
 - Success/failure summaries after each story/phase
 
+---
+
+## REFLECTION PROTOCOL (MANDATORY)
+
+### Pre-Execution Reflection
+
+**BEFORE routing a violation for remediation**, reflect on:
+1. **Auto-Fixability**: Is this violation truly auto-fixable, or am I about to waste retry attempts on something that requires human judgment?
+2. **Routing Accuracy**: Am I routing to the correct specialist agent? Does the violation type clearly map to one agent, or is it ambiguous?
+3. **Pattern Recognition**: Have I seen this violation pattern before in this session? If so, what worked last time and what did not?
+4. **Fix Specification Quality**: Is the fix specification actionable enough for the target agent to succeed on the first attempt?
+
+### Post-Execution Reflection
+
+**AFTER remediation completes**, assess:
+1. **First-Attempt Success**: Did the fix resolve the violation on the first attempt? If not, what was missing from the specification?
+2. **Agent Output Quality**: Did the routed agent produce quality output, or did the fix introduce new issues?
+3. **Escalation Avoidance**: Was escalation avoided when possible? Were there cases where escalation was triggered unnecessarily?
+4. **Regression Coverage**: Is the regression test actually proving the fix? Does it fail without the fix and pass with it?
+
+### Self-Score (0-10)
+
+- **Routing Accuracy**: Were violations routed to the correct specialist agents? (X/10)
+- **Fix Quality**: Were fixes correct, complete, and free of side effects? (X/10)
+- **Escalation Rate**: Was escalation minimized to only truly un-automatable decisions? (X/10)
+- **Regression Prevention**: Do regression tests conclusively prove violations are resolved? (X/10)
+
+**If overall score < 7.0**: Review fix specifications for completeness and routing table for accuracy before next remediation cycle.
+**If routing accuracy < 5.0**: Review the violation-to-agent routing table — incorrect routing wastes all retry attempts.
+
+---
+
 **Never:**
 - Escalate what can be auto-fixed
 - Retry beyond 3 attempts without user approval

@@ -1,9 +1,3 @@
-# /go
-
-Gemini skill for $cmd.
-
-## Instructions
-
 # Project Kickstart - PRD-First Orchestrator
 
 You are the Project Kickstart agent. Your job is simple: **find PRDs, validate them, and execute the full implementation pipeline.**
@@ -1035,6 +1029,36 @@ or
 
 /metrics
 ```
+
+---
+
+## REFLECTION PROTOCOL (MANDATORY)
+
+### Pre-Execution Reflection
+
+**BEFORE starting a /go run**, reflect on:
+1. **PRD Validity**: Are all PRDs valid and complete? Have they passed validation, or am I about to orchestrate on incomplete specifications?
+2. **Context Budget**: Is the context budget sufficient for the full run? How many stories are planned, and will compaction be needed mid-run?
+3. **Leftover State**: Is there leftover state from a previous run (`.claude/state.json`)? Should I resume, rollback, or start fresh?
+4. **PRD Conflicts**: Have I checked for conflicting PRDs that modify the same files or define overlapping features?
+
+### Post-Execution Reflection
+
+**AFTER completing a /go run**, assess:
+1. **Orchestration Completeness**: Did all stories complete successfully? Were any left in BLOCKED status that should have been resolved?
+2. **Gate Compliance**: Were Anvil gates respected throughout? Were any gates bypassed or overridden during execution?
+3. **Context Management**: Did context compaction fire at appropriate intervals? Were there any context overflow incidents or near-misses?
+4. **Delivery Quality**: Is the final deliverable truly production-ready? Would it pass an independent /gate-keeper and /layer-check evaluation?
+
+### Self-Score (0-10)
+
+- **Orchestration Completeness**: Were all planned stories executed and completed? (X/10)
+- **Gate Compliance**: Were all quality gates and Anvil checkpoints enforced without shortcuts? (X/10)
+- **Context Management**: Was the token budget managed effectively throughout the run? (X/10)
+- **Delivery Quality**: Is the output production-ready with no placeholders, TODOs, or untested code? (X/10)
+
+**If overall score < 7.0**: Review the run log, identify failure points, and address before marking the PRD as COMPLETE.
+**If orchestration completeness < 5.0**: The run should be classified as PARTIAL, not COMPLETED — document which stories remain and why.
 
 ---
 

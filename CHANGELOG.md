@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.9] - 2026-02-26
+
+### Added — Reflection Protocols for 5 Key Orchestrators
+
+Completed the reflection coverage gap from v2.0.8. The 5 most-used orchestrator agents now have full reflection protocols with pre/post execution self-assessment and scoring thresholds.
+
+#### Reflection Protocols Added
+- **auto.md**: Classification accuracy, pipeline completeness, escalation quality, token efficiency. Fixed 4 incorrect `docs/prd/` references to `genesis/`.
+- **context.md**: Estimation accuracy, compaction timing, context preservation, budget health.
+- **fixer.md**: Routing accuracy, fix quality, escalation rate, regression prevention.
+- **gate-keeper.md**: Decision accuracy, violation detection, standards consistency, false positive rate.
+- **go.md**: Orchestration completeness, gate compliance, context management, delivery quality.
+
+#### Knowledge Promotion Pipeline
+- **New**: `scripts/promote-knowledge.sh` — Full promotion pipeline for knowledge bank
+  - Scans `knowledge/staging/`, validates YAML frontmatter and body sections
+  - Deduplicates against `knowledge/promoted/`
+  - Scores lessons (0-5) with minimum threshold of 3 to promote
+  - Commands: `promote`, `scan`, `force`, `reject <id>`, `stats`
+  - Pure bash, no external dependencies
+
+#### Visual Overhaul Verification
+- All 11 CLI components confirmed using theme.ts (hex colors, Unicode symbols, custom borders)
+- No hardcoded colors remaining — visual overhaul from v2.0.8 plan is 100% complete
+
+### Synced
+- 5 command files synced to 4 platforms (20 copies total)
+
+---
+
 ## [2.0.8] - 2026-02-26
 
 ### Changed — Self-Introspection: Full Agent Quality Overhaul

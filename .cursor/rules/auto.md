@@ -34,7 +34,7 @@ First, classify the incoming request:
 ### PRD Detection Logic
 
 ```
-IF input contains path to .md file in docs/prd/:
+IF input contains path to .md file in genesis/:
     → Type = PRD_FEATURE
     → Skip PRD creation, use existing
     → Check for existing stories
@@ -60,7 +60,7 @@ IF NO PRD EXISTS:
     1. Run PRD Architect interrogation
     2. Extract requirements from user
     3. Generate full PRD document
-    4. Save to: docs/prd/[YYYY-MM-DD]-[feature-slug].md
+    4. Save to: genesis/[YYYY-MM-DD]-[feature-slug].md
     5. Present PRD for user approval
 
 IF PRD EXISTS:
@@ -462,7 +462,7 @@ User receives: Complete, tested, documented authentication system with full PRD 
 ### Example 2: From Existing PRD
 
 User says:
-> "/auto docs/prd/2026-01-16-user-auth.md"
+> "/auto genesis/2026-01-16-user-auth.md"
 
 Auto Pilot executes:
 1. ✓ Classify: PRD_FEATURE
@@ -489,13 +489,43 @@ This looks like a simple feature. Options:
 
 ---
 
+## REFLECTION PROTOCOL (MANDATORY)
+
+### Pre-Execution Reflection
+
+**BEFORE orchestrating a pipeline**, reflect on:
+1. **Classification Accuracy**: Am I classifying this request correctly? Could it fit a simpler pipeline (e.g., BUG_FIX instead of NEW_FEATURE)?
+2. **Pipeline Necessity**: Is the full pipeline needed, or is this overkill for the request? Would quick mode be more appropriate?
+3. **Context Efficiency**: Am I about to load unnecessary context? Can I avoid loading the full PRD/story set when only a subset is needed?
+4. **PRD Location**: Is the PRD location correct (genesis/, not docs/prd/)? Am I referencing the right source of truth?
+
+### Post-Execution Reflection
+
+**AFTER pipeline completion**, assess:
+1. **Pipeline Completeness**: Did the pipeline complete all required phases? Were any phases skipped or short-circuited?
+2. **Feedback Loop Effectiveness**: Were feedback loops necessary? Did they converge within the 3-attempt limit?
+3. **Escalation Appropriateness**: Did I escalate at the right moments? Were there escalations that could have been auto-resolved?
+4. **Auto-Fix Quality**: Were auto-fixes appropriate, or did they mask underlying problems that will resurface later?
+
+### Self-Score (0-10)
+
+- **Classification Accuracy**: Did the request type map to the correct pipeline? (X/10)
+- **Pipeline Completeness**: Were all phases executed with proper gate enforcement? (X/10)
+- **Escalation Quality**: Were user interruptions minimized to only truly blocking questions? (X/10)
+- **Token Efficiency**: Was context managed well, avoiding unnecessary loading and compaction? (X/10)
+
+**If overall score < 7.0**: Review pipeline selection logic and feedback loop handling before next invocation.
+**If classification accuracy < 5.0**: Re-classify the request and restart with the correct pipeline.
+
+---
+
 ## INVOCATION
 
 ```
 /auto Build a REST API endpoint for user profiles with CRUD operations
 → Triggers: PRD → Stories → Full pipeline
 
-/auto docs/prd/2026-01-16-user-profiles.md
+/auto genesis/2026-01-16-user-profiles.md
 → Triggers: Load PRD → Stories → Full pipeline
 
 /auto Fix the login timeout bug in auth.service.ts

@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.8 - Quick Reference Card
+# SkillFoundry v2.0.9 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -602,4 +602,4 @@ your-project/
 
 ---
 
-*SkillFoundry Framework v2.0.8 - February 2026 - The Forge (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.9 - February 2026 - The Forge (53 Core Agents / 60 Skills)*
