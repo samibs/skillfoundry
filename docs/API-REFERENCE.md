@@ -501,5 +501,93 @@ GET  /api/metrics/export/:format
 
 ---
 
-**Last Updated**: 2026-02-26  
-**Version**: 1.3.1
+## Pipeline Engine API (v2.0.10)
+
+### ai-runner.ts — Standalone Agentic Loop
+
+The core multi-turn tool-use loop, decoupled from React. Can be called from any context.
+
+```typescript
+import { runAgentLoop } from './core/ai-runner.js';
+
+const result = await runAgentLoop(
+  messages,       // AnthropicMessage[]
+  {
+    config,       // SfConfig (provider, model, budget)
+    policy,       // SfPolicy (allow_shell, redact, etc.)
+    systemPrompt, // Optional system prompt for the AI
+    tools,        // ToolDefinition[] (default: ALL_TOOLS)
+    maxTurns,     // Max tool-use turns (default: 25)
+    workDir,      // Working directory for tool execution
+    abortSignal,  // { aborted: boolean } to cancel mid-loop
+  },
+  {
+    onStreamChunk,   // (chunk: string) => void
+    onToolStart,     // (toolCall: ToolCall) => void
+    onToolComplete,  // (toolCall: ToolCall, result: ToolResult) => void
+    onTurnComplete,  // (turn: number, tokens: { input, output, cost }) => void
+    requestPermission, // (toolCall, reason) => Promise<'allow' | 'deny'>
+  },
+);
+
+// result: RunnerResult { content, turnCount, totalInputTokens, totalOutputTokens, totalCostUsd, aborted }
+```
+
+### pipeline.ts — Pipeline Execution Engine
+
+Chains AI execution across multiple stories from PRDs.
+
+```typescript
+import { runPipeline } from './core/pipeline.js';
+
+const result = await runPipeline({
+  config,     // SfConfig
+  policy,     // SfPolicy
+  workDir,    // Project working directory
+  prdFilter,  // Optional: filter to specific PRD file
+  callbacks: {
+    onPhaseStart,    // (phase: string, detail?: string) => void
+    onPhaseComplete, // (phase: string, status: PipelinePhaseStatus) => void
+    onStoryStart,    // (story: string, index: number, total: number) => void
+    onStoryComplete, // (story: string, passed: boolean, cost: number) => void
+    onGateResult,    // (tier: string, status: string) => void
+    requestPermission, // (toolCall, reason) => Promise<'allow' | 'deny'>
+  },
+});
+
+// result: PipelineResult { runId, phases[], storiesTotal, storiesCompleted, storiesFailed,
+//                          gateVerdict, totalCostUsd, totalTokens, durationMs }
+```
+
+### Pipeline Phases
+
+| Phase | Name | Description |
+|-------|------|-------------|
+| 1 | IGNITE | Scan and validate PRDs from `genesis/` |
+| 2 | PLAN | Generate stories via AI or reuse existing in `docs/stories/` |
+| 3 | FORGE | Execute each story via `runAgentLoop()` (25 turns max) |
+| 4 | TEMPER | Run T1-T6 quality gates |
+| 5 | INSPECT | Isolate T4 security results |
+| 6 | DEBRIEF | Persist run metadata to `.skillfoundry/runs/` |
+
+### Run Metadata Schema
+
+Each run persists to `.skillfoundry/runs/{runId}.json`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `run_id` | string | Unique run identifier |
+| `status` | string | `COMPLETED` or `PARTIAL` |
+| `started_at` | ISO string | Pipeline start time |
+| `completed_at` | ISO string | Pipeline end time |
+| `prd_files` | string[] | PRDs processed |
+| `phases` | object[] | Phase results with status and duration |
+| `stories` | object | Per-story execution results |
+| `gates` | object | Gate summary (verdict, counts) |
+| `totalCostUsd` | number | Total AI cost |
+| `totalTokens` | object | `{ input, output }` token counts |
+
+---
+
+**Last Updated**: 2026-02-26
+**Version**: 2.0.10

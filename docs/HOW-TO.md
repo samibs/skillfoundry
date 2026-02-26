@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 2.0.9** | Last Updated: 2026-02-26
+> **Version 2.0.10** | Last Updated: 2026-02-26
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -13,20 +13,21 @@ This guide covers everything you need to know to use the SkillFoundry framework 
 3. [Working with Existing Projects](#3-working-with-existing-projects) *(v1.3.1)*
 4. [Creating PRDs](#4-creating-prds)
 5. [The /go Command](#5-the-go-command)
-6. [Story Dependencies](#6-story-dependencies)
-7. [PRD Dependencies](#7-prd-dependencies)
-8. [Recovery & Rollback](#8-recovery--rollback)
-9. [Metrics & Analytics](#9-metrics--analytics)
-10. [Context Management](#10-context-management)
-11. [Testing & Verification](#11-testing--verification)
-12. [TDD Enforcement](#12-tdd-enforcement) *(v1.3.1)*
-13. [Parallel Execution](#13-parallel-execution) *(v1.3.1)*
-14. [Git Worktree Isolation](#14-git-worktree-isolation) *(v1.3.1)*
-15. [Systematic Debugging](#15-systematic-debugging) *(v1.3.1)*
-16. [Updating Projects](#16-updating-projects)
-17. [Troubleshooting](#17-troubleshooting)
-18. [Best Practices](#18-best-practices)
-19. [Command Reference](#19-command-reference)
+6. [The /forge Command (Pipeline Engine)](#6-the-forge-command-pipeline-engine) *(v2.0.10)*
+7. [Story Dependencies](#7-story-dependencies)
+8. [PRD Dependencies](#8-prd-dependencies)
+9. [Recovery & Rollback](#9-recovery--rollback)
+10. [Metrics & Analytics](#10-metrics--analytics)
+11. [Context Management](#11-context-management)
+12. [Testing & Verification](#12-testing--verification)
+13. [TDD Enforcement](#13-tdd-enforcement) *(v1.3.1)*
+14. [Parallel Execution](#14-parallel-execution) *(v1.3.1)*
+15. [Git Worktree Isolation](#15-git-worktree-isolation) *(v1.3.1)*
+16. [Systematic Debugging](#16-systematic-debugging) *(v1.3.1)*
+17. [Updating Projects](#17-updating-projects)
+18. [Troubleshooting](#18-troubleshooting)
+19. [Best Practices](#19-best-practices)
+20. [Command Reference](#20-command-reference)
 
 ---
 
@@ -475,7 +476,79 @@ PHASE 8: Completion
 
 ---
 
-## 6. Story Dependencies
+## 6. The /forge Command (Pipeline Engine)
+
+> **New in v2.0.10**: `/forge` is now a real AI-powered pipeline that executes end-to-end, not just a read-only scanner.
+
+### What /forge Does
+
+The Forge executes 6 phases to go from PRD to production-ready code:
+
+| Phase | Name | What Happens |
+|-------|------|-------------|
+| 1 | **IGNITE** | Discovers and validates PRDs from `genesis/` |
+| 2 | **PLAN** | Generates stories from PRDs via AI (or reuses existing stories) |
+| 3 | **FORGE** | Implements each story using the agentic tool-use loop (25 turns max per story) |
+| 4 | **TEMPER** | Runs T1-T6 quality gates |
+| 5 | **INSPECT** | Isolates T4 security scan results |
+| 6 | **DEBRIEF** | Persists run metadata to `.skillfoundry/runs/{runId}.json` |
+
+### Usage
+
+```bash
+# Full pipeline execution
+/forge
+
+# Read-only scan (no AI execution, backward compatible)
+/forge --dry-run
+
+# Filter to a specific PRD
+/forge genesis/2026-02-23-auth.md
+```
+
+### Auto-Fixer
+
+When a story implementation fails the T1 gate (banned patterns), the pipeline automatically routes to a fixer agent. The fixer gets the T1 violation details and attempts to fix them. Up to 2 fixer retries per story. If the fixer can't resolve the issue, the story is marked as failed and the pipeline continues.
+
+### Run Metadata
+
+Each pipeline run persists a JSON bundle to `.skillfoundry/runs/`:
+
+```json
+{
+  "run_id": "forge-1708987654-abc12345",
+  "status": "COMPLETED",
+  "phases": [
+    { "name": "IGNITE", "status": "passed", "durationMs": 50 },
+    { "name": "FORGE", "status": "passed", "durationMs": 90000 }
+  ],
+  "stories": {
+    "STORY-001": { "status": "completed", "turns": 12, "costUsd": 0.05 }
+  },
+  "totalCostUsd": 0.15
+}
+```
+
+### Architecture
+
+The pipeline is built on two new modules:
+
+- **`ai-runner.ts`** — Standalone multi-turn tool-use loop with zero React dependencies. Supports callbacks for streaming, tool execution, permissions, and turn progress. Used by both the interactive UI and the batch pipeline.
+- **`pipeline.ts`** — 6-phase orchestrator that chains PRD discovery, story generation, story execution, quality gates, and run persistence.
+
+### Differences from /go
+
+| | `/go` | `/forge` |
+|---|------|---------|
+| Story generation | Requires pre-existing stories | Generates stories from PRDs if none exist |
+| Execution | Orchestrates via prompt instructions | Drives real AI agentic loop per story |
+| Gates | Runs gates once at end | Runs T1 per story + full T1-T6 at end |
+| Auto-fix | No | Yes (T1 fixer, max 2 retries) |
+| Run persistence | No | Yes (`.skillfoundry/runs/`) |
+
+---
+
+## 7. Story Dependencies
 
 ### How Stories Declare Dependencies
 
@@ -552,7 +625,7 @@ CRITICAL PATH: STORY-001 → STORY-002 → STORY-004
 
 ---
 
-## 7. PRD Dependencies
+## 8. PRD Dependencies
 
 ### Declaring PRD Dependencies
 
@@ -628,7 +701,7 @@ TOTAL IMPACT: 5 PRDs, 14 stories
 
 ---
 
-## 8. Recovery & Rollback
+## 9. Recovery & Rollback
 
 ### Automatic State Persistence
 
@@ -752,7 +825,7 @@ Proceed? (y/n)
 
 ---
 
-## 9. Metrics & Analytics
+## 10. Metrics & Analytics
 
 ### Viewing the Dashboard
 
@@ -824,7 +897,7 @@ AGENT PERFORMANCE
 
 ---
 
-## 10. Context Management
+## 11. Context Management
 
 ### The Problem
 
@@ -897,7 +970,7 @@ Compaction is triggered:
 
 ---
 
-## 11. Testing & Verification
+## 12. Testing & Verification
 
 ### Test Execution
 
@@ -965,7 +1038,7 @@ Gate opened.
 
 ---
 
-## 12. TDD Enforcement
+## 13. TDD Enforcement
 
 **New in v1.3.1** - All implementation now follows Test-Driven Development.
 
@@ -1045,7 +1118,7 @@ The framework tracks TDD metrics in `.claude/tdd-state.json`:
 
 ---
 
-## 13. Parallel Execution
+## 14. Parallel Execution
 
 **New in v1.3.1** - Independent stories can run simultaneously for 2-5x speedup.
 
@@ -1137,7 +1210,7 @@ Resolution: Running sequentially
 
 ---
 
-## 14. Git Worktree Isolation
+## 15. Git Worktree Isolation
 
 **New in v1.3.1** - Execute PRDs in isolated git worktrees for safe development.
 
@@ -1227,7 +1300,7 @@ Worktrees are a git feature, not GitHub-specific:
 
 ---
 
-## 15. Systematic Debugging
+## 16. Systematic Debugging
 
 **New in v1.3.1** - Four-phase debugging protocol for root cause analysis.
 
@@ -1351,7 +1424,7 @@ Guard added: Null check in getProfile callers
 
 ---
 
-## 16. Updating Projects
+## 17. Updating Projects
 
 ### Check for Updates
 
@@ -1411,7 +1484,7 @@ Registered Projects:
 
 ---
 
-## 17. Troubleshooting
+## 18. Troubleshooting
 
 ### `/go` command not found
 
@@ -1495,7 +1568,7 @@ git checkout -- path/to/file
 
 ---
 
-## 18. Best Practices
+## 19. Best Practices
 
 ### PRD Quality
 
@@ -1527,7 +1600,7 @@ git checkout -- path/to/file
 
 ---
 
-## 19. Command Reference
+## 20. Command Reference
 
 ### Primary Commands
 
@@ -1721,4 +1794,4 @@ Compliance presets are additive - they add gate-keeper rules without weakening e
 ---
 
 *Created by SBS with Claude Code*
-*Framework Version: 2.0.9*
+*Framework Version: 2.0.10*
