@@ -1,7 +1,7 @@
 # SkillFoundry
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.6-blue)
+![Version](https://img.shields.io/badge/version-2.0.7-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
@@ -59,7 +59,7 @@ The CLI adds multi-provider switching, budget controls, permission management, a
  ███████║██║  ██╗██║███████╗███████╗██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║
  ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝
 
-  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms                         v2.0.6
+  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms                         v2.0.7
  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 

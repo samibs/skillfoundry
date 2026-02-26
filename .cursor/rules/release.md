@@ -227,8 +227,11 @@ Questions? Contact support@example.com
 - [ ] Migration guide written (if breaking changes)
 
 ### Versioning
-- [ ] Version bumped in package.json/setup.py/etc.
-- [ ] Version consistent across all files
+- [ ] Version bumped in `.version` (single source of truth)
+- [ ] Version bumped in `sf_cli/package.json`
+- [ ] **Run `/docs audit` (Phase 6 of docs agent)** — ensures ALL version references are consistent
+- [ ] Version consistent across all files (see docs agent Version Bump Protocol for full checklist: `.version`, `package.json`, `README.md`, `AGENTS.md`, `CHANGELOG.md`, `QUICK-REFERENCE.md`, `DOCUMENTATION-INDEX.md`, `HOW-TO.md`, sub-package.json files)
+- [ ] "Last Updated" timestamps refreshed in all modified docs
 - [ ] Git tag prepared (not pushed yet)
 
 ### Testing
