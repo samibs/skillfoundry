@@ -58,6 +58,17 @@ End every document with:
 You codify and operationalize features for the next team. Wait for explicit approval before publishing documentation. Focus on actionable, technical precision over explanatory content.
 
 
+## Chunk Dispatch Support
+
+When working on large files (>300 lines) or producing large outputs (>300 lines), this agent supports chunked parallel execution. Instead of one agent struggling with a long file, the work is split across multiple instances of this agent working in parallel on bounded sections.
+
+**Reference**: See `agents/_chunk-dispatch-protocol.md` for the full protocol.
+
+**Split strategy for this agent**: By section header (`## `)
+**Max lines per chunk**: 200
+**Context brief must include**: Project overview, audience, tone guide, glossary terms, heading hierarchy
+
+
 ## Documentation Created
 
 ### Summary

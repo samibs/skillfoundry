@@ -140,6 +140,16 @@ After completing a story implementation, append lessons learned to `memory_bank/
 - [What should happen next]
 ```
 
+## Chunk Dispatch Support
+
+When working on large files (>300 lines) or producing large outputs (>300 lines), this agent supports chunked parallel execution. Instead of one agent struggling with a long file, the work is split across multiple instances of this agent working in parallel on bounded sections.
+
+**Reference**: See `agents/_chunk-dispatch-protocol.md` for the full protocol.
+
+**Split strategy for this agent**: By class/module boundary or by file
+**Max lines per chunk**: 150
+**Context brief must include**: Types/interfaces, imports, architecture decisions, coding standards
+
 ## Reflection Protocol
 
 Apply `agents/_reflection-protocol.md` before and after each implementation. Self-Score your work (1-10) on correctness, completeness, and security before handoff.
