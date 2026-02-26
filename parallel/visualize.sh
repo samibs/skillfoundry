@@ -11,13 +11,6 @@
 set -e
 set -o pipefail
 
-# Requires bash 4+ for associative arrays
-if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
-    echo "Error: visualize.sh requires bash 4.0+ (you have $BASH_VERSION)" >&2
-    echo "On macOS: brew install bash" >&2
-    exit 1
-fi
-
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -86,6 +79,13 @@ fi
 if [ ! -d "$STORIES_DIR" ]; then
     echo -e "${RED}Error: Directory not found: $STORIES_DIR${NC}" >&2
     exit 3
+fi
+
+# Requires bash 4+ for associative arrays (graph operations)
+if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    echo "Error: visualize.sh requires bash 4.0+ (you have $BASH_VERSION)" >&2
+    echo "On macOS: brew install bash" >&2
+    exit 1
 fi
 
 # ═══════════════════════════════════════════════════════════════
@@ -232,7 +232,7 @@ render_ascii() {
         local child_count=${#children[@]}
         local idx=0
         for child in "${children[@]}"; do
-            ((idx++))
+            idx=$((idx + 1))
             local child_is_last="false"
             if [ "$idx" -eq "$child_count" ]; then
                 child_is_last="true"
@@ -245,7 +245,7 @@ render_ascii() {
     local root_count=${#roots[@]}
     local ridx=0
     for root in "${roots[@]}"; do
-        ((ridx++))
+        ridx=$((ridx + 1))
         local root_is_last="false"
         if [ "$ridx" -eq "$root_count" ]; then
             root_is_last="true"

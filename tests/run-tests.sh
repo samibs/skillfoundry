@@ -150,26 +150,32 @@ test_install_claude() {
     mkdir -p "$TEST_PROJECT"
     
     cd "$FRAMEWORK_DIR"
-    if bash install.sh --platform=claude "$TEST_PROJECT" > /dev/null 2>&1; then
+    local _err_file="/tmp/sf-install-test-err.$$"
+    if bash install.sh --platform=claude "$TEST_PROJECT" > /dev/null 2>"$_err_file"; then
         # Verify installation
         if [ -d "$TEST_PROJECT/.claude/commands" ]; then
             log_success "Claude installation created .claude/commands"
         else
             log_failure "Claude installation missing .claude/commands"
+            rm -f "$_err_file"
             return 1
         fi
-        
+
         if [ -f "$TEST_PROJECT/CLAUDE.md" ]; then
             log_success "Claude installation created CLAUDE.md"
         else
             log_failure "Claude installation missing CLAUDE.md"
+            rm -f "$_err_file"
             return 1
         fi
-        
+
+        rm -f "$_err_file"
         cleanup_test_workspace
         return 0
     else
         log_failure "Install script failed for Claude platform"
+        [ -s "$_err_file" ] && echo "  Install stderr: $(head -5 "$_err_file")"
+        rm -f "$_err_file"
         cleanup_test_workspace
         return 1
     fi
@@ -496,13 +502,13 @@ test_performance_install_speed() {
     TEST_PROJECT="$TEST_DIR/test-performance-project"
     mkdir -p "$TEST_PROJECT"
     
-    START_TIME=$(date +%s%N)
+    START_TIME=$(date +%s)
     cd "$FRAMEWORK_DIR"
     bash install.sh --platform=claude "$TEST_PROJECT" > /dev/null 2>&1
-    END_TIME=$(date +%s%N)
-    
-    DURATION_MS=$(( (END_TIME - START_TIME) / 1000000 ))
-    
+    END_TIME=$(date +%s)
+
+    DURATION_MS=$(( (END_TIME - START_TIME) * 1000 ))
+
     # Install should complete in under 5 seconds
     if [ $DURATION_MS -lt 5000 ]; then
         log_success "Install completed in ${DURATION_MS}ms (< 5s)"
