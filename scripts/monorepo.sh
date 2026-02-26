@@ -15,13 +15,6 @@
 set -e
 set -o pipefail
 
-# Requires bash 4+ for associative arrays (topological sort)
-if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
-    echo "Error: monorepo.sh requires bash 4.0+ (you have $BASH_VERSION)" >&2
-    echo "On macOS: brew install bash" >&2
-    exit 1
-fi
-
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -445,6 +438,13 @@ cmd_status() {
 if [ -z "$COMMAND" ]; then
     show_help
     exit 0
+fi
+
+# Require bash 4+ for commands that use associative arrays
+if [ "$COMMAND" = "order" ] && [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+    echo "Error: monorepo.sh 'order' command requires bash 4.0+ (you have $BASH_VERSION)" >&2
+    echo "On macOS: brew install bash" >&2
+    exit 1
 fi
 
 case "$COMMAND" in
