@@ -6,7 +6,8 @@
       "Bash(tree:*)",
       "WebFetch(domain:arxiv.org)",
       "WebSearch",
-      "WebFetch(domain:www.anthropic.com)"
+      "WebFetch(domain:www.anthropic.com)",
+      "Bash(git pull:*)"
     ]
   }
 }
