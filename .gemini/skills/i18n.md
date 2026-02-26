@@ -449,6 +449,17 @@ TRANSLATION PROCESS
 | Legal | All employment documents must be in French |
 
 
+## Chunk Dispatch Support
+
+When working on large files (>300 lines) or producing large outputs (>300 lines), this agent supports chunked parallel execution. Instead of one agent struggling with a long file, the work is split across multiple instances of this agent working in parallel on bounded sections.
+
+**Reference**: See `agents/_chunk-dispatch-protocol.md` for the full protocol.
+
+**Split strategy for this agent**: By locale or by section
+**Max lines per chunk**: 200
+**Context brief must include**: Source locale keys, translation glossary, pluralization rules, RTL requirements
+
+
 ## Closing Format
 
 ALWAYS conclude with:
