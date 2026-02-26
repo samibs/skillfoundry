@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.7] - 2026-02-26
+
+### Changed — Documentation Agent Rewrite & Release Version Protocol
+
+Major rewrite of the docs agent to prevent version drift and documentation inconsistencies across the framework. The release agent now cross-references the docs agent's version bump protocol.
+
+#### Docs Agent (`/docs`) — Full Rewrite
+- **PHASE 1: VERSION & CONSISTENCY AUDIT** (mandatory first step) — version reconciliation checklist, timestamp verification, terminology consistency, rule: "NEVER hardcode a version in prose"
+- **PHASE 2: CONTEXT GATHERING** — required inputs table, rejection criteria for incomplete requests
+- **PHASE 3: DOCUMENTATION WRITING** — document types table, required structure template (Version/Last Updated/Status header), code examples standard, API documentation standard
+- **PHASE 4: CROSS-DOCUMENT CONSISTENCY VERIFICATION** — consistency matrix, cross-reference integrity, staleness detection
+- **PHASE 5: DOCUMENTATION HEALTH SCAN** — `/docs health` and `/docs audit` commands, 6-point scan checklist, health report format
+- **PHASE 6: VERSION BUMP DOCUMENTATION PROTOCOL** — checklist of ~15 files that must update on every version bump, automated version check command
+
+#### Release Agent (`/release`) — Version Checklist Enhancement
+- Pre-release versioning checklist now references `.version` as single source of truth
+- Added mandatory `/docs audit` step (docs agent Phase 6) to release preparation
+- Expanded checklist to cover all ~15 files that need version updates (README, AGENTS, QUICK-REFERENCE, DOCUMENTATION-INDEX, HOW-TO, sub-package.json files)
+- Added "Last Updated" timestamp refresh requirement
+
+#### Platform Sync
+- Docs agent synced to 6 targets: command, persona, Codex, Copilot, Cursor, Gemini
+- Release agent synced to 6 targets: command, persona, Codex, Copilot, Cursor, Gemini
+
+### Changed
+- `.version` bumped to 2.0.7 (from 2.0.6)
+- `sf_cli/package.json` version bumped to 2.0.7
+
+---
+
 ## [2.0.6] - 2026-02-26
 
 ### Added — Chunk Dispatch Protocol
