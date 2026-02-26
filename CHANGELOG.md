@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.6] - 2026-02-26
+
+### Added — Chunk Dispatch Protocol
+
+New protocol for splitting large work items across multiple instances of the same agent type. Addresses LLM quality degradation on long files by chunking work at natural boundaries, dispatching shards in parallel, and merging results with a consistency pass.
+
+#### Protocol (`agents/_chunk-dispatch-protocol.md`)
+- **When to chunk**: Input >300 lines, output >300 lines, repetitive structure, quality risk
+- **Where to split**: Natural boundaries (section headers, class/function boundaries, file boundaries)
+- **Context brief**: Shared context (types, imports, style guide) each shard receives for consistency
+- **Chunk limits**: Per-agent max lines (docs: 200, coder: 150, refactor: 100, review: 250)
+- **Merge strategies**: Concatenate, concatenate with TOC, interleave, file-per-chunk
+- **Consistency pass**: 5-check verification (naming, style, cross-references, completeness, tone)
+- **Agent-specific strategies**: Detailed chunking guidance for docs, coder, tester, refactor, review, migration, i18n
+
+#### Agent Updates (7 agents, 35 files across 5 platforms)
+- `docs`: Chunk Dispatch Support section added (split by `## ` headers, 200 lines/chunk)
+- `coder`: Chunk Dispatch Support section added (split by class/file, 150 lines/chunk)
+- `tester`: Chunk Dispatch Support section added (split by module, 200 lines/chunk)
+- `refactor`: Chunk Dispatch Support section added (split by file/module, 100 lines/chunk)
+- `review`: Chunk Dispatch Support section added (split by PR file, 250 lines/chunk)
+- `migration`: Chunk Dispatch Support section added (split by table/entity, 150 lines/chunk)
+- `i18n`: Chunk Dispatch Support section added (split by locale/section, 200 lines/chunk)
+
+### Changed
+- `.version` bumped to 2.0.6 (from 2.0.5)
+- `sf_cli/package.json` version bumped to 2.0.6
+
+---
+
 ## [2.0.5] - 2026-02-24
 
 ### Changed — Agent Quality Enhancement Sweep

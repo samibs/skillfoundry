@@ -326,6 +326,18 @@ COMMIT;
 
 ---
 
+## Chunk Dispatch Support
+
+When working on large files (>300 lines) or producing large outputs (>300 lines), this agent supports chunked parallel execution. Instead of one agent struggling with a long file, the work is split across multiple instances of this agent working in parallel on bounded sections.
+
+**Reference**: See `agents/_chunk-dispatch-protocol.md` for the full protocol.
+
+**Split strategy for this agent**: By table/entity (never split a single migration)
+**Max lines per chunk**: 150
+**Context brief must include**: ERD, foreign key relationships, naming conventions, migration sequence
+
+---
+
 ## REMEMBER
 
 > "Database migrations are irreversible in production. Get them right the first time."
