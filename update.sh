@@ -642,6 +642,14 @@ update_project() {
         project_dir="$(cd "$project_dir" && pwd)"
     fi
 
+    # Guard: skip file sync when project dir IS the framework source
+    local resolved_script_dir
+    resolved_script_dir="$(cd "$SCRIPT_DIR" && pwd)"
+    local is_same_dir=false
+    if [ "$resolved_script_dir" = "$project_dir" ]; then
+        is_same_dir=true
+    fi
+
     # Check if it's a valid project
     if ! is_valid_project "$project_dir"; then
         echo -e "${RED}Error: '$project_dir' is not a SkillFoundry project.${NC}"
@@ -745,9 +753,11 @@ update_project() {
                     fi
                 done
 
-                # Update helper and workflow guide
-                [ -f "$SCRIPT_DIR/.copilot/helper.sh" ] && cp "$SCRIPT_DIR/.copilot/helper.sh" "$project_dir/.copilot/" && chmod +x "$project_dir/.copilot/helper.sh"
-                [ -f "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" ] && cp "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" "$project_dir/.copilot/"
+                # Update helper and workflow guide (skip when updating self)
+                if [ "$is_same_dir" = false ]; then
+                    [ -f "$SCRIPT_DIR/.copilot/helper.sh" ] && cp "$SCRIPT_DIR/.copilot/helper.sh" "$project_dir/.copilot/" && chmod +x "$project_dir/.copilot/helper.sh"
+                    [ -f "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" ] && cp "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" "$project_dir/.copilot/"
+                fi
 
                 if [ $agents_added -eq 0 ] && [ $agents_updated -eq 0 ]; then
                     echo -e "  ${GREEN}All agents up to date${NC}"
@@ -1091,10 +1101,12 @@ update_project() {
                 fi
             fi
 
-            # Update helper and guides
-            [ -f "$SCRIPT_DIR/.copilot/helper.sh" ] && cp "$SCRIPT_DIR/.copilot/helper.sh" "$project_dir/.copilot/helper.sh" && chmod +x "$project_dir/.copilot/helper.sh"
-            [ -f "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" ] && cp "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" "$project_dir/.copilot/WORKFLOW-GUIDE.md"
-            [ -f "$SCRIPT_DIR/.copilot/SECURITY-INTEGRATION.md" ] && cp "$SCRIPT_DIR/.copilot/SECURITY-INTEGRATION.md" "$project_dir/.copilot/SECURITY-INTEGRATION.md"
+            # Update helper and guides (skip when updating self)
+            if [ "$is_same_dir" = false ]; then
+                [ -f "$SCRIPT_DIR/.copilot/helper.sh" ] && cp "$SCRIPT_DIR/.copilot/helper.sh" "$project_dir/.copilot/helper.sh" && chmod +x "$project_dir/.copilot/helper.sh"
+                [ -f "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" ] && cp "$SCRIPT_DIR/.copilot/WORKFLOW-GUIDE.md" "$project_dir/.copilot/WORKFLOW-GUIDE.md"
+                [ -f "$SCRIPT_DIR/.copilot/SECURITY-INTEGRATION.md" ] && cp "$SCRIPT_DIR/.copilot/SECURITY-INTEGRATION.md" "$project_dir/.copilot/SECURITY-INTEGRATION.md"
+            fi
         fi
     fi
 
