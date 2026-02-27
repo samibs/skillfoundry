@@ -11,6 +11,7 @@ import { streamWithRetry } from './retry.js';
 import { checkPermission } from './permissions.js';
 import { redactText } from './redact.js';
 import { ALL_TOOLS } from './tools.js';
+import { compactMessages, getContextWindow, isLocalProvider } from './compaction.js';
 import type {
   SfConfig,
   SfPolicy,
@@ -120,16 +121,28 @@ export async function runAgentLoop(
       };
     }
 
+    // Apply context compaction for local providers (or any model with limited context)
+    let messagesForTurn = conversation;
+    let promptForTurn = systemPrompt;
+    if (isLocalProvider(config.provider)) {
+      const contextWindow = getContextWindow(config.model, config.context_window || 0);
+      const compacted = compactMessages(conversation, systemPrompt || '', {
+        contextWindow,
+      });
+      messagesForTurn = compacted.messages;
+      promptForTurn = compacted.systemPrompt;
+    }
+
     // Stream with tools
     let accumulated = '';
     const toolStreamResult = await streamWithRetry(
       async (p) =>
         p.streamWithTools(
-          conversation,
+          messagesForTurn,
           {
             model: config.model,
             tools,
-            systemPrompt,
+            systemPrompt: promptForTurn,
           },
           (chunk: string, done: boolean) => {
             if (abortSignal?.aborted) return;

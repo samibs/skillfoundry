@@ -1,9 +1,10 @@
 # SkillFoundry
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.10-blue)
+![Version](https://img.shields.io/badge/version-2.0.13-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
+![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
 > A production AI engineering framework that turns requirements into tested, reviewable code through a multi-agent pipeline. Works inside your existing IDE (Claude Code, Cursor, Copilot, Codex, Gemini) or through a standalone interactive CLI. Ships with quality gates, persistent memory, autonomous mode, and cost controls.
@@ -60,7 +61,7 @@ The CLI adds multi-provider switching, budget controls, permission management, a
  ███████║██║  ██╗██║███████╗███████╗██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║
  ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝
 
-  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms                         v2.0.10
+  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms  ●  6 Providers          v2.0.13
  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -177,7 +178,7 @@ Every non-trivial feature starts with a Product Requirements Document. No PRD = 
 
 ### Multi-Provider Support
 
-Switch between 5 AI providers without changing your workflow:
+Switch between 6 AI providers without changing your workflow:
 
 | Provider | Env Variable | Default Model |
 |----------|-------------|---------------|
@@ -186,10 +187,12 @@ Switch between 5 AI providers without changing your workflow:
 | xAI Grok | `XAI_API_KEY` | grok-3 |
 | Google Gemini | `GOOGLE_API_KEY` | gemini-2.5-flash |
 | Ollama (local) | `OLLAMA_BASE_URL` | llama3.1 |
+| LM Studio (local) | `LMSTUDIO_BASE_URL` | qwen2.5-coder-7b |
 
 ```bash
 sf setup --provider anthropic --key sk-ant-...   # persistent storage
 /provider set openai                              # switch at runtime
+/provider set lmstudio                            # use LM Studio locally
 ```
 
 ### Budget Controls
@@ -204,6 +207,31 @@ per_run_limit_usd = 2.00
 ```
 
 Token usage and cost are shown live in the header during streaming.
+
+### Local-First Development
+
+Use local models (Ollama, LM Studio) for free, offline AI — with automatic fallback to cloud when needed.
+
+```toml
+# .skillfoundry/config.toml
+[routing]
+route_local_first = true        # Enable local-first routing
+local_provider = "ollama"       # or "lmstudio"
+local_model = "llama3.1"        # your preferred local model
+context_window = 0              # 0 = auto-detect from model
+```
+
+**What happens when enabled:**
+- Simple tasks (docs, formatting, boilerplate) route to your local model (free)
+- Complex tasks (architecture, security, refactoring) route to cloud (paid)
+- Context compaction automatically fits prompts within local model limits (4K-32K)
+- If the local model is offline, cloud fallback activates with a warning
+
+```
+/cost                    → Shows local vs cloud token breakdown + estimated savings
+/config route_local_first true   → Enable routing
+/provider set lmstudio           → Switch to LM Studio
+```
 
 ### Tool System
 
@@ -374,7 +402,7 @@ Install multiple platforms at once:
 ```
 skillfoundry/
 ├── sf_cli/                  Interactive CLI (Node.js + React/Ink)
-│   ├── src/core/            Provider adapters, tools, permissions, gates, budget
+│   ├── src/core/            Provider adapters, tools, permissions, gates, budget, compaction, health checks
 │   ├── src/components/      Terminal UI: Header, Input, Message, GateTimeline, ...
 │   ├── src/commands/        Slash command handlers (/team, /agent, /plan, ...)
 │   └── src/hooks/           Session state and streaming hooks
@@ -490,7 +518,7 @@ Update all registered projects at once:
 ## Contributing
 
 1. Create a branch from `main`
-2. Implement with tests (238+ tests must pass)
+2. Implement with tests (308+ tests must pass)
 3. Run `/forge` or `/gates` to validate
 4. Open a pull request with rationale
 

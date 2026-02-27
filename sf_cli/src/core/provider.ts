@@ -202,7 +202,7 @@ export class AnthropicAdapter implements ProviderAdapter {
   }
 }
 
-import { createOpenAIProvider, createXAIProvider, createOllamaProvider } from './providers/openai.js';
+import { createOpenAIProvider, createXAIProvider, createOllamaProvider, createLMStudioProvider } from './providers/openai.js';
 import { createGeminiProvider } from './providers/gemini.js';
 
 export const AVAILABLE_PROVIDERS: Record<
@@ -224,6 +224,7 @@ export const AVAILABLE_PROVIDERS: Record<
     defaultModel: 'gemini-2.5-flash',
   },
   ollama: { name: 'Ollama (local)', envKey: 'OLLAMA_BASE_URL', defaultModel: 'llama3.1' },
+  lmstudio: { name: 'LM Studio (local)', envKey: 'LMSTUDIO_BASE_URL', defaultModel: 'qwen2.5-coder-7b' },
 };
 
 export function createProvider(name: string): ProviderAdapter {
@@ -238,6 +239,8 @@ export function createProvider(name: string): ProviderAdapter {
       return createGeminiProvider();
     case 'ollama':
       return createOllamaProvider();
+    case 'lmstudio':
+      return createLMStudioProvider();
     default:
       throw new Error(
         `Provider "${name}" not supported. Available: ${Object.keys(AVAILABLE_PROVIDERS).join(', ')}`,
@@ -248,7 +251,7 @@ export function createProvider(name: string): ProviderAdapter {
 export function detectAvailableProviders(): string[] {
   const available: string[] = [];
   for (const [key, info] of Object.entries(AVAILABLE_PROVIDERS)) {
-    if (key === 'ollama') {
+    if (key === 'ollama' || key === 'lmstudio') {
       available.push(key);
       continue;
     }

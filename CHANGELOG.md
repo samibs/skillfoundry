@@ -7,6 +7,101 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.13] - 2026-02-27
+
+### Updated — Documentation, CLI Help & Consistency
+
+#### CLI Help & Setup
+- Setup wizard now lists LM Studio as a separate option (option 6) alongside Ollama
+- `/setup list` correctly shows lmstudio as "always available (local)"
+- `/provider set lmstudio` no longer requires an API key
+- `/config` now supports editing `route_local_first`, `local_provider`, `local_model`, `context_window`
+- `/status` shows active local-first routing info when enabled
+
+#### Documentation
+- README.md: Updated version badge to 2.0.13, added providers badge, added Local-First Development section
+- USER-GUIDE-CLI.md: Added Section 12 (Local-First Development) with routing, compaction, health checks, and cost savings docs
+- USER-GUIDE-CLI.md: Updated architecture section with compaction.ts, health-check.ts, task-classifier.ts
+- USER-GUIDE-CLI.md: Updated test suite count from 154 to 308 across 25 test files
+- USER-GUIDE-CLI.md: Updated config reference with routing settings
+
+---
+
+## [2.0.12] - 2026-02-27
+
+### Added — Local-First Development
+
+Three new modules that enable effective use of local AI models (Ollama, LM Studio) for cost optimization and offline development.
+
+#### New: Context Compaction Engine (`src/core/compaction.ts`)
+- Token estimation using conservative 3.5 chars-per-token ratio
+- Context window defaults for 20+ models (cloud and local)
+- System prompt compression: strips code blocks, examples, tables when over budget
+- Message sliding window: keeps first user message + last N turns that fit
+- Summary injection: prepends "[N earlier messages omitted...]" when pruning
+- Automatically applied for local providers (Ollama, LM Studio) in the agentic loop
+
+#### New: Provider Health Checks (`src/core/health-check.ts`)
+- `pingProvider()` — HTTP ping to local endpoint with 500ms timeout
+- Cached results with 60-second TTL (avoids per-turn latency)
+- `resolveProvider()` — graceful fallback to cloud with user-visible warning
+- `listLocalModels()` — queries /v1/models endpoint for available models
+- `isLocalProvider()` / `getLocalBaseUrl()` helpers
+
+#### New: Task Complexity Classifier (`src/core/task-classifier.ts`)
+- Keyword-based simple/complex task classification (no LLM call needed)
+- Simple keywords: docstring, format, explain, readme, changelog, etc.
+- Complex keywords: architect, security, refactor, implement, test, etc.
+- Default to complex (safer — cloud handles ambiguous tasks)
+- `selectProvider()` — combines classification + health check for routing decisions
+
+#### Updated: Config & Types
+- New `SfConfig` fields: `route_local_first`, `local_provider`, `local_model`, `context_window`
+- Default: routing disabled (opt-in via `route_local_first = true` in config.toml)
+
+#### Updated: Cost Command
+- Shows local vs cloud token breakdown when both providers have been used
+- Estimates savings from local routing: "Saved: ~$X.XX by routing locally"
+
+#### Updated: AI Runner
+- Applies context compaction before each turn when using local providers
+- Uses model-specific context windows for sliding-window pruning
+
+#### Tests
+- `compaction.test.ts`: 20 test cases (token estimation, sliding window, summary injection, compression)
+- `health-check.test.ts`: 11 test cases (ping, caching, fallback, local detection)
+- `task-classifier.test.ts`: 17 test cases (classification, routing, provider selection)
+- All 308 tests passing, 0 regressions
+
+---
+
+## [2.0.11] - 2026-02-27
+
+### Added — LM Studio Provider & Local-First PRD
+
+#### New: LM Studio Provider
+- Added LM Studio as the 6th supported provider (OpenAI-compatible at `localhost:1234/v1`)
+- Factory function `createLMStudioProvider()` in `providers/openai.ts`
+- Registered in `AVAILABLE_PROVIDERS` with default model `qwen2.5-coder-7b`
+- Auto-detected as always available (same as Ollama — no API key needed)
+- Credential mapping via `LMSTUDIO_BASE_URL` environment variable
+- Deprioritized in auto-selection (local providers don't override cloud)
+
+#### New: Local-First Development PRD
+- Created `genesis/2026-02-27-local-first-development.md` PRD covering:
+  - Context compaction engine for small-context local models (4K-32K)
+  - Local-first cost routing (simple tasks → local, complex → cloud)
+  - Provider health checks with graceful fallback
+  - Task complexity classification (keyword-based, no LLM call)
+- Based on analysis of XDA article "How I built a Claude Code workflow with LM Studio"
+
+#### Updated
+- Provider tests updated: 260 tests passing (2 new: lmstudio detection + creation)
+- README.md: LM Studio added to provider table
+- USER-GUIDE-CLI.md: LM Studio added to setup wizard, capabilities table, env var docs
+
+---
+
 ## [2.0.10] - 2026-02-26
 
 ### Added — The Forge Pipeline Engine

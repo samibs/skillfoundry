@@ -38,6 +38,9 @@ export const PROVIDER_ENV_MAPPING: Record<string, Record<string, string>> = {
   ollama: {
     base_url: 'OLLAMA_BASE_URL',
   },
+  lmstudio: {
+    base_url: 'LMSTUDIO_BASE_URL',
+  },
 };
 
 /**
@@ -49,6 +52,7 @@ export const PROVIDER_KEY_URLS: Record<string, string> = {
   xai: 'https://console.x.ai/',
   gemini: 'https://aistudio.google.com/apikey',
   ollama: 'https://ollama.com/download',
+  lmstudio: 'https://lmstudio.ai/docs',
 };
 
 export interface ProviderCredentials {
