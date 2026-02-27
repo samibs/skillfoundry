@@ -121,6 +121,13 @@ function formatPipelineResult(result: PipelineResult): string {
     lines.push(`  Failed:     ${result.storiesFailed}`);
   }
   lines.push(`  Gates:      ${result.gateVerdict}`);
+  if (result.microGateSummary) {
+    const mg = result.microGateSummary;
+    lines.push(`  Micro-gates: ${mg.totalPassed}P ${mg.totalFailed}F ${mg.totalWarned}W ($${mg.totalCostUsd.toFixed(4)})`);
+    if (mg.preTemperAdvisory && mg.preTemperAdvisory.verdict !== 'PASS') {
+      lines.push(`  Advisory:   ${mg.preTemperAdvisory.summary || mg.preTemperAdvisory.verdict}`);
+    }
+  }
   lines.push(`  Cost:       $${result.totalCostUsd.toFixed(4)}`);
   lines.push(`  Tokens:     ${(result.totalTokens.input / 1000).toFixed(1)}k in / ${(result.totalTokens.output / 1000).toFixed(1)}k out`);
   lines.push(`  Duration:   ${(result.durationMs / 1000).toFixed(1)}s`);
@@ -141,7 +148,7 @@ function formatPipelineResult(result: PipelineResult): string {
 
 export const forgeCommand: SlashCommand = {
   name: 'forge',
-  description: 'Full pipeline: validate PRDs, generate stories, implement via AI, run quality gates',
+  description: 'Full pipeline: validate PRDs, generate stories, implement via AI, run micro-gates + quality gates',
   usage: '/forge [prd-file] [--dry-run]',
   execute: async (args: string, session: SessionContext): Promise<string> => {
     const dryRun = args.includes('--dry-run');
@@ -185,6 +192,13 @@ export const forgeCommand: SlashCommand = {
         session.addMessage({
           role: 'system',
           content: `  ${tier} [${icon}]`,
+        });
+      },
+      onMicroGateResult: (mgResult) => {
+        const icon = mgResult.verdict === 'PASS' ? 'v' : mgResult.verdict === 'FAIL' ? 'x' : '!';
+        session.addMessage({
+          role: 'system',
+          content: `  ${mgResult.gate} [${icon}] ${mgResult.agent}: ${mgResult.summary || mgResult.verdict}`,
         });
       },
     };

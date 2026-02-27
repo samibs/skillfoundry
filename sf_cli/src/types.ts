@@ -230,6 +230,27 @@ export interface RunnerResult {
   aborted: boolean;
 }
 
+// ── Micro-gate types (post-handoff AI review checks) ────────────
+
+export type MicroGateVerdict = 'PASS' | 'FAIL' | 'WARN';
+
+export interface MicroGateFinding {
+  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'INFO';
+  description: string;
+  location?: string;  // file:line
+}
+
+export interface MicroGateResult {
+  gate: string;       // 'MG1' | 'MG2' | 'MG3'
+  agent: string;      // 'security' | 'standards' | 'review'
+  verdict: MicroGateVerdict;
+  findings: MicroGateFinding[];
+  summary: string;
+  costUsd: number;
+  turnCount: number;
+  durationMs: number;
+}
+
 // ── Pipeline types (forge execution engine) ────────────────────────
 
 export type PipelinePhaseStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -247,6 +268,7 @@ export interface PipelineCallbacks {
   onStoryStart?: (story: string, index: number, total: number) => void;
   onStoryComplete?: (story: string, passed: boolean, cost: number) => void;
   onGateResult?: (tier: string, status: string) => void;
+  onMicroGateResult?: (result: MicroGateResult) => void;
   requestPermission?: (toolCall: ToolCall, reason: string) => Promise<'allow' | 'deny'>;
 }
 
@@ -264,6 +286,7 @@ export interface StoryExecution {
   turnCount: number;
   costUsd: number;
   fixerAttempts: number;
+  microGateResults?: MicroGateResult[];
 }
 
 export interface PipelineResult {
@@ -276,4 +299,12 @@ export interface PipelineResult {
   totalCostUsd: number;
   totalTokens: { input: number; output: number };
   durationMs: number;
+  microGateSummary?: {
+    totalRun: number;
+    totalPassed: number;
+    totalFailed: number;
+    totalWarned: number;
+    totalCostUsd: number;
+    preTemperAdvisory?: MicroGateResult;
+  };
 }

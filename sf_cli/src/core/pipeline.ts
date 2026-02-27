@@ -6,6 +6,7 @@ import { join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { runAgentLoop } from './ai-runner.js';
 import { runAllGates, runSingleGate } from './gates.js';
+import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from './micro-gates.js';
 import type { GateRunSummary } from './gates.js';
 import { ALL_TOOLS } from './tools.js';
 import type {
@@ -15,6 +16,7 @@ import type {
   PipelinePhaseStatus,
   StoryExecution,
   AnthropicMessage,
+  MicroGateResult,
 } from '../types.js';
 
 const RUNS_DIR = '.skillfoundry/runs';
@@ -156,6 +158,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   const storyExecutions: Record<string, StoryExecution> = {};
   let gateVerdict = 'UNKNOWN';
   let gateSummary: GateRunSummary | null = null;
+  const allMicroGateResults: MicroGateResult[] = [];
 
   function updatePhase(name: string, status: PipelinePhaseStatus, durationMs: number, detail?: string) {
     const phase = phases.find((p) => p.name === name);
@@ -342,20 +345,40 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     totalInputTokens += storyRunnerResult.totalInputTokens;
     totalOutputTokens += storyRunnerResult.totalOutputTokens;
 
+    // ── Micro-gates: post-story AI review (MG1 security, MG2 standards) ──
+    const mgResults = await runPostStoryGates(storyFile, storyContent, {
+      config, policy, workDir,
+    });
+    execution.microGateResults = mgResults;
+    for (const mgr of mgResults) {
+      allMicroGateResults.push(mgr);
+      execution.costUsd += mgr.costUsd;
+      totalCostUsd += mgr.costUsd;
+      callbacks?.onMicroGateResult?.(mgr);
+    }
+
     // Quick T1 gate check after story implementation
     const t1Result = runSingleGate('T1', workDir, '.');
     callbacks?.onGateResult?.('T1', t1Result.status);
 
-    if (t1Result.status === 'fail') {
-      // Fixer loop: attempt to fix T1 violations
+    const mgFailed = mgResults.some((r) => r.verdict === 'FAIL');
+
+    if (t1Result.status === 'fail' || mgFailed) {
+      // Fixer loop: attempt to fix T1 violations and/or micro-gate failures
       let fixed = false;
       for (let attempt = 0; attempt < MAX_FIXER_ATTEMPTS && !fixed; attempt++) {
         execution.fixerAttempts++;
 
+        const microGateFindings = formatFindingsForFixer(mgResults);
+        const fixerDetail = [
+          t1Result.status === 'fail' ? `T1 gate violations:\n${t1Result.detail}` : '',
+          microGateFindings || '',
+        ].filter(Boolean).join('\n\n');
+
         const fixerMessages: AnthropicMessage[] = [
           {
             role: 'user',
-            content: `${FIXER_PROMPT}\n\nGate violations:\n${t1Result.detail}\n\nFix all issues in the codebase.`,
+            content: `${FIXER_PROMPT}\n\n${fixerDetail}\n\nFix all issues in the codebase.`,
           },
         ];
 
@@ -398,6 +421,21 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   const forgeStatus: PipelinePhaseStatus = storiesFailed === 0 ? 'passed' : (storiesCompleted > 0 ? 'passed' : 'failed');
   updatePhase('FORGE', forgeStatus, Date.now() - forgeStart, `${storiesCompleted}/${allStoryFiles.length} stories completed`);
   callbacks?.onPhaseComplete?.('FORGE', forgeStatus);
+
+  // ── Pre-TEMPER: Cross-story review (MG3 — advisory only) ──
+  const completedStoryFiles = Object.entries(storyExecutions)
+    .filter(([, ex]) => ex.status === 'completed')
+    .map(([file]) => file);
+
+  let preTemperResult: MicroGateResult | null = null;
+  if (completedStoryFiles.length > 0) {
+    preTemperResult = await runPreTemperGate(completedStoryFiles, {
+      config, policy, workDir,
+    });
+    allMicroGateResults.push(preTemperResult);
+    totalCostUsd += preTemperResult.costUsd;
+    callbacks?.onMicroGateResult?.(preTemperResult);
+  }
 
   // ── Phase 4: TEMPER ────────────────────────────────────
 
@@ -444,6 +482,16 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     pipelineStart, prds, workDir,
   );
 
+  // Attach micro-gate summary
+  result.microGateSummary = {
+    totalRun: allMicroGateResults.length,
+    totalPassed: allMicroGateResults.filter((r) => r.verdict === 'PASS').length,
+    totalFailed: allMicroGateResults.filter((r) => r.verdict === 'FAIL').length,
+    totalWarned: allMicroGateResults.filter((r) => r.verdict === 'WARN').length,
+    totalCostUsd: allMicroGateResults.reduce((sum, r) => sum + r.costUsd, 0),
+    preTemperAdvisory: preTemperResult || undefined,
+  };
+
   // Persist run to disk
   const runsDir = join(workDir, RUNS_DIR);
   if (!existsSync(runsDir)) mkdirSync(runsDir, { recursive: true });
@@ -465,6 +513,16 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     } : null,
     totalCostUsd,
     totalTokens: { input: totalInputTokens, output: totalOutputTokens },
+    microGates: {
+      total: allMicroGateResults.length,
+      passed: allMicroGateResults.filter((r) => r.verdict === 'PASS').length,
+      failed: allMicroGateResults.filter((r) => r.verdict === 'FAIL').length,
+      warned: allMicroGateResults.filter((r) => r.verdict === 'WARN').length,
+      totalCostUsd: allMicroGateResults.reduce((sum, r) => sum + r.costUsd, 0),
+      preTemperAdvisory: preTemperResult
+        ? { verdict: preTemperResult.verdict, summary: preTemperResult.summary }
+        : null,
+    },
   };
 
   writeFileSync(join(runsDir, `${runId}.json`), JSON.stringify(runBundle, null, 2), 'utf-8');

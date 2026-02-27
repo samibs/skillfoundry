@@ -14,9 +14,17 @@ vi.mock('../core/gates.js', () => ({
   runSingleGate: vi.fn(),
 }));
 
+// Mock micro-gates so pipeline tests don't need real AI
+vi.mock('../core/micro-gates.js', () => ({
+  runPostStoryGates: vi.fn(),
+  runPreTemperGate: vi.fn(),
+  formatFindingsForFixer: vi.fn(() => ''),
+}));
+
 import { runPipeline, scanPRDs, scanStories } from '../core/pipeline.js';
 import { runAgentLoop } from '../core/ai-runner.js';
 import { runAllGates, runSingleGate } from '../core/gates.js';
+import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from '../core/micro-gates.js';
 import type { SfConfig, SfPolicy } from '../types.js';
 
 const TEST_DIR = join(tmpdir(), 'sf-pipeline-test-' + Date.now());
@@ -31,6 +39,10 @@ const mockConfig: SfConfig = {
   run_budget_usd: 5,
   memory_sync_enabled: false,
   memory_sync_remote: '',
+  route_local_first: false,
+  local_provider: '',
+  local_model: '',
+  context_window: 0,
 };
 
 const mockPolicy: SfPolicy = {
@@ -43,6 +55,15 @@ const mockPolicy: SfPolicy = {
 beforeEach(() => {
   vi.clearAllMocks();
   mkdirSync(TEST_DIR, { recursive: true });
+
+  // Default micro-gate mocks: all pass (overridden in specific tests)
+  vi.mocked(runPostStoryGates).mockResolvedValue([
+    { gate: 'MG1', agent: 'security', verdict: 'PASS', findings: [], summary: 'Clean', costUsd: 0, turnCount: 1, durationMs: 50 },
+    { gate: 'MG2', agent: 'standards', verdict: 'PASS', findings: [], summary: 'Clean', costUsd: 0, turnCount: 1, durationMs: 50 },
+  ]);
+  vi.mocked(runPreTemperGate).mockResolvedValue({
+    gate: 'MG3', agent: 'review', verdict: 'PASS', findings: [], summary: 'Consistent', costUsd: 0, turnCount: 1, durationMs: 50,
+  });
 });
 
 afterEach(() => {
@@ -504,5 +525,170 @@ describe('runPipeline', () => {
     // Should fire for story
     expect(onStoryStart).toHaveBeenCalledWith('STORY-001-test.md', 0, 1);
     expect(onStoryComplete).toHaveBeenCalledWith('STORY-001-test.md', true, expect.any(Number));
+  });
+
+  // ── Micro-gate integration tests ──────────────────────────
+
+  it('runs post-story micro-gates and pre-temper gate', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-mg.md'), '# MG Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'mg');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runPostStoryGates).mockResolvedValue([
+      { gate: 'MG1', agent: 'security', verdict: 'PASS', findings: [], summary: 'Clean', costUsd: 0.005, turnCount: 2, durationMs: 200 },
+      { gate: 'MG2', agent: 'standards', verdict: 'PASS', findings: [], summary: 'Clean', costUsd: 0.004, turnCount: 1, durationMs: 150 },
+    ]);
+
+    vi.mocked(runPreTemperGate).mockResolvedValue({
+      gate: 'MG3', agent: 'review', verdict: 'PASS', findings: [], summary: 'Consistent', costUsd: 0.006, turnCount: 2, durationMs: 300,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: 'Clean', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    expect(runPostStoryGates).toHaveBeenCalledTimes(1);
+    expect(runPreTemperGate).toHaveBeenCalledTimes(1);
+    expect(result.microGateSummary).toBeDefined();
+    expect(result.microGateSummary!.totalRun).toBe(3);
+    expect(result.microGateSummary!.totalPassed).toBe(3);
+    expect(result.totalCostUsd).toBeGreaterThan(0.001);
+  });
+
+  it('triggers fixer when micro-gate fails even if T1 passes', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-sec.md'), '# Security Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'sec');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-api.md'), '# STORY-001: API\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    // MG1 fails on first call (story execution), passes on second (after fixer)
+    vi.mocked(runPostStoryGates)
+      .mockResolvedValueOnce([
+        { gate: 'MG1', agent: 'security', verdict: 'FAIL', findings: [{ severity: 'HIGH', description: 'SQL injection', location: 'src/db.ts:10' }], summary: 'Issue', costUsd: 0.005, turnCount: 2, durationMs: 200 },
+        { gate: 'MG2', agent: 'standards', verdict: 'PASS', findings: [], summary: 'OK', costUsd: 0.004, turnCount: 1, durationMs: 150 },
+      ]);
+
+    // T1 passes throughout
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: 'Clean', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    vi.mocked(formatFindingsForFixer).mockReturnValue('[MG1] security — FAIL\n  - [HIGH] SQL injection (src/db.ts:10)');
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    // Fixer should have been called (runAgentLoop called twice: 1 story + 1 fixer)
+    expect(runAgentLoop).toHaveBeenCalledTimes(2);
+    expect(result.storiesCompleted).toBe(1);
+  });
+
+  it('fires onMicroGateResult callbacks for all micro-gates', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-cb2.md'), '# CB Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'cb2');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    const onMicroGateResult = vi.fn();
+
+    await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+      callbacks: { onMicroGateResult },
+    });
+
+    // MG1 + MG2 per story + MG3 pre-temper = 3 callbacks
+    expect(onMicroGateResult).toHaveBeenCalledTimes(3);
+    expect(onMicroGateResult).toHaveBeenCalledWith(
+      expect.objectContaining({ gate: 'MG1' }),
+    );
+    expect(onMicroGateResult).toHaveBeenCalledWith(
+      expect.objectContaining({ gate: 'MG3' }),
+    );
+  });
+
+  it('MG3 pre-temper gate is advisory only and does not block pipeline', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-adv.md'), '# Advisory Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'adv');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    // MG3 FAILS but should NOT block the pipeline
+    vi.mocked(runPreTemperGate).mockResolvedValue({
+      gate: 'MG3', agent: 'review', verdict: 'FAIL',
+      findings: [{ severity: 'HIGH', description: 'Cross-story inconsistency' }],
+      summary: 'Issues found across stories', costUsd: 0.008, turnCount: 3, durationMs: 500,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 6, failed: 0, warned: 0, skipped: 0, totalMs: 100, verdict: 'PASS',
+    });
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    // Pipeline should STILL pass — MG3 is advisory
+    expect(result.storiesCompleted).toBe(1);
+    expect(result.gateVerdict).toBe('PASS');
+    // But the advisory should be recorded
+    expect(result.microGateSummary?.preTemperAdvisory?.verdict).toBe('FAIL');
   });
 });

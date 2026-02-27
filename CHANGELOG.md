@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.14] - 2026-02-27
+
+### Added — Post-Handoff Micro-Gates
+
+Lightweight AI-powered quality reviews at pipeline handoff points. Agents now enforce quality on each other — security blocks insecure code, standards blocks non-compliant code — at ~15% cost increase vs ~400% for full cross-agent enforcement.
+
+#### New: Micro-Gates Module (`src/core/micro-gates.ts`)
+- **MG1 (Security)**: Post-coder per-story security review — checks OWASP Top 10, injection, hardcoded secrets, auth issues
+- **MG2 (Standards)**: Post-coder per-story standards review — checks missing docs, magic numbers, naming, conventions
+- **MG3 (Review)**: Pre-TEMPER cross-story consistency review — checks cross-story inconsistencies, arch issues (advisory only)
+- Structured response parser: `VERDICT: PASS|FAIL|WARN` / `FINDINGS:` / `SUMMARY:` format
+- Safety override: PASS verdict with CRITICAL/HIGH findings automatically escalated to FAIL
+- Conservative defaults: unparseable AI responses default to WARN
+- Read-only tool set (read, glob, grep) — micro-gates inspect but never modify code
+- Each gate limited to 3 turns max for cost control
+
+#### Updated: Pipeline Integration (`src/core/pipeline.ts`)
+- MG1 + MG2 run after each story implementation, before T1 gate
+- Micro-gate FAIL triggers fixer even when T1 passes
+- Fixer prompt merges T1 violations + micro-gate findings into single remediation prompt
+- MG3 runs once between FORGE and TEMPER phases (advisory only, does not block)
+- Micro-gate costs tracked and included in pipeline totals
+- Run bundle JSON includes `microGates` section with per-gate results
+
+#### Updated: Forge Command (`src/commands/forge.ts`)
+- Real-time `onMicroGateResult` callback shows gate progress during execution
+- Final output includes micro-gate summary: `Micro-gates: 3P 0F 0W ($0.0150)`
+- MG3 advisory warning displayed when verdict is not PASS
+
+#### Updated: Types (`src/types.ts`)
+- `MicroGateVerdict`, `MicroGateFinding`, `MicroGateResult` types
+- `StoryExecution.microGateResults` for per-story results
+- `PipelineCallbacks.onMicroGateResult` callback
+- `PipelineResult.microGateSummary` with totals and advisory
+
+#### Tests
+- `micro-gates.test.ts`: 16 test cases (8 parser, 5 runner, 3 formatter)
+- `pipeline.test.ts`: +4 integration tests (micro-gate wiring, fixer trigger, callbacks, advisory)
+- All tests passing, 0 regressions
+
+---
+
 ## [2.0.13] - 2026-02-27
 
 ### Updated — Documentation, CLI Help & Consistency
