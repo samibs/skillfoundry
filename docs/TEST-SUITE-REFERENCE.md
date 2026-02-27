@@ -2,7 +2,7 @@
 
 > Complete documentation of all 380 TypeScript unit tests and 198+ shell integration tests.
 
-**Version:** 2.0.16
+**Version:** 2.0.17
 **Last Updated:** 2026-02-27
 **Test Framework:** Vitest (TypeScript), Custom bash runner (Shell)
 
@@ -1038,4 +1038,4 @@ cd sf_cli && npm test && cd ../tests && bash run-tests.sh
 
 ---
 
-_Generated: 2026-02-27 | SkillFoundry v2.0.16_
+_Generated: 2026-02-27 | SkillFoundry v2.0.17_

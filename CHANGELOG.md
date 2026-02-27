@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.17] - 2026-02-27
+
+### Fixed — Git Executable Permissions
+
+31 scripts (`.sh`, `.ps1`, `bin/sf.js`, `sf` wrapper) were stored as `100644` (non-executable) in the git index. Every fresh `git clone` required a manual `chmod -R 755 *` before `install.sh` or `update.sh` would run. All 31 files now stored as `100755` — fresh clones have correct permissions out of the box.
+
+---
+
 ## [2.0.16] - 2026-02-27
 
 ### Fixed — Update Script Self-Copy Bug
