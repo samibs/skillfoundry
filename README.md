@@ -1,7 +1,7 @@
 # SkillFoundry
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.13-blue)
+![Version](https://img.shields.io/badge/version-2.0.14-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -61,7 +61,7 @@ The CLI adds multi-provider switching, budget controls, permission management, a
  ███████║██║  ██╗██║███████╗███████╗██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║
  ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝
 
-  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms  ●  6 Providers          v2.0.13
+  53 Agents  ●  60 Skills  ●  The Forge  ●  5 Platforms  ●  6 Providers          v2.0.14
  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -146,9 +146,9 @@ Summon a team once, and messages auto-route to the best agent for the job. No ma
 
 Routing is keyword-based with weighted patterns — no extra LLM calls, deterministic and fast.
 
-### Quality Gates (The Anvil)
+### Quality Gates (The Anvil + Micro-Gates)
 
-Every handoff passes through a 6-tier quality pipeline:
+Every handoff passes through a 6-tier quality pipeline plus AI-powered micro-gates:
 
 ```
  ◆ The Anvil
@@ -163,7 +163,15 @@ Every handoff passes through a 6-tier quality pipeline:
    ┌──────────────────────────────────────────┐
    │ ✓ VERDICT: PASS  5P 0F 0W 1S (7.9s)    │
    └──────────────────────────────────────────┘
+
+ ◆ Micro-Gates (per story)
+
+   ┣━ MG1  ◉  Security Review (AI)          PASS
+   ┣━ MG2  ◉  Standards Review (AI)         PASS
+   ┗━ MG3  ◉  Cross-Story Review (AI)       PASS  (advisory)
 ```
+
+Micro-gates are lightweight AI reviews at pipeline handoff points. MG1 (security) and MG2 (standards) run after each story — if they fail, the fixer is triggered automatically. MG3 reviews cross-story consistency before the TEMPER phase (advisory only). Cost: ~15% pipeline increase.
 
 ### PRD-First Development
 
@@ -402,7 +410,7 @@ Install multiple platforms at once:
 ```
 skillfoundry/
 ├── sf_cli/                  Interactive CLI (Node.js + React/Ink)
-│   ├── src/core/            Provider adapters, tools, permissions, gates, budget, compaction, health checks
+│   ├── src/core/            Provider adapters, tools, permissions, gates, micro-gates, budget, compaction, health checks
 │   ├── src/components/      Terminal UI: Header, Input, Message, GateTimeline, ...
 │   ├── src/commands/        Slash command handlers (/team, /agent, /plan, ...)
 │   └── src/hooks/           Session state and streaming hooks
@@ -452,6 +460,10 @@ skillfoundry/
               └────────────┼────────────┘
                            │
                     ┌──────▼──────┐
+                    │ Micro-Gates │  MG1 security + MG2 standards
+                    └──────┬──────┘
+                           │
+                    ┌──────▼──────┐
                     │  The Anvil  │  T1-T6 quality gates
                     └──────┬──────┘
                            │
@@ -469,7 +481,7 @@ skillfoundry/
                     └─────────────┘
 ```
 
-Or skip the steps and run `/forge` for the full pipeline in one command. The Forge drives real AI execution: it discovers PRDs, generates stories, implements each story using the agentic tool-use loop, runs T1-T6 quality gates (with auto-fixer retries), and persists run metadata. Use `/forge --dry-run` for a read-only scan.
+Or skip the steps and run `/forge` for the full pipeline in one command. The Forge drives real AI execution: it discovers PRDs, generates stories, implements each story using the agentic tool-use loop, runs micro-gates (MG1 security + MG2 standards per story, MG3 cross-story review), runs T1-T6 quality gates (with auto-fixer retries), and persists run metadata. Use `/forge --dry-run` for a read-only scan.
 
 **In autonomous mode**, you skip all the commands. Just type "add user authentication" and the pipeline runs end-to-end — PRD generated, stories broken out, agents dispatched, quality gates enforced, lessons harvested.
 
@@ -518,7 +530,7 @@ Update all registered projects at once:
 ## Contributing
 
 1. Create a branch from `main`
-2. Implement with tests (308+ tests must pass)
+2. Implement with tests (328+ tests must pass)
 3. Run `/forge` or `/gates` to validate
 4. Open a pull request with rationale
 

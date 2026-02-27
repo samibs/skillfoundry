@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.13** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
+> **v2.0.14** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
 
 ---
 
@@ -501,6 +501,35 @@ Run quality gates independently with `/gates`:
 | T5 | Full build (`npm run build`, `cargo build`) | Build errors |
 | T6 | Scope validation (changes match story requirements) | Scope drift |
 
+### Micro-Gates (MG1-MG3)
+
+In addition to the T1-T6 gates, the Forge pipeline runs lightweight AI-powered micro-gates at handoff points. These give cross-agent quality enforcement — security blocks insecure code, standards blocks non-compliant code — at ~15% cost increase.
+
+| Gate | When | Agent | Checks | Blocks? |
+|------|------|-------|--------|---------|
+| **MG1** | After each story | `security` | OWASP Top 10, injection, hardcoded secrets, auth issues | Yes |
+| **MG2** | After each story | `standards` | Missing docs, magic numbers, naming, conventions | Yes |
+| **MG3** | Before TEMPER | `review` | Cross-story inconsistencies, arch issues, duplicate code | Advisory only |
+
+MG1 and MG2 run after each story implementation, before the T1 gate. If either returns FAIL, the fixer agent is triggered with the combined findings. MG3 runs once after all stories complete — it checks cross-story consistency but does not block the pipeline.
+
+Each micro-gate uses read-only tools (read, glob, grep) with a maximum of 3 turns.
+
+```
+  Story implemented
+    ↓
+  MG1 [v] security: PASS
+  MG2 [!] standards: WARN — [LOW] Missing jsdoc
+    ↓
+  T1 [v] Banned Patterns
+    ↓
+  (next story or TEMPER phase)
+    ↓
+  MG3 [v] review: PASS — All consistent
+    ↓
+  TEMPER T1-T6
+```
+
 ---
 
 ## 9. The Forge Pipeline
@@ -518,9 +547,16 @@ Run quality gates independently with `/gates`:
     ✓ genesis/payment-integration.md
     2 PRDs validated
 
-  Phase 2 (Forge) — Checking Stories
-    ✓ docs/stories/authentication/ (5 stories)
-    ⚠ docs/stories/payment-integration/ (3/5 complete)
+  Phase 2 (Forge) — Implementing Stories
+    ✓ STORY-001-auth-models ($0.0120)
+      MG1 [v] security: PASS
+      MG2 [v] standards: PASS
+    ✓ STORY-002-login-api ($0.0150)
+      MG1 [v] security: PASS
+      MG2 [!] standards: WARN — Missing jsdoc on 2 exports
+
+  Pre-TEMPER Review
+    MG3 [v] review: PASS — All consistent
 
   Phase 3 (Temper) — Quality Gates
     T1 ✓  T2 ✓  T3 ✓  T4 ✓  T5 ✓  T6 ✓
@@ -529,13 +565,13 @@ Run quality gates independently with `/gates`:
     ✓ No security violations
 
   Phase 5 (Debrief) — Summary
-    PRDs: 2 validated
-    Stories: 8/10 complete
+    Stories: 2/2 complete
     Gates: All passing
+    Micro-gates: 5P 0F 1W ($0.0280)
     Security: Clean
 
   ━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Verdict: WARN — 2 incomplete stories
+  Verdict: PASS — Ready for deployment
 ```
 
 ---
@@ -915,6 +951,7 @@ sf_cli/src/
 │   ├── executor.ts        Tool executor (child_process, fs)
 │   ├── permissions.ts     Permission engine (auto/ask/deny/trusted)
 │   ├── gates.ts           Quality gate runner (The Anvil T1-T6)
+│   ├── micro-gates.ts     Post-handoff AI micro-gates (MG1-MG3)
 │   ├── budget.ts          Usage tracking + budget enforcement
 │   ├── memory.ts          Knowledge recall + capture (JSONL)
 │   └── redact.ts          Secret redaction pipeline
@@ -957,7 +994,7 @@ sf_cli/src/
 
 ### Test Suite
 
-308 tests across 25 test files covering:
+328 tests across 26 test files covering:
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
@@ -968,6 +1005,7 @@ sf_cli/src/
 | executor.test.ts | Bash, read, write, glob, grep execution |
 | permissions.test.ts | Permission modes, dangerous patterns |
 | gates.test.ts | T1-T6 gates, callbacks, verdicts |
+| micro-gates.test.ts | MG1-MG3 parsing, runners, fixer formatting |
 | diff.test.ts | Diff parsing, additions, removals |
 | forge.test.ts | Forge pipeline phases |
 | provider.test.ts | Provider registry, factory, detection (6 providers) |
@@ -981,4 +1019,4 @@ sf_cli/src/
 
 ---
 
-*SkillFoundry CLI v2.0.13 — February 2026*
+*SkillFoundry CLI v2.0.14 — February 2026*
