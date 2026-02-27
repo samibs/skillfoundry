@@ -64,7 +64,8 @@ export function runSetupNonInteractive(opts: SetupOptions): string {
     );
   }
 
-  const field = opts.provider === 'ollama' ? 'base_url' : 'api_key';
+  const isLocal = opts.provider === 'ollama' || opts.provider === 'lmstudio';
+  const field = isLocal ? 'base_url' : 'api_key';
   setCredential(opts.provider, field, opts.key);
   injectCredentials();
   return `Saved ${field} for ${opts.provider} to ${getCredentialsPath()}`;
@@ -85,7 +86,7 @@ function listConfiguredProviders(): string {
       Object.values(store[key] as Record<string, string>).some((v) => v);
     const hasEnv = available.includes(key);
     let status: string;
-    if (key === 'ollama') {
+    if (key === 'ollama' || key === 'lmstudio') {
       status = 'always available (local)';
     } else if (hasEnv && hasCred) {
       status = 'configured (env + stored)';
@@ -98,7 +99,7 @@ function listConfiguredProviders(): string {
     }
 
     lines.push(`  ${key}: ${info.name} — ${status}`);
-    if (!hasEnv && !hasCred && key !== 'ollama') {
+    if (!hasEnv && !hasCred && key !== 'ollama' && key !== 'lmstudio') {
       lines.push(
         `    Get key: ${PROVIDER_KEY_URLS[key] || 'N/A'}`,
       );
@@ -143,8 +144,9 @@ export async function runInteractiveSetup(): Promise<'configured' | 'skipped' | 
     console.log('  No API key detected. Choose a provider to get started:');
     console.log('');
 
+    const localProviders = ['ollama', 'lmstudio'];
     const providers = Object.entries(AVAILABLE_PROVIDERS).filter(
-      ([k]) => k !== 'ollama',
+      ([k]) => !localProviders.includes(k),
     );
 
     for (let i = 0; i < providers.length; i++) {
@@ -154,7 +156,8 @@ export async function runInteractiveSetup(): Promise<'configured' | 'skipped' | 
       console.log(`       Get key: ${url}`);
     }
     console.log(`    ${providers.length + 1}) Ollama (local, no key needed)`);
-    console.log(`    ${providers.length + 2}) Skip (configure later with sf setup)`);
+    console.log(`    ${providers.length + 2}) LM Studio (local, no key needed)`);
+    console.log(`    ${providers.length + 3}) Skip (configure later with sf setup)`);
     console.log('');
     console.log('  Type q or /exit to quit.');
     console.log('');
@@ -172,7 +175,7 @@ export async function runInteractiveSetup(): Promise<'configured' | 'skipped' | 
     const idx = parseInt(choice || '1', 10) - 1;
 
     // Skip
-    if (idx === providers.length + 1 || isNaN(idx) || idx < 0) {
+    if (idx === providers.length + 2 || isNaN(idx) || idx < 0) {
       console.log('');
       console.log('  Skipped. Run `sf setup --provider <name> --key <key>` later.');
       console.log('  Or use /setup inside the REPL.');
@@ -186,6 +189,16 @@ export async function runInteractiveSetup(): Promise<'configured' | 'skipped' | 
       console.log('');
       console.log('  Ollama selected — no API key needed.');
       console.log('  Make sure Ollama is running: https://ollama.com/download');
+      console.log('');
+      rl.close();
+      return 'configured';
+    }
+
+    // LM Studio
+    if (idx === providers.length + 1) {
+      console.log('');
+      console.log('  LM Studio selected — no API key needed.');
+      console.log('  Make sure LM Studio is running: https://lmstudio.ai/docs');
       console.log('');
       rl.close();
       return 'configured';
@@ -288,7 +301,7 @@ export const setupCommand: SlashCommand = {
       return `Usage: /setup ${provider} <api-key>\nGet your key at: ${url}`;
     }
 
-    const field = provider === 'ollama' ? 'base_url' : 'api_key';
+    const field = (provider === 'ollama' || provider === 'lmstudio') ? 'base_url' : 'api_key';
     setCredential(provider, field, key);
     injectCredentials();
 

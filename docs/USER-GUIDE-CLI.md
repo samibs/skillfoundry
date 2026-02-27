@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.0** — Interactive terminal AI assistant with streaming, tools, quality gates, and multi-provider support.
+> **v2.0.13** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
 
 ---
 
@@ -17,9 +17,10 @@
 9. [The Forge Pipeline](#9-the-forge-pipeline)
 10. [Multi-Provider Setup](#10-multi-provider-setup)
 11. [Budget & Cost Controls](#11-budget--cost-controls)
-12. [Memory System](#12-memory-system)
-13. [Configuration Reference](#13-configuration-reference)
-14. [Keyboard Shortcuts](#14-keyboard-shortcuts)
+12. [Local-First Development](#12-local-first-development)
+13. [Memory System](#13-memory-system)
+14. [Configuration Reference](#14-configuration-reference)
+15. [Keyboard Shortcuts](#15-keyboard-shortcuts)
 
 ---
 
@@ -65,7 +66,8 @@ On first launch with no API key configured, the CLI shows an **interactive setup
     4) Google Gemini
        Get key: https://aistudio.google.com/apikey
     5) Ollama (local, no key needed)
-    6) Skip (configure later with sf setup)
+    6) LM Studio (local, no key needed)
+    7) Skip (configure later with sf setup)
 
   Type q or /exit to quit.
 
@@ -553,8 +555,9 @@ Run quality gates independently with `/gates`:
   │    xai         xAI Grok           grok-3         │
   │  ✓ gemini      Google Gemini      gemini-2.5-..  │
   │  ✓ ollama      Ollama (local)     llama3.1       │
+  │  ✓ lmstudio    LM Studio (local)  qwen2.5-co..  │
   ├──────────────────────────────────────────────────┤
-  │  ✓ = API key detected                           │
+  │  ✓ = API key detected / always available         │
   │  Active: anthropic                               │
   ╰──────────────────────────────────────────────────╯
 ```
@@ -602,6 +605,9 @@ export GEMINI_API_KEY="AIza..."
 
 # Ollama (local, no key needed)
 export OLLAMA_BASE_URL="http://localhost:11434/v1"
+
+# LM Studio (local, no key needed)
+export LMSTUDIO_BASE_URL="http://localhost:1234/v1"
 ```
 
 ### Provider Capabilities
@@ -613,6 +619,7 @@ export OLLAMA_BASE_URL="http://localhost:11434/v1"
 | xAI | Yes | Yes | No | No |
 | Gemini | Yes | Yes | No | No |
 | Ollama | Yes | Yes | No | Yes |
+| LM Studio | Yes | Yes | No | Yes |
 
 ---
 
@@ -658,7 +665,98 @@ Usage is persisted to `.skillfoundry/usage.json` with:
 
 ---
 
-## 12. Memory System
+## 12. Local-First Development
+
+Use local AI models (Ollama, LM Studio) to reduce costs, work offline, and keep sensitive code on-device.
+
+### Enable Local-First Routing
+
+```
+  you> /config route_local_first true
+
+  Set route_local_first = true. Config saved.
+```
+
+Or edit `.skillfoundry/config.toml`:
+
+```toml
+[routing]
+route_local_first = true
+local_provider = "ollama"       # or "lmstudio"
+local_model = "llama3.1"
+context_window = 0              # 0 = auto-detect from model
+```
+
+### How Routing Works
+
+```
+  ┌───────────────────────────────────────────┐
+  │  Task Classifier (keyword-based, no LLM)  │
+  ├──────────────────┬────────────────────────┤
+  │  SIMPLE           │  COMPLEX              │
+  │  docs, format,    │  architect, security,  │
+  │  explain, readme   │  refactor, test, debug │
+  ├──────────────────┼────────────────────────┤
+  │  → Local Model    │  → Cloud Provider     │
+  │  (free)           │  (paid)               │
+  └──────────────────┴────────────────────────┘
+```
+
+- **Simple tasks**: docstring, format, explain, readme, changelog, summarize, template, boilerplate
+- **Complex tasks**: architect, security, refactor, implement, test, debug, migrate, design
+- **Default**: If no keywords match, routes to cloud (safer)
+
+### Context Compaction
+
+Local models have smaller context windows (4K-32K tokens vs 128K-200K for cloud). The CLI automatically compacts context:
+
+1. **System prompt compression** — Strips code blocks, examples, and tables when over budget
+2. **Message sliding window** — Keeps first user message (intent) + last N turns that fit
+3. **Summary injection** — Prepends "[N earlier messages omitted...]" when pruning
+
+```
+  Context compaction:
+    Cloud model (200K):   Full context sent as-is
+    Local model (8K):     System prompt compressed, last 4-6 turns kept
+```
+
+### Provider Health Checks
+
+When using local providers, the CLI pings localhost before each session:
+
+```
+  ✓ ollama is running (localhost:11434)
+
+  ⚠ LM Studio is offline. Falling back to Anthropic Claude.
+```
+
+- **500ms timeout** — won't slow you down
+- **60-second cache** — doesn't re-ping every message
+- **Graceful fallback** — automatically switches to cloud with a warning
+
+### Cost Savings
+
+```
+  you> /cost
+
+  Local vs Cloud:
+    Local:  50,000 tokens ($0.0000)
+    Cloud:  20,000 tokens ($0.1500)
+    Saved:  ~$0.3750 by routing locally
+```
+
+### Supported Local Providers
+
+| Provider | Install | Default Port | Default Model |
+|----------|---------|-------------|---------------|
+| Ollama | [ollama.com](https://ollama.com) | `localhost:11434` | llama3.1 |
+| LM Studio | [lmstudio.ai](https://lmstudio.ai) | `localhost:1234` | qwen2.5-coder-7b |
+
+Both use the OpenAI-compatible API format (`/v1/chat/completions`).
+
+---
+
+## 13. Memory System
 
 The CLI integrates with SkillFoundry's knowledge base (`memory_bank/knowledge/`) for persistent learning across sessions.
 
@@ -732,7 +830,7 @@ The CLI integrates with SkillFoundry's knowledge base (`memory_bank/knowledge/`)
 
 ---
 
-## 13. Configuration Reference
+## 14. Configuration Reference
 
 ### config.toml
 
@@ -747,6 +845,12 @@ per_run_limit_usd = 2.00             # Per-conversation cap
 
 [session]
 max_tokens = 8192                     # Max tokens per response
+
+[routing]
+route_local_first = false             # Enable local-first cost routing
+local_provider = "ollama"             # Local provider (ollama or lmstudio)
+local_model = "llama3.1"             # Local model name
+context_window = 0                    # 0 = auto-detect from model
 ```
 
 ### policy.toml
@@ -773,7 +877,7 @@ allow_paths = ["."]                   # Allowed working directories
 
 ---
 
-## 14. Keyboard Shortcuts
+## 15. Keyboard Shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -802,8 +906,11 @@ sf_cli/src/
 │   ├── session.ts         State machine (.claude/state.json)
 │   ├── provider.ts        Multi-provider factory + Anthropic adapter
 │   ├── providers/
-│   │   ├── openai.ts      OpenAI / xAI / Ollama adapter
+│   │   ├── openai.ts      OpenAI / xAI / Ollama / LM Studio adapter
 │   │   └── gemini.ts      Google Gemini adapter
+│   ├── compaction.ts      Context compaction for local models
+│   ├── health-check.ts    Provider health checks + fallback
+│   ├── task-classifier.ts Task complexity classifier + routing
 │   ├── tools.ts           Tool definitions (bash, read, write, glob, grep)
 │   ├── executor.ts        Tool executor (child_process, fs)
 │   ├── permissions.ts     Permission engine (auto/ask/deny/trusted)
@@ -850,7 +957,7 @@ sf_cli/src/
 
 ### Test Suite
 
-154 tests across 14 test files covering:
+308 tests across 25 test files covering:
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
@@ -863,12 +970,15 @@ sf_cli/src/
 | gates.test.ts | T1-T6 gates, callbacks, verdicts |
 | diff.test.ts | Diff parsing, additions, removals |
 | forge.test.ts | Forge pipeline phases |
-| provider.test.ts | Provider registry, factory, detection |
+| provider.test.ts | Provider registry, factory, detection (6 providers) |
 | budget.test.ts | Usage tracking, budget caps |
 | memory.test.ts | Recall, capture, stats |
 | framework.test.ts | Framework root discovery, version detection |
 | credentials.test.ts | Credential storage, injection, setup command |
+| compaction.test.ts | Token estimation, sliding window, summary injection, compression |
+| health-check.test.ts | Ping, caching, fallback, local detection |
+| task-classifier.test.ts | Classification, routing, provider selection |
 
 ---
 
-*SkillFoundry CLI v2.0.0 — February 2026*
+*SkillFoundry CLI v2.0.13 — February 2026*

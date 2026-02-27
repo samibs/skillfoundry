@@ -4,6 +4,7 @@ import { saveConfig } from '../core/config.js';
 const EDITABLE_KEYS = [
   'provider', 'engine', 'model', 'fallback_provider', 'fallback_engine',
   'monthly_budget_usd', 'run_budget_usd', 'memory_sync_enabled', 'memory_sync_remote',
+  'route_local_first', 'local_provider', 'local_model', 'context_window',
 ];
 
 export const configCommand: SlashCommand = {

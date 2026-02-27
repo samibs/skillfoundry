@@ -40,7 +40,7 @@ export const providerCommand: SlashCommand = {
 
       // Check if API key is available
       const available = detectAvailableProviders();
-      if (!available.includes(name) && name !== 'ollama') {
+      if (!available.includes(name) && name !== 'ollama' && name !== 'lmstudio') {
         return (
           `No API key found for ${name}.\n\n` +
           `To configure, run one of:\n` +

@@ -1,5 +1,5 @@
 // OpenAI provider adapter — supports GPT-4o, GPT-4.1, o3, etc.
-// Also used as base for xAI (Grok) and Ollama since they use OpenAI-compatible APIs.
+// Also used as base for xAI (Grok), Ollama, and LM Studio since they use OpenAI-compatible APIs.
 
 import OpenAI from 'openai';
 import type {
@@ -169,6 +169,7 @@ export class OpenAIAdapter implements ProviderAdapter {
       case 'openai': return 'OPENAI_API_KEY';
       case 'xai': return 'XAI_API_KEY';
       case 'ollama': return 'OLLAMA_API_KEY';
+      case 'lmstudio': return 'LMSTUDIO_API_KEY';
       default: return 'OPENAI_API_KEY';
     }
   }
@@ -335,5 +336,14 @@ export function createOllamaProvider(): ProviderAdapter {
     apiKey: 'ollama',
     baseURL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1',
     defaultModel: 'llama3.1',
+  });
+}
+
+export function createLMStudioProvider(): ProviderAdapter {
+  return new OpenAIAdapter({
+    name: 'lmstudio',
+    apiKey: 'lm-studio',
+    baseURL: process.env.LMSTUDIO_BASE_URL || 'http://localhost:1234/v1',
+    defaultModel: 'qwen2.5-coder-7b',
   });
 }

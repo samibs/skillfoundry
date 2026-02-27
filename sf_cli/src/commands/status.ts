@@ -20,6 +20,9 @@ export const statusCommand: SlashCommand = {
       `  Messages:   ${session.messages.length}`,
       `  Work Dir:   ${session.workDir}`,
     ];
+    if (config.route_local_first) {
+      lines.push(`  Routing:    local-first (${config.local_provider}:${config.local_model})`);
+    }
     if (state.last_plan_id) {
       lines.push(`  Last Plan:  ${state.last_plan_id}`);
     }

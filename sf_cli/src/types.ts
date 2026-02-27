@@ -56,6 +56,11 @@ export interface SfConfig {
   run_budget_usd: number;
   memory_sync_enabled: boolean;
   memory_sync_remote: string;
+  // Local-first development (v2.0.12)
+  route_local_first: boolean;
+  local_provider: string;
+  local_model: string;
+  context_window: number; // 0 = auto-detect from model
 }
 
 // Policy schema matching existing .skillfoundry/policy.toml

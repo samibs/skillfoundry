@@ -42,8 +42,36 @@ export const costCommand: SlashCommand = {
     if (Object.keys(summary.byProvider).length > 0) {
       lines.push('');
       lines.push('  By Provider:');
+
+      let localTokens = 0;
+      let localCost = 0;
+      let cloudTokens = 0;
+      let cloudCost = 0;
+      const localProviders = ['ollama', 'lmstudio'];
+
       for (const [provider, data] of Object.entries(summary.byProvider)) {
         lines.push(`    ${provider}: ${data.count} calls, $${data.cost.toFixed(4)}, ${data.tokens} tokens`);
+        if (localProviders.includes(provider)) {
+          localTokens += data.tokens;
+          localCost += data.cost;
+        } else {
+          cloudTokens += data.tokens;
+          cloudCost += data.cost;
+        }
+      }
+
+      // Show local vs cloud breakdown if both have been used
+      if (localTokens > 0 || cloudTokens > 0) {
+        lines.push('');
+        lines.push('  Local vs Cloud:');
+        lines.push(`    Local:  ${localTokens} tokens ($${localCost.toFixed(4)})`);
+        lines.push(`    Cloud:  ${cloudTokens} tokens ($${cloudCost.toFixed(4)})`);
+        if (localTokens > 0 && cloudCost > 0) {
+          // Estimate savings: what would local tokens have cost at cloud rates
+          const avgCloudRate = cloudCost / cloudTokens;
+          const estimatedSavings = localTokens * avgCloudRate;
+          lines.push(`    Saved:  ~$${estimatedSavings.toFixed(4)} by routing locally`);
+        }
       }
     }
 

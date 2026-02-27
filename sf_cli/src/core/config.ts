@@ -18,6 +18,10 @@ const DEFAULT_CONFIG: SfConfig = {
   run_budget_usd: 2,
   memory_sync_enabled: false,
   memory_sync_remote: 'origin',
+  route_local_first: false,
+  local_provider: 'ollama',
+  local_model: 'llama3.1',
+  context_window: 0, // 0 = auto-detect from model
 };
 
 const DEFAULT_POLICY: SfPolicy = {
@@ -50,8 +54,9 @@ export function loadConfig(workDir: string): SfConfig {
 
   // Auto-select provider: if configured provider has no credentials, pick the first available one
   const available = detectAvailableProviders();
-  if (!available.includes(config.provider) || config.provider === 'ollama') {
-    const preferred = available.filter((p) => p !== 'ollama');
+  const localProviders = ['ollama', 'lmstudio'];
+  if (!available.includes(config.provider) || localProviders.includes(config.provider)) {
+    const preferred = available.filter((p) => !localProviders.includes(p));
     if (preferred.length > 0) {
       const picked = preferred[0];
       const info = AVAILABLE_PROVIDERS[picked];

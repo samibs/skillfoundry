@@ -22,16 +22,17 @@ afterEach(() => {
 });
 
 describe('AVAILABLE_PROVIDERS', () => {
-  it('should define 5 providers', () => {
-    expect(Object.keys(AVAILABLE_PROVIDERS)).toHaveLength(5);
+  it('should define 6 providers', () => {
+    expect(Object.keys(AVAILABLE_PROVIDERS)).toHaveLength(6);
   });
 
-  it('should include anthropic, openai, xai, gemini, ollama', () => {
+  it('should include anthropic, openai, xai, gemini, ollama, lmstudio', () => {
     expect(AVAILABLE_PROVIDERS).toHaveProperty('anthropic');
     expect(AVAILABLE_PROVIDERS).toHaveProperty('openai');
     expect(AVAILABLE_PROVIDERS).toHaveProperty('xai');
     expect(AVAILABLE_PROVIDERS).toHaveProperty('gemini');
     expect(AVAILABLE_PROVIDERS).toHaveProperty('ollama');
+    expect(AVAILABLE_PROVIDERS).toHaveProperty('lmstudio');
   });
 
   it('should have envKey and defaultModel for each provider', () => {
@@ -47,6 +48,11 @@ describe('detectAvailableProviders', () => {
   it('should always include ollama', () => {
     const available = detectAvailableProviders();
     expect(available).toContain('ollama');
+  });
+
+  it('should always include lmstudio', () => {
+    const available = detectAvailableProviders();
+    expect(available).toContain('lmstudio');
   });
 });
 
@@ -79,6 +85,11 @@ describe('createProvider', () => {
   it('should create ollama provider', () => {
     const provider = createProvider('ollama');
     expect(provider.name).toBe('ollama');
+  });
+
+  it('should create lmstudio provider', () => {
+    const provider = createProvider('lmstudio');
+    expect(provider.name).toBe('lmstudio');
   });
 
   it('should throw when openai API key is missing', () => {
