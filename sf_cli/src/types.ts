@@ -251,6 +251,29 @@ export interface MicroGateResult {
   durationMs: number;
 }
 
+// ── Finisher types (post-pipeline mechanical housekeeping) ──────────
+
+export type FinisherCheckStatus = 'ok' | 'drift' | 'missing' | 'error';
+
+export interface FinisherCheckResult {
+  check: string;         // 'version' | 'test-count' | 'architecture' | 'changelog' | 'git-clean'
+  status: FinisherCheckStatus;
+  detail: string;
+  fixed: boolean;
+  durationMs: number;
+}
+
+export interface FinisherSummary {
+  checks: FinisherCheckResult[];
+  totalChecks: number;
+  drifted: number;
+  fixed: number;
+  ok: number;
+  errors: number;
+  durationMs: number;
+  newVersion?: string;
+}
+
 // ── Pipeline types (forge execution engine) ────────────────────────
 
 export type PipelinePhaseStatus = 'pending' | 'running' | 'passed' | 'failed' | 'skipped';
@@ -269,6 +292,7 @@ export interface PipelineCallbacks {
   onStoryComplete?: (story: string, passed: boolean, cost: number) => void;
   onGateResult?: (tier: string, status: string) => void;
   onMicroGateResult?: (result: MicroGateResult) => void;
+  onFinisherCheck?: (result: FinisherCheckResult) => void;
   requestPermission?: (toolCall: ToolCall, reason: string) => Promise<'allow' | 'deny'>;
 }
 
@@ -307,4 +331,5 @@ export interface PipelineResult {
     totalCostUsd: number;
     preTemperAdvisory?: MicroGateResult;
   };
+  finisherSummary?: FinisherSummary;
 }

@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.14** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
+> **v2.0.15** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
 
 ---
 
@@ -954,7 +954,8 @@ sf_cli/src/
 │   ├── micro-gates.ts     Post-handoff AI micro-gates (MG1-MG3)
 │   ├── budget.ts          Usage tracking + budget enforcement
 │   ├── memory.ts          Knowledge recall + capture (JSONL)
-│   └── redact.ts          Secret redaction pipeline
+│   ├── redact.ts          Secret redaction pipeline
+│   └── finisher.ts        Post-pipeline housekeeping (version, docs, arch)
 │
 ├── commands/
 │   ├── index.ts           Command registry + slash parser
@@ -994,7 +995,7 @@ sf_cli/src/
 
 ### Test Suite
 
-328 tests across 26 test files covering:
+380 tests across 27 test files covering:
 
 | Test File | Tests | Coverage |
 |-----------|-------|----------|
@@ -1016,7 +1017,8 @@ sf_cli/src/
 | compaction.test.ts | Token estimation, sliding window, summary injection, compression |
 | health-check.test.ts | Ping, caching, fallback, local detection |
 | task-classifier.test.ts | Classification, routing, provider selection |
+| finisher.test.ts | Version sync, test counts, arch listing, changelog, git clean |
 
 ---
 
-*SkillFoundry CLI v2.0.14 — February 2026*
+*SkillFoundry CLI v2.0.15 — February 2026*

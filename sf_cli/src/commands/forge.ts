@@ -1,6 +1,7 @@
 import type { SlashCommand, SessionContext, PipelineCallbacks, PipelineResult } from '../types.js';
 import { runPipeline, scanPRDs, scanStories } from '../core/pipeline.js';
 import { runAllGates } from '../core/gates.js';
+import { runFinisher } from '../core/finisher.js';
 
 // ── Dry-run: read-only scan (backward-compatible with pre-2.0.10) ──
 
@@ -84,6 +85,26 @@ async function runDryScan(session: SessionContext): Promise<string> {
   }
   lines.push('');
 
+  // Phase 5: Finisher checks (read-only)
+  lines.push('Phase 5 (Finish): Housekeeping');
+  lines.push('------------------------------');
+
+  const finisherSummary = await runFinisher({
+    workDir: session.workDir,
+    mode: 'check',
+    storiesCompleted: 0,
+  });
+
+  for (const check of finisherSummary.checks) {
+    const icon = check.status === 'ok' ? 'v'
+      : check.status === 'drift' ? '!'
+      : check.status === 'error' ? 'x'
+      : '~';
+    lines.push(`  [${icon}] ${check.check}: ${check.detail}`);
+  }
+  lines.push(`  Summary: ${finisherSummary.ok} ok, ${finisherSummary.drifted} drift, ${finisherSummary.errors} errors`);
+  lines.push('');
+
   // Summary
   const overallPass = gateSummary.verdict !== 'FAIL';
   lines.push('==============================');
@@ -126,6 +147,13 @@ function formatPipelineResult(result: PipelineResult): string {
     lines.push(`  Micro-gates: ${mg.totalPassed}P ${mg.totalFailed}F ${mg.totalWarned}W ($${mg.totalCostUsd.toFixed(4)})`);
     if (mg.preTemperAdvisory && mg.preTemperAdvisory.verdict !== 'PASS') {
       lines.push(`  Advisory:   ${mg.preTemperAdvisory.summary || mg.preTemperAdvisory.verdict}`);
+    }
+  }
+  if (result.finisherSummary) {
+    const fs = result.finisherSummary;
+    lines.push(`  Finisher:   ${fs.ok} ok, ${fs.fixed} fixed, ${fs.drifted} drift`);
+    if (fs.newVersion) {
+      lines.push(`  Version:    v${fs.newVersion}`);
     }
   }
   lines.push(`  Cost:       $${result.totalCostUsd.toFixed(4)}`);
@@ -199,6 +227,17 @@ export const forgeCommand: SlashCommand = {
         session.addMessage({
           role: 'system',
           content: `  ${mgResult.gate} [${icon}] ${mgResult.agent}: ${mgResult.summary || mgResult.verdict}`,
+        });
+      },
+      onFinisherCheck: (checkResult) => {
+        const icon = checkResult.status === 'ok' ? 'v'
+          : checkResult.status === 'drift' ? '!'
+          : checkResult.status === 'error' ? 'x'
+          : '~';
+        const fixTag = checkResult.fixed ? ' (fixed)' : '';
+        session.addMessage({
+          role: 'system',
+          content: `  ${checkResult.check} [${icon}]${fixTag}`,
         });
       },
     };

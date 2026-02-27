@@ -1,8 +1,8 @@
 # SkillFoundry Test Suite Reference
 
-> Complete documentation of all 328 TypeScript unit tests and 198+ shell integration tests.
+> Complete documentation of all 380 TypeScript unit tests and 198+ shell integration tests.
 
-**Version:** 2.0.14
+**Version:** 2.0.15
 **Last Updated:** 2026-02-27
 **Test Framework:** Vitest (TypeScript), Custom bash runner (Shell)
 
@@ -11,7 +11,7 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [TypeScript Unit Tests (328 tests / 26 files)](#typescript-unit-tests)
+2. [TypeScript Unit Tests (380 tests / 27 files)](#typescript-unit-tests)
    - [config.test.ts](#1-configtestts--5-tests)
    - [redact.test.ts](#2-redacttestts--12-tests)
    - [commands.test.ts](#3-commandstestts--10-tests)
@@ -33,11 +33,12 @@
    - [team-command.test.ts](#19-team-commandtestts--11-tests)
    - [retry.test.ts](#20-retrytestts--6-tests)
    - [ai-runner.test.ts](#21-ai-runnertestts--8-tests)
-   - [pipeline.test.ts](#22-pipelinetestts--16-tests)
+   - [pipeline.test.ts](#22-pipelinetestts--18-tests)
    - [compaction.test.ts](#23-compactiontestts--20-tests)
    - [health-check.test.ts](#24-health-checktestts--13-tests)
    - [task-classifier.test.ts](#25-task-classifiertestts--15-tests)
    - [micro-gates.test.ts](#26-micro-gatestestts--16-tests)
+   - [finisher.test.ts](#27-finishertestts--50-tests)
 3. [Shell Integration Tests (198+ tests / 8 files)](#shell-integration-tests)
    - [run-tests.sh](#1-run-testssh--167-tests)
    - [test_sf_cli.sh](#2-test_sf_clish--21-tests)
@@ -59,9 +60,9 @@ The SkillFoundry test suite validates the entire stack from low-level utility fu
 
 | Layer | Tests | Files | Framework |
 |-------|-------|-------|-----------|
-| TypeScript Unit Tests | 328 | 26 | Vitest |
+| TypeScript Unit Tests | 380 | 27 | Vitest |
 | Shell Integration Tests | 198+ | 8 | Custom bash runner |
-| **Total** | **506+** | **33** | — |
+| **Total** | **558+** | **35** | — |
 
 ### What the tests protect
 
@@ -579,7 +580,7 @@ All TypeScript tests live in `sf_cli/src/__tests__/` and use **Vitest** with `vi
 
 ---
 
-### 22. pipeline.test.ts — 16 tests
+### 22. pipeline.test.ts — 18 tests
 
 **Source:** `sf_cli/src/core/pipeline.ts`
 **What it protects:** The Forge pipeline engine — PRD→stories→implementation→gates→debrief
@@ -716,6 +717,68 @@ All TypeScript tests live in `sf_cli/src/__tests__/` and use **Vitest** with `vi
 | 16 | WARN included, PASS excluded | Mixed results (1 PASS, 1 WARN) | Output contains WARN gate, omits PASS gate | Only actionable findings forwarded |
 
 **Value:** Micro-gates are the cross-agent quality enforcement layer. They catch issues that individual agents miss — security blocks insecure code, standards blocks non-compliant code. Without these tests, a broken parser or missed override could let vulnerabilities through the pipeline.
+
+---
+
+### 27. finisher.test.ts — 50 tests
+
+**Source:** `sf_cli/src/core/finisher.ts`
+**What it protects:** Post-pipeline mechanical housekeeping — version sync, test count sync, architecture listing drift, changelog entries, git clean state
+
+| # | Test | How | Expected Result | Value |
+|---|------|-----|-----------------|-------|
+| 1 | bumpPatch increments | `bumpPatch('2.0.14')` | `'2.0.15'` | Patch version math correct |
+| 2 | bumpPatch rollover past 9 | `bumpPatch('1.0.9')` | `'1.0.10'` | No single-digit assumption |
+| 3 | bumpPatch from zero | `bumpPatch('0.0.0')` | `'0.0.1'` | Edge case handled |
+| 4 | readCanonicalVersion reads file | Write `.version` file | Returns version string | Version source of truth |
+| 5 | readCanonicalVersion missing | No `.version` file | Returns `null` | Graceful degradation |
+| 6 | readCanonicalVersion trims | Whitespace in file | Returns trimmed string | No trailing newline issues |
+| 7 | checkVersionConsistency all match | All 4 doc files match | All entries `matches: true` | Detects consistency |
+| 8 | checkVersionConsistency drift | package.json has old version | Drift entry detected | Catches stale references |
+| 9 | checkVersionConsistency missing | No files created | Missing entries reported | Handles absent files |
+| 10 | fixVersionReferences all | Create all version files | 5 files updated | Bulk update works |
+| 11 | fixVersionReferences skip missing | Remove docs/ | 3 files updated, no errors | Missing files don't crash |
+| 12 | runVersionCheck error no .version | No `.version` file | `status: 'error'` | Reports missing source |
+| 13 | runVersionCheck consistent | All files match | `status: 'ok'`, not fixed | Check mode is read-only |
+| 14 | runVersionCheck fix mode bump | Fix + storiesCompleted > 0 | Bumps version, `fixed: true` | Auto-bump on completion |
+| 15 | runVersionCheck fix no bump 0 stories | Fix + storiesCompleted = 0 | Not bumped, not fixed | Skips bump when nothing done |
+| 16 | getActualTestCount parse | Mock vitest JSON | Returns count number | Vitest output parsed |
+| 17 | getActualTestCount failure | execSync throws | Returns `null` | Vitest failure is non-fatal |
+| 18 | getActualTestCount no field | JSON without numTotalTests | Returns `null` | Missing field handled |
+| 19 | checkTestCounts match | Docs have correct count | Empty drift array | No false positives |
+| 20 | checkTestCounts drift | Docs have stale count | Drift entries found | Catches outdated docs |
+| 21 | fixTestCounts replace | Old count in docs | New count written | Bulk doc update |
+| 22 | runTestCountCheck error | vitest unavailable | `status: 'error'` | Reports tool failure |
+| 23 | runTestCountCheck ok | Docs match actual | `status: 'ok'` | Happy path |
+| 24 | runTestCountCheck fix drift | Stale docs | `status: 'ok'`, `fixed: true` | Auto-fix test counts |
+| 25 | scanCoreModules lists files | Create 3 .ts files | Sorted list of 3 | On-disk scanning works |
+| 26 | scanCoreModules missing dir | No core/ directory | Empty array | Graceful for new projects |
+| 27 | scanCoreModules excludes .d.ts | Create .ts + .d.ts | Only .ts returned | Declaration files excluded |
+| 28 | extractDocArchListing parse | Architecture tree in docs | Sorted .ts filenames | Doc tree parsing works |
+| 29 | extractDocArchListing missing | No docs file | Empty array | Graceful degradation |
+| 30 | diffArchListing missing from docs | 3 on disk, 2 in docs | `missing: ['finisher.ts']` | Detects undocumented modules |
+| 31 | diffArchListing extra in docs | 2 on disk, 3 in docs | `extra: ['old-module.ts']` | Detects removed modules |
+| 32 | diffArchListing match | Same lists | Empty missing + extra | No false positives |
+| 33 | runArchitectureCheck drift | Extra module on disk | `status: 'drift'`, not fixed | Report-only, no auto-fix |
+| 34 | runArchitectureCheck ok | Lists match | `status: 'ok'` | Happy path |
+| 35 | checkChangelogEntry found | `## [2.0.14]` exists | `true` | Entry detection works |
+| 36 | checkChangelogEntry missing | Only older entries | `false` | Missing entry detected |
+| 37 | checkChangelogEntry no file | No CHANGELOG.md | `false` | Graceful degradation |
+| 38 | runChangelogCheck ok | Entry exists | `status: 'ok'` | Happy path |
+| 39 | runChangelogCheck missing check | No entry, check mode | `status: 'missing'` | Reports gap |
+| 40 | runChangelogCheck fix inserts | No entry, fix mode | Placeholder inserted, `fixed: true` | Auto-creates entry |
+| 41 | runChangelogCheck error | No CHANGELOG.md | `status: 'error'` | Reports missing file |
+| 42 | checkGitClean clean | execSync returns empty | `clean: true` | Clean state detected |
+| 43 | checkGitClean dirty | Status shows modified + untracked | `clean: false`, counts in summary | Dirty state reported |
+| 44 | runGitCleanCheck never fixes | Dirty state, fix mode | `fixed: false` | Git-clean is report-only |
+| 45 | runGitCleanCheck ok | Clean state | `status: 'ok'` | Happy path |
+| 46 | runFinisher all 5 checks | Setup minimal files | 5 checks in correct order | Full orchestration |
+| 47 | runFinisher callbacks | Provide onCheck | Called 5 times | Real-time progress works |
+| 48 | runFinisher aggregation | Mixed statuses | Correct ok/drift/error counts | Summary math correct |
+| 49 | runFinisher fix mode bump | Fix + stories > 0 | `newVersion` set, .version updated | End-to-end version bump |
+| 50 | runFinisher check mode safe | Check + stories > 0 | Files unmodified | Check mode never mutates |
+
+**Value:** The finisher eliminates the "forgot to bump version / update test counts / update docs" gap that occurs after every pipeline run. Without these tests, a broken finisher could silently skip housekeeping or worse — corrupt version references across files.
 
 ---
 
@@ -878,10 +941,10 @@ sf_cli/src/__tests__/
 │   ├── credentials.test.ts     — Secure credential storage
 │   └── framework.test.ts       — Framework root/version
 │
-├── AI Pipeline (3 files, 30 tests)
+├── AI Pipeline (3 files, 32 tests)
 │   ├── ai-runner.test.ts       — Multi-turn agentic loop
 │   ├── retry.test.ts           — Retry + fallback logic
-│   └── pipeline.test.ts        — Forge pipeline engine + micro-gate integration
+│   └── pipeline.test.ts        — Forge pipeline engine + micro-gate + finisher integration
 │
 ├── Intelligence (5 files, 74 tests)
 │   ├── intent.test.ts          — Chat vs agent classification
@@ -890,9 +953,10 @@ sf_cli/src/__tests__/
 │   ├── team-router.test.ts     — Message→agent routing
 │   └── team-command.test.ts    — /team slash command
 │
-├── Quality & Safety (4 files, 46 tests)
+├── Quality & Safety (5 files, 96 tests)
 │   ├── gates.test.ts           — Anvil quality gates T1-T6
 │   ├── micro-gates.test.ts     — Post-handoff AI micro-gates (MG1-MG3)
+│   ├── finisher.test.ts        — Post-pipeline housekeeping (version, docs, arch)
 │   ├── redact.test.ts          — Secret redaction
 │   └── diff.test.ts            — Diff parsing
 │
@@ -929,7 +993,7 @@ tests/
 
 ```bash
 cd sf_cli
-npm test                    # Run all 328 tests
+npm test                    # Run all 380 tests
 npm run test:watch          # Watch mode for development
 npx vitest run --reporter=verbose  # Detailed output
 npx vitest run src/__tests__/permissions.test.ts  # Single file
@@ -961,17 +1025,17 @@ cd sf_cli && npm test && cd ../tests && bash run-tests.sh
 | AI Providers | 14 | 3+ | 17+ |
 | Tool Execution | 28 | 5+ | 33+ |
 | Permissions & Safety | 29 | 5+ | 34+ |
-| Quality Gates | 28 | 10+ | 38+ |
-| AI Pipeline | 30 | 5+ | 35+ |
+| Quality Gates | 78 | 10+ | 88+ |
+| AI Pipeline | 32 | 5+ | 37+ |
 | Agent System | 60 | 10+ | 70+ |
 | Memory & Knowledge | 10 | 15+ | 25+ |
 | Local-First | 48 | 3+ | 51+ |
 | Forge Pipeline | 21 | 10+ | 31+ |
 | Utilities | 30 | 15+ | 45+ |
 | Framework Infra | 9 | 100+ | 109+ |
-| **Total** | **328** | **198+** | **526+** |
+| **Total** | **380** | **198+** | **578+** |
 
 
 ---
 
-_Generated: 2026-02-27 | SkillFoundry v2.0.14_
+_Generated: 2026-02-27 | SkillFoundry v2.0.15_
