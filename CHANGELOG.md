@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.16] - 2026-02-27
+
+### Fixed — Update Script Self-Copy Bug
+
+When running `update.ps1 .` or `update.sh .` from inside the framework directory, `$ScriptDir` and `$ProjectDir` resolve to the same path. Unguarded `Copy-Item`/`cp` calls for copilot helper files (helper.sh, WORKFLOW-GUIDE.md, SECURITY-INTEGRATION.md) crashed because the OS prevents overwriting a file with itself.
+
+- **update.ps1**: Added `$isSameDir` guard; wrapped 2 unguarded `Copy-Item` calls
+- **update.sh**: Added `is_same_dir` guard; wrapped 5 unguarded `cp` calls across 2 code paths
+
+Hash-checked copy loops already handled this gracefully (identical hashes = skip), so only the direct copies needed the guard.
+
+---
+
 ## [2.0.15] - 2026-02-27
 
 ### Added — Pipeline Finisher (Automated Post-Pipeline Housekeeping)

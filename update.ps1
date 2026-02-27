@@ -424,7 +424,12 @@ function Update-Project {
         Write-Error-Enhanced "Not a SkillFoundry project" "Project directory missing framework markers" $ProjectDir "Run install.ps1 first to set up the framework"
         return $false
     }
-    
+
+    # Guard: skip file sync when project dir IS the framework source
+    $resolvedScriptDir = (Resolve-Path $ScriptDir).Path.TrimEnd('\', '/')
+    $resolvedProjectDir = (Resolve-Path $ProjectDir).Path.TrimEnd('\', '/')
+    $isSameDir = ($resolvedScriptDir -eq $resolvedProjectDir)
+
     $currentVersion = Get-ProjectVersion $ProjectDir
     
     if ($currentVersion -eq $FrameworkVersion -and -not $ForceUpdate) {
@@ -515,12 +520,14 @@ function Update-Project {
                     }
                 }
 
-                # Update helper and guides
-                if (Test-Path "$ScriptDir\.copilot\helper.sh") {
-                    Copy-Item -Path "$ScriptDir\.copilot\helper.sh" -Destination "$ProjectDir\.copilot\" -Force
-                }
-                if (Test-Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md") {
-                    Copy-Item -Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md" -Destination "$ProjectDir\.copilot\" -Force
+                # Update helper and guides (skip when updating self)
+                if (-not $isSameDir) {
+                    if (Test-Path "$ScriptDir\.copilot\helper.sh") {
+                        Copy-Item -Path "$ScriptDir\.copilot\helper.sh" -Destination "$ProjectDir\.copilot\" -Force
+                    }
+                    if (Test-Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md") {
+                        Copy-Item -Path "$ScriptDir\.copilot\WORKFLOW-GUIDE.md" -Destination "$ProjectDir\.copilot\" -Force
+                    }
                 }
 
                 if ($agentsAdded -eq 0 -and $agentsUpdated -eq 0) {
