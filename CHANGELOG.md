@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.15] - 2026-02-27
+
+### Added — Pipeline Finisher (Automated Post-Pipeline Housekeeping)
+
+Deterministic 7th pipeline phase that eliminates the "forgot to bump version / update test counts / update docs" gap. Zero AI cost — fully mechanical checks that auto-fix what's safe and report what needs human judgment.
+
+#### New: Finisher Module (`src/core/finisher.ts`)
+- **Version sync**: Bumps patch version (when stories completed > 0) and syncs across `.version`, `package.json`, `README.md`, `USER-GUIDE-CLI.md`, `TEST-SUITE-REFERENCE.md`
+- **Test count sync**: Runs vitest, compares actual count vs docs, auto-fixes stale references
+- **Architecture listing**: Scans `src/core/*.ts` on disk, compares with tree diagram in docs, reports drift (no auto-fix — descriptions need human judgment)
+- **Changelog**: Verifies `[current-version]` entry exists in CHANGELOG.md, inserts placeholder if missing
+- **Git clean**: Detects uncommitted changes (report-only, never auto-commits)
+- Two modes: `check` (read-only for dry-run) and `fix` (auto-correct what's mechanical)
+- Execution order: version → test-count → architecture → changelog → git-clean
+
+#### Updated: Pipeline Integration
+- FINISH phase runs after DEBRIEF (7th of 7 phases)
+- Non-blocking: drift or errors don't fail the pipeline
+- `onFinisherCheck` callback fires per check for real-time progress
+- Results attached to `PipelineResult.finisherSummary`
+- Run bundle JSON updated with finisher data
+
+#### Updated: Forge Command (`/forge`)
+- Full pipeline shows finisher summary: `Finisher: X ok, Y fixed, Z drift`
+- Dry-run mode (`--dry-run`) shows finisher checks in read-only mode
+- Real-time progress shows each check with status icon
+
+#### Tests
+- 50 new unit tests (`finisher.test.ts`) covering all 5 checkers + integration
+- 2 new pipeline integration tests (FINISH phase + callbacks)
+- Total: 380 tests across 27 files (was 328/26)
+
+---
+
 ## [2.0.14] - 2026-02-27
 
 ### Added — Post-Handoff Micro-Gates

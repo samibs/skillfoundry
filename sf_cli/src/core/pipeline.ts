@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { runAgentLoop } from './ai-runner.js';
 import { runAllGates, runSingleGate } from './gates.js';
 import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from './micro-gates.js';
+import { runFinisher } from './finisher.js';
 import type { GateRunSummary } from './gates.js';
 import { ALL_TOOLS } from './tools.js';
 import type {
@@ -17,6 +18,7 @@ import type {
   StoryExecution,
   AnthropicMessage,
   MicroGateResult,
+  FinisherSummary,
 } from '../types.js';
 
 const RUNS_DIR = '.skillfoundry/runs';
@@ -150,6 +152,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     makePhase('TEMPER'),
     makePhase('INSPECT'),
     makePhase('DEBRIEF'),
+    makePhase('FINISH'),
   ];
 
   let totalCostUsd = 0;
@@ -529,6 +532,41 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
 
   updatePhase('DEBRIEF', 'passed', Date.now() - debriefStart, `Run saved: ${RUNS_DIR}/${runId}.json`);
   callbacks?.onPhaseComplete?.('DEBRIEF', 'passed');
+
+  // ── Phase 7: FINISH ────────────────────────────────────
+
+  callbacks?.onPhaseStart?.('FINISH', 'Running finisher checks');
+  const finishStart = Date.now();
+
+  const finisherSummary = await runFinisher({
+    workDir,
+    mode: 'fix',
+    storiesCompleted,
+    onCheck: (checkResult) => {
+      callbacks?.onFinisherCheck?.(checkResult);
+    },
+  });
+
+  result.finisherSummary = finisherSummary;
+
+  // Append finisher results to the run bundle
+  const runBundlePath = join(runsDir, `${runId}.json`);
+  if (existsSync(runBundlePath)) {
+    const savedBundle = JSON.parse(readFileSync(runBundlePath, 'utf-8'));
+    savedBundle.finisher = {
+      totalChecks: finisherSummary.totalChecks,
+      ok: finisherSummary.ok,
+      drifted: finisherSummary.drifted,
+      fixed: finisherSummary.fixed,
+      errors: finisherSummary.errors,
+      newVersion: finisherSummary.newVersion || null,
+    };
+    writeFileSync(runBundlePath, JSON.stringify(savedBundle, null, 2), 'utf-8');
+  }
+
+  const finishDetail = `${finisherSummary.ok} ok, ${finisherSummary.fixed} fixed, ${finisherSummary.drifted} drift${finisherSummary.newVersion ? ` → v${finisherSummary.newVersion}` : ''}`;
+  updatePhase('FINISH', 'passed', Date.now() - finishStart, finishDetail);
+  callbacks?.onPhaseComplete?.('FINISH', 'passed');
 
   return result;
 }

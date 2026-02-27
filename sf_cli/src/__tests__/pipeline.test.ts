@@ -21,11 +21,17 @@ vi.mock('../core/micro-gates.js', () => ({
   formatFindingsForFixer: vi.fn(() => ''),
 }));
 
+// Mock finisher so pipeline tests don't run real vitest/git
+vi.mock('../core/finisher.js', () => ({
+  runFinisher: vi.fn(),
+}));
+
 import { runPipeline, scanPRDs, scanStories } from '../core/pipeline.js';
 import { runAgentLoop } from '../core/ai-runner.js';
 import { runAllGates, runSingleGate } from '../core/gates.js';
 import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from '../core/micro-gates.js';
-import type { SfConfig, SfPolicy } from '../types.js';
+import { runFinisher } from '../core/finisher.js';
+import type { SfConfig, SfPolicy, FinisherSummary } from '../types.js';
 
 const TEST_DIR = join(tmpdir(), 'sf-pipeline-test-' + Date.now());
 
@@ -63,6 +69,23 @@ beforeEach(() => {
   ]);
   vi.mocked(runPreTemperGate).mockResolvedValue({
     gate: 'MG3', agent: 'review', verdict: 'PASS', findings: [], summary: 'Consistent', costUsd: 0, turnCount: 1, durationMs: 50,
+  });
+
+  // Default finisher mock: all ok
+  vi.mocked(runFinisher).mockResolvedValue({
+    checks: [
+      { check: 'version', status: 'ok', detail: 'v2.0.14 consistent', fixed: false, durationMs: 5 },
+      { check: 'test-count', status: 'ok', detail: '328 tests', fixed: false, durationMs: 5 },
+      { check: 'architecture', status: 'ok', detail: '10 modules', fixed: false, durationMs: 5 },
+      { check: 'changelog', status: 'ok', detail: '[2.0.14] found', fixed: false, durationMs: 5 },
+      { check: 'git-clean', status: 'ok', detail: 'Working tree clean', fixed: false, durationMs: 5 },
+    ],
+    totalChecks: 5,
+    drifted: 0,
+    fixed: 0,
+    ok: 5,
+    errors: 0,
+    durationMs: 25,
   });
 });
 
@@ -690,5 +713,108 @@ describe('runPipeline', () => {
     expect(result.gateVerdict).toBe('PASS');
     // But the advisory should be recorded
     expect(result.microGateSummary?.preTemperAdvisory?.verdict).toBe('FAIL');
+  });
+
+  // ── Finisher integration tests ─────────────────────────────
+
+  it('runs FINISH phase after DEBRIEF and attaches finisherSummary', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-fin.md'), '# Finisher Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'fin');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    vi.mocked(runFinisher).mockResolvedValue({
+      checks: [
+        { check: 'version', status: 'ok', detail: 'Bumped 2.0.14 → 2.0.15', fixed: true, durationMs: 10 },
+        { check: 'test-count', status: 'ok', detail: '328 tests', fixed: false, durationMs: 10 },
+        { check: 'architecture', status: 'drift', detail: 'missing from docs: finisher.ts', fixed: false, durationMs: 5 },
+        { check: 'changelog', status: 'ok', detail: 'Inserted [2.0.15] placeholder', fixed: true, durationMs: 5 },
+        { check: 'git-clean', status: 'drift', detail: '3 modified', fixed: false, durationMs: 5 },
+      ],
+      totalChecks: 5, drifted: 2, fixed: 2, ok: 3, errors: 0, durationMs: 35,
+      newVersion: '2.0.15',
+    });
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    // FINISH phase should exist and be passed
+    const finishPhase = result.phases.find((p) => p.name === 'FINISH');
+    expect(finishPhase).toBeDefined();
+    expect(finishPhase!.status).toBe('passed');
+
+    // finisherSummary should be attached
+    expect(result.finisherSummary).toBeDefined();
+    expect(result.finisherSummary!.newVersion).toBe('2.0.15');
+    expect(result.finisherSummary!.fixed).toBe(2);
+
+    // FINISH should come after DEBRIEF
+    const phaseNames = result.phases.map((p) => p.name);
+    const debriefIdx = phaseNames.indexOf('DEBRIEF');
+    const finishIdx = phaseNames.indexOf('FINISH');
+    expect(finishIdx).toBeGreaterThan(debriefIdx);
+  });
+
+  it('fires onFinisherCheck callbacks during FINISH phase', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-fcb.md'), '# Finisher CB\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'fcb');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    // Mock finisher to call onCheck for each check
+    vi.mocked(runFinisher).mockImplementation(async (options) => {
+      const checks = [
+        { check: 'version', status: 'ok' as const, detail: 'ok', fixed: false, durationMs: 5 },
+        { check: 'test-count', status: 'ok' as const, detail: 'ok', fixed: false, durationMs: 5 },
+      ];
+      for (const c of checks) {
+        options.onCheck?.(c);
+      }
+      return { checks, totalChecks: 2, drifted: 0, fixed: 0, ok: 2, errors: 0, durationMs: 10 };
+    });
+
+    const onFinisherCheck = vi.fn();
+
+    await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+      callbacks: { onFinisherCheck },
+    });
+
+    expect(onFinisherCheck).toHaveBeenCalledTimes(2);
+    expect(onFinisherCheck).toHaveBeenCalledWith(expect.objectContaining({ check: 'version' }));
+    expect(onFinisherCheck).toHaveBeenCalledWith(expect.objectContaining({ check: 'test-count' }));
   });
 });
