@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.19] - 2026-02-28
+
+### Added — Social Media Publishing Script
+
+New shell script `scripts/social-publish.sh` for publishing posts directly to X (Twitter) and LinkedIn via their REST APIs.
+
+- **Single posts**: `social-publish.sh publish x "content"` / `social-publish.sh publish linkedin "content"`
+- **Threads**: `social-publish.sh thread x thread-file.txt` (sections split by `---`)
+- **Dry-run mode**: Preview without posting (`--dry-run`)
+- **History tracking**: All posts logged to `.claude/social-media-posts.jsonl`
+- **Status check**: Verify API connectivity and token validity
+- **Setup wizard**: Interactive token configuration
+- **Sourceable**: Other scripts can `source` it and call `social_publish()` directly
+- Config via env vars (`CLAUDE_AS_X_BEARER_TOKEN`, `CLAUDE_AS_LINKEDIN_ACCESS_TOKEN`) or `.claude/social-media.json`
+- Updated `/social-media` agent with Publishing section referencing the script
+
+---
+
 ## [2.0.18] - 2026-02-28
 
 ### Added — 3 New Specialist Agents (56 agents, 63 skills)
