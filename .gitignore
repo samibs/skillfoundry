@@ -128,6 +128,8 @@ memory_bank/retrieval/*
 .claude/heartbeat-state.json
 .claude/notifications.json
 .claude/notifications.jsonl
+.claude/social-media.json
+.claude/social-media-posts.jsonl
 .claude/preferences.json
 .claude/metrics.json
 .claude/state.json

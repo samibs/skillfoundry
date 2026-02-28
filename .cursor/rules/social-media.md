@@ -463,6 +463,64 @@ When announcing a single event (release, milestone, feature) across all platform
 | Actionability | [1-10] | Is there a clear next step for the reader? |
 
 
+## PUBLISHING (scripts/social-publish.sh)
+
+The framework includes a companion shell script for publishing directly to X and LinkedIn via their REST APIs.
+
+### Quick Reference
+
+```bash
+# First-time setup (configure API tokens)
+./scripts/social-publish.sh setup
+
+# Publish to X
+./scripts/social-publish.sh publish x "Your post content"
+
+# Publish to LinkedIn
+./scripts/social-publish.sh publish linkedin "Your post content"
+
+# Post a thread on X (sections separated by ---)
+./scripts/social-publish.sh thread x ./thread-content.txt
+
+# Dry-run (preview without posting)
+./scripts/social-publish.sh publish x "Test" --dry-run
+
+# Check API connectivity
+./scripts/social-publish.sh status
+
+# View post history
+./scripts/social-publish.sh history
+```
+
+### Token Configuration
+
+Set via environment variables (recommended) or the setup wizard:
+
+| Variable | Purpose |
+|----------|---------|
+| `CLAUDE_AS_X_BEARER_TOKEN` | X API Bearer token (OAuth 2.0) |
+| `CLAUDE_AS_LINKEDIN_ACCESS_TOKEN` | LinkedIn OAuth 2.0 access token |
+| `CLAUDE_AS_LINKEDIN_PERSON_URN` | LinkedIn person URN (`urn:li:person:ID`) |
+
+Config file: `.claude/social-media.json` (gitignored — contains secrets)
+
+### Integration with Content Generation
+
+After using `/social-media post x [topic]` to generate content, publish it directly:
+
+```bash
+# Generate content with the agent, then publish
+./scripts/social-publish.sh publish x "Generated content here" --no-confirm
+```
+
+The script can also be sourced by other scripts:
+
+```bash
+source ./scripts/social-publish.sh
+social_publish x "Hello from my automation!"
+```
+
+
 ## CLOSING FORMAT
 
 Always conclude with:
