@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.18] - 2026-02-28
+
+### Added — 3 New Specialist Agents (56 agents, 63 skills)
+
+Three new agents added to the framework, synced across all 5 platforms (Claude Code, Copilot, Cursor, Codex, Gemini):
+
+- **SEO Specialist** (`/seo`) — Google Search Console analysis, technical SEO audits, Core Web Vitals, structured data/Schema.org validation, sitemap/robots.txt generation, crawl budget optimization, URL migration planning
+- **Social Media Specialist** (`/social-media`) — Platform-specific content creation for X (Twitter), Medium, Reddit, XDA-Developers, and LinkedIn. Includes formatting rules, character limits, tone guidelines, content calendars, and engagement strategies per platform
+- **Production Cleaner** (`/clean`) — Strips AI/LLM framework artifacts before production deployment. Generates production `.gitignore`/`.dockerignore`, removes AI modification markers from code, audits for leaked framework files, CI/CD integration for automated clean checks
+
+Agent count: 53 → 56 | Skill count: 60 → 63
+
+---
+
 ## [2.0.17] - 2026-02-27
 
 ### Fixed — Git Executable Permissions

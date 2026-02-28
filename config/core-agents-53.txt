@@ -31,6 +31,7 @@ ops
 orchestrate
 performance
 prd
+production-cleaner
 profile
 refactor
 release
@@ -39,7 +40,9 @@ review
 security
 security-scanner
 senior-engineer
+seo
 ship
+social-media
 sre
 standards
 status
