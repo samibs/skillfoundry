@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.20] - 2026-03-01
+
+### Added — Skill Scope Boundaries in CLAUDE.md
+
+Added explicit scope isolation rules to prevent instruction creep — where heavyweight skill rules (e.g., `/security` STRIDE modeling, `/tester` 14 test categories, `/forge` 6-phase pipeline) get misapplied to trivial tasks like README edits, config changes, or one-line fixes.
+
+- **Rule 1 — Activation/Deactivation**: Skill rules are active only between invocation and output delivery
+- **Rule 2 — Global vs Skill-Local**: Classifies which rules always apply (no hardcoded secrets) vs skill-scoped (OWASP checklist only during `/security`)
+- **Rule 3 — Complexity-Based Scope**: Trivial (1 file) = direct edit; Large (10+ files) = full pipeline
+- **Rule 4 — Exempt Contexts**: Documentation, housekeeping, questions, config files exempt from heavyweight rules
+- **Rule 5 — No Retroactive Expansion**: Running `/security audit` doesn't re-evaluate prior unrelated work
+
+Thanks to joozio from Reddit for the suggestion.
+
+---
+
 ## [2.0.19] - 2026-02-28
 
 ### Added — Social Media Publishing Script
