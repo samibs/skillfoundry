@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.21] - 2026-03-01
+
+### Changed — UX/UI Specialist Agent Rewrite
+
+Complete rewrite of the UX/UI Specialist agent (`agents/ux-ui-specialist.md`) merging the existing structure with production-quality reference material. The agent grows from ~513 lines to ~800 lines with concrete, actionable content replacing generic placeholders.
+
+- **Design tokens**: Generic `--color-primary: [...]` placeholders replaced with full 178-line CSS custom properties with real hex values, plus Tailwind config, Angular Material theme, and React theme object templates
+- **Audit system**: Checkbox-based pass/fail audit replaced with 12-point scored system (0-3 per item, 36-point max) organized into 4 categories (Layout & Spacing, Color & Visual Hierarchy, Typography, Components & Patterns, Responsive & Polish)
+- **Priority matrix**: New P0-P3 categorization for audit findings (P0 = blocks professional use, P3 = delight layer)
+- **Component specs**: Concrete specifications table with pixel heights, padding, font sizes for 9 components (Button sm/md/lg, Input, Card, Table header/row, Badge, Modal)
+- **Component patterns**: Full empty state pattern with 9 context examples, status badge color mapping with 6 statuses, table standards with 9 rules and CSS, page header standard with structure diagram, card standards with KPI rules
+- **Remediation workflow**: New 4-phase systematic workflow (Discovery → Foundation → Remediation → QA)
+- **Execution order**: New 9-step ordered sequence (tokens → globals → layout → components → pages → empty states → interactive → responsive → polish) to avoid rework
+- **QA checklist**: 26-item visual regression checklist + 10 cross-page consistency checks + multi-width testing (1920, 1440, 1280, 1024, 768)
+- **Enterprise anti-patterns**: 10 new enterprise-specific anti-patterns (ghost town pages, Frankenstein styling, label salad, table wilderness, button roulette, padding chaos, status color anarchy, orphan pages, missing states, visual hierarchy collapse)
+- **Reflection protocol**: Blocking threshold lowered from 7 to 5 for hard blocks
+- **Preserved**: Operating modes, migration protocol, rewrite protocol, existing 18 anti-patterns, button/form/loading patterns, dark mode requirements, responsive breakpoints, security considerations, integration section, closing format
+
+---
+
 ## [2.0.20] - 2026-03-01
 
 ### Added — Skill Scope Boundaries in CLAUDE.md
