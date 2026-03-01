@@ -305,6 +305,113 @@ SESSION END:
 
 ---
 
+## Skill Scope Boundaries
+
+Skills are scoped tools, not global policies. When a skill is invoked, ONLY that skill's rules are active. When it finishes, its rules deactivate. Violating this causes instruction creep — heavyweight rules applied to trivial tasks.
+
+### Rule 1: Activation and Deactivation
+
+A skill's instructions are active **only** between its explicit invocation (`/skill-name`) and the delivery of its output. After output, the skill's rules no longer apply to subsequent work.
+
+```
+/security audit         ← security rules ACTIVATE
+  ... audit runs ...
+  ... output delivered  ← security rules DEACTIVATE
+Fix the typo in README  ← security rules DO NOT apply here
+```
+
+If a pipeline skill (e.g., `/forge`) calls sub-skills internally, those sub-skill rules apply only within that pipeline step, not to the entire session.
+
+### Rule 2: Global vs Skill-Local Rules
+
+**Global rules** (always apply, regardless of active skill):
+- No hardcoded secrets or credentials in code
+- No `@ts-ignore` without justification
+- No silent failures — log all errors
+- Input validation at system boundaries
+- BPSBS standards from `~/.claude/CLAUDE.md`
+
+**Skill-local rules** (apply ONLY when that skill is explicitly active):
+
+| Skill | Scoped Rules | NEVER Apply To |
+|-------|-------------|----------------|
+| `/forge` | 6-phase pipeline, Anvil T1-T6 gates, story decomposition | Single-file edits, README changes, quick fixes |
+| `/go` | PRD validation, state machine, wave execution | One-off tasks, questions, config changes |
+| `/security` | STRIDE modeling, OWASP checklist, CVSS scoring | Documentation, logging, non-security code |
+| `/tester` | 14 test categories, 80% coverage, coverage matrix | README examples, config files, documentation |
+| `/auto` | Intent classification, pipeline routing | Direct questions, read-only exploration |
+| `/layer-check` | Three-layer DB→Backend→Frontend validation | Changes that don't touch all three layers |
+
+### Rule 3: Complexity-Based Scope
+
+Not every task needs every skill. Match the tool to the task size.
+
+| Task Size | Examples | Appropriate Response |
+|-----------|----------|---------------------|
+| **Trivial** (1 file, <10 lines) | Typo fix, config tweak, log line | Direct edit. No pipeline, no gates, no audit. |
+| **Small** (1-3 files, <100 lines) | Bug fix, minor feature, doc update | Targeted skill only. Skip orchestration overhead. |
+| **Medium** (3-10 files) | New endpoint, component, module | Core pipeline. Optional security/test phases. |
+| **Large** (10+ files, multi-story) | Full feature, new service | Full `/forge` or `/go` pipeline with all phases. |
+
+**The test**: Would invoking this skill produce *useful, proportionate* output for this task? If the overhead exceeds the value, the skill is out of scope.
+
+### Rule 4: Exempt Contexts
+
+These contexts are **always exempt** from heavyweight skill rules:
+
+| Context | Exempt From | Reason |
+|---------|-------------|--------|
+| Documentation (README, CHANGELOG, docs/) | `/tester` coverage requirements, `/security` threat models | Docs aren't production code |
+| Housekeeping (version bump, sync, commit) | `/forge` pipeline, `/go` story decomposition | Mechanical tasks, not features |
+| Direct questions ("how does X work?") | All pipeline skills | Read-only, no code changes |
+| Config files (.gitignore, tsconfig, etc.) | `/security` zero-tolerance patterns | Config isn't application code |
+| Comments and docstrings | Banned pattern scan (TODO in comments is acceptable) | Comments describe intent, not production logic |
+
+### Rule 5: No Retroactive Scope Expansion
+
+When a skill finishes, do NOT retroactively apply its standards to unrelated prior work in the same session. Example: running `/security audit` should not trigger re-evaluation of a README edit made 10 messages earlier.
+
+### Anti-Pattern Examples
+
+**BAD: Security bleeds into documentation**
+```
+User: "Fix the typo in README.md"
+Agent: *Runs STRIDE threat model on README change*
+Agent: *Demands OWASP checklist for markdown edit*
+```
+
+**GOOD: Scoped response**
+```
+User: "Fix the typo in README.md"
+Agent: *Fixes typo. Done.*
+```
+
+**BAD: Tester bleeds into config change**
+```
+User: "Add .claude/social-media.json to .gitignore"
+Agent: *Demands 14 test categories and coverage matrix for .gitignore edit*
+```
+
+**GOOD: Proportionate response**
+```
+User: "Add .claude/social-media.json to .gitignore"
+Agent: *Adds line. Done.*
+```
+
+**BAD: Forge pipeline for a one-liner**
+```
+User: "Bump the version to 2.0.19"
+Agent: *Initiates 6-phase pipeline with PRD validation, story decomposition, Anvil gates*
+```
+
+**GOOD: Direct execution**
+```
+User: "Bump the version to 2.0.19"
+Agent: *Updates 8 version locations. Done.*
+```
+
+---
+
 ## The Illusion of Control: Why Prompt Memory Matters
 
 > "Alex believes he's in control... but he's not. It's the illusion of free will." — RoboCop (2014)
@@ -323,4 +430,4 @@ AI/LLMs must check for and eliminate duplicate code blocks before suggesting or 
 
 ---
 
-_Last Updated: 2026-02-20_
+_Last Updated: 2026-03-01_
