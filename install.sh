@@ -187,6 +187,114 @@ timer_elapsed() {
     echo $(( end - _TIMER_START ))
 }
 
+# Generate the SkillFoundry .gitignore block content
+generate_gitignore_block() {
+    cat <<'GITIGNORE_BLOCK'
+# >>> SkillFoundry Framework (managed by install/update — do not edit this block)
+
+# Memory bank & scratchpads
+memory_bank/
+scratchpads/
+
+# Metrics & knowledge staging
+metrics/
+knowledge/staging/
+
+# Workspace config
+.skillfoundry/
+
+# Claude runtime artifacts
+.claude/*.jsonl
+.claude/*.json
+.claude/attribution/
+.claude/heartbeat*
+.claude/backups/
+.claude/scratchpad.md
+
+# Keep settings and skills tracked
+!.claude/settings.json
+!.claude/settings.local.json
+!.claude/commands/
+
+# Platform skills are tracked (do NOT ignore)
+!.copilot/custom-agents/
+!.cursor/rules/
+!.agents/skills/
+!.gemini/skills/
+
+# Arena
+.arena/
+
+# Compliance evidence (keep .gitkeep)
+compliance/evidence/*
+!compliance/evidence/.gitkeep
+
+# Observability logs
+observability/*.log
+
+# Framework version markers
+.*/.framework-version
+.*/.framework-updated
+.*/.framework-platform
+
+# Diagnostics
+.skillfoundry-diagnostics.log
+
+# <<< SkillFoundry Framework
+GITIGNORE_BLOCK
+}
+
+# Merge SkillFoundry entries into the project's .gitignore (idempotent)
+merge_gitignore() {
+    local target_dir="$1"
+    local gitignore="$target_dir/.gitignore"
+    local marker_start="# >>> SkillFoundry Framework"
+    local marker_end="# <<< SkillFoundry Framework"
+
+    # Case 1: .gitignore doesn't exist — create it
+    if [ ! -f "$gitignore" ]; then
+        generate_gitignore_block > "$gitignore"
+        echo -e "${GREEN}  ✓ .gitignore created with SkillFoundry entries${NC}"
+        return 0
+    fi
+
+    # Check if read-only
+    if [ ! -w "$gitignore" ]; then
+        echo -e "${YELLOW}  ⚠ .gitignore is read-only — skipping${NC}"
+        return 0
+    fi
+
+    # Case 2: .gitignore exists with existing block — replace it
+    if grep -qF "$marker_start" "$gitignore"; then
+        local tmp="${gitignore}.sf_tmp"
+        awk '
+            /^# >>> SkillFoundry Framework/ { skip=1; next }
+            /^# <<< SkillFoundry Framework/ { skip=0; next }
+            !skip { print }
+        ' "$gitignore" > "$tmp"
+        # Rebuild: preserved content + new block
+        {
+            # Remove trailing blank lines from preserved content
+            sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$tmp"
+            echo ""
+            generate_gitignore_block
+        } > "$gitignore"
+        rm -f "$tmp"
+        echo -e "${GREEN}  ✓ .gitignore updated (SkillFoundry block replaced)${NC}"
+        return 0
+    fi
+
+    # Case 3: .gitignore exists without block — append
+    # Ensure file ends with a newline before appending
+    if [ -s "$gitignore" ] && [ "$(tail -c1 "$gitignore" | wc -l)" -eq 0 ]; then
+        echo "" >> "$gitignore"
+    fi
+    echo "" >> "$gitignore"
+    generate_gitignore_block >> "$gitignore"
+    echo -e "${GREEN}  ✓ .gitignore updated (SkillFoundry entries appended)${NC}"
+    return 0
+}
+
 # Parse What's New from CHANGELOG.md (first version block)
 show_whats_new() {
     local changelog_file="$1"
@@ -607,6 +715,7 @@ if [ "$DRY_RUN" = true ]; then
     echo "    docs/                 Security anti-pattern docs"
     echo "    memory_bank/          Knowledge bootstrap"
     echo "    CLAUDE.md             Project instructions"
+    echo "    .gitignore            SkillFoundry entries (merged)"
     for plat in "${PLATFORMS[@]}"; do
         case "$plat" in
             claude)
@@ -643,7 +752,7 @@ fi
 # Initialize progress counter
 # ═══════════════════════════════════════════════════════════════
 # Steps: shared dirs + shared agents + templates/docs + per-platform + CLI build + registry + done
-step_init $((3 + ${#PLATFORMS[@]} + 3))
+step_init $((3 + ${#PLATFORMS[@]} + 4))
 
 # ═══════════════════════════════════════════════════════════════
 # PHASE 1: Shared files (copied once, not per platform)
@@ -928,6 +1037,12 @@ for plat in "${PLATFORMS[@]}"; do
 done
 
 # ═══════════════════════════════════════════════════════════════
+# Merge .gitignore entries
+# ═══════════════════════════════════════════════════════════════
+step "Configuring .gitignore..."
+merge_gitignore "$TARGET_DIR"
+
+# ═══════════════════════════════════════════════════════════════
 # FINAL STEP: Summary
 # ═══════════════════════════════════════════════════════════════
 step "Done!"
@@ -977,6 +1092,7 @@ echo "    genesis/                PRD template"
 if [ "$SF_CLI_INSTALLED" = true ]; then
     echo "    ~/.local/bin/sf         global CLI wrapper"
 fi
+echo "    .gitignore              SkillFoundry entries merged"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════

@@ -306,7 +306,7 @@ function Test-ValidProject {
 
 function Backup-File {
     param([string]$FilePath)
-    
+
     if (Test-Path $FilePath) {
         $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
         $backup = "$FilePath.backup.$timestamp"
@@ -314,6 +314,107 @@ function Backup-File {
         return $backup
     }
     return $null
+}
+
+# Generate the SkillFoundry .gitignore block content
+function Get-SkillFoundryGitignoreBlock {
+    return @"
+# >>> SkillFoundry Framework (managed by install/update — do not edit this block)
+
+# Memory bank & scratchpads
+memory_bank/
+scratchpads/
+
+# Metrics & knowledge staging
+metrics/
+knowledge/staging/
+
+# Workspace config
+.skillfoundry/
+
+# Claude runtime artifacts
+.claude/*.jsonl
+.claude/*.json
+.claude/attribution/
+.claude/heartbeat*
+.claude/backups/
+.claude/scratchpad.md
+
+# Keep settings and skills tracked
+!.claude/settings.json
+!.claude/settings.local.json
+!.claude/commands/
+
+# Platform skills are tracked (do NOT ignore)
+!.copilot/custom-agents/
+!.cursor/rules/
+!.agents/skills/
+!.gemini/skills/
+
+# Arena
+.arena/
+
+# Compliance evidence (keep .gitkeep)
+compliance/evidence/*
+!compliance/evidence/.gitkeep
+
+# Observability logs
+observability/*.log
+
+# Framework version markers
+.*/.framework-version
+.*/.framework-updated
+.*/.framework-platform
+
+# Diagnostics
+.skillfoundry-diagnostics.log
+
+# <<< SkillFoundry Framework
+"@
+}
+
+# Merge SkillFoundry entries into the project's .gitignore (idempotent)
+function Merge-GitIgnore {
+    param([string]$TargetPath)
+
+    $gitignorePath = Join-Path $TargetPath ".gitignore"
+    $markerStart = "# >>> SkillFoundry Framework"
+    $markerEnd = "# <<< SkillFoundry Framework"
+    $block = Get-SkillFoundryGitignoreBlock
+
+    # Case 1: .gitignore doesn't exist — create it
+    if (-not (Test-Path $gitignorePath)) {
+        $block | Out-File -FilePath $gitignorePath -Encoding utf8 -NoNewline
+        Write-ColorOutput "  [OK] .gitignore created with SkillFoundry entries" "Green"
+        return
+    }
+
+    # Check if read-only
+    $fileInfo = Get-Item $gitignorePath
+    if ($fileInfo.IsReadOnly) {
+        Write-ColorOutput "  [!] .gitignore is read-only -- skipping" "Yellow"
+        return
+    }
+
+    $content = Get-Content $gitignorePath -Raw
+    if (-not $content) { $content = "" }
+
+    # Case 2: .gitignore exists with existing block — replace it
+    if ($content -match [regex]::Escape($markerStart)) {
+        $pattern = "(?s)" + [regex]::Escape($markerStart) + ".*?" + [regex]::Escape($markerEnd) + "[`r`n]*"
+        $cleaned = [regex]::Replace($content, $pattern, "")
+        $cleaned = $cleaned.TrimEnd("`r", "`n")
+        $newContent = $cleaned + "`n`n" + $block + "`n"
+        $newContent | Out-File -FilePath $gitignorePath -Encoding utf8 -NoNewline
+        Write-ColorOutput "  [OK] .gitignore updated (SkillFoundry block replaced)" "Green"
+        return
+    }
+
+    # Case 3: .gitignore exists without block — append
+    $trimmed = $content.TrimEnd("`r", "`n")
+    $newContent = $trimmed + "`n`n" + $block + "`n"
+    $newContent | Out-File -FilePath $gitignorePath -Encoding utf8 -NoNewline
+    Write-ColorOutput "  [OK] .gitignore updated (SkillFoundry entries appended)" "Green"
 }
 
 # ===============================================================
@@ -848,9 +949,14 @@ function Update-Project {
         Write-ColorOutput "  Node.js not found. CLI rebuild skipped." "Yellow"
     }
 
+    # Merge .gitignore entries
+    Write-Host ""
+    Write-ColorOutput "Updating .gitignore..." "Yellow"
+    Merge-GitIgnore $ProjectDir
+
     # Set version marker
     Set-ProjectVersion $ProjectDir
-    
+
     # Auto-register
     $projects = Get-RegisteredProjects
     if ($projects -notcontains $ProjectDir) {

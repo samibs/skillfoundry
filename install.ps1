@@ -250,6 +250,107 @@ function Show-WhatsNew {
     Write-Host ""
 }
 
+# Generate the SkillFoundry .gitignore block content
+function Get-SkillFoundryGitignoreBlock {
+    return @"
+# >>> SkillFoundry Framework (managed by install/update — do not edit this block)
+
+# Memory bank & scratchpads
+memory_bank/
+scratchpads/
+
+# Metrics & knowledge staging
+metrics/
+knowledge/staging/
+
+# Workspace config
+.skillfoundry/
+
+# Claude runtime artifacts
+.claude/*.jsonl
+.claude/*.json
+.claude/attribution/
+.claude/heartbeat*
+.claude/backups/
+.claude/scratchpad.md
+
+# Keep settings and skills tracked
+!.claude/settings.json
+!.claude/settings.local.json
+!.claude/commands/
+
+# Platform skills are tracked (do NOT ignore)
+!.copilot/custom-agents/
+!.cursor/rules/
+!.agents/skills/
+!.gemini/skills/
+
+# Arena
+.arena/
+
+# Compliance evidence (keep .gitkeep)
+compliance/evidence/*
+!compliance/evidence/.gitkeep
+
+# Observability logs
+observability/*.log
+
+# Framework version markers
+.*/.framework-version
+.*/.framework-updated
+.*/.framework-platform
+
+# Diagnostics
+.skillfoundry-diagnostics.log
+
+# <<< SkillFoundry Framework
+"@
+}
+
+# Merge SkillFoundry entries into the project's .gitignore (idempotent)
+function Merge-GitIgnore {
+    param([string]$TargetPath)
+
+    $gitignorePath = Join-Path $TargetPath ".gitignore"
+    $markerStart = "# >>> SkillFoundry Framework"
+    $markerEnd = "# <<< SkillFoundry Framework"
+    $block = Get-SkillFoundryGitignoreBlock
+
+    # Case 1: .gitignore doesn't exist — create it
+    if (-not (Test-Path $gitignorePath)) {
+        $block | Out-File -FilePath $gitignorePath -Encoding utf8 -NoNewline
+        Write-ColorOutput "  [OK] .gitignore created with SkillFoundry entries" "Green"
+        return
+    }
+
+    # Check if read-only
+    $fileInfo = Get-Item $gitignorePath
+    if ($fileInfo.IsReadOnly) {
+        Write-ColorOutput "  [!] .gitignore is read-only -- skipping" "Yellow"
+        return
+    }
+
+    $content = Get-Content $gitignorePath -Raw
+    if (-not $content) { $content = "" }
+
+    # Case 2: .gitignore exists with existing block — replace it
+    if ($content -match [regex]::Escape($markerStart)) {
+        $pattern = "(?s)" + [regex]::Escape($markerStart) + ".*?" + [regex]::Escape($markerEnd) + "[`r`n]*"
+        $cleaned = [regex]::Replace($content, $pattern, "")
+        $cleaned = $cleaned.TrimEnd("`r", "`n")
+        $newContent = $cleaned + "`n`n" + $block + "`n"
+        $newContent | Out-File -FilePath $gitignorePath -Encoding utf8 -NoNewline
+        Write-ColorOutput "  [OK] .gitignore updated (SkillFoundry block replaced)" "Green"
+        return
+    }
+
+    # Case 3: .gitignore exists without block — append
+    $trimmed = $content.TrimEnd("`r", "`n")
+    $newContent = $trimmed + "`n`n" + $block + "`n"
+    $newContent | Out-File -FilePath $gitignorePath -Encoding utf8 -NoNewline
+    Write-ColorOutput "  [OK] .gitignore updated (SkillFoundry entries appended)" "Green"
+}
+
 # Convert to absolute path
 if (Test-Path $TargetDir) {
     $TargetDir = Resolve-Path $TargetDir
@@ -434,6 +535,7 @@ if ($DryRun) {
     Write-Host "    docs/                 Security anti-pattern docs"
     Write-Host "    memory_bank/          Knowledge bootstrap"
     Write-Host "    CLAUDE.md             Project instructions"
+    Write-Host "    .gitignore            SkillFoundry entries (merged)"
     foreach ($plat in $Platforms) {
         switch ($plat) {
             "claude" {
@@ -466,7 +568,7 @@ if ($DryRun) {
 # ===============================================================
 # Initialize progress counter
 # ===============================================================
-Initialize-Steps (3 + $Platforms.Count + 3)
+Initialize-Steps (3 + $Platforms.Count + 4)
 
 # Create directory structure -- shared directories (once)
 Write-Step "Creating shared directory structure..."
@@ -722,6 +824,9 @@ if ($nodeCmd) {
     Write-ColorOutput "  Install Node.js 20+ to enable the 'sf' CLI command." "Yellow"
 }
 
+Write-Step "Configuring .gitignore..."
+Merge-GitIgnore $TargetDir
+
 Write-Step "Done!"
 
 $Elapsed = Get-ElapsedSeconds
@@ -753,6 +858,7 @@ if ($SF_CLI_INSTALLED) {
 } else {
     Write-Host "    sf CLI                  - skipped (Node.js 20+ required)"
 }
+Write-Host "    .gitignore              SkillFoundry entries merged"
 Write-Host ""
 
 # Compact Quick Start
