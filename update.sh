@@ -187,6 +187,114 @@ backup_file() {
     fi
 }
 
+# Generate the SkillFoundry .gitignore block content
+generate_gitignore_block() {
+    cat <<'GITIGNORE_BLOCK'
+# >>> SkillFoundry Framework (managed by install/update — do not edit this block)
+
+# Memory bank & scratchpads
+memory_bank/
+scratchpads/
+
+# Metrics & knowledge staging
+metrics/
+knowledge/staging/
+
+# Workspace config
+.skillfoundry/
+
+# Claude runtime artifacts
+.claude/*.jsonl
+.claude/*.json
+.claude/attribution/
+.claude/heartbeat*
+.claude/backups/
+.claude/scratchpad.md
+
+# Keep settings and skills tracked
+!.claude/settings.json
+!.claude/settings.local.json
+!.claude/commands/
+
+# Platform skills are tracked (do NOT ignore)
+!.copilot/custom-agents/
+!.cursor/rules/
+!.agents/skills/
+!.gemini/skills/
+
+# Arena
+.arena/
+
+# Compliance evidence (keep .gitkeep)
+compliance/evidence/*
+!compliance/evidence/.gitkeep
+
+# Observability logs
+observability/*.log
+
+# Framework version markers
+.*/.framework-version
+.*/.framework-updated
+.*/.framework-platform
+
+# Diagnostics
+.skillfoundry-diagnostics.log
+
+# <<< SkillFoundry Framework
+GITIGNORE_BLOCK
+}
+
+# Merge SkillFoundry entries into the project's .gitignore (idempotent)
+merge_gitignore() {
+    local target_dir="$1"
+    local gitignore="$target_dir/.gitignore"
+    local marker_start="# >>> SkillFoundry Framework"
+    local marker_end="# <<< SkillFoundry Framework"
+
+    # Case 1: .gitignore doesn't exist — create it
+    if [ ! -f "$gitignore" ]; then
+        generate_gitignore_block > "$gitignore"
+        echo -e "${GREEN}  ✓ .gitignore created with SkillFoundry entries${NC}"
+        return 0
+    fi
+
+    # Check if read-only
+    if [ ! -w "$gitignore" ]; then
+        echo -e "${YELLOW}  ⚠ .gitignore is read-only — skipping${NC}"
+        return 0
+    fi
+
+    # Case 2: .gitignore exists with existing block — replace it
+    if grep -qF "$marker_start" "$gitignore"; then
+        local tmp="${gitignore}.sf_tmp"
+        awk '
+            /^# >>> SkillFoundry Framework/ { skip=1; next }
+            /^# <<< SkillFoundry Framework/ { skip=0; next }
+            !skip { print }
+        ' "$gitignore" > "$tmp"
+        # Rebuild: preserved content + new block
+        {
+            # Remove trailing blank lines from preserved content
+            sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' "$tmp"
+            echo ""
+            generate_gitignore_block
+        } > "$gitignore"
+        rm -f "$tmp"
+        echo -e "${GREEN}  ✓ .gitignore updated (SkillFoundry block replaced)${NC}"
+        return 0
+    fi
+
+    # Case 3: .gitignore exists without block — append
+    # Ensure file ends with a newline before appending
+    if [ -s "$gitignore" ] && [ "$(tail -c1 "$gitignore" | wc -l)" -eq 0 ]; then
+        echo "" >> "$gitignore"
+    fi
+    echo "" >> "$gitignore"
+    generate_gitignore_block >> "$gitignore"
+    echo -e "${GREEN}  ✓ .gitignore updated (SkillFoundry entries appended)${NC}"
+    return 0
+}
+
 # ═══════════════════════════════════════════════════════════════
 # CLAUDE.md / CLAUDE-SUMMARY.md SYNC VALIDATION
 # ═══════════════════════════════════════════════════════════════
@@ -1162,6 +1270,13 @@ WRAPPER_EOF
     else
         echo -e "  ${YELLOW}Node.js not found. Skipping CLI rebuild.${NC}"
     fi
+
+    # ─────────────────────────────────────────────────────────────
+    # Merge .gitignore entries
+    # ─────────────────────────────────────────────────────────────
+    echo ""
+    echo -e "${YELLOW}Updating .gitignore...${NC}"
+    merge_gitignore "$project_dir"
 
     # ─────────────────────────────────────────────────────────────
     # Set version marker

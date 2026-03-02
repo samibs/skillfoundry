@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.22] - 2026-03-02
+
+### Added — Auto-merge .gitignore on Install & Update
+
+Both `install.sh` / `install.ps1` and `update.sh` / `update.ps1` now automatically create or update the project's `.gitignore` with a managed block of SkillFoundry entries. This prevents framework operational state (memory bank, scratchpads, metrics, Claude runtime artifacts, etc.) from being committed to the user's repository.
+
+- **Managed block**: Entries wrapped in `# >>> SkillFoundry Framework` / `# <<< SkillFoundry Framework` markers for safe, idempotent updates
+- **Three cases handled**: creates `.gitignore` if missing, appends block if no marker exists, replaces block if already present
+- **Read-only safety**: skips with a warning if `.gitignore` is read-only
+- **Ignored paths**: `memory_bank/`, `scratchpads/`, `metrics/`, `knowledge/staging/`, `.skillfoundry/`, `.claude/*.jsonl`, `.claude/*.json`, `.claude/attribution/`, `.claude/heartbeat*`, `.claude/backups/`, `.claude/scratchpad.md`, `.arena/`, `compliance/evidence/*`, `observability/*.log`, `.*/.framework-version`, `.*/.framework-updated`, `.*/.framework-platform`, `.skillfoundry-diagnostics.log`
+- **Explicitly tracked** (un-ignored): `.claude/settings.json`, `.claude/settings.local.json`, `.claude/commands/`, `.copilot/custom-agents/`, `.cursor/rules/`, `.agents/skills/`, `.gemini/skills/`
+- **Dry-run support**: `.gitignore` merge shown in `install.sh --dry-run` and `install.ps1 -DryRun` previews
+- **Summary output**: `.gitignore` status included in post-install summary
+
+---
+
 ## [2.0.21] - 2026-03-01
 
 ### Changed — UX/UI Specialist Agent Rewrite
