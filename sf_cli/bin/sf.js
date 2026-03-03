@@ -12,4 +12,7 @@ if (!process.env.SF_FRAMEWORK_ROOT) {
   process.env.SF_FRAMEWORK_ROOT = join(__dirname, '..', '..');
 }
 
-import('../dist/index.js');
+import('../dist/index.js').catch((err) => {
+  console.error('[sf] Fatal:', err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});
