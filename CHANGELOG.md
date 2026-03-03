@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.23] - 2026-03-03
+
+### Fixed — CLI Exits Silently on Windows (Non-Claude Platforms)
+
+When SkillFoundry was installed with a non-Claude platform (e.g., Copilot only), running `sf` on Windows would silently exit with no output. The CLI appeared to do nothing.
+
+- **Root cause**: `render()` from Ink was not awaited — the async action handler completed immediately, allowing Node.js to exit before the React/Ink terminal UI had time to render. On Linux the event loop often stayed alive long enough by coincidence; on Windows it exited reliably.
+- **Secondary issue**: `program.parse()` (synchronous) was used instead of `program.parseAsync()`, causing any startup errors in the async action handler to be silently swallowed as unhandled promise rejections.
+- **Fix**: `render()` now returns `{ waitUntilExit }` which is properly awaited, keeping the process alive for the lifetime of the Ink UI. `program.parseAsync()` with a `.catch()` handler ensures startup errors are logged.
+- **Entry point hardened**: `bin/sf.js` dynamic import now has a `.catch()` to surface fatal module load errors.
+
+---
+
 ## [2.0.22] - 2026-03-02
 
 ### Added — Auto-merge .gitignore on Install & Update
