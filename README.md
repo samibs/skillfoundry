@@ -11,10 +11,9 @@
 
 SkillFoundry is an AI engineering framework that installs 56 agents and 63 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes.
 
-```
-You type:  /forge
-What runs: PRD validation → story generation → implementation → 6-tier quality gates → security audit → lessons saved
-```
+<p align="center">
+  <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
+</p>
 
 ### Why SkillFoundry?
 
