@@ -519,10 +519,9 @@ Update all registered projects at once:
 
 ## Contributing
 
-1. Create a branch from `main`
-2. Implement with tests (380+ tests must pass)
-3. Run `/forge` or `/gates` to validate
-4. Open a pull request with rationale
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, workflow, and code standards.
+
+Short version: fork, branch, write tests, open a PR against `main`.
 
 ---
 
