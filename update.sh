@@ -1260,6 +1260,35 @@ WRAPPER_EOF
                         chmod +x "$sf_wrapper"
                         echo -e "  ${GREEN}CLI wrapper updated${NC}"
                     fi
+
+                    # Ensure ~/.local/bin is on PATH (fixes installs done before auto-PATH)
+                    local sf_wrapper_dir="${HOME}/.local/bin"
+                    if ! echo "$PATH" | tr ':' '\n' | grep -qx "${sf_wrapper_dir}"; then
+                        local shell_name
+                        shell_name=$(basename "${SHELL:-/bin/bash}")
+                        local shell_rc
+                        case "$shell_name" in
+                            zsh)  shell_rc="${HOME}/.zshrc" ;;
+                            fish) shell_rc="${HOME}/.config/fish/config.fish" ;;
+                            *)    shell_rc="${HOME}/.bashrc" ;;
+                        esac
+                        if [ "$shell_name" = "fish" ]; then
+                            mkdir -p "$(dirname "$shell_rc")"
+                            if ! grep -qF "fish_add_path ${sf_wrapper_dir}" "$shell_rc" 2>/dev/null; then
+                                echo "" >> "$shell_rc"
+                                echo "# SkillFoundry CLI" >> "$shell_rc"
+                                echo "fish_add_path ${sf_wrapper_dir}" >> "$shell_rc"
+                            fi
+                        else
+                            if ! grep -qF "${sf_wrapper_dir}" "$shell_rc" 2>/dev/null; then
+                                echo "" >> "$shell_rc"
+                                echo "# SkillFoundry CLI" >> "$shell_rc"
+                                echo "export PATH=\"${sf_wrapper_dir}:\$PATH\"" >> "$shell_rc"
+                            fi
+                        fi
+                        export PATH="${sf_wrapper_dir}:$PATH"
+                        echo -e "  ${GREEN}Added ${sf_wrapper_dir} to PATH (via ${shell_rc})${NC}"
+                    fi
                 } || {
                     echo -e "  ${YELLOW}CLI rebuild failed (non-critical, skipping)${NC}"
                 }

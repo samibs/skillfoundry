@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.24] - 2026-03-04
+
+### Fixed — CLI Wrapper Auto-Added to PATH on Install & Update
+
+The `sf` command was not recognized on Windows (and sometimes Linux/macOS) after installation because `~/.local/bin` was not on the user's PATH. The installer only printed a yellow warning with manual instructions — users missed it and thought the install had failed.
+
+- **install.ps1**: Now auto-adds `%USERPROFILE%\.local\bin` to the user's persistent PATH via `[Environment]::SetEnvironmentVariable()` and updates the current session so `sf` works immediately without restarting the terminal
+- **install.sh**: Now auto-appends `export PATH="~/.local/bin:$PATH"` to the user's shell profile (`.bashrc`, `.zshrc`, or `config.fish`), with duplicate detection to stay idempotent
+- **update.ps1 / update.sh**: Also check and fix PATH on update, so users who installed before this fix get the PATH entry on their next update
+- **Dry-run output**: Both installers now show `PATH — Auto-add ~/.local/bin if missing` in the dry-run preview
+
+### Changed — README Hero Section Rewritten
+
+The README hero section was redesigned for GitHub visitors who spend 5 seconds on a repo page:
+
+- Added bold tagline: "Turn requirements into tested, production-ready code — with quality gates your AI can't skip."
+- Added "Why SkillFoundry?" section with 5 sharp differentiator bullets
+- Moved Quick Start to the hero (3 steps, Windows collapsed in `<details>`)
+- Added compact "How It Works" pipeline overview before the detailed sections
+- Renamed the duplicate detailed pipeline section to "Pipeline Details"
+- Removed redundant duplicate Quick Start section
+
+---
+
 ## [2.0.23] - 2026-03-03
 
 ### Fixed — CLI Exits Silently on Windows (Non-Claude Platforms)
