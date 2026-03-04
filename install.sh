@@ -716,6 +716,7 @@ if [ "$DRY_RUN" = true ]; then
     echo "    memory_bank/          Knowledge bootstrap"
     echo "    CLAUDE.md             Project instructions"
     echo "    .gitignore            SkillFoundry entries (merged)"
+    echo "    PATH                  Auto-add ~/.local/bin if missing"
     for plat in "${PLATFORMS[@]}"; do
         case "$plat" in
             claude)
@@ -971,14 +972,10 @@ WRAPPER_EOF
                 SF_CLI_INSTALLED=true
                 echo -e "${GREEN}  ✓ CLI wrapper installed: ${SF_WRAPPER}${NC}"
 
-                # Check if ~/.local/bin is on PATH
+                # Ensure ~/.local/bin is on PATH
                 if echo "$PATH" | tr ':' '\n' | grep -qx "${SF_WRAPPER_DIR}"; then
                     echo -e "${GREEN}  ✓ ${SF_WRAPPER_DIR} is on PATH${NC}"
                 else
-                    echo ""
-                    echo -e "${YELLOW}  ⚠ ${SF_WRAPPER_DIR} is not on your PATH${NC}"
-                    echo ""
-
                     SHELL_NAME=$(basename "${SHELL:-/bin/bash}")
                     case "$SHELL_NAME" in
                         zsh)
@@ -992,17 +989,30 @@ WRAPPER_EOF
                             ;;
                     esac
 
-                    echo -e "  Add this to ${CYAN}${SHELL_RC}${NC}:"
-                    echo ""
+                    PATH_LINE="export PATH=\"${SF_WRAPPER_DIR}:\$PATH\""
+                    FISH_LINE="fish_add_path ${SF_WRAPPER_DIR}"
+
                     if [ "$SHELL_NAME" = "fish" ]; then
-                        echo -e "    ${CYAN}fish_add_path ${SF_WRAPPER_DIR}${NC}"
+                        # Fish shell — add to config.fish if not already there
+                        mkdir -p "$(dirname "$SHELL_RC")"
+                        if ! grep -qF "fish_add_path ${SF_WRAPPER_DIR}" "$SHELL_RC" 2>/dev/null; then
+                            echo "" >> "$SHELL_RC"
+                            echo "# SkillFoundry CLI" >> "$SHELL_RC"
+                            echo "$FISH_LINE" >> "$SHELL_RC"
+                        fi
                     else
-                        echo -e "    ${CYAN}export PATH=\"${SF_WRAPPER_DIR}:\$PATH\"${NC}"
+                        # Bash/Zsh — add export to profile if not already there
+                        if ! grep -qF "${SF_WRAPPER_DIR}" "$SHELL_RC" 2>/dev/null; then
+                            echo "" >> "$SHELL_RC"
+                            echo "# SkillFoundry CLI" >> "$SHELL_RC"
+                            echo "$PATH_LINE" >> "$SHELL_RC"
+                        fi
                     fi
-                    echo ""
-                    echo -e "  Then restart your shell or run:"
-                    echo -e "    ${CYAN}source ${SHELL_RC}${NC}"
-                    echo ""
+
+                    # Update current session so sf works immediately
+                    export PATH="${SF_WRAPPER_DIR}:$PATH"
+                    echo -e "${GREEN}  ✓ Added ${SF_WRAPPER_DIR} to PATH (via ${SHELL_RC})${NC}"
+                    echo -e "${BLUE}  Note: 'sf' is available now. New terminals will also have it.${NC}"
                 fi
             fi
         fi

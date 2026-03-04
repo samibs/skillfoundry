@@ -1,13 +1,82 @@
 # SkillFoundry
 
+**Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
+
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.23-blue)
+![Version](https://img.shields.io/badge/version-2.0.24-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-> A production AI engineering framework that turns requirements into tested, reviewable code through a multi-agent pipeline. Works inside your existing IDE (Claude Code, Cursor, Copilot, Codex, Gemini) or through a standalone interactive CLI. Ships with quality gates, persistent memory, autonomous mode, and cost controls.
+SkillFoundry is an AI engineering framework that installs 56 agents and 63 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes.
+
+```
+You type:  /forge
+What runs: PRD validation → story generation → implementation → 6-tier quality gates → security audit → lessons saved
+```
+
+### Why SkillFoundry?
+
+- **Works where you already code** — Claude Code, Cursor, GitHub Copilot, OpenAI Codex, Google Gemini. No new IDE to learn.
+- **Quality gates your AI can't bypass** — The Anvil runs 6 tiers of checks (banned patterns, type checking, tests, security, build, scope) between every agent handoff. Code that fails doesn't ship.
+- **Persistent memory across sessions** — Decisions, errors, and patterns are stored in `memory_bank/` and recalled automatically. Your AI doesn't repeat the same mistakes.
+- **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
+- **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
+
+### Quick Start
+
+```bash
+# 1. Clone
+git clone https://github.com/samibs/skillfoundry.git ~/dev-tools/skillfoundry
+
+# 2. Install into your project
+cd ~/my-project && ~/dev-tools/skillfoundry/install.sh
+
+# 3. Use it
+/prd "add user authentication"     # write requirements
+/forge                             # build everything with quality gates
+```
+
+That's it. The installer copies agents and skills into your project, builds the CLI, and adds `sf` to your PATH.
+
+<details>
+<summary><strong>Windows (PowerShell)</strong></summary>
+
+```powershell
+git clone https://github.com/samibs/skillfoundry.git C:\DevTools\skillfoundry
+cd C:\MyProject
+C:\DevTools\skillfoundry\install.ps1
+```
+
+</details>
+
+> **Requires Node.js v20+** for the standalone CLI. IDE skills work without Node.js.
+
+---
+
+## How It Works
+
+```
+ /prd "feature"          Write requirements (saved to genesis/)
+       │
+ /forge                  The full pipeline:
+       │
+       ├── Validate PRD         Are requirements complete?
+       ├── Generate stories     Break into implementable units
+       ├── Implement            Architect → Coder → Tester pipeline
+       ├── Quality gates        The Anvil (T1-T6) + Micro-Gates (MG1-MG3)
+       ├── Security audit       OWASP scan + credential check
+       └── Harvest knowledge    Save lessons to memory_bank/
+```
+
+Or use autonomous mode — just type what you want in plain English:
+
+```
+/autonomous on
+> "add dark mode to the dashboard"    → auto-classified as FEATURE → full pipeline runs
+> "the login is broken"               → auto-classified as BUG → debugger + fixer dispatched
+```
 
 ---
 
@@ -15,57 +84,19 @@
 
 ### 1. Inside Your IDE (No CLI Required)
 
-SkillFoundry installs 63 skills directly into your AI coding tool. No separate CLI needed — just use the commands your platform already supports:
+63 skills install directly into your AI coding tool:
 
-| Platform | How You Invoke Skills | Example |
-|----------|----------------------|---------|
-| **Claude Code** | `/command` | `/forge`, `/go`, `/review`, `/coder` |
-| **GitHub Copilot** | `@agent-name` in chat | `@forge`, `@coder`, `@tester` |
-| **Cursor** | Auto-loaded rules | Rules activate based on context |
+| Platform | Invocation | Example |
+|----------|-----------|---------|
+| **Claude Code** | `/command` | `/forge`, `/go`, `/review` |
+| **GitHub Copilot** | `@agent` in chat | `@forge`, `@coder`, `@tester` |
+| **Cursor** | Auto-loaded rules | Rules activate on context |
 | **OpenAI Codex** | `$command` | `$forge`, `$go`, `$review` |
 | **Google Gemini** | Skill invocation | `forge`, `go`, `review` |
 
-Every skill — from PRD generation to code review to security scanning — works natively in your IDE. The agents, protocols, and quality gates are injected into your project during install and your AI tool reads them automatically.
-
-```bash
-# Example: using SkillFoundry in Claude Code (no sf CLI)
-/prd "add user authentication with OAuth2"
-/go                    # validates PRDs, generates stories, implements
-/forge                 # real AI pipeline: PRDs → stories → implement → gates → report
-/forge --dry-run       # read-only scan: check PRDs, stories, and gates without executing
-/review                # code review
-/memory recall "auth"  # recall lessons from previous sessions
-```
-
 ### 2. The Standalone CLI (`sf`)
 
-For a dedicated terminal experience with streaming UI, agent routing, tool execution, and visual quality gates:
-
-```
- ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
- │ ◆ SkillFoundry CLI    anthropic:claude-sonnet ● team:dev ● $0.00 ● 14.2k tok │
- └──────────────────────────────────────────────────────────────────────────────────┘
-```
-
-The CLI adds multi-provider switching, budget controls, permission management, and a visual tool execution interface on top of the same 63 skills.
-
----
-
-## The CLI
-
-```
- ███████╗██╗  ██╗██╗██╗     ██╗     ███████╗ ██████╗ ██╗   ██╗███╗   ██╗██████╗ ██████╗ ██╗   ██╗
- ██╔════╝██║ ██╔╝██║██║     ██║     ██╔════╝██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔══██╗╚██╗ ██╔╝
- ███████╗█████╔╝ ██║██║     ██║     █████╗  ██║   ██║██║   ██║██╔██╗ ██║██║  ██║██████╔╝ ╚████╔╝
- ╚════██║██╔═██╗ ██║██║     ██║     ██╔══╝  ██║   ██║██║   ██║██║╚██╗██║██║  ██║██╔══██╗  ╚██╔╝
- ███████║██║  ██╗██║███████╗███████╗██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║
- ╚══════╝╚═╝  ╚═╝╚═╝╚══════╝╚══════╝╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝
-
-  56 Agents  ●  63 Skills  ●  The Forge  ●  5 Platforms  ●  6 Providers          v2.0.23
- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-The `sf` command launches a terminal-native AI assistant with streaming responses, agent routing, quality gates, and multi-provider support.
+A terminal-native AI assistant with streaming UI, agent routing, budget controls, and visual quality gates:
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -86,46 +117,7 @@ The `sf` command launches a terminal-native AI assistant with streaming response
  ╰──────────────────────────────────────────────────────────────────────────────────╯
 
  │ ▸ sf:review> I'll review the dark mode implementation for accessibility...
-
- ──────────────────────────────────────────────────────────────────────────────────
- /help · /status · /plan · /forge · /team dev · /exit
 ```
-
----
-
-## Quick Start
-
-### Linux / macOS
-
-```bash
-# 1. Clone to a central location
-git clone https://github.com/samibs/skillfoundry.git ~/dev-tools/skillfoundry
-
-# 2. Install into your project (builds CLI + copies agents/skills)
-cd ~/my-project
-~/dev-tools/skillfoundry/install.sh
-
-# 3. Launch
-sf
-```
-
-### Windows (PowerShell)
-
-```powershell
-# 1. Clone to a central location
-git clone https://github.com/samibs/skillfoundry.git C:\DevTools\skillfoundry
-
-# 2. Install into your project
-cd C:\MyProject
-C:\DevTools\skillfoundry\install.ps1
-
-# 3. Launch
-sf
-```
-
-> **Requires Node.js v20+.** The installer builds the CLI and places a wrapper at
-> `~/.local/bin/sf` (Linux/macOS) or `%USERPROFILE%\.local\bin\sf.cmd` (Windows).
-> If the directory isn't on your PATH, the installer prints instructions to add it.
 
 ---
 
@@ -440,7 +432,7 @@ skillfoundry/
 
 ---
 
-## How It Works
+## Pipeline Details
 
 ```
                     ┌─────────────┐
@@ -481,9 +473,7 @@ skillfoundry/
                     └─────────────┘
 ```
 
-Or skip the steps and run `/forge` for the full pipeline in one command. The Forge drives real AI execution: it discovers PRDs, generates stories, implements each story using the agentic tool-use loop, runs micro-gates (MG1 security + MG2 standards per story, MG3 cross-story review), runs T1-T6 quality gates (with auto-fixer retries), and persists run metadata. Use `/forge --dry-run` for a read-only scan.
-
-**In autonomous mode**, you skip all the commands. Just type "add user authentication" and the pipeline runs end-to-end — PRD generated, stories broken out, agents dispatched, quality gates enforced, lessons harvested.
+`/forge` runs this entire pipeline in one command. It discovers PRDs, generates stories, implements each story with the agentic tool-use loop, runs micro-gates (MG1 security + MG2 standards per story, MG3 cross-story review), runs T1-T6 quality gates (with auto-fixer retries), and persists run metadata. Use `/forge --dry-run` for a read-only scan.
 
 ---
 

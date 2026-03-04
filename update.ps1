@@ -933,6 +933,14 @@ function Update-Project {
                             $ps1Content | Out-File -FilePath $SF_WRAPPER_PS1 -Encoding utf8
                             Write-ColorOutput "  [OK] PowerShell wrapper updated: $SF_WRAPPER_PS1" "Green"
                         }
+
+                        # Ensure wrapper dir is on PATH (fixes installs done before auto-PATH)
+                        $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+                        if (-not ($userPath -split ';' | Where-Object { $_ -eq $SF_WRAPPER_DIR })) {
+                            [Environment]::SetEnvironmentVariable("Path", "$SF_WRAPPER_DIR;$userPath", "User")
+                            $env:Path = "$SF_WRAPPER_DIR;$env:Path"
+                            Write-ColorOutput "  [OK] Added $SF_WRAPPER_DIR to PATH (permanent)" "Green"
+                        }
                     } else {
                         Write-ColorOutput "  [!] CLI build failed (non-critical)" "Yellow"
                     }

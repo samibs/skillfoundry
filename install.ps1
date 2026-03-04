@@ -536,6 +536,7 @@ if ($DryRun) {
     Write-Host "    memory_bank/          Knowledge bootstrap"
     Write-Host "    CLAUDE.md             Project instructions"
     Write-Host "    .gitignore            SkillFoundry entries (merged)"
+    Write-Host "    PATH                  Auto-add ~/.local/bin if missing"
     foreach ($plat in $Platforms) {
         switch ($plat) {
             "claude" {
@@ -795,23 +796,17 @@ if ($nodeCmd) {
 
                 $SF_CLI_INSTALLED = $true
 
-                # Check if wrapper dir is on PATH
+                # Ensure wrapper dir is on PATH
                 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
                 if ($userPath -split ';' | Where-Object { $_ -eq $SF_WRAPPER_DIR }) {
                     Write-ColorOutput "  [OK] $SF_WRAPPER_DIR is on PATH" "Green"
                 } else {
-                    Write-Host ""
-                    Write-ColorOutput "  [!] $SF_WRAPPER_DIR is not on your PATH" "Yellow"
-                    Write-Host ""
-                    Write-Host "  To add it permanently, run (as your user):"
-                    Write-Host ""
-                    Write-ColorOutput "    [Environment]::SetEnvironmentVariable('Path', `"$SF_WRAPPER_DIR;`$([Environment]::GetEnvironmentVariable('Path','User'))`", 'User')" "Cyan"
-                    Write-Host ""
-                    Write-Host "  Or add to your PowerShell profile ($PROFILE):"
-                    Write-ColorOutput "    `$env:Path = `"$SF_WRAPPER_DIR;`$env:Path`"" "Cyan"
-                    Write-Host ""
-                    Write-Host "  Then restart your terminal."
-                    Write-Host ""
+                    # Auto-add to user PATH (permanent)
+                    [Environment]::SetEnvironmentVariable("Path", "$SF_WRAPPER_DIR;$userPath", "User")
+                    # Also update current session so sf works immediately
+                    $env:Path = "$SF_WRAPPER_DIR;$env:Path"
+                    Write-ColorOutput "  [OK] Added $SF_WRAPPER_DIR to PATH (permanent)" "Green"
+                    Write-ColorOutput "  Note: 'sf' is available now. New terminals will also have it." "Blue"
                 }
             }
         }
