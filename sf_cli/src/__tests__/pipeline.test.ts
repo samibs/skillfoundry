@@ -49,6 +49,7 @@ const mockConfig: SfConfig = {
   local_provider: '',
   local_model: '',
   context_window: 0,
+  log_level: 'error',
 };
 
 const mockPolicy: SfPolicy = {
@@ -539,6 +540,77 @@ describe('runPipeline', () => {
     // Should fire for story
     expect(onStoryStart).toHaveBeenCalledWith('STORY-001-test.md', 0, 1);
     expect(onStoryComplete).toHaveBeenCalledWith('STORY-001-test.md', true, expect.any(Number));
+  });
+
+  it('marks story file as DONE after successful completion', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-mark.md'), '# Mark Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'mark');
+    mkdirSync(storyDir, { recursive: true });
+    const storyPath = join(storyDir, 'STORY-001-test.md');
+    writeFileSync(storyPath, '# STORY-001: Test\nstatus: PENDING\n\n## Description\nTest.\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    // Story file should now have status: DONE
+    const content = readFileSync(storyPath, 'utf-8');
+    expect(content).toMatch(/status:\s*DONE/);
+    expect(content).not.toMatch(/status:\s*PENDING/);
+  });
+
+  it('skips already-done stories on re-run (pipeline resume)', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-resume.md'), '# Resume Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'resume');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-done.md'), '# STORY-001: Done\nstatus: DONE\n');
+    writeFileSync(join(storyDir, 'STORY-002-pending.md'), '# STORY-002: Pending\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    const onStoryStart = vi.fn();
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+      callbacks: { onStoryStart },
+    });
+
+    // Should show 2 total stories but only execute the pending one
+    expect(result.storiesTotal).toBe(2);
+    expect(result.storiesCompleted).toBe(2); // 1 already done + 1 newly completed
+    expect(onStoryStart).toHaveBeenCalledTimes(1); // Only STORY-002
+    expect(onStoryStart).toHaveBeenCalledWith('STORY-002-pending.md', 0, 1);
+    expect(runAgentLoop).toHaveBeenCalledTimes(1); // Only STORY-002 executed
   });
 
   // ── Micro-gate integration tests ──────────────────────────

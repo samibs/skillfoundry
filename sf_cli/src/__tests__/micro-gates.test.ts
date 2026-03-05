@@ -40,6 +40,7 @@ const mockConfig: SfConfig = {
   local_provider: '',
   local_model: '',
   context_window: 0,
+  log_level: 'error',
 };
 
 const mockPolicy: SfPolicy = {
