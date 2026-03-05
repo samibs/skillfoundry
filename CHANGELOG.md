@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.37] - 2026-03-05
+
+### Added — Platform Memory Migration
+
+- **One-time migration script** (`scripts/migrate-platform-memory.ts`) normalizes all legacy JSONL entries, extracts knowledge from `.claude/scratchpad.md`, updates stale bootstrap facts, and writes canonical JSONL.
+- **16 legacy entries normalized** across `decisions.jsonl`, `decisions-universal.jsonl`, `patterns-universal.jsonl`, `errors-universal.jsonl` — converted from flat key-value schema to canonical schema with `id`, `weight`, `lineage`, `reality_anchor`.
+- **27 entries extracted** from scratchpad session history (Feb 15 – Feb 27): 13 facts (session summaries, architecture, version progression), 5 decisions, 4 errors (security fixes), 3 preferences.
+- **2 stale bootstrap entries superseded**: `bootstrap-fact-003` ("3 platforms" → "5 platforms") and `bootstrap-fact-004` ("41 agents" → "56 agents, 63 skills") with proper `lineage.supersedes` linkage.
+- **Idempotent**: running the script again reports 0 new entries. Deduplication checks content against existing entries before writing.
+- **`facts.jsonl`** populated (was empty): 15 entries covering session summaries, version history, architecture facts, and superseding bootstrap facts.
+- **`errors.jsonl`** populated (was empty): 4 entries covering critical security fixes (eval injection, mktemp, sed injection, clearTimeout).
+- **`preferences.jsonl`** populated (was empty): 3 entries (backend-first workflow, dark mode default, cold-blooded logic philosophy).
+
+---
+
 ## [2.0.36] - 2026-03-05
 
 ### Added — Automatic Memory Harvesting in Pipeline
