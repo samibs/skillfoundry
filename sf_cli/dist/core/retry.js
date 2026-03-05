@@ -3,7 +3,7 @@
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 // Errors that should NOT be retried (fail immediately)
-const NON_RETRYABLE = /401|403|authentication|unauthorized|invalid.*key|api.*key.*missing/i;
+const NON_RETRYABLE = /401|403|404|authentication|unauthorized|invalid.*key|api.*key.*missing|model.*not.*found|model.*not.*available|does not have access|do not have access|no access.*model|model.*does not exist|not available.*model|unsupported.*model|unknown.*model|insufficient.*quota|billing|payment.*required/i;
 function isRetryable(err) {
     const message = err instanceof Error ? err.message : String(err);
     return !NON_RETRYABLE.test(message);

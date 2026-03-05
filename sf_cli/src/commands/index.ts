@@ -11,6 +11,7 @@ import { memoryCommand, lessonsCommand } from './memory.js';
 import { setupCommand } from './setup.js';
 import { agentCommand } from './agent.js';
 import { teamCommand } from './team.js';
+import { modelCommand } from './model.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -56,4 +57,5 @@ export function initCommands(): void {
   registerCommand(setupCommand);
   registerCommand(agentCommand);
   registerCommand(teamCommand);
+  registerCommand(modelCommand);
 }

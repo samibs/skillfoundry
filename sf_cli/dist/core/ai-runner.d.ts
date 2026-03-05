@@ -1,5 +1,9 @@
 import type { AnthropicMessage, RunnerCallbacks, RunnerOptions, RunnerResult } from '../types.js';
 /**
+ * Classify a provider error and return a user-friendly message with fix instructions.
+ */
+export declare function classifyProviderError(err: unknown): string;
+/**
  * Run a multi-turn agentic loop: send messages to an AI provider,
  * execute tool calls, feed results back, and repeat until the AI
  * stops requesting tools or the turn limit is reached.

@@ -27,6 +27,68 @@ import type {
 const DEFAULT_MAX_TURNS = 25;
 
 /**
+ * Classify a provider error and return a user-friendly message with fix instructions.
+ */
+export function classifyProviderError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+
+  // Model access / not found
+  if (/model.*not.*found|model.*not.*available|does not have access|do not have access|no access.*model|model.*does not exist|not available.*model|unsupported.*model|unknown.*model/i.test(message)) {
+    return (
+      `Model not available: ${message}\n\n` +
+      `The configured model is not accessible with your API key.\n` +
+      `To switch models, use:\n` +
+      `  /model                         — list available models\n` +
+      `  /config model <model-name>     — switch to a different model\n` +
+      `  /provider list                 — see all providers`
+    );
+  }
+
+  // Auth / API key errors
+  if (/401|403|authentication|unauthorized|invalid.*key|api.*key.*missing|auth_token/i.test(message)) {
+    return (
+      `Authentication error: ${message}\n\n` +
+      `To configure API keys, run:\n` +
+      `  sf setup --provider <name> --key <your-key>\n` +
+      `  Or use /setup inside this session.`
+    );
+  }
+
+  // Billing / quota errors
+  if (/insufficient.*quota|billing|payment.*required|rate.*limit|429/i.test(message)) {
+    return (
+      `Quota/billing error: ${message}\n\n` +
+      `Your API key may have hit its usage limit.\n` +
+      `Check your provider dashboard or try a different model:\n` +
+      `  /model                         — list available models\n` +
+      `  /provider set <name>           — switch provider`
+    );
+  }
+
+  // SSL / certificate errors
+  if (/SELF_SIGNED_CERT|certificate|ssl|tls/i.test(message)) {
+    return (
+      `SSL/Certificate error: ${message}\n\n` +
+      `If behind a corporate proxy, try:\n` +
+      `  export NODE_TLS_REJECT_UNAUTHORIZED=0\n` +
+      `  (Windows: set NODE_TLS_REJECT_UNAUTHORIZED=0)`
+    );
+  }
+
+  // Network errors
+  if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|network|fetch failed|could not resolve/i.test(message)) {
+    return (
+      `Network error: ${message}\n\n` +
+      `Check your internet connection and provider status.\n` +
+      `If using a local provider (Ollama/LM Studio), ensure it is running.`
+    );
+  }
+
+  // Fallback
+  return `Provider error: ${message}`;
+}
+
+/**
  * Run a multi-turn agentic loop: send messages to an AI provider,
  * execute tool calls, feed results back, and repeat until the AI
  * stops requesting tools or the turn limit is reached.
@@ -135,26 +197,39 @@ export async function runAgentLoop(
 
     // Stream with tools
     let accumulated = '';
-    const toolStreamResult = await streamWithRetry(
-      async (p) =>
-        p.streamWithTools(
-          messagesForTurn,
-          {
-            model: config.model,
-            tools,
-            systemPrompt: promptForTurn,
-          },
-          (chunk: string, done: boolean) => {
-            if (abortSignal?.aborted) return;
-            if (!done) {
-              accumulated += chunk;
-              callbacks?.onStreamChunk?.(redactText(accumulated, policy.redact));
-            }
-          },
-        ),
-      provider,
-      fallbackProvider,
-    );
+    let toolStreamResult;
+    try {
+      toolStreamResult = await streamWithRetry(
+        async (p) =>
+          p.streamWithTools(
+            messagesForTurn,
+            {
+              model: config.model,
+              tools,
+              systemPrompt: promptForTurn,
+            },
+            (chunk: string, done: boolean) => {
+              if (abortSignal?.aborted) return;
+              if (!done) {
+                accumulated += chunk;
+                callbacks?.onStreamChunk?.(redactText(accumulated, policy.redact));
+              }
+            },
+          ),
+        provider,
+        fallbackProvider,
+      );
+    } catch (err) {
+      const friendlyError = classifyProviderError(err);
+      return {
+        content: friendlyError,
+        turnCount,
+        totalInputTokens,
+        totalOutputTokens,
+        totalCostUsd,
+        aborted: false,
+      };
+    }
 
     const result = toolStreamResult.result;
 
