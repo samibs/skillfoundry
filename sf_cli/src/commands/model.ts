@@ -2,7 +2,7 @@ import type { SlashCommand, SessionContext } from '../types.js';
 import { AVAILABLE_PROVIDERS } from '../core/provider.js';
 import { saveConfig } from '../core/config.js';
 
-// Well-known models per provider (user can still set any model string)
+// Well-known models per provider (for display only — user can set any model string)
 const KNOWN_MODELS: Record<string, string[]> = {
   anthropic: [
     'claude-sonnet-4-20250514',
@@ -15,6 +15,7 @@ const KNOWN_MODELS: Record<string, string[]> = {
     'gpt-4.1',
     'gpt-4.1-mini',
     'gpt-4.1-nano',
+    'gpt-5.1-codex-max',
     'o3',
     'o3-mini',
     'o4-mini',
@@ -67,15 +68,6 @@ export const modelCommand: SlashCommand = {
     // Update the live session config
     session.config.model = modelName;
 
-    const provider = session.config.provider;
-    const known = KNOWN_MODELS[provider] || [];
-    const isKnown = known.includes(modelName);
-
-    let response = `Model switched to **${modelName}**. Config saved.`;
-    if (!isKnown && known.length > 0) {
-      response += `\n\nNote: "${modelName}" is not in the known models list for ${provider}. If your provider supports it, it will work.`;
-    }
-
-    return response;
+    return `Model switched to **${modelName}**. Config saved.`;
   },
 };
