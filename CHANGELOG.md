@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.29] - 2026-03-05
+
+### Fixed — Pipeline Cost Tracking + Story Execution Quality
+
+Two issues fixed in the `/forge` pipeline:
+
+**Header cost display now updates during pipeline execution**
+- The status bar showed `$0.0000` throughout `/forge` runs because pipeline costs were tracked internally but never attached to message metadata. The forge result is now added as a message with `metadata.costUsd`, so the header's cost counter updates.
+
+**Story execution prompt now enforces quality standards**
+- Previously the AI wrote code with TODOs, missing input validation, hardcoded values, and empty error handlers — then the quality gates correctly flagged all of it. The story execution prompt now explicitly lists the same standards the gates check: banned patterns (TODO/FIXME/STUB), security requirements (input validation, parameterized queries, no hardcoded secrets), error handling, documentation, and code quality rules. The AI knows what it will be checked against before writing code.
+
+---
+
 ## [2.0.28] - 2026-03-05
 
 ### Fixed — Gate and Micro-Gate Output Now Shows Actionable Details
