@@ -8,7 +8,7 @@ import { getAgentTools, getAgentSystemPrompt } from '../core/agent-registry.js';
 import { routeToAgent } from '../core/team-router.js';
 import { checkBudget, recordUsage, loadUsage } from '../core/budget.js';
 import { streamWithRetry } from '../core/retry.js';
-import { runAgentLoop } from '../core/ai-runner.js';
+import { runAgentLoop, classifyProviderError } from '../core/ai-runner.js';
 const MAX_TOOL_TURNS = 25;
 export function useStream(config, policy, addMessage, workDir = process.cwd()) {
     const [isStreaming, setIsStreaming] = useState(false);
@@ -233,15 +233,7 @@ export function useStream(config, policy, addMessage, workDir = process.cwd()) {
             setStreamingTurnCount(0);
         }
         catch (err) {
-            const message = err instanceof Error ? err.message : String(err);
-            const isAuthError = /authentication|api.key|unauthorized|401|auth_token|could not resolve/i.test(message);
-            let content = `Provider error: ${message}`;
-            if (isAuthError) {
-                content +=
-                    '\n\nTo configure API keys, run:\n' +
-                        '  sf setup --provider <name> --key <your-key>\n' +
-                        'Or use /setup inside this session.';
-            }
+            const content = classifyProviderError(err);
             addMessage({
                 role: 'system',
                 content,

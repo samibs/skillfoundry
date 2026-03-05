@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.26] - 2026-03-05
+
+### Fixed — Graceful Error Handling for Model Access Errors
+
+The sf CLI crashed and exited when the configured AI model was not accessible (e.g., "you don't have access to gpt-4o"). Now errors are classified and displayed with actionable fix instructions.
+
+- **Model access errors**: Friendly message suggesting `/model` or `/config model <name>` instead of a stack trace crash
+- **Auth errors**: Suggests `/setup` for API key configuration
+- **Billing/quota errors**: Suggests checking provider dashboard or switching models
+- **SSL/certificate errors**: Suggests `NODE_TLS_REJECT_UNAUTHORIZED=0` for corporate proxies
+- **Network errors**: Suggests checking connectivity and local provider status
+- **`ai-runner.ts`**: Added try/catch around `streamWithRetry()` — pipeline mode no longer crashes on provider errors
+- **`useStream.ts`**: Unified error classification using shared `classifyProviderError()` helper
+- **`retry.ts`**: Expanded `NON_RETRYABLE` regex to include model access, billing, and 404 errors (fail fast instead of retrying 3 times)
+
+### Added
+
+- **`/model` command**: List known models for the active provider and switch models instantly. More discoverable than `/config model <name>`.
+
+---
+
 ## [2.0.25] - 2026-03-05
 
 ### Added — Demo GIF and CONTRIBUTING.md

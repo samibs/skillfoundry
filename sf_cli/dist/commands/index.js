@@ -10,6 +10,7 @@ import { memoryCommand, lessonsCommand } from './memory.js';
 import { setupCommand } from './setup.js';
 import { agentCommand } from './agent.js';
 import { teamCommand } from './team.js';
+import { modelCommand } from './model.js';
 const registry = new Map();
 export function registerCommand(cmd) {
     registry.set(cmd.name, cmd);
@@ -48,5 +49,6 @@ export function initCommands() {
     registerCommand(setupCommand);
     registerCommand(agentCommand);
     registerCommand(teamCommand);
+    registerCommand(modelCommand);
 }
 //# sourceMappingURL=index.js.map

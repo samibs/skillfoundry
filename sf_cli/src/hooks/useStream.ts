@@ -12,7 +12,7 @@ import type { TeamDefinitionRef } from '../types.js';
 import { checkBudget, recordUsage, loadUsage } from '../core/budget.js';
 import type { UsageData } from '../core/budget.js';
 import { streamWithRetry } from '../core/retry.js';
-import { runAgentLoop } from '../core/ai-runner.js';
+import { runAgentLoop, classifyProviderError } from '../core/ai-runner.js';
 import type {
   SfConfig,
   SfPolicy,
@@ -327,20 +327,7 @@ export function useStream(
         setStreamingAgent(null);
         setStreamingTurnCount(0);
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        const isAuthError =
-          /authentication|api.key|unauthorized|401|auth_token|could not resolve/i.test(
-            message,
-          );
-
-        let content = `Provider error: ${message}`;
-        if (isAuthError) {
-          content +=
-            '\n\nTo configure API keys, run:\n' +
-            '  sf setup --provider <name> --key <your-key>\n' +
-            'Or use /setup inside this session.';
-        }
-
+        const content = classifyProviderError(err);
         addMessage({
           role: 'system',
           content,

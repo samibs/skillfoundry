@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.25** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
+> **v2.0.26** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
 
 ---
 
@@ -220,6 +220,7 @@ Type `/` followed by a command name. All commands are available from the input p
   │  /status     Session info and state      │
   │  /setup      Configure API keys          │
   │  /provider   List or switch providers    │
+  │  /model      List or switch AI model    │
   │  /config     View or edit configuration  │
   │  /cost       Token usage and cost report │
   │  /memory     Knowledge base operations   │
@@ -965,6 +966,7 @@ sf_cli/src/
 │   ├── apply.ts           /apply, /gates
 │   ├── forge.ts           /forge
 │   ├── provider.ts        /provider
+│   ├── model.ts           /model
 │   ├── config.ts          /config
 │   ├── cost.ts            /cost
 │   ├── memory.ts          /memory, /lessons

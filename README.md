@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.25-blue)
+![Version](https://img.shields.io/badge/version-2.0.26-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -123,7 +123,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 2. The Standalone CLI (`sf`)
 
-A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 14 native commands (not all 63 skills).
+A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 15 native commands (not all 63 skills).
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -379,7 +379,7 @@ scripts/evolve.sh run                      Full evolution cycle
 
 ## Command Reference
 
-### sf CLI Commands (14 native)
+### sf CLI Commands (15 native)
 
 These work inside the `sf` terminal app:
 
@@ -396,6 +396,7 @@ These work inside the `sf` terminal app:
 | `/forge` | Pipeline: validate PRDs → implement → gate → report |
 | `/forge --dry-run` | Read-only scan without execution |
 | `/provider [set <name>]` | Switch AI provider |
+| `/model [model-name]` | List or switch the AI model |
 | `/cost` | Token usage and cost report |
 | `/memory [stats\|recall]` | Query or record knowledge |
 | `/config [key] [value]` | View or edit configuration |
