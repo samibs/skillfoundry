@@ -273,7 +273,7 @@ describe('runPipeline', () => {
     expect(storyFiles.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('T1 gate failure is advisory and does not trigger fixer', async () => {
+  it('story completes when T2/T5 pass (quality review deferred to POLISH)', async () => {
     // Create PRD + story
     const genesisDir = join(TEST_DIR, 'genesis');
     mkdirSync(genesisDir, { recursive: true });
@@ -283,7 +283,7 @@ describe('runPipeline', () => {
     mkdirSync(storyDir, { recursive: true });
     writeFileSync(join(storyDir, 'STORY-001-fix.md'), '# STORY-001: Apply Fix\nstatus: PENDING\n\n## Description\nFix it.\n');
 
-    // Story execution only — no fixer needed since T1 is advisory
+    // Story execution only — no fixer needed since T2/T5 pass
     vi.mocked(runAgentLoop).mockResolvedValue({
       content: 'Implemented with TODO marker.',
       turnCount: 3,
@@ -293,12 +293,12 @@ describe('runPipeline', () => {
       aborted: false,
     });
 
-    // T1 fails — but should be advisory only, not block story
+    // T2/T5 pass — code compiles, no fixer needed during FORGE
     vi.mocked(runSingleGate).mockReturnValue({
-      tier: 'T1',
-      name: 'Banned Patterns',
-      status: 'fail',
-      detail: 'Found TODO markers',
+      tier: 'T2',
+      name: 'Type Check',
+      status: 'pass',
+      detail: 'Clean',
       durationMs: 50,
     });
 
@@ -321,13 +321,14 @@ describe('runPipeline', () => {
       workDir: TEST_DIR,
     });
 
-    // T1 is advisory — story should complete, no fixer triggered
+    // T2/T5 pass — story should complete, no fixer triggered during FORGE
     expect(result.storiesCompleted).toBe(1);
     expect(result.storiesFailed).toBe(0);
-    expect(runAgentLoop).toHaveBeenCalledTimes(1); // Only story execution, no fixer
+    // 1 story execution, no FORGE fixer (POLISH micro-gates all PASS via default mock)
+    expect(runAgentLoop).toHaveBeenCalledTimes(1);
   });
 
-  it('marks story as failed when MG fixer retries exhausted', async () => {
+  it('marks story as failed when T2/T5 fixer retries exhausted', async () => {
     // Create PRD + story
     const genesisDir = join(TEST_DIR, 'genesis');
     mkdirSync(genesisDir, { recursive: true });
@@ -347,22 +348,14 @@ describe('runPipeline', () => {
       aborted: false,
     });
 
-    // T1 passes (advisory anyway)
+    // T2/T5 always FAIL — unfixable compilation errors
     vi.mocked(runSingleGate).mockReturnValue({
-      tier: 'T1',
-      name: 'Banned Patterns',
-      status: 'pass',
-      detail: 'Clean',
+      tier: 'T2',
+      name: 'Type Check',
+      status: 'fail',
+      detail: 'Unfixable type errors',
       durationMs: 50,
     });
-
-    // MG1 always FAILS — unfixable security issue
-    vi.mocked(runPostStoryGates).mockResolvedValue([
-      { gate: 'MG1', agent: 'security', verdict: 'FAIL', findings: [{ severity: 'CRITICAL', description: 'Unfixable SQL injection' }], summary: 'Critical issue', costUsd: 0.005, turnCount: 2, durationMs: 200 },
-      { gate: 'MG2', agent: 'standards', verdict: 'PASS', findings: [], summary: 'OK', costUsd: 0.004, turnCount: 1, durationMs: 150 },
-    ]);
-
-    vi.mocked(formatFindingsForFixer).mockReturnValue('[MG1] security — FAIL\n  - [CRITICAL] Unfixable SQL injection');
 
     vi.mocked(runAllGates).mockResolvedValue({
       gates: [
@@ -532,9 +525,11 @@ describe('runPipeline', () => {
       },
     });
 
-    // Should fire for all 6 phases
+    // Should fire for all 8 phases (IGNITE, PLAN, FORGE, POLISH, TEMPER, INSPECT, DEBRIEF, FINISH)
     expect(onPhaseStart).toHaveBeenCalledWith('IGNITE', expect.any(String));
     expect(onPhaseStart).toHaveBeenCalledWith('FORGE', expect.any(String));
+    expect(onPhaseStart).toHaveBeenCalledWith('POLISH', expect.any(String));
+    expect(onPhaseComplete).toHaveBeenCalledWith('POLISH', 'passed');
     expect(onPhaseComplete).toHaveBeenCalledWith('DEBRIEF', 'passed');
 
     // Should fire for story
@@ -615,7 +610,7 @@ describe('runPipeline', () => {
 
   // ── Micro-gate integration tests ──────────────────────────
 
-  it('runs post-story micro-gates and pre-temper gate', async () => {
+  it('POLISH phase runs micro-gates and pre-temper gate runs after', async () => {
     const genesisDir = join(TEST_DIR, 'genesis');
     mkdirSync(genesisDir, { recursive: true });
     writeFileSync(join(genesisDir, '2026-01-01-mg.md'), '# MG Test\n\nstatus: APPROVED\n');
@@ -658,7 +653,7 @@ describe('runPipeline', () => {
     expect(result.totalCostUsd).toBeGreaterThan(0.001);
   });
 
-  it('triggers fixer when micro-gate fails even if T1 passes', async () => {
+  it('POLISH phase triggers fixer when micro-gate fails', async () => {
     const genesisDir = join(TEST_DIR, 'genesis');
     mkdirSync(genesisDir, { recursive: true });
     writeFileSync(join(genesisDir, '2026-01-01-sec.md'), '# Security Test\n\nstatus: APPROVED\n');
@@ -672,16 +667,16 @@ describe('runPipeline', () => {
       totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
     });
 
-    // MG1 fails on first call (story execution), passes on second (after fixer)
+    // MG1 fails on first call (POLISH review), passes on second (after fixer re-check)
     vi.mocked(runPostStoryGates)
       .mockResolvedValueOnce([
         { gate: 'MG1', agent: 'security', verdict: 'FAIL', findings: [{ severity: 'HIGH', description: 'SQL injection', location: 'src/db.ts:10' }], summary: 'Issue', costUsd: 0.005, turnCount: 2, durationMs: 200 },
         { gate: 'MG2', agent: 'standards', verdict: 'PASS', findings: [], summary: 'OK', costUsd: 0.004, turnCount: 1, durationMs: 150 },
       ]);
 
-    // T1 passes throughout
+    // T2/T5 pass — story completes, reaches POLISH
     vi.mocked(runSingleGate).mockReturnValue({
-      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: 'Clean', durationMs: 50,
+      tier: 'T2', name: 'Type Check', status: 'pass', detail: 'Clean', durationMs: 50,
     });
 
     vi.mocked(runAllGates).mockResolvedValue({
@@ -694,9 +689,11 @@ describe('runPipeline', () => {
       config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
     });
 
-    // Fixer should have been called (runAgentLoop called twice: 1 story + 1 fixer)
+    // POLISH fixer should have been called (runAgentLoop: 1 story + 1 POLISH fixer)
     expect(runAgentLoop).toHaveBeenCalledTimes(2);
     expect(result.storiesCompleted).toBe(1);
+    // Story was NOT failed — POLISH doesn't block stories
+    expect(result.storiesFailed).toBe(0);
   });
 
   it('fires onMicroGateResult callbacks for all micro-gates', async () => {
@@ -728,7 +725,7 @@ describe('runPipeline', () => {
       callbacks: { onMicroGateResult },
     });
 
-    // MG1 + MG2 per story + MG3 pre-temper = 3 callbacks
+    // MG1 + MG2 in POLISH phase + MG3 pre-temper = 3 callbacks
     expect(onMicroGateResult).toHaveBeenCalledTimes(3);
     expect(onMicroGateResult).toHaveBeenCalledWith(
       expect.objectContaining({ gate: 'MG1' }),
@@ -776,6 +773,155 @@ describe('runPipeline', () => {
     expect(result.gateVerdict).toBe('PASS');
     // But the advisory should be recorded
     expect(result.microGateSummary?.preTemperAdvisory?.verdict).toBe('FAIL');
+  });
+
+  // ── POLISH phase tests ──────────────────────────────────────
+
+  it('POLISH phase appears in phases array between FORGE and TEMPER', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-pol.md'), '# Polish Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'pol');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T2', name: 'Type Check', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    const phaseNames = result.phases.map((p) => p.name);
+    expect(phaseNames).toEqual(['IGNITE', 'PLAN', 'FORGE', 'POLISH', 'TEMPER', 'INSPECT', 'DEBRIEF', 'FINISH']);
+    const polishPhase = result.phases.find((p) => p.name === 'POLISH');
+    expect(polishPhase).toBeDefined();
+    expect(polishPhase!.status).toBe('passed');
+  });
+
+  it('POLISH phase does not block pipeline even with MG failures', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-noblk.md'), '# NoBlock Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'noblk');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    // T2/T5 pass — story completes
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T2', name: 'Type Check', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    // MG1 always FAILS in POLISH — but POLISH should NOT block pipeline
+    vi.mocked(runPostStoryGates).mockResolvedValue([
+      { gate: 'MG1', agent: 'security', verdict: 'FAIL', findings: [{ severity: 'HIGH', description: 'Issue' }], summary: 'Bad', costUsd: 0.005, turnCount: 2, durationMs: 200 },
+      { gate: 'MG2', agent: 'standards', verdict: 'PASS', findings: [], summary: 'OK', costUsd: 0.004, turnCount: 1, durationMs: 150 },
+    ]);
+
+    vi.mocked(formatFindingsForFixer).mockReturnValue('[MG1] security — FAIL\n  - [HIGH] Issue');
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 6, failed: 0, warned: 0, skipped: 0, totalMs: 100, verdict: 'PASS',
+    });
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    // Story should be completed (not failed — POLISH doesn't fail stories)
+    expect(result.storiesCompleted).toBe(1);
+    expect(result.storiesFailed).toBe(0);
+    // POLISH phase always passes (TEMPER is the real gate)
+    const polishPhase = result.phases.find((p) => p.name === 'POLISH');
+    expect(polishPhase!.status).toBe('passed');
+    // Pipeline should still pass if TEMPER passes
+    expect(result.gateVerdict).toBe('PASS');
+  });
+
+  it('stories fail only on T2/T5 compilation failures, not MG failures', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-comp.md'), '# Compile Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'comp');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    // T2 fails (compilation error) — should fail the story
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T2', name: 'Type Check', status: 'fail', detail: 'TS2345: type error', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    // Story should fail due to T2/T5 failure (after 2 fixer attempts)
+    expect(result.storiesFailed).toBe(1);
+    expect(result.storiesCompleted).toBe(0);
+  });
+
+  it('T2/T5 smoke test runs per-story during FORGE', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-smoke.md'), '# Smoke Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'smoke');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-a.md'), '# STORY-001: A\nstatus: PENDING\n');
+    writeFileSync(join(storyDir, 'STORY-002-b.md'), '# STORY-002: B\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T2', name: 'Type Check', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    const onGateResult = vi.fn();
+
+    await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+      callbacks: { onGateResult },
+    });
+
+    // T2 + T5 called per story = 2 stories × 2 gates = 4 runSingleGate calls
+    expect(runSingleGate).toHaveBeenCalledTimes(4);
+    // onGateResult called for each T2 and T5 per story
+    expect(onGateResult).toHaveBeenCalledWith('T2', expect.any(String), expect.any(String));
+    expect(onGateResult).toHaveBeenCalledWith('T5', expect.any(String), expect.any(String));
   });
 
   // ── Finisher integration tests ─────────────────────────────
