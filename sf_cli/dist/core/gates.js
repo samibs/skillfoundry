@@ -30,9 +30,9 @@ function runCommand(cmd, cwd, timeoutMs = 60_000) {
     }
 }
 function findAnvilScript(workDir) {
-    // Extensions to check: prefer .ps1 on Windows, .sh on Unix
+    // Extensions to check: .ps1/.cmd on Windows (bash can't handle C:/ paths), .sh on Unix
     const extensions = IS_WINDOWS
-        ? ['anvil.ps1', 'anvil.cmd', 'anvil.sh', 'anvil']
+        ? ['anvil.ps1', 'anvil.cmd']
         : ['anvil.sh', 'anvil'];
     const candidates = [];
     // Check project-local first (if user copied scripts/ into their project)

@@ -208,6 +208,7 @@ export interface MicroGateResult {
     costUsd: number;
     turnCount: number;
     durationMs: number;
+    skippedDueToError?: boolean;
 }
 export type FinisherCheckStatus = 'ok' | 'drift' | 'missing' | 'error';
 export interface FinisherCheckResult {

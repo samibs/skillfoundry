@@ -53,9 +53,9 @@ function runCommand(cmd: string, cwd: string, timeoutMs: number = 60_000): { ok:
 }
 
 function findAnvilScript(workDir: string): string | null {
-  // Extensions to check: prefer .ps1 on Windows, .sh on Unix
+  // Extensions to check: .ps1/.cmd on Windows (bash can't handle C:/ paths), .sh on Unix
   const extensions = IS_WINDOWS
-    ? ['anvil.ps1', 'anvil.cmd', 'anvil.sh', 'anvil']
+    ? ['anvil.ps1', 'anvil.cmd']
     : ['anvil.sh', 'anvil'];
 
   const candidates: string[] = [];

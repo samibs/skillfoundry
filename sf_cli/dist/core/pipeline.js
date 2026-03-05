@@ -347,7 +347,8 @@ export async function runPipeline(options) {
         const t1Result = runSingleGate('T1', workDir, '.');
         callbacks?.onGateResult?.('T1', t1Result.status, t1Result.detail);
         // Micro-gate FAIL triggers fixer (MG1 security FAIL = real problem in story code)
-        const mgFailed = mgResults.some((r) => r.verdict === 'FAIL');
+        // Exclude provider errors — no real review happened, can't fix what wasn't checked
+        const mgFailed = mgResults.some((r) => r.verdict === 'FAIL' && !r.skippedDueToError);
         if (mgFailed) {
             // Fixer loop: attempt to fix critical micro-gate failures only
             let fixed = false;

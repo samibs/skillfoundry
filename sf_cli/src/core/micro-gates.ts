@@ -204,6 +204,24 @@ async function runSingleMicroGate(
     workDir: options.workDir,
   });
 
+  // Detect provider errors — runAgentLoop catches connection/auth failures
+  // and returns the error as content. Don't parse these as gate verdicts.
+  const isProviderError = /^(Provider error|Network error|Authentication error|Model not available|Quota\/billing error|SSL\/Certificate error|Budget exceeded|Connection error)/i.test(result.content);
+
+  if (isProviderError) {
+    return {
+      gate: mgConfig.gate,
+      agent: mgConfig.agent,
+      verdict: 'WARN',
+      findings: [],
+      summary: result.content.split('\n')[0].slice(0, 120),
+      costUsd: result.totalCostUsd,
+      turnCount: result.turnCount,
+      durationMs: Date.now() - start,
+      skippedDueToError: true,
+    };
+  }
+
   const parsed = parseMicroGateResponse(result.content);
 
   return {
