@@ -9,7 +9,8 @@
 export declare function getFrameworkRoot(): string;
 /**
  * Get the path to the anvil script in the framework root.
- * On Windows, looks for .ps1/.cmd; on Unix, looks for .sh or extensionless.
+ * On Windows-like environments, prefers .ps1/.cmd but falls back to .sh
+ * (Git Bash / WSL can run bash scripts with Windows drive-letter paths).
  * Returns null if the script does not exist.
  */
 export declare function getAnvilScript(): string | null;

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.33] - 2026-03-05
+
+### Fixed — Git Bash / WSL Anvil Script Discovery
+
+**Anvil script now found correctly in Git Bash and WSL environments**
+- In Git Bash / WSL, `process.platform` reports `'linux'` but paths use Windows drive letters (`C:/...`). The previous fix (v2.0.31) excluded `.sh` scripts entirely on Windows-like paths, but this was too aggressive — Git Bash's `bash` can handle `C:/` paths natively.
+- `findAnvilScript()` now tries all extensions in priority order: `.ps1/.cmd` first on Windows-like environments, then `.sh` as fallback. This ensures the framework's `anvil.sh` is found even when no `.ps1/.cmd` variant exists.
+- `getAnvilScript()` in `framework.ts` gets the same drive-letter detection and extension fallback logic.
+- `anvilCommand()` now converts backslashes to forward slashes for bash when drive-letter paths are detected (not just on native `win32`).
+
+---
+
 ## [2.0.32] - 2026-03-05
 
 ### Added — Structured Logging
