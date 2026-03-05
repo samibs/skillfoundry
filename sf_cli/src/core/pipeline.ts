@@ -392,7 +392,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
 
     // Quick T1 gate check after story implementation
     const t1Result = runSingleGate('T1', workDir, '.');
-    callbacks?.onGateResult?.('T1', t1Result.status);
+    callbacks?.onGateResult?.('T1', t1Result.status, t1Result.detail);
 
     const mgFailed = mgResults.some((r) => r.verdict === 'FAIL');
 
@@ -479,7 +479,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     workDir,
     target: '.',
     onGateComplete: (result) => {
-      callbacks?.onGateResult?.(result.tier, result.status);
+      callbacks?.onGateResult?.(result.tier, result.status, result.detail);
     },
   });
 

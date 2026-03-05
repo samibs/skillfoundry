@@ -54,10 +54,13 @@ async function runDryScan(session) {
     });
     for (const gate of gateSummary.gates) {
         const icon = gate.status === 'pass' ? 'v' : gate.status === 'fail' ? 'x' : gate.status === 'warn' ? '!' : '-';
-        const detail = gate.status !== 'pass' && gate.status !== 'skip' && gate.detail
-            ? ': ' + gate.detail.split('\n')[0].slice(0, 60)
-            : '';
-        lines.push(`  ${gate.tier} [${icon}] ${gate.name}${detail}`);
+        lines.push(`  ${gate.tier} [${icon}] ${gate.name}`);
+        if (gate.status !== 'pass' && gate.status !== 'skip' && gate.detail) {
+            const detailLines = gate.detail.split('\n').filter((l) => l.trim()).slice(0, 5);
+            for (const dl of detailLines) {
+                lines.push(`    ${dl.slice(0, 120)}`);
+            }
+        }
     }
     lines.push(`  VERDICT: ${gateSummary.verdict} | ${gateSummary.passed}P ${gateSummary.failed}F ${gateSummary.warned}W ${gateSummary.skipped}S`);
     lines.push('');
@@ -189,18 +192,34 @@ export const forgeCommand = {
                     content: `  ${icon} ${story} ($${cost.toFixed(4)})`,
                 });
             },
-            onGateResult: (tier, status) => {
+            onGateResult: (tier, status, detail) => {
                 const icon = status === 'pass' ? 'v' : status === 'fail' ? 'x' : status === 'warn' ? '!' : '-';
+                // Show the first meaningful line of detail for non-passing gates
+                let detailLine = '';
+                if (status !== 'pass' && status !== 'skip' && detail) {
+                    detailLine = ': ' + detail.split('\n').filter((l) => l.trim()).slice(0, 3).join(' | ').slice(0, 200);
+                }
                 session.addMessage({
                     role: 'system',
-                    content: `  ${tier} [${icon}]`,
+                    content: `  ${tier} [${icon}]${detailLine}`,
                 });
             },
             onMicroGateResult: (mgResult) => {
                 const icon = mgResult.verdict === 'PASS' ? 'v' : mgResult.verdict === 'FAIL' ? 'x' : '!';
+                const lines = [`  ${mgResult.gate} [${icon}] ${mgResult.agent}: ${mgResult.summary || mgResult.verdict}`];
+                // Show findings for non-passing micro-gates
+                if (mgResult.verdict !== 'PASS' && mgResult.findings.length > 0) {
+                    for (const f of mgResult.findings.slice(0, 5)) {
+                        const loc = f.location ? ` (${f.location})` : '';
+                        lines.push(`    [${f.severity}] ${f.description}${loc}`);
+                    }
+                    if (mgResult.findings.length > 5) {
+                        lines.push(`    ... and ${mgResult.findings.length - 5} more`);
+                    }
+                }
                 session.addMessage({
                     role: 'system',
-                    content: `  ${mgResult.gate} [${icon}] ${mgResult.agent}: ${mgResult.summary || mgResult.verdict}`,
+                    content: lines.join('\n'),
                 });
             },
             onFinisherCheck: (checkResult) => {
