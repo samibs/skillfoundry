@@ -733,19 +733,21 @@ if ($nodeCmd) {
             Write-ColorOutput "  Installing CLI dependencies..." "Blue"
             Push-Location $SF_CLI_DIR
             try {
-                # Temporarily lower ErrorActionPreference — npm writes warnings
-                # to stderr which PowerShell treats as terminating errors under "Stop"
                 $prevEAP = $ErrorActionPreference
-                $ErrorActionPreference = "Continue"
-                & npm install --production=false --silent 2>&1 | Out-Null
+                $ErrorActionPreference = "SilentlyContinue"
+                $npmResult = & npm install 2>&1
+                $npmExit = $LASTEXITCODE
                 $ErrorActionPreference = $prevEAP
-                if ($LASTEXITCODE -ne 0) {
-                    Write-ColorOutput "  Warning: npm install failed (exit code $LASTEXITCODE). Skipping CLI deployment." "Yellow"
+                if ($npmExit -ne 0) {
+                    Write-ColorOutput "  Warning: npm install failed (exit code $npmExit):" "Yellow"
+                    $npmResult | ForEach-Object { Write-Host "    $_" }
+                    Write-ColorOutput "  Falling back to pre-built dist/ from git." "Yellow"
                     $BUILD_OK = $false
                 }
             } catch {
                 $ErrorActionPreference = $prevEAP
-                Write-ColorOutput "  Warning: npm install failed: $($_.Exception.Message). Skipping CLI deployment." "Yellow"
+                Write-ColorOutput "  Warning: npm install failed: $($_.Exception.Message)" "Yellow"
+                Write-ColorOutput "  Falling back to pre-built dist/ from git." "Yellow"
                 $BUILD_OK = $false
             } finally {
                 Pop-Location
@@ -756,23 +758,29 @@ if ($nodeCmd) {
                 Push-Location $SF_CLI_DIR
                 try {
                     $prevEAP = $ErrorActionPreference
-                    $ErrorActionPreference = "Continue"
-                    & npm run build 2>&1 | Out-Null
+                    $ErrorActionPreference = "SilentlyContinue"
+                    $buildResult = & npm run build 2>&1
+                    $buildExit = $LASTEXITCODE
                     $ErrorActionPreference = $prevEAP
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-ColorOutput "  Warning: CLI build failed (exit code $LASTEXITCODE). Skipping CLI deployment." "Yellow"
+                    if ($buildExit -ne 0) {
+                        Write-ColorOutput "  Warning: CLI build failed (exit code $buildExit):" "Yellow"
+                        $buildResult | ForEach-Object { Write-Host "    $_" }
+                        Write-ColorOutput "  Falling back to pre-built dist/ from git." "Yellow"
                         $BUILD_OK = $false
                     }
                 } catch {
                     $ErrorActionPreference = $prevEAP
-                    Write-ColorOutput "  Warning: CLI build failed: $($_.Exception.Message). Skipping CLI deployment." "Yellow"
+                    Write-ColorOutput "  Warning: CLI build failed: $($_.Exception.Message)" "Yellow"
+                    Write-ColorOutput "  Falling back to pre-built dist/ from git." "Yellow"
                     $BUILD_OK = $false
                 } finally {
                     Pop-Location
                 }
             }
 
-            if ($BUILD_OK) {
+            # Create wrappers if dist/index.js exists (either freshly built or pre-built from git)
+            $distIndex = Join-Path $SF_CLI_DIR "dist\index.js"
+            if ($BUILD_OK -or (Test-Path $distIndex)) {
                 # Create wrapper directory
                 $SF_WRAPPER_DIR = Join-Path $env:USERPROFILE ".local\bin"
                 if (-not (Test-Path $SF_WRAPPER_DIR)) {
