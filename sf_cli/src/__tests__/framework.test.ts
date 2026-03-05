@@ -76,11 +76,12 @@ describe('getAnvilScript', () => {
     expect(getAnvilScript()).toBeNull();
   });
 
-  it('returns path when scripts/anvil.sh exists', () => {
+  it('returns path when anvil script exists', () => {
     process.env.SF_FRAMEWORK_ROOT = FAKE_ROOT;
     mkdirSync(join(FAKE_ROOT, 'scripts'), { recursive: true });
-    writeFileSync(join(FAKE_ROOT, 'scripts', 'anvil.sh'), '#!/bin/bash\n');
-    expect(getAnvilScript()).toBe(join(FAKE_ROOT, 'scripts', 'anvil.sh'));
+    const ext = process.platform === 'win32' ? 'anvil.ps1' : 'anvil.sh';
+    writeFileSync(join(FAKE_ROOT, 'scripts', ext), '#!/bin/bash\n');
+    expect(getAnvilScript()).toBe(join(FAKE_ROOT, 'scripts', ext));
   });
 });
 

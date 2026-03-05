@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, lstatSync, } from 'node:fs';
 import { resolve, isAbsolute, dirname } from 'node:path';
 import { globSync } from 'glob';
+import { getLogger } from '../utils/logger.js';
 const MAX_OUTPUT_CHARS = 30000;
 const DEFAULT_BASH_TIMEOUT = 120_000;
 const MAX_BASH_TIMEOUT = 600_000;
@@ -311,23 +312,34 @@ function executeGrep(input, ctx) {
     }
 }
 export function executeTool(toolName, input, ctx) {
+    const log = getLogger();
+    const start = Date.now();
+    log.debug('tool', 'call_start', { name: toolName });
+    let result;
     switch (toolName) {
         case 'bash':
-            return executeBash(input, ctx);
+            result = executeBash(input, ctx);
+            break;
         case 'read':
-            return executeRead(input, ctx);
+            result = executeRead(input, ctx);
+            break;
         case 'write':
-            return executeWrite(input, ctx);
+            result = executeWrite(input, ctx);
+            break;
         case 'glob':
-            return executeGlob(input, ctx);
+            result = executeGlob(input, ctx);
+            break;
         case 'grep':
-            return executeGrep(input, ctx);
+            result = executeGrep(input, ctx);
+            break;
         default:
-            return {
+            result = {
                 toolCallId: '',
                 output: `Unknown tool: ${toolName}`,
                 isError: true,
             };
     }
+    log.debug('tool', 'call_complete', { name: toolName, durationMs: Date.now() - start, isError: result.isError });
+    return result;
 }
 //# sourceMappingURL=executor.js.map

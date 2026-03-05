@@ -62,16 +62,18 @@ function validateFrameworkRoot(dir: string): boolean {
 }
 
 /**
- * Get the path to scripts/anvil.sh in the framework root.
+ * Get the path to the anvil script in the framework root.
+ * On Windows, looks for .ps1/.cmd; on Unix, looks for .sh or extensionless.
  * Returns null if the script does not exist.
  */
 export function getAnvilScript(): string | null {
   const root = getFrameworkRoot();
-  const candidates = [
-    join(root, 'scripts', 'anvil.sh'),
-    join(root, 'scripts', 'anvil'),
-  ];
-  for (const path of candidates) {
+  const isWindows = process.platform === 'win32';
+  const extensions = isWindows
+    ? ['anvil.ps1', 'anvil.cmd']
+    : ['anvil.sh', 'anvil'];
+  for (const ext of extensions) {
+    const path = join(root, 'scripts', ext);
     if (existsSync(path)) return path;
   }
   return null;

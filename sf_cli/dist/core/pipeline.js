@@ -8,6 +8,7 @@ import { runAllGates, runSingleGate } from './gates.js';
 import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from './micro-gates.js';
 import { runFinisher } from './finisher.js';
 import { ALL_TOOLS } from './tools.js';
+import { getLogger } from '../utils/logger.js';
 const RUNS_DIR = '.skillfoundry/runs';
 const MAX_FIXER_ATTEMPTS = 2;
 export function scanPRDs(workDir) {
@@ -139,6 +140,9 @@ export async function runPipeline(options) {
     const { config, policy, workDir, prdFilter, callbacks } = options;
     const runId = `forge-${Date.now()}-${randomUUID().slice(0, 8)}`;
     const pipelineStart = Date.now();
+    const log = getLogger();
+    log.startRunLog(runId);
+    log.cleanupOldLogs();
     const phases = [
         makePhase('IGNITE'),
         makePhase('PLAN'),
@@ -165,6 +169,7 @@ export async function runPipeline(options) {
         }
     }
     // ── Phase 1: IGNITE ────────────────────────────────────
+    log.info('pipeline', 'phase_start', { phase: 'IGNITE', detail: 'Validating PRDs' });
     callbacks?.onPhaseStart?.('IGNITE', 'Validating PRDs');
     const igniteStart = Date.now();
     let prds = scanPRDs(workDir);
@@ -173,12 +178,15 @@ export async function runPipeline(options) {
     }
     if (prds.length === 0) {
         updatePhase('IGNITE', 'failed', Date.now() - igniteStart, 'No PRDs found in genesis/');
+        log.error('pipeline', 'phase_failed', { phase: 'IGNITE', detail: 'No PRDs found in genesis/' });
         callbacks?.onPhaseComplete?.('IGNITE', 'failed');
         return buildResult(runId, phases, storyExecutions, gateVerdict, totalCostUsd, totalInputTokens, totalOutputTokens, pipelineStart, prds, workDir);
     }
     updatePhase('IGNITE', 'passed', Date.now() - igniteStart, `${prds.length} PRD(s) validated`);
+    log.info('pipeline', 'phase_complete', { phase: 'IGNITE', status: 'passed', durationMs: Date.now() - igniteStart });
     callbacks?.onPhaseComplete?.('IGNITE', 'passed');
     // ── Phase 2: PLAN ──────────────────────────────────────
+    log.info('pipeline', 'phase_start', { phase: 'PLAN', detail: 'Checking for existing stories' });
     callbacks?.onPhaseStart?.('PLAN', 'Checking for existing stories');
     const planStart = Date.now();
     const allStoryFiles = [];
@@ -276,6 +284,7 @@ export async function runPipeline(options) {
         ? `${allStoryFiles.length} stories found (${doneStories} done, ${pendingStories} pending)`
         : `${allStoryFiles.length} stories ready`;
     updatePhase('PLAN', 'passed', Date.now() - planStart, planDetail);
+    log.info('pipeline', 'phase_complete', { phase: 'PLAN', status: 'passed', durationMs: Date.now() - planStart, detail: planDetail });
     callbacks?.onPhaseComplete?.('PLAN', 'passed');
     // ── Phase 3: FORGE ─────────────────────────────────────
     // Filter to only pending stories — skip already-completed ones
@@ -284,6 +293,7 @@ export async function runPipeline(options) {
     const forgeDetail = skippedCount > 0
         ? `Implementing ${pendingStoryFiles.length} stories (${skippedCount} already done, skipped)`
         : `Implementing ${pendingStoryFiles.length} stories`;
+    log.info('pipeline', 'phase_start', { phase: 'FORGE', detail: forgeDetail });
     callbacks?.onPhaseStart?.('FORGE', forgeDetail);
     const forgeStart = Date.now();
     let storiesCompleted = skippedCount; // Count already-done as completed
@@ -300,6 +310,7 @@ export async function runPipeline(options) {
     }
     for (let i = 0; i < pendingStoryFiles.length; i++) {
         const { storyFile, storyPath } = pendingStoryFiles[i];
+        log.info('pipeline', 'story_start', { story: storyFile, index: i, total: pendingStoryFiles.length });
         callbacks?.onStoryStart?.(storyFile, i, pendingStoryFiles.length);
         const storyContent = readFileSync(storyPath, 'utf-8');
         const execution = {
@@ -388,6 +399,7 @@ export async function runPipeline(options) {
             if (!fixed) {
                 execution.status = 'failed';
                 storiesFailed++;
+                log.error('pipeline', 'story_failed', { story: storyFile, cost: execution.costUsd, fixerAttempts: execution.fixerAttempts });
                 callbacks?.onStoryComplete?.(storyFile, false, execution.costUsd);
                 continue;
             }
@@ -396,10 +408,12 @@ export async function runPipeline(options) {
         // The full T1-T6 TEMPER phase runs after all stories and serves as the real gate.
         execution.status = 'completed';
         storiesCompleted++;
+        log.info('pipeline', 'story_complete', { story: storyFile, passed: true, cost: execution.costUsd, turns: execution.turnCount });
         callbacks?.onStoryComplete?.(storyFile, true, execution.costUsd);
     }
     const forgeStatus = storiesFailed === 0 ? 'passed' : (storiesCompleted > 0 ? 'passed' : 'failed');
     updatePhase('FORGE', forgeStatus, Date.now() - forgeStart, `${storiesCompleted}/${allStoryFiles.length} stories completed`);
+    log.info('pipeline', 'phase_complete', { phase: 'FORGE', status: forgeStatus, durationMs: Date.now() - forgeStart });
     callbacks?.onPhaseComplete?.('FORGE', forgeStatus);
     // ── Pre-TEMPER: Cross-story review (MG3 — advisory only) ──
     const completedStoryFiles = Object.entries(storyExecutions)
@@ -415,6 +429,7 @@ export async function runPipeline(options) {
         callbacks?.onMicroGateResult?.(preTemperResult);
     }
     // ── Phase 4: TEMPER ────────────────────────────────────
+    log.info('pipeline', 'phase_start', { phase: 'TEMPER', detail: 'Running quality gates T1-T6' });
     callbacks?.onPhaseStart?.('TEMPER', 'Running quality gates T1-T6');
     const temperStart = Date.now();
     gateSummary = await runAllGates({
@@ -427,6 +442,7 @@ export async function runPipeline(options) {
     gateVerdict = gateSummary.verdict;
     const temperStatus = gateSummary.verdict === 'FAIL' ? 'failed' : (gateSummary.verdict === 'WARN' ? 'passed' : 'passed');
     updatePhase('TEMPER', temperStatus, Date.now() - temperStart, `${gateSummary.verdict} | ${gateSummary.passed}P ${gateSummary.failed}F ${gateSummary.warned}W`);
+    log.info('pipeline', 'phase_complete', { phase: 'TEMPER', status: temperStatus, durationMs: Date.now() - temperStart, verdict: gateSummary.verdict });
     callbacks?.onPhaseComplete?.('TEMPER', temperStatus);
     // ── Phase 5: INSPECT ───────────────────────────────────
     callbacks?.onPhaseStart?.('INSPECT', 'Security review');
@@ -517,6 +533,14 @@ export async function runPipeline(options) {
     const finishDetail = `${finisherSummary.ok} ok, ${finisherSummary.fixed} fixed, ${finisherSummary.drifted} drift${finisherSummary.newVersion ? ` → v${finisherSummary.newVersion}` : ''}`;
     updatePhase('FINISH', 'passed', Date.now() - finishStart, finishDetail);
     callbacks?.onPhaseComplete?.('FINISH', 'passed');
+    log.info('pipeline', 'run_complete', {
+        runId,
+        stories: allStoryFiles.length,
+        completed: storiesCompleted,
+        failed: storiesFailed,
+        cost: totalCostUsd,
+        durationMs: Date.now() - pipelineStart,
+    });
     return result;
 }
 // ── Helpers ────────────────────────────────────────────────────

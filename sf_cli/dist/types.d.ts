@@ -46,6 +46,7 @@ export interface SfConfig {
     local_provider: string;
     local_model: string;
     context_window: number;
+    log_level: string;
 }
 export interface SfPolicy {
     allow_shell: boolean;

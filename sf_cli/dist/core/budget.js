@@ -2,6 +2,7 @@
 // Persists usage data to .skillfoundry/usage.json.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { getLogger } from '../utils/logger.js';
 const USAGE_FILE = join('.skillfoundry', 'usage.json');
 function defaultUsage() {
     return { version: '1.0', entries: [], monthlyTotals: {} };
@@ -65,6 +66,12 @@ export function checkBudget(workDir, monthlyBudget, runBudget, currentRunCost = 
             runSpend: currentRunCost,
             runBudget,
         };
+    }
+    // Warn when >80% of monthly budget is consumed
+    const percentUsed = monthlyBudget > 0 ? (monthlySpend / monthlyBudget) * 100 : 0;
+    if (percentUsed > 80) {
+        const log = getLogger();
+        log.warn('budget', 'threshold', { monthlyUsed: monthlySpend, monthlyBudget, percentUsed: Math.round(percentUsed) });
     }
     return {
         allowed: true,

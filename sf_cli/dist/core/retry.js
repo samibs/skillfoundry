@@ -1,5 +1,6 @@
 // Retry with exponential backoff + fallback provider support.
 // Non-retryable errors (auth, validation) fail immediately.
+import { getLogger } from '../utils/logger.js';
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
 // Errors that should NOT be retried (fail immediately)
@@ -18,6 +19,7 @@ function delay(ms) {
  * @param fallback - optional fallback provider (used if primary exhausts retries)
  */
 export async function streamWithRetry(fn, primary, fallback) {
+    const log = getLogger();
     let lastError;
     // Try primary with retries
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
@@ -27,18 +29,22 @@ export async function streamWithRetry(fn, primary, fallback) {
         }
         catch (err) {
             lastError = err;
+            const errMsg = err instanceof Error ? err.message : String(err);
             if (!isRetryable(err)) {
                 // Non-retryable: try fallback immediately if available
+                log.warn('provider', 'retry_skip', { attempt: attempt + 1, error: errMsg, reason: 'non-retryable' });
                 break;
             }
             if (attempt < MAX_RETRIES - 1) {
                 const delayMs = BASE_DELAY_MS * Math.pow(2, attempt);
+                log.warn('provider', 'retry_attempt', { attempt: attempt + 1, maxRetries: MAX_RETRIES, delayMs, error: errMsg });
                 await delay(delayMs);
             }
         }
     }
     // Try fallback provider (single attempt, no retry)
     if (fallback) {
+        log.warn('provider', 'fallback_attempt', { fallback: fallback.name });
         try {
             const result = await fn(fallback);
             return { result, fallbackUsed: fallback.name };
@@ -47,6 +53,11 @@ export async function streamWithRetry(fn, primary, fallback) {
             // Fallback also failed — throw the original error
         }
     }
+    log.error('provider', 'retries_exhausted', {
+        provider: primary.name,
+        attempts: MAX_RETRIES,
+        lastError: lastError instanceof Error ? lastError.message : String(lastError),
+    });
     throw lastError;
 }
 //# sourceMappingURL=retry.js.map
