@@ -343,24 +343,21 @@ export async function runPipeline(options) {
             totalCostUsd += mgr.costUsd;
             callbacks?.onMicroGateResult?.(mgr);
         }
-        // Quick T1 gate check after story implementation
+        // Quick T1 gate check after story implementation (advisory — does not block story completion)
         const t1Result = runSingleGate('T1', workDir, '.');
         callbacks?.onGateResult?.('T1', t1Result.status, t1Result.detail);
+        // Micro-gate FAIL triggers fixer (MG1 security FAIL = real problem in story code)
         const mgFailed = mgResults.some((r) => r.verdict === 'FAIL');
-        if (t1Result.status === 'fail' || mgFailed) {
-            // Fixer loop: attempt to fix T1 violations and/or micro-gate failures
+        if (mgFailed) {
+            // Fixer loop: attempt to fix critical micro-gate failures only
             let fixed = false;
             for (let attempt = 0; attempt < MAX_FIXER_ATTEMPTS && !fixed; attempt++) {
                 execution.fixerAttempts++;
                 const microGateFindings = formatFindingsForFixer(mgResults);
-                const fixerDetail = [
-                    t1Result.status === 'fail' ? `T1 gate violations:\n${t1Result.detail}` : '',
-                    microGateFindings || '',
-                ].filter(Boolean).join('\n\n');
                 const fixerMessages = [
                     {
                         role: 'user',
-                        content: `${FIXER_PROMPT}\n\n${fixerDetail}\n\nFix all issues in the codebase.`,
+                        content: `${FIXER_PROMPT}\n\n${microGateFindings}\n\nFix all issues in the codebase. Focus on the files mentioned in the findings.`,
                     },
                 ];
                 const fixerResult = await runAgentLoop(fixerMessages, {
@@ -377,9 +374,13 @@ export async function runPipeline(options) {
                 totalCostUsd += fixerResult.totalCostUsd;
                 totalInputTokens += fixerResult.totalInputTokens;
                 totalOutputTokens += fixerResult.totalOutputTokens;
-                // Re-check T1
-                const recheck = runSingleGate('T1', workDir, '.');
-                if (recheck.status !== 'fail') {
+                // Re-run micro-gates to check if fixes worked
+                const recheckMg = await runPostStoryGates(storyFile, storyContent, {
+                    config, policy, workDir,
+                });
+                execution.costUsd += recheckMg.reduce((s, r) => s + r.costUsd, 0);
+                totalCostUsd += recheckMg.reduce((s, r) => s + r.costUsd, 0);
+                if (!recheckMg.some((r) => r.verdict === 'FAIL')) {
                     fixed = true;
                 }
             }
@@ -390,6 +391,8 @@ export async function runPipeline(options) {
                 continue;
             }
         }
+        // Story completed — T1 warnings and MG WARNs don't block completion.
+        // The full T1-T6 TEMPER phase runs after all stories and serves as the real gate.
         execution.status = 'completed';
         storiesCompleted++;
         callbacks?.onStoryComplete?.(storyFile, true, execution.costUsd);

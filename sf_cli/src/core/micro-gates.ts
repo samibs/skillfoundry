@@ -90,21 +90,39 @@ export function parseMicroGateResponse(content: string): {
   const findings: MicroGateFinding[] = [];
   let summary = '';
 
-  // Parse VERDICT line
-  const verdictMatch = content.match(/^VERDICT:\s*(PASS|FAIL|WARN)/mi);
+  // Parse VERDICT line (flexible: "VERDICT: WARN", "**VERDICT:** WARN", etc.)
+  const verdictMatch = content.match(/\*?\*?VERDICT\*?\*?:?\s*(PASS|FAIL|WARN)/mi);
   if (verdictMatch) {
     verdict = verdictMatch[1] as MicroGateVerdict;
   }
 
-  // Parse FINDINGS section
-  const findingsMatch = content.match(/^FINDINGS:\s*\n([\s\S]*?)(?=\nSUMMARY:)/mi);
-  if (findingsMatch) {
-    const findingsBlock = findingsMatch[1];
-    const findingLines = findingsBlock.split('\n').filter((l) => l.trim().startsWith('-'));
+  // Parse FINDINGS section — try strict format first, then loose
+  let findingsBlock = '';
+  const strictMatch = content.match(/FINDINGS:\s*\n([\s\S]*?)(?=\n\s*SUMMARY:)/mi);
+  if (strictMatch) {
+    findingsBlock = strictMatch[1];
+  } else {
+    // Loose: grab everything between FINDINGS: and the end (or SUMMARY:)
+    const looseMatch = content.match(/FINDINGS:\s*\n([\s\S]*?)$/mi);
+    if (looseMatch) {
+      // Strip trailing SUMMARY line if present
+      findingsBlock = looseMatch[1].replace(/^SUMMARY:.*$/mi, '').trim();
+    }
+  }
+
+  if (findingsBlock) {
+    // Match lines starting with -, *, or numbered lists
+    const findingLines = findingsBlock.split('\n').filter((l) =>
+      /^\s*[-*•]\s|^\s*\d+[.)]\s/.test(l),
+    );
 
     for (const line of findingLines) {
-      const parsed = line.match(
-        /^-\s*\[?(CRITICAL|HIGH|MEDIUM|LOW|INFO)\]?\s*(.+?)(?:\(([^)]+)\))?\s*$/i,
+      const cleaned = line.replace(/^\s*[-*•]\s*/, '').replace(/^\s*\d+[.)]\s*/, '').trim();
+      if (!cleaned) continue;
+
+      // Try to extract [SEVERITY] Description (file:line)
+      const parsed = cleaned.match(
+        /^\[?(CRITICAL|HIGH|MEDIUM|LOW|INFO)\]?\s*(.+?)(?:\(([^)]+)\))?\s*$/i,
       );
       if (parsed) {
         findings.push({
@@ -116,16 +134,35 @@ export function parseMicroGateResponse(content: string): {
         // Fallback: treat entire line as MEDIUM finding
         findings.push({
           severity: 'MEDIUM',
-          description: line.replace(/^-\s*/, '').trim(),
+          description: cleaned,
         });
       }
     }
   }
 
   // Parse SUMMARY line
-  const summaryMatch = content.match(/^SUMMARY:\s*(.+)/mi);
+  const summaryMatch = content.match(/\*?\*?SUMMARY\*?\*?:?\s*(.+)/mi);
   if (summaryMatch) {
     summary = summaryMatch[1].trim();
+  }
+
+  // Fallback summary: if no SUMMARY line but we have findings, generate one
+  if (!summary && findings.length > 0) {
+    const critical = findings.filter((f) => f.severity === 'CRITICAL' || f.severity === 'HIGH').length;
+    const total = findings.length;
+    summary = critical > 0
+      ? `${critical} critical/high issue${critical > 1 ? 's' : ''} found (${total} total)`
+      : `${total} issue${total > 1 ? 's' : ''} found`;
+  }
+
+  // Fallback summary from content: if still no summary, extract first meaningful sentence
+  if (!summary && content.length > 0) {
+    const firstLine = content.split('\n').find((l) =>
+      l.trim().length > 10 && !l.match(/^(VERDICT|FINDINGS|SUMMARY)/i),
+    );
+    if (firstLine) {
+      summary = firstLine.trim().slice(0, 120);
+    }
   }
 
   // Safety override: PASS with CRITICAL/HIGH findings → FAIL

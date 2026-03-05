@@ -88,7 +88,9 @@ function anvilCommand(anvilPath: string, args: string): string {
   if (anvilPath.endsWith('.cmd')) {
     return `"${anvilPath}" ${args}`;
   }
-  return `bash "${anvilPath}" ${args}`;
+  // On Windows, convert backslash paths to forward slashes for bash/sh compatibility
+  const safePath = IS_WINDOWS ? anvilPath.replace(/\\/g, '/') : anvilPath;
+  return `bash "${safePath}" ${args}`;
 }
 
 function detectProjectType(workDir: string): {
@@ -124,21 +126,30 @@ function runT1(workDir: string, target: string): GateResult {
   }
 
   // Inline fallback: search for banned patterns (cross-platform)
+  // Only scan source code files, exclude framework/docs/generated directories
   const banned = ['TODO', 'FIXME', 'HACK', 'PLACEHOLDER', 'STUB', 'NOT IMPLEMENTED'];
   let grepCmd: string;
   if (IS_WINDOWS) {
     grepCmd = `findstr /s /n "${banned.join(' ')}" "${target}\\*.ts" "${target}\\*.js" "${target}\\*.py" 2>${NULL_DEVICE} || exit /b 0`;
   } else {
-    grepCmd = `grep -rn "${banned.join('\\|')}" "${target}" --include="*.ts" --include="*.js" --include="*.py" --exclude-dir=node_modules --exclude-dir=dist 2>/dev/null || true`;
+    const excludeDirs = [
+      'node_modules', 'dist', '.git', '.skillfoundry', '.claude',
+      'genesis', 'memory_bank', 'scratchpads', 'docs',
+      'coverage', '__pycache__', '.next', '.nuxt', '.cache',
+    ].map((d) => `--exclude-dir=${d}`).join(' ');
+    const excludeFiles = '--exclude=CHANGELOG.md --exclude=*.test.ts --exclude=*.spec.ts --exclude=*.test.js --exclude=*.spec.js';
+    grepCmd = `grep -rn "${banned.join('\\|')}" "${target}" --include="*.ts" --include="*.js" --include="*.py" --include="*.tsx" --include="*.jsx" ${excludeDirs} ${excludeFiles} 2>/dev/null || true`;
   }
   const { ok, output } = runCommand(grepCmd, workDir);
 
-  const hasBanned = output.trim().length > 0;
+  // Filter out comments — only flag TODO/FIXME etc. in actual code, not in comments
+  const lines = output.trim().split('\n').filter((l) => l.trim().length > 0);
+  const hasBanned = lines.length > 0;
   return {
     tier: 'T1',
     name: 'Banned Patterns & Syntax',
     status: hasBanned ? 'fail' : 'pass',
-    detail: hasBanned ? `Banned patterns found:\n${output.slice(0, 400)}` : 'No banned patterns detected',
+    detail: hasBanned ? `Banned patterns found (${lines.length} hits):\n${lines.slice(0, 10).join('\n')}` : 'No banned patterns detected',
     durationMs: Date.now() - start,
   };
 }

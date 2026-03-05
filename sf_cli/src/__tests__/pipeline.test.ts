@@ -272,7 +272,7 @@ describe('runPipeline', () => {
     expect(storyFiles.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('retries with fixer when T1 gate fails', async () => {
+  it('T1 gate failure is advisory and does not trigger fixer', async () => {
     // Create PRD + story
     const genesisDir = join(TEST_DIR, 'genesis');
     mkdirSync(genesisDir, { recursive: true });
@@ -282,42 +282,24 @@ describe('runPipeline', () => {
     mkdirSync(storyDir, { recursive: true });
     writeFileSync(join(storyDir, 'STORY-001-fix.md'), '# STORY-001: Apply Fix\nstatus: PENDING\n\n## Description\nFix it.\n');
 
-    // Story execution
-    vi.mocked(runAgentLoop)
-      .mockResolvedValueOnce({
-        content: 'Implemented with TODO marker.',
-        turnCount: 3,
-        totalInputTokens: 500,
-        totalOutputTokens: 200,
-        totalCostUsd: 0.005,
-        aborted: false,
-      })
-      // Fixer execution
-      .mockResolvedValueOnce({
-        content: 'Fixed TODO markers.',
-        turnCount: 2,
-        totalInputTokens: 300,
-        totalOutputTokens: 100,
-        totalCostUsd: 0.003,
-        aborted: false,
-      });
+    // Story execution only — no fixer needed since T1 is advisory
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Implemented with TODO marker.',
+      turnCount: 3,
+      totalInputTokens: 500,
+      totalOutputTokens: 200,
+      totalCostUsd: 0.005,
+      aborted: false,
+    });
 
-    // T1 fails first, passes after fix
-    vi.mocked(runSingleGate)
-      .mockReturnValueOnce({
-        tier: 'T1',
-        name: 'Banned Patterns',
-        status: 'fail',
-        detail: 'Found TODO markers',
-        durationMs: 50,
-      })
-      .mockReturnValueOnce({
-        tier: 'T1',
-        name: 'Banned Patterns',
-        status: 'pass',
-        detail: 'Clean',
-        durationMs: 50,
-      });
+    // T1 fails — but should be advisory only, not block story
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1',
+      name: 'Banned Patterns',
+      status: 'fail',
+      detail: 'Found TODO markers',
+      durationMs: 50,
+    });
 
     vi.mocked(runAllGates).mockResolvedValue({
       gates: [
@@ -338,12 +320,13 @@ describe('runPipeline', () => {
       workDir: TEST_DIR,
     });
 
+    // T1 is advisory — story should complete, no fixer triggered
     expect(result.storiesCompleted).toBe(1);
     expect(result.storiesFailed).toBe(0);
-    expect(runAgentLoop).toHaveBeenCalledTimes(2); // 1 story + 1 fixer
+    expect(runAgentLoop).toHaveBeenCalledTimes(1); // Only story execution, no fixer
   });
 
-  it('marks story as failed when fixer retries exhausted', async () => {
+  it('marks story as failed when MG fixer retries exhausted', async () => {
     // Create PRD + story
     const genesisDir = join(TEST_DIR, 'genesis');
     mkdirSync(genesisDir, { recursive: true });
@@ -363,25 +346,33 @@ describe('runPipeline', () => {
       aborted: false,
     });
 
-    // T1 always fails
+    // T1 passes (advisory anyway)
     vi.mocked(runSingleGate).mockReturnValue({
       tier: 'T1',
       name: 'Banned Patterns',
-      status: 'fail',
-      detail: 'Unfixable pattern',
+      status: 'pass',
+      detail: 'Clean',
       durationMs: 50,
     });
 
+    // MG1 always FAILS — unfixable security issue
+    vi.mocked(runPostStoryGates).mockResolvedValue([
+      { gate: 'MG1', agent: 'security', verdict: 'FAIL', findings: [{ severity: 'CRITICAL', description: 'Unfixable SQL injection' }], summary: 'Critical issue', costUsd: 0.005, turnCount: 2, durationMs: 200 },
+      { gate: 'MG2', agent: 'standards', verdict: 'PASS', findings: [], summary: 'OK', costUsd: 0.004, turnCount: 1, durationMs: 150 },
+    ]);
+
+    vi.mocked(formatFindingsForFixer).mockReturnValue('[MG1] security — FAIL\n  - [CRITICAL] Unfixable SQL injection');
+
     vi.mocked(runAllGates).mockResolvedValue({
       gates: [
-        { tier: 'T1', name: 'Banned Patterns', status: 'fail', detail: '', durationMs: 50 },
+        { tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50 },
       ],
-      passed: 0,
-      failed: 1,
+      passed: 1,
+      failed: 0,
       warned: 0,
       skipped: 0,
       totalMs: 50,
-      verdict: 'FAIL',
+      verdict: 'PASS',
     });
 
     const result = await runPipeline({
