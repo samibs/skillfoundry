@@ -901,8 +901,13 @@ function Update-Project {
             if (Test-Path (Join-Path $SF_CLI_DIR "package.json")) {
                 try {
                     Push-Location $SF_CLI_DIR
+                    # Temporarily lower ErrorActionPreference — npm writes warnings
+                    # to stderr which PowerShell treats as terminating errors under "Stop"
+                    $prevEAP = $ErrorActionPreference
+                    $ErrorActionPreference = "Continue"
                     & npm install --production=false --silent 2>&1 | Out-Null
                     & npm run build 2>&1 | Out-Null
+                    $ErrorActionPreference = $prevEAP
                     if ($LASTEXITCODE -eq 0) {
                         Write-ColorOutput "  [OK] CLI rebuilt successfully" "Green"
 
@@ -945,6 +950,7 @@ function Update-Project {
                         Write-ColorOutput "  [!] CLI build failed (non-critical)" "Yellow"
                     }
                 } catch {
+                    $ErrorActionPreference = $prevEAP
                     Write-ColorOutput "  [!] CLI rebuild skipped: $($_.Exception.Message)" "Yellow"
                 } finally {
                     Pop-Location

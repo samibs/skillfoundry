@@ -731,15 +731,21 @@ if ($nodeCmd) {
             $BUILD_OK = $true
 
             Write-ColorOutput "  Installing CLI dependencies..." "Blue"
+            Push-Location $SF_CLI_DIR
             try {
-                Push-Location $SF_CLI_DIR
-                $npmOutput = & npm install --production=false --silent 2>&1
+                # Temporarily lower ErrorActionPreference — npm writes warnings
+                # to stderr which PowerShell treats as terminating errors under "Stop"
+                $prevEAP = $ErrorActionPreference
+                $ErrorActionPreference = "Continue"
+                & npm install --production=false --silent 2>&1 | Out-Null
+                $ErrorActionPreference = $prevEAP
                 if ($LASTEXITCODE -ne 0) {
-                    Write-ColorOutput "  Warning: npm install failed. Skipping CLI deployment." "Yellow"
+                    Write-ColorOutput "  Warning: npm install failed (exit code $LASTEXITCODE). Skipping CLI deployment." "Yellow"
                     $BUILD_OK = $false
                 }
             } catch {
-                Write-ColorOutput "  Warning: npm install failed. Skipping CLI deployment." "Yellow"
+                $ErrorActionPreference = $prevEAP
+                Write-ColorOutput "  Warning: npm install failed: $($_.Exception.Message). Skipping CLI deployment." "Yellow"
                 $BUILD_OK = $false
             } finally {
                 Pop-Location
@@ -747,15 +753,19 @@ if ($nodeCmd) {
 
             if ($BUILD_OK) {
                 Write-ColorOutput "  Compiling TypeScript..." "Blue"
+                Push-Location $SF_CLI_DIR
                 try {
-                    Push-Location $SF_CLI_DIR
-                    $buildOutput = & npm run build 2>&1
+                    $prevEAP = $ErrorActionPreference
+                    $ErrorActionPreference = "Continue"
+                    & npm run build 2>&1 | Out-Null
+                    $ErrorActionPreference = $prevEAP
                     if ($LASTEXITCODE -ne 0) {
-                        Write-ColorOutput "  Warning: CLI build failed. Skipping CLI deployment." "Yellow"
+                        Write-ColorOutput "  Warning: CLI build failed (exit code $LASTEXITCODE). Skipping CLI deployment." "Yellow"
                         $BUILD_OK = $false
                     }
                 } catch {
-                    Write-ColorOutput "  Warning: CLI build failed. Skipping CLI deployment." "Yellow"
+                    $ErrorActionPreference = $prevEAP
+                    Write-ColorOutput "  Warning: CLI build failed: $($_.Exception.Message). Skipping CLI deployment." "Yellow"
                     $BUILD_OK = $false
                 } finally {
                     Pop-Location
