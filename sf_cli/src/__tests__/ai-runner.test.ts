@@ -45,6 +45,11 @@ const mockConfig: SfConfig = {
   run_budget_usd: 5,
   memory_sync_enabled: false,
   memory_sync_remote: '',
+  route_local_first: false,
+  local_provider: '',
+  local_model: '',
+  context_window: 0,
+  log_level: 'error',
 };
 
 const mockPolicy: SfPolicy = {

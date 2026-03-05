@@ -83,6 +83,20 @@ export function scanStories(workDir: string): Array<{ prd: string; stories: stri
     });
 }
 
+// ── Story file status update (enables pipeline resume) ────────
+
+function markStoryDone(storyPath: string): void {
+  try {
+    const content = readFileSync(storyPath, 'utf-8');
+    const updated = content.replace(/^(status:\s*)PENDING/mi, '$1DONE');
+    if (updated !== content) {
+      writeFileSync(storyPath, updated, 'utf-8');
+    }
+  } catch {
+    // Best-effort — don't crash the pipeline if we can't update the file
+  }
+}
+
 // ── Story generation system prompt ─────────────────────────────
 
 const STORY_GENERATION_PROMPT = `You are a senior software architect decomposing a PRD into implementation stories.
@@ -496,6 +510,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     // The full T1-T6 TEMPER phase runs after all stories and serves as the real gate.
     execution.status = 'completed';
     storiesCompleted++;
+    markStoryDone(storyPath);
     log.info('pipeline', 'story_complete', { story: storyFile, passed: true, cost: execution.costUsd, turns: execution.turnCount });
     callbacks?.onStoryComplete?.(storyFile, true, execution.costUsd);
   }
