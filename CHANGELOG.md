@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.28] - 2026-03-05
+
+### Fixed — Gate and Micro-Gate Output Now Shows Actionable Details
+
+Quality gates (T1-T6) and micro-gates (MG1/MG2/MG3) previously displayed bare icons with no explanation (e.g., `T1 [x]` or `MG1 [!] security: WARN`). Now they show the actual failure details and findings.
+
+- **Gate results (T1-T6)**: Non-passing gates show up to 3 lines of detail with file paths and matched patterns
+- **Micro-gate results (MG1/MG2/MG3)**: Non-passing gates list up to 5 individual findings with severity, description, and file location
+- **Dry-run mode**: Also improved — shows up to 5 detail lines per gate instead of a single truncated line
+- **`/model` command**: Removed confusing "not in known models" warning — any model string is accepted without caveats
+- **OpenAI models**: Added `gpt-5.1-codex-max` to known models list and pricing table
+
+---
+
 ## [2.0.27] - 2026-03-05
 
 ### Fixed — Forge Pipeline Skips Already-Completed Stories
