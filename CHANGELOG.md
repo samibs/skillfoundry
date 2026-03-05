@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.31] - 2026-03-05
+
+### Fixed — Windows T1 Gate + Micro-Gate Provider Error Handling
+
+**T1 gate no longer tries bash scripts on Windows**
+- On Windows, `findAnvilScript` was finding `scripts/anvil.sh` and trying to run it with `bash "C:/apps/.../scripts/anvil.sh"`, which fails because bash can't resolve Windows drive-letter paths. The script search now only looks for `.ps1` and `.cmd` on Windows, falling back to the inline grep-based T1 check which works cross-platform.
+
+**Micro-gates detect provider connection errors**
+- When the AI provider is unreachable, micro-gates (MG1/MG2) received error content like "Provider error: Connection error" and parsed it as WARN verdict (no VERDICT keyword found). Now provider errors are detected before parsing and marked with `skippedDueToError: true`. These don't trigger the fixer loop and display with a `~` icon instead of `!` so the user can tell the difference between a real warning and a connection failure.
+
+---
+
 ## [2.0.30] - 2026-03-05
 
 ### Fixed — Pipeline Reliability Overhaul (First Real-Use Fixes)

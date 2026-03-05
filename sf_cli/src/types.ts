@@ -249,6 +249,7 @@ export interface MicroGateResult {
   costUsd: number;
   turnCount: number;
   durationMs: number;
+  skippedDueToError?: boolean;  // true when provider error prevented actual review
 }
 
 // ── Finisher types (post-pipeline mechanical housekeeping) ──────────

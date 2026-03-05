@@ -205,7 +205,7 @@ export const forgeCommand = {
                 });
             },
             onMicroGateResult: (mgResult) => {
-                const icon = mgResult.verdict === 'PASS' ? 'v' : mgResult.verdict === 'FAIL' ? 'x' : '!';
+                const icon = mgResult.skippedDueToError ? '~' : mgResult.verdict === 'PASS' ? 'v' : mgResult.verdict === 'FAIL' ? 'x' : '!';
                 const lines = [`  ${mgResult.gate} [${icon}] ${mgResult.agent}: ${mgResult.summary || mgResult.verdict}`];
                 // Show findings for non-passing micro-gates
                 if (mgResult.verdict !== 'PASS' && mgResult.findings.length > 0) {
