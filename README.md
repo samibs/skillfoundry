@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.33-blue)
+![Version](https://img.shields.io/badge/version-2.0.34-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -51,6 +51,7 @@ C:\DevTools\skillfoundry\install.ps1
 </details>
 
 > **Requires Node.js v20+** for the standalone CLI. IDE skills work without Node.js.
+> **Cross-platform:** Works on Linux, macOS, Windows (native, Git Bash, and WSL). Quality gates and anvil scripts auto-detect the environment.
 
 ---
 
@@ -234,6 +235,41 @@ per_run_limit_usd = 2.00
 ```
 
 Token usage and cost are shown live in the header during streaming.
+
+### Structured Logging
+
+Every pipeline run and interactive session produces structured JSONL logs for troubleshooting. One JSON object per line — parseable, grep-friendly, and timestamped.
+
+```
+.skillfoundry/logs/
+├── session.log                   # Rolling log for interactive mode (last 1000 lines)
+├── forge-20260305-abc123.log     # Per-pipeline-run log
+└── ...                           # Auto-cleanup keeps last 20
+```
+
+```jsonl
+{"ts":"2026-03-05T12:07:14.123Z","level":"INFO","category":"pipeline","event":"phase_start","data":{"phase":"FORGE"}}
+{"ts":"2026-03-05T12:07:15.456Z","level":"ERROR","category":"provider","event":"connection_error","data":{"provider":"openai","error":"ECONNREFUSED"}}
+{"ts":"2026-03-05T12:07:16.789Z","level":"WARN","category":"provider","event":"retry_attempt","data":{"attempt":2,"delayMs":1000}}
+```
+
+Configure the log level in `.skillfoundry/config.toml`:
+
+```toml
+log_level = "info"   # debug | info | warn | error
+```
+
+Set to `debug` for per-turn token counts and tool call tracing. Default `info` captures phase transitions, gate results, and errors.
+
+### Pipeline Resume
+
+`/forge` tracks story completion and resumes where it left off. If a run is interrupted or partially fails, re-running `/forge` skips already-completed stories and implements only the remaining ones.
+
+```
+Implementing 2 stories (3 already done, skipped)
+```
+
+Stories are marked `status: DONE` in their `.md` files after successful completion, including passing micro-gates and fixer loops.
 
 ### Local-First Development
 

@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.33** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, and local-first development.
+> **v2.0.34** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, structured logging, and local-first development.
 
 ---
 
@@ -888,7 +888,21 @@ route_local_first = false             # Enable local-first cost routing
 local_provider = "ollama"             # Local provider (ollama or lmstudio)
 local_model = "llama3.1"             # Local model name
 context_window = 0                    # 0 = auto-detect from model
+
+[logging]
+log_level = "info"                    # debug | info | warn | error
 ```
+
+**Log levels:**
+
+| Level | What gets logged |
+|-------|-----------------|
+| `error` | Provider failures, gate failures, budget exceeded |
+| `warn` | Retry attempts, micro-gate warnings, budget threshold (>80%) |
+| `info` | Phase transitions, story completion, gate results, provider selection |
+| `debug` | Per-turn token counts, tool calls with duration, request details |
+
+Logs are written to `.skillfoundry/logs/` — `session.log` for interactive mode and `{runId}.log` per pipeline run. Auto-cleanup keeps the last 20 run logs.
 
 ### policy.toml
 
