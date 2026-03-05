@@ -10,10 +10,19 @@ import type {
 } from '../types.js';
 import { loadConfig, loadPolicy } from '../core/config.js';
 import { loadState, updateState } from '../core/session.js';
+import { initLogger } from '../utils/logger.js';
+import type { LogLevel } from '../utils/logger.js';
 
 export function useSession(workDir: string) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [config] = useState<SfConfig>(() => loadConfig(workDir));
+  const [config] = useState<SfConfig>(() => {
+    const cfg = loadConfig(workDir);
+    // Initialize the structured logger with the configured log level
+    const level = (cfg.log_level || 'info').toUpperCase() as LogLevel;
+    const validLevels: LogLevel[] = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
+    initLogger(workDir, validLevels.includes(level) ? level : 'INFO');
+    return cfg;
+  });
   const [policy] = useState<SfPolicy>(() => loadPolicy(workDir));
   const [state, setStateLocal] = useState<SfState>(() => loadState(workDir));
   const [permissionMode] = useState<PermissionMode>('ask');

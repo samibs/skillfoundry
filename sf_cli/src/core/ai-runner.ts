@@ -12,6 +12,7 @@ import { checkPermission } from './permissions.js';
 import { redactText } from './redact.js';
 import { ALL_TOOLS } from './tools.js';
 import { compactMessages, getContextWindow, isLocalProvider } from './compaction.js';
+import { getLogger } from '../utils/logger.js';
 import type {
   SfConfig,
   SfPolicy,
@@ -110,6 +111,9 @@ export async function runAgentLoop(
     workDir = process.cwd(),
     abortSignal,
   } = options;
+
+  const log = getLogger();
+  log.info('runner', 'loop_start', { model: config.model, maxTurns, promptLength: systemPrompt?.length ?? 0 });
 
   // Provider setup
   const provider = createProvider(config.provider);
@@ -221,6 +225,12 @@ export async function runAgentLoop(
       );
     } catch (err) {
       const friendlyError = classifyProviderError(err);
+      log.error('provider', 'stream_error', {
+        provider: config.provider,
+        model: config.model,
+        error: err instanceof Error ? err.message : String(err),
+        classified: friendlyError.split('\n')[0],
+      });
       return {
         content: friendlyError,
         turnCount,
@@ -244,6 +254,13 @@ export async function runAgentLoop(
       inputTokens: result.inputTokens,
       outputTokens: result.outputTokens,
       costUsd: result.costUsd,
+    });
+
+    log.debug('runner', 'turn_complete', {
+      turn: turnCount,
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+      cost: result.costUsd,
     });
 
     callbacks?.onTurnComplete?.(turnCount, {
@@ -349,6 +366,13 @@ export async function runAgentLoop(
       lastTextContent = redactText(turnText, policy.redact);
     }
   }
+
+  log.info('runner', 'loop_end', {
+    turns: turnCount,
+    inputTokens: totalInputTokens,
+    outputTokens: totalOutputTokens,
+    cost: totalCostUsd,
+  });
 
   return {
     content: lastTextContent,

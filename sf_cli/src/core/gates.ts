@@ -10,6 +10,7 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getFrameworkRoot } from './framework.js';
+import { getLogger } from '../utils/logger.js';
 
 const IS_WINDOWS = process.platform === 'win32';
 const WHICH_CMD = IS_WINDOWS ? 'where' : 'which';
@@ -397,10 +398,16 @@ export async function runAllGates(options: GateOptions): Promise<GateRunSummary>
     { run: () => runT6(workDir, storyFile), tier: 'T6', name: 'Scope Validation' },
   ];
 
+  const log = getLogger();
   for (const { run, tier, name } of tiers) {
     onGateStart?.(tier, name);
     const result = run();
     gates.push(result);
+    if (result.status === 'fail') {
+      log.error('gate', 'gate_failed', { tier: result.tier, detail: result.detail.slice(0, 200) });
+    } else {
+      log.info('gate', 'gate_result', { tier: result.tier, status: result.status, detail: result.detail.slice(0, 200) });
+    }
     onGateComplete?.(result);
   }
 

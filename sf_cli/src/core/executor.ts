@@ -14,6 +14,7 @@ import { join, resolve, isAbsolute, dirname } from 'node:path';
 import { globSync } from 'glob';
 import type { ToolResult } from '../types.js';
 import type { SfPolicy } from '../types.js';
+import { getLogger } from '../utils/logger.js';
 
 const MAX_OUTPUT_CHARS = 30000;
 const DEFAULT_BASH_TIMEOUT = 120_000;
@@ -375,22 +376,35 @@ export function executeTool(
   input: Record<string, unknown>,
   ctx: ExecutorContext,
 ): ToolResult {
+  const log = getLogger();
+  const start = Date.now();
+  log.debug('tool', 'call_start', { name: toolName });
+
+  let result: ToolResult;
   switch (toolName) {
     case 'bash':
-      return executeBash(input as { command: string; timeout?: number }, ctx);
+      result = executeBash(input as { command: string; timeout?: number }, ctx);
+      break;
     case 'read':
-      return executeRead(input as { file_path: string; offset?: number; limit?: number }, ctx);
+      result = executeRead(input as { file_path: string; offset?: number; limit?: number }, ctx);
+      break;
     case 'write':
-      return executeWrite(input as { file_path: string; content: string }, ctx);
+      result = executeWrite(input as { file_path: string; content: string }, ctx);
+      break;
     case 'glob':
-      return executeGlob(input as { pattern: string; path?: string }, ctx);
+      result = executeGlob(input as { pattern: string; path?: string }, ctx);
+      break;
     case 'grep':
-      return executeGrep(input as { pattern: string; path?: string; glob?: string; context?: number }, ctx);
+      result = executeGrep(input as { pattern: string; path?: string; glob?: string; context?: number }, ctx);
+      break;
     default:
-      return {
+      result = {
         toolCallId: '',
         output: `Unknown tool: ${toolName}`,
         isError: true,
       };
   }
+
+  log.debug('tool', 'call_complete', { name: toolName, durationMs: Date.now() - start, isError: result.isError });
+  return result;
 }

@@ -3,6 +3,7 @@
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { getLogger } from '../utils/logger.js';
 
 const USAGE_FILE = join('.skillfoundry', 'usage.json');
 
@@ -110,6 +111,13 @@ export function checkBudget(
       runSpend: currentRunCost,
       runBudget,
     };
+  }
+
+  // Warn when >80% of monthly budget is consumed
+  const percentUsed = monthlyBudget > 0 ? (monthlySpend / monthlyBudget) * 100 : 0;
+  if (percentUsed > 80) {
+    const log = getLogger();
+    log.warn('budget', 'threshold', { monthlyUsed: monthlySpend, monthlyBudget, percentUsed: Math.round(percentUsed) });
   }
 
   return {
