@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.31-blue)
+![Version](https://img.shields.io/badge/version-2.0.32-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)

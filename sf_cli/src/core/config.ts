@@ -22,6 +22,7 @@ const DEFAULT_CONFIG: SfConfig = {
   local_provider: 'ollama',
   local_model: 'llama3.1',
   context_window: 0, // 0 = auto-detect from model
+  log_level: 'info',
 };
 
 const DEFAULT_POLICY: SfPolicy = {

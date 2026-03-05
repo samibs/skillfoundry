@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.32] - 2026-03-05
+
+### Added — Structured Logging
+
+**JSONL structured logging for pipeline and interactive sessions**
+- New `SfLogger` class in `src/utils/logger.ts` with `DEBUG`, `INFO`, `WARN`, `ERROR` levels
+- JSONL format: one JSON object per line with `ts`, `level`, `category`, `event`, `data` fields
+- Per-run log files in `.skillfoundry/logs/{runId}.log` matching the run bundle naming
+- Rolling `session.log` (capped at 1000 lines) for interactive mode
+- Auto-cleanup keeps the last 20 run logs, removes oldest on pipeline start
+- Configurable via `log_level` in `.skillfoundry/config.toml` (default: `info`)
+
+**Logger wired into all pipeline modules:**
+- `pipeline.ts` — phase start/complete, story start/complete/failed, run complete
+- `ai-runner.ts` — loop start/end, per-turn token stats (DEBUG), provider stream errors
+- `retry.ts` — retry attempts with delay/error, fallback attempts, retries exhausted
+- `micro-gates.ts` — gate start/complete, provider errors
+- `gates.ts` — T1-T6 gate results and failures
+- `budget.ts` — threshold warnings when >80% of monthly budget consumed
+- `executor.ts` — tool call start/complete at DEBUG level with duration
+
+---
+
 ## [2.0.31] - 2026-03-05
 
 ### Fixed — Windows T1 Gate + Micro-Gate Provider Error Handling

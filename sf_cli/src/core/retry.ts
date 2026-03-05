@@ -2,6 +2,7 @@
 // Non-retryable errors (auth, validation) fail immediately.
 
 import type { ProviderAdapter } from '../types.js';
+import { getLogger } from '../utils/logger.js';
 
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 1000;
@@ -35,6 +36,7 @@ export async function streamWithRetry<T>(
   primary: ProviderAdapter,
   fallback: ProviderAdapter | null,
 ): Promise<RetryResult<T>> {
+  const log = getLogger();
   let lastError: unknown;
 
   // Try primary with retries
@@ -44,12 +46,15 @@ export async function streamWithRetry<T>(
       return { result };
     } catch (err) {
       lastError = err;
+      const errMsg = err instanceof Error ? err.message : String(err);
       if (!isRetryable(err)) {
         // Non-retryable: try fallback immediately if available
+        log.warn('provider', 'retry_skip', { attempt: attempt + 1, error: errMsg, reason: 'non-retryable' });
         break;
       }
       if (attempt < MAX_RETRIES - 1) {
         const delayMs = BASE_DELAY_MS * Math.pow(2, attempt);
+        log.warn('provider', 'retry_attempt', { attempt: attempt + 1, maxRetries: MAX_RETRIES, delayMs, error: errMsg });
         await delay(delayMs);
       }
     }
@@ -57,6 +62,7 @@ export async function streamWithRetry<T>(
 
   // Try fallback provider (single attempt, no retry)
   if (fallback) {
+    log.warn('provider', 'fallback_attempt', { fallback: fallback.name });
     try {
       const result = await fn(fallback);
       return { result, fallbackUsed: fallback.name };
@@ -64,6 +70,12 @@ export async function streamWithRetry<T>(
       // Fallback also failed — throw the original error
     }
   }
+
+  log.error('provider', 'retries_exhausted', {
+    provider: primary.name,
+    attempts: MAX_RETRIES,
+    lastError: lastError instanceof Error ? lastError.message : String(lastError),
+  });
 
   throw lastError;
 }

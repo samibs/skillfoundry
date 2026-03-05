@@ -61,6 +61,7 @@ export interface SfConfig {
   local_provider: string;
   local_model: string;
   context_window: number; // 0 = auto-detect from model
+  log_level: string; // debug | info | warn | error
 }
 
 // Policy schema matching existing .skillfoundry/policy.toml

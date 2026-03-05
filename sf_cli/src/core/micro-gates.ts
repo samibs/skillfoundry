@@ -5,6 +5,7 @@
 
 import { runAgentLoop } from './ai-runner.js';
 import { getAgentSystemPrompt, TOOL_SETS } from './agent-registry.js';
+import { getLogger } from '../utils/logger.js';
 import type {
   SfConfig,
   SfPolicy,
@@ -183,7 +184,9 @@ async function runSingleMicroGate(
   storyContext: string,
   options: { config: SfConfig; policy: SfPolicy; workDir: string },
 ): Promise<MicroGateResult> {
+  const log = getLogger();
   const start = Date.now();
+  log.info('microgate', 'gate_start', { gate: mgConfig.gate, agent: mgConfig.agent });
 
   const basePrompt = getAgentSystemPrompt(mgConfig.agent);
   const systemPrompt = `${basePrompt}\n\n${mgConfig.prompt}`;
@@ -209,6 +212,7 @@ async function runSingleMicroGate(
   const isProviderError = /^(Provider error|Network error|Authentication error|Model not available|Quota\/billing error|SSL\/Certificate error|Budget exceeded|Connection error)/i.test(result.content);
 
   if (isProviderError) {
+    log.warn('microgate', 'provider_error', { gate: mgConfig.gate, agent: mgConfig.agent, error: result.content.split('\n')[0].slice(0, 120) });
     return {
       gate: mgConfig.gate,
       agent: mgConfig.agent,
@@ -223,6 +227,14 @@ async function runSingleMicroGate(
   }
 
   const parsed = parseMicroGateResponse(result.content);
+
+  log.info('microgate', 'gate_complete', {
+    gate: mgConfig.gate,
+    verdict: parsed.verdict,
+    summary: parsed.summary,
+    cost: result.totalCostUsd,
+    durationMs: Date.now() - start,
+  });
 
   return {
     gate: mgConfig.gate,
