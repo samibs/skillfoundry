@@ -81,21 +81,49 @@ Or use autonomous mode — just type what you want in plain English:
 
 ## Two Ways to Use SkillFoundry
 
-### 1. Inside Your IDE (No CLI Required)
+SkillFoundry has two independent systems. They share the same agents and philosophy, but work differently:
 
-63 skills install directly into your AI coding tool:
+| | **IDE Skills** (63 skills) | **Standalone CLI** (`sf`) |
+|---|---|---|
+| **What it is** | Markdown instruction files your AI reads | Terminal app with its own AI connection |
+| **Runs inside** | Claude Code, Copilot, Cursor, Codex, Gemini | Your terminal (any OS) |
+| **Full pipeline** | `/forge`, `/go`, `/goma` (all 63 skills) | `/forge`, `/plan`, `/gates` (14 commands) |
+| **Autonomous mode** | `/goma` — full autonomous with safety gates | Not available |
+| **Provider switching** | Uses your IDE's provider | Built-in: 6 providers, switch at runtime |
+| **Budget controls** | Not available | Per-run and monthly cost caps |
+| **Persistent memory** | `/memory`, `/gohm` | `/memory`, `/lessons` |
+| **Requires** | An AI coding tool | Node.js v20+ |
+
+**Most users should start with IDE skills.** The CLI is for standalone use or when you want provider switching and budget controls.
+
+### 1. Inside Your IDE (Recommended)
+
+63 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
 
 | Platform | Invocation | Example |
 |----------|-----------|---------|
-| **Claude Code** | `/command` | `/forge`, `/go`, `/review` |
+| **Claude Code** | `/command` | `/forge`, `/go`, `/goma`, `/review` |
 | **GitHub Copilot** | `@agent` in chat | `@forge`, `@coder`, `@tester` |
 | **Cursor** | Auto-loaded rules | Rules activate on context |
 | **OpenAI Codex** | `$command` | `$forge`, `$go`, `$review` |
 | **Google Gemini** | Skill invocation | `forge`, `go`, `review` |
 
+```bash
+# Full pipeline — works in Claude Code, Copilot, Cursor, Codex, Gemini
+/prd "add user authentication"     # create requirements
+/forge                             # validate → implement → gate → audit → harvest
+/goma                              # autonomous mode: just describe what you want
+
+# Individual agents
+/coder                             # code implementation
+/review                            # code review
+/security audit                    # security scan
+/memory recall "auth"              # recall lessons from previous sessions
+```
+
 ### 2. The Standalone CLI (`sf`)
 
-A terminal-native AI assistant with streaming UI, agent routing, budget controls, and visual quality gates:
+A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 14 native commands (not all 63 skills).
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -349,27 +377,51 @@ scripts/evolve.sh run                      Full evolution cycle
 
 ---
 
-## CLI Commands
+## Command Reference
+
+### sf CLI Commands (14 native)
+
+These work inside the `sf` terminal app:
 
 | Command | Purpose |
 |---------|---------|
-| `/help` | List all available commands |
-| `/setup` | Configure API keys interactively |
-| `/status` | Session info, provider, budget, state |
-| `/team <name>` | Summon a team (dev, security, ops, fullstack, review, ship) |
+| `/help` | List available commands |
+| `/setup` | Configure API keys |
+| `/status` | Session info, provider, budget |
+| `/team <name>` | Summon a team (dev, security, ops, fullstack, ship) |
 | `/agent <name>` | Activate a single agent (coder, review, tester, etc.) |
-| `/plan <task>` | Generate a read-only implementation plan |
-| `/apply [plan-id]` | Execute a plan with quality gate enforcement |
+| `/plan <task>` | Generate an implementation plan |
+| `/apply [plan-id]` | Execute a plan with quality gates |
 | `/gates [target]` | Run The Anvil quality gates (T1-T6) |
-| `/forge` | Real AI pipeline: PRDs → stories → implement → gates → report |
-| `/forge --dry-run` | Read-only scan: check PRDs, stories, and gates |
-| `/prd "idea"` | Create a Product Requirements Document |
-| `/go` | Orchestrate implementation from PRDs |
-| `/provider [set <name>]` | Switch AI providers |
+| `/forge` | Pipeline: validate PRDs → implement → gate → report |
+| `/forge --dry-run` | Read-only scan without execution |
+| `/provider [set <name>]` | Switch AI provider |
 | `/cost` | Token usage and cost report |
-| `/memory [stats\|recall]` | Query or record knowledge entries |
+| `/memory [stats\|recall]` | Query or record knowledge |
 | `/config [key] [value]` | View or edit configuration |
-| `/exit` | Quit the CLI |
+
+### IDE Skills (63 — Claude Code, Copilot, Cursor, Codex, Gemini)
+
+These work inside your AI coding tool, not in the `sf` CLI:
+
+| Skill | Purpose |
+|-------|---------|
+| `/forge` | Full 6-phase pipeline (Ignite → Forge → Temper → Inspect → Remember → Debrief) |
+| `/go` | PRD-first orchestrator: validate → stories → implement |
+| `/goma` | Autonomous mode: classify intent, route to pipeline, execute |
+| `/prd "idea"` | Create a Product Requirements Document |
+| `/coder` | Code implementation agent |
+| `/tester` | Test generation and validation |
+| `/review` | Code review |
+| `/security` | Security audit (OWASP, credentials, banned patterns) |
+| `/architect` | System design and architecture |
+| `/layer-check` | Three-layer validation (DB → Backend → Frontend) |
+| `/memory` | Knowledge management |
+| `/gohm` | Harvest lessons from current session |
+| `/autonomous` | Toggle autonomous developer loop |
+| *...and 50 more* | See `/help` in your IDE for the full list |
+
+> **Note:** `/forge` exists in both systems but they are different implementations. The IDE skill orchestrates sub-agents; the CLI command runs a self-contained pipeline.
 
 ---
 
