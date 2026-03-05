@@ -8,6 +8,7 @@ const MODEL_PRICING = {
     'gpt-4.1': { input: 2, output: 8 },
     'gpt-4.1-mini': { input: 0.4, output: 1.6 },
     'gpt-4.1-nano': { input: 0.1, output: 0.4 },
+    'gpt-5.1-codex-max': { input: 3, output: 12 },
     'o3': { input: 2, output: 8 },
     'o3-mini': { input: 1.1, output: 4.4 },
     'o4-mini': { input: 1.1, output: 4.4 },
