@@ -1,8 +1,8 @@
 # SkillFoundry Test Suite Reference
 
-> Complete documentation of all 382 TypeScript unit tests and 198+ shell integration tests.
+> Complete documentation of all 386 TypeScript unit tests and 198+ shell integration tests.
 
-**Version:** 2.0.34
+**Version:** 2.0.35
 **Last Updated:** 2026-03-05
 **Test Framework:** Vitest (TypeScript), Custom bash runner (Shell)
 
@@ -11,7 +11,7 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [TypeScript Unit Tests (382 tests / 27 files)](#typescript-unit-tests)
+2. [TypeScript Unit Tests (386 tests / 27 files)](#typescript-unit-tests)
    - [config.test.ts](#1-configtestts--5-tests)
    - [redact.test.ts](#2-redacttestts--12-tests)
    - [commands.test.ts](#3-commandstestts--10-tests)
@@ -33,7 +33,7 @@
    - [team-command.test.ts](#19-team-commandtestts--11-tests)
    - [retry.test.ts](#20-retrytestts--6-tests)
    - [ai-runner.test.ts](#21-ai-runnertestts--8-tests)
-   - [pipeline.test.ts](#22-pipelinetestts--20-tests)
+   - [pipeline.test.ts](#22-pipelinetestts--24-tests)
    - [compaction.test.ts](#23-compactiontestts--20-tests)
    - [health-check.test.ts](#24-health-checktestts--13-tests)
    - [task-classifier.test.ts](#25-task-classifiertestts--15-tests)
@@ -60,9 +60,9 @@ The SkillFoundry test suite validates the entire stack from low-level utility fu
 
 | Layer | Tests | Files | Framework |
 |-------|-------|-------|-----------|
-| TypeScript Unit Tests | 382 | 27 | Vitest |
+| TypeScript Unit Tests | 386 | 27 | Vitest |
 | Shell Integration Tests | 198+ | 8 | Custom bash runner |
-| **Total** | **560+** | **35** | — |
+| **Total** | **564+** | **35** | — |
 
 ### What the tests protect
 
@@ -580,7 +580,7 @@ All TypeScript tests live in `sf_cli/src/__tests__/` and use **Vitest** with `vi
 
 ---
 
-### 22. pipeline.test.ts — 20 tests
+### 22. pipeline.test.ts — 24 tests
 
 **Source:** `sf_cli/src/core/pipeline.ts`
 **What it protects:** The Forge pipeline engine — PRD→stories→implementation→gates→debrief

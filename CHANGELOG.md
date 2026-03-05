@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.35] - 2026-03-05
+
+### Changed — Two-Pass Pipeline (FORGE + POLISH)
+
+- **FORGE phase** now runs only T2 (type check) and T5 (build) smoke tests per story, replacing the previous per-story micro-gate (MG1/MG2) checks. Stories fail only on compilation errors, not quality gate findings.
+- **New POLISH phase** inserted between FORGE and TEMPER. Runs MG1 (security) and MG2 (standards) reviews on all completed stories in aggregate. If failures are found, a holistic fixer runs once across the entire codebase, then re-checks.
+- POLISH failures do not block the pipeline — TEMPER remains the strict enforcement gate (T1-T6).
+- Pipeline phases now: IGNITE → PLAN → FORGE → POLISH → TEMPER → INSPECT → DEBRIEF → FINISH.
+- Reduced story failures caused by micro-gate rejections during active development.
+- Updated pipeline tests for new two-pass behavior.
+
+---
+
 ## [2.0.34] - 2026-03-05
 
 ### Changed — Documentation & Version Update
