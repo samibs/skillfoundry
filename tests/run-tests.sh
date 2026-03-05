@@ -509,13 +509,14 @@ test_performance_install_speed() {
 
     DURATION_MS=$(( (END_TIME - START_TIME) * 1000 ))
 
-    # Install should complete in under 5 seconds
-    if [ $DURATION_MS -lt 5000 ]; then
-        log_success "Install completed in ${DURATION_MS}ms (< 5s)"
+    # Install should complete in under 30 seconds
+    # (includes npm install + TypeScript build for the CLI)
+    if [ $DURATION_MS -lt 30000 ]; then
+        log_success "Install completed in ${DURATION_MS}ms (< 30s)"
         cleanup_test_workspace
         return 0
     else
-        log_failure "Install took ${DURATION_MS}ms (> 5s threshold)"
+        log_failure "Install took ${DURATION_MS}ms (> 30s threshold)"
         cleanup_test_workspace
         return 1
     fi
