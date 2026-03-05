@@ -939,20 +939,21 @@ if command -v node >/dev/null 2>&1; then
         if [ -f "$SF_CLI_DIR/package.json" ]; then
             echo -e "${BLUE}  Installing CLI dependencies...${NC}"
             BUILD_OK=true
-            (cd "$SF_CLI_DIR" && npm install --production=false --silent 2>&1) || {
-                echo -e "${YELLOW}  Warning: npm install failed. Skipping CLI deployment.${NC}"
+            (cd "$SF_CLI_DIR" && npm install 2>&1) || {
+                echo -e "${YELLOW}  Warning: npm install failed. Falling back to pre-built dist/.${NC}"
                 BUILD_OK=false
             }
 
             if [ "$BUILD_OK" = true ]; then
                 echo -e "${BLUE}  Compiling TypeScript...${NC}"
                 (cd "$SF_CLI_DIR" && npm run build 2>&1) || {
-                    echo -e "${YELLOW}  Warning: CLI build failed. Skipping CLI deployment.${NC}"
+                    echo -e "${YELLOW}  Warning: CLI build failed. Falling back to pre-built dist/.${NC}"
                     BUILD_OK=false
                 }
             fi
 
-            if [ "$BUILD_OK" = true ]; then
+            # Create wrapper if dist/index.js exists (freshly built or pre-built from git)
+            if [ "$BUILD_OK" = true ] || [ -f "$SF_CLI_DIR/dist/index.js" ]; then
                 SF_WRAPPER_DIR="${HOME}/.local/bin"
                 SF_WRAPPER="${SF_WRAPPER_DIR}/sf"
 
