@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.25] - 2026-03-05
+
+### Added — Demo GIF and CONTRIBUTING.md
+
+- **Animated demo GIF**: 20-frame terminal animation of the `/forge` pipeline embedded in the README hero section — shows typing, all 6 phases running (with Anvil gate recovery), and final "FORGED" status. 123KB.
+- **CONTRIBUTING.md**: Setup instructions, development workflow, code standards, commit conventions, and guides for adding new agents and CLI commands.
+- **README hero polish**: Bold tagline, "Why SkillFoundry?" bullets, compact quick start, pipeline overview diagram. Windows instructions collapsed in `<details>`.
+
+### Fixed
+
+- **Install performance test**: Threshold increased from 5s to 30s to account for `npm install` + TypeScript build on CI runners.
+
+---
+
 ## [2.0.24] - 2026-03-04
 
 ### Fixed — CLI Wrapper Auto-Added to PATH on Install & Update
