@@ -1,9 +1,9 @@
 # SkillFoundry Test Suite Reference
 
-> Complete documentation of all 380 TypeScript unit tests and 198+ shell integration tests.
+> Complete documentation of all 382 TypeScript unit tests and 198+ shell integration tests.
 
-**Version:** 2.0.33
-**Last Updated:** 2026-02-27
+**Version:** 2.0.34
+**Last Updated:** 2026-03-05
 **Test Framework:** Vitest (TypeScript), Custom bash runner (Shell)
 
 ---
@@ -11,7 +11,7 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [TypeScript Unit Tests (380 tests / 27 files)](#typescript-unit-tests)
+2. [TypeScript Unit Tests (382 tests / 27 files)](#typescript-unit-tests)
    - [config.test.ts](#1-configtestts--5-tests)
    - [redact.test.ts](#2-redacttestts--12-tests)
    - [commands.test.ts](#3-commandstestts--10-tests)
@@ -33,7 +33,7 @@
    - [team-command.test.ts](#19-team-commandtestts--11-tests)
    - [retry.test.ts](#20-retrytestts--6-tests)
    - [ai-runner.test.ts](#21-ai-runnertestts--8-tests)
-   - [pipeline.test.ts](#22-pipelinetestts--18-tests)
+   - [pipeline.test.ts](#22-pipelinetestts--20-tests)
    - [compaction.test.ts](#23-compactiontestts--20-tests)
    - [health-check.test.ts](#24-health-checktestts--13-tests)
    - [task-classifier.test.ts](#25-task-classifiertestts--15-tests)
@@ -60,9 +60,9 @@ The SkillFoundry test suite validates the entire stack from low-level utility fu
 
 | Layer | Tests | Files | Framework |
 |-------|-------|-------|-----------|
-| TypeScript Unit Tests | 380 | 27 | Vitest |
+| TypeScript Unit Tests | 382 | 27 | Vitest |
 | Shell Integration Tests | 198+ | 8 | Custom bash runner |
-| **Total** | **558+** | **35** | — |
+| **Total** | **560+** | **35** | — |
 
 ### What the tests protect
 
@@ -580,7 +580,7 @@ All TypeScript tests live in `sf_cli/src/__tests__/` and use **Vitest** with `vi
 
 ---
 
-### 22. pipeline.test.ts — 18 tests
+### 22. pipeline.test.ts — 20 tests
 
 **Source:** `sf_cli/src/core/pipeline.ts`
 **What it protects:** The Forge pipeline engine — PRD→stories→implementation→gates→debrief
@@ -603,6 +603,10 @@ All TypeScript tests live in `sf_cli/src/__tests__/` and use **Vitest** with `vi
 | 14 | Micro-gate FAIL triggers fixer | MG1 returns FAIL, T1 passes | Fixer agent invoked with micro-gate findings | Cross-agent enforcement works |
 | 15 | Micro-gate callbacks fire | Provide `onMicroGateResult` callback | Callback called for MG1, MG2, MG3 | UI shows micro-gate progress in real time |
 | 16 | MG3 advisory does not block | MG3 returns FAIL, T1-T6 pass | Pipeline verdict is PASS, advisory recorded | Advisory gates are informational only |
+| 17 | Skips already-completed stories | Create stories with `status: DONE` | Only pending stories are implemented | Pipeline resume skips finished work |
+| 18 | Marks stories DONE on completion | Story passes all gates | Story file updated from `status: PENDING` to `status: DONE` | Enables pipeline resume on re-run |
+| 19 | Micro-gate provider error handled | MG1 returns provider error content | Marked `skippedDueToError`, no fixer triggered | Provider failures don't block stories |
+| 20 | T1 advisory does not block | T1 fails but micro-gates pass | Story still marked as passed | T1 is advisory post-story; TEMPER is the real gate |
 
 **Value:** The pipeline is the top-level orchestrator that turns PRDs into production code. It coordinates AI, tools, gates, micro-gates, and persistence — a bug here breaks the entire Forge workflow.
 

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.34] - 2026-03-05
+
+### Changed — Documentation & Version Update
+
+- Updated README with structured logging section, pipeline resume documentation, and cross-platform (Git Bash / WSL) support notes
+- Updated test count to 382 (from 380) reflecting new pipeline resume tests
+- Updated USER-GUIDE-CLI.md with structured logging configuration reference
+- Updated TEST-SUITE-REFERENCE.md with current test counts
+
+---
+
 ## [2.0.33] - 2026-03-05
 
 ### Fixed — Git Bash / WSL Anvil Script Discovery
@@ -39,6 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `gates.ts` — T1-T6 gate results and failures
 - `budget.ts` — threshold warnings when >80% of monthly budget consumed
 - `executor.ts` — tool call start/complete at DEBUG level with duration
+
+### Fixed — Pipeline Resume
+
+**Pipeline marks stories DONE after successful completion**
+- Previously, completed stories were never marked in their `.md` files, so re-running `/forge` would re-implement all stories from scratch. Now `status: PENDING` is updated to `status: DONE` in the story file after successful completion.
+- Re-running `/forge` skips stories already marked DONE, implementing only remaining pending stories.
+- Two new tests added: story-mark-done validation and pipeline resume behavior (382 total).
 
 ---
 
