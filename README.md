@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.35-blue)
+![Version](https://img.shields.io/badge/version-2.0.36-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -330,6 +330,8 @@ memory_bank/
     └── weights.json             Weight adjustment history
 ```
 
+**Automatic pipeline harvesting:** Every `/forge` run automatically writes knowledge entries to `memory_bank/knowledge/*.jsonl` — run summaries, failed story errors, micro-gate findings, and gate verdicts. No manual invocation needed.
+
 **In the CLI:**
 ```
 /memory stats                              Show memory bank statistics
@@ -561,7 +563,7 @@ skillfoundry/
                     └─────────────┘
 ```
 
-`/forge` runs this entire pipeline in one command. It discovers PRDs, generates stories, implements each story with the agentic tool-use loop, runs micro-gates (MG1 security + MG2 standards per story, MG3 cross-story review), runs T1-T6 quality gates (with auto-fixer retries), and persists run metadata. Use `/forge --dry-run` for a read-only scan.
+`/forge` runs this entire pipeline in one command. It discovers PRDs, generates stories, implements each story with the agentic tool-use loop, runs micro-gates (MG1 security + MG2 standards per story, MG3 cross-story review), runs T1-T6 quality gates (with auto-fixer retries), persists run metadata, and automatically harvests knowledge entries (run summaries, errors, gate verdicts) to `memory_bank/knowledge/*.jsonl`. Use `/forge --dry-run` for a read-only scan.
 
 ---
 

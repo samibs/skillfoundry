@@ -8,6 +8,7 @@ import { runAgentLoop } from './ai-runner.js';
 import { runAllGates, runSingleGate } from './gates.js';
 import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from './micro-gates.js';
 import { runFinisher } from './finisher.js';
+import { harvestRunMemory } from './memory-harvest.js';
 import type { GateRunSummary } from './gates.js';
 import { ALL_TOOLS } from './tools.js';
 import { getLogger } from '../utils/logger.js';
@@ -697,7 +698,25 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
 
   writeFileSync(join(runsDir, `${runId}.json`), JSON.stringify(runBundle, null, 2), 'utf-8');
 
-  updatePhase('DEBRIEF', 'passed', Date.now() - debriefStart, `Run saved: ${RUNS_DIR}/${runId}.json`);
+  // Harvest knowledge entries to memory_bank/knowledge/*.jsonl
+  const harvestResult = harvestRunMemory({
+    runId,
+    workDir,
+    storiesCompleted,
+    storiesFailed,
+    storiesTotal: allStoryFiles.length,
+    totalCostUsd,
+    gateVerdict,
+    gateSummary: gateSummary
+      ? { passed: gateSummary.passed, failed: gateSummary.failed, warned: gateSummary.warned }
+      : null,
+    storyExecutions,
+    microGateResults: allMicroGateResults,
+    prdFiles: prds.map((p) => `genesis/${p.file}`),
+  });
+  log.info('pipeline', 'memory_harvest', { entriesWritten: harvestResult.entriesWritten });
+
+  updatePhase('DEBRIEF', 'passed', Date.now() - debriefStart, `Run saved: ${RUNS_DIR}/${runId}.json | ${harvestResult.entriesWritten} knowledge entries`);
   callbacks?.onPhaseComplete?.('DEBRIEF', 'passed');
 
   // ── Phase 7: FINISH ────────────────────────────────────

@@ -26,11 +26,17 @@ vi.mock('../core/finisher.js', () => ({
   runFinisher: vi.fn(),
 }));
 
+// Mock memory harvester so pipeline tests don't write to real memory_bank/
+vi.mock('../core/memory-harvest.js', () => ({
+  harvestRunMemory: vi.fn(() => ({ entriesWritten: 0 })),
+}));
+
 import { runPipeline, scanPRDs, scanStories } from '../core/pipeline.js';
 import { runAgentLoop } from '../core/ai-runner.js';
 import { runAllGates, runSingleGate } from '../core/gates.js';
 import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from '../core/micro-gates.js';
 import { runFinisher } from '../core/finisher.js';
+import { harvestRunMemory } from '../core/memory-harvest.js';
 import type { SfConfig, SfPolicy, FinisherSummary } from '../types.js';
 
 const TEST_DIR = join(tmpdir(), 'sf-pipeline-test-' + Date.now());
@@ -1025,5 +1031,48 @@ describe('runPipeline', () => {
     expect(onFinisherCheck).toHaveBeenCalledTimes(2);
     expect(onFinisherCheck).toHaveBeenCalledWith(expect.objectContaining({ check: 'version' }));
     expect(onFinisherCheck).toHaveBeenCalledWith(expect.objectContaining({ check: 'test-count' }));
+  });
+
+  // ── Memory harvest integration tests ─────────────────────────
+
+  it('calls harvestRunMemory once during DEBRIEF phase', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-harv.md'), '# Harvest Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'harv');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    vi.mocked(runSingleGate).mockReturnValue({
+      tier: 'T1', name: 'Banned Patterns', status: 'pass', detail: '', durationMs: 50,
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+    });
+
+    expect(harvestRunMemory).toHaveBeenCalledTimes(1);
+    expect(harvestRunMemory).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runId: expect.any(String),
+        workDir: TEST_DIR,
+        storiesCompleted: expect.any(Number),
+        storiesFailed: expect.any(Number),
+        storiesTotal: expect.any(Number),
+        totalCostUsd: expect.any(Number),
+        gateVerdict: expect.any(String),
+        prdFiles: expect.arrayContaining(['genesis/2026-01-01-harv.md']),
+      }),
+    );
   });
 });
