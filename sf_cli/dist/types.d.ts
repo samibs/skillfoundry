@@ -12,7 +12,7 @@ export interface Message {
         outputTokens?: number;
         costUsd?: number;
         thinkingContent?: string;
-        mode?: 'chat' | 'agent';
+        mode?: 'chat' | 'agent' | 'pipeline';
         activeAgent?: string;
         fallbackUsed?: string;
         routedAgent?: string;

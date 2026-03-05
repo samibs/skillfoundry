@@ -276,6 +276,21 @@ export const forgeCommand: SlashCommand = {
       last_run_id: result.runId,
     });
 
-    return formatPipelineResult(result);
+    // Add the result as a message with cost metadata so the header bar updates
+    session.addMessage({
+      role: 'assistant',
+      content: formatPipelineResult(result),
+      metadata: {
+        provider: session.config.provider,
+        model: session.config.model,
+        inputTokens: result.totalTokens.input,
+        outputTokens: result.totalTokens.output,
+        costUsd: result.totalCostUsd,
+        mode: 'pipeline',
+      },
+    });
+
+    // Return empty — we already added the message with metadata above
+    return '';
   },
 };
