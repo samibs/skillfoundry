@@ -194,10 +194,10 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
 
   // ── Phase 2: PLAN ──────────────────────────────────────
 
-  callbacks?.onPhaseStart?.('PLAN', 'Generating stories from PRDs');
+  callbacks?.onPhaseStart?.('PLAN', 'Checking for existing stories');
   const planStart = Date.now();
 
-  const allStoryFiles: Array<{ prdSlug: string; storyFile: string; storyPath: string }> = [];
+  const allStoryFiles: Array<{ prdSlug: string; storyFile: string; storyPath: string; alreadyDone: boolean }> = [];
 
   for (const prd of prds) {
     const storyDir = join(workDir, 'docs', 'stories', prd.slug);
@@ -206,18 +206,25 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
       : [];
 
     if (existingStories.length > 0) {
-      // Reuse existing stories
+      // Reuse existing stories — check which ones are already completed
       for (const sf of existingStories.sort()) {
+        const sfPath = join(storyDir, sf);
+        const sfContent = readFileSync(sfPath, 'utf-8');
+        const isDone = /status:\s*(DONE|COMPLETED|IMPLEMENTED)/i.test(sfContent);
         allStoryFiles.push({
           prdSlug: prd.slug,
           storyFile: sf,
-          storyPath: join(storyDir, sf),
+          storyPath: sfPath,
+          alreadyDone: isDone,
         });
       }
+      const doneCount = allStoryFiles.filter((s) => s.prdSlug === prd.slug && s.alreadyDone).length;
+      callbacks?.onPhaseStart?.('PLAN', `Found ${existingStories.length} existing stories for ${prd.slug} (${doneCount} already done)`);
       continue;
     }
 
-    // Generate stories via AI
+    // No existing stories — generate via AI
+    callbacks?.onPhaseStart?.('PLAN', `Generating stories for ${prd.slug}`);
     const storyMessages: AnthropicMessage[] = [
       {
         role: 'user',
@@ -287,7 +294,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
       );
 
       writeFileSync(storyPath, normalizedContent, 'utf-8');
-      allStoryFiles.push({ prdSlug: prd.slug, storyFile: filename, storyPath });
+      allStoryFiles.push({ prdSlug: prd.slug, storyFile: filename, storyPath, alreadyDone: false });
     }
   }
 
@@ -297,20 +304,43 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     return buildResult(runId, phases, storyExecutions, gateVerdict, totalCostUsd, totalInputTokens, totalOutputTokens, pipelineStart, prds, workDir);
   }
 
-  updatePhase('PLAN', 'passed', Date.now() - planStart, `${allStoryFiles.length} stories ready`);
+  const doneStories = allStoryFiles.filter((s) => s.alreadyDone).length;
+  const pendingStories = allStoryFiles.length - doneStories;
+  const planDetail = doneStories > 0
+    ? `${allStoryFiles.length} stories found (${doneStories} done, ${pendingStories} pending)`
+    : `${allStoryFiles.length} stories ready`;
+  updatePhase('PLAN', 'passed', Date.now() - planStart, planDetail);
   callbacks?.onPhaseComplete?.('PLAN', 'passed');
 
   // ── Phase 3: FORGE ─────────────────────────────────────
 
-  callbacks?.onPhaseStart?.('FORGE', `Implementing ${allStoryFiles.length} stories`);
+  // Filter to only pending stories — skip already-completed ones
+  const pendingStoryFiles = allStoryFiles.filter((s) => !s.alreadyDone);
+  const skippedCount = allStoryFiles.length - pendingStoryFiles.length;
+
+  const forgeDetail = skippedCount > 0
+    ? `Implementing ${pendingStoryFiles.length} stories (${skippedCount} already done, skipped)`
+    : `Implementing ${pendingStoryFiles.length} stories`;
+  callbacks?.onPhaseStart?.('FORGE', forgeDetail);
   const forgeStart = Date.now();
-  let storiesCompleted = 0;
+  let storiesCompleted = skippedCount; // Count already-done as completed
   let storiesFailed = 0;
 
-  for (let i = 0; i < allStoryFiles.length; i++) {
-    const { storyFile, storyPath } = allStoryFiles[i];
+  // Record skipped stories in execution log
+  for (const skipped of allStoryFiles.filter((s) => s.alreadyDone)) {
+    storyExecutions[skipped.storyFile] = {
+      storyFile: skipped.storyFile,
+      status: 'completed',
+      turnCount: 0,
+      costUsd: 0,
+      fixerAttempts: 0,
+    };
+  }
 
-    callbacks?.onStoryStart?.(storyFile, i, allStoryFiles.length);
+  for (let i = 0; i < pendingStoryFiles.length; i++) {
+    const { storyFile, storyPath } = pendingStoryFiles[i];
+
+    callbacks?.onStoryStart?.(storyFile, i, pendingStoryFiles.length);
 
     const storyContent = readFileSync(storyPath, 'utf-8');
 
