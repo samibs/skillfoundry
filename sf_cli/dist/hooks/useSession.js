@@ -1,9 +1,17 @@
 import { useState, useCallback, useRef } from 'react';
 import { loadConfig, loadPolicy } from '../core/config.js';
 import { loadState, updateState } from '../core/session.js';
+import { initLogger } from '../utils/logger.js';
 export function useSession(workDir) {
     const [messages, setMessages] = useState([]);
-    const [config] = useState(() => loadConfig(workDir));
+    const [config] = useState(() => {
+        const cfg = loadConfig(workDir);
+        // Initialize the structured logger with the configured log level
+        const level = (cfg.log_level || 'info').toUpperCase();
+        const validLevels = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
+        initLogger(workDir, validLevels.includes(level) ? level : 'INFO');
+        return cfg;
+    });
     const [policy] = useState(() => loadPolicy(workDir));
     const [state, setStateLocal] = useState(() => loadState(workDir));
     const [permissionMode] = useState('ask');
