@@ -16,6 +16,11 @@ const IS_WINDOWS = process.platform === 'win32';
 const WHICH_CMD = IS_WINDOWS ? 'where' : 'which';
 const NULL_DEVICE = IS_WINDOWS ? 'NUL' : '/dev/null';
 
+// Detect Windows drive-letter paths (C:\... or C:/...) even when process.platform reports 'linux' (Git Bash, WSL)
+function hasWindowsDrivePath(p: string): boolean {
+  return /^[A-Za-z]:[/\\]/.test(p);
+}
+
 export type GateStatus = 'pass' | 'fail' | 'warn' | 'skip' | 'running';
 
 export interface GateResult {
@@ -54,10 +59,14 @@ function runCommand(cmd: string, cwd: string, timeoutMs: number = 60_000): { ok:
 }
 
 function findAnvilScript(workDir: string): string | null {
-  // Extensions to check: .ps1/.cmd on Windows (bash can't handle C:/ paths), .sh on Unix
-  const extensions = IS_WINDOWS
-    ? ['anvil.ps1', 'anvil.cmd']
-    : ['anvil.sh', 'anvil'];
+  // Detect Windows environment: process.platform OR drive-letter paths (covers Git Bash / WSL)
+  const isWinEnv = IS_WINDOWS || hasWindowsDrivePath(workDir);
+
+  // On Windows-like environments, prefer native scripts (.ps1/.cmd) but fall back to .sh
+  // because Git Bash / WSL can still run bash scripts with Windows drive-letter paths.
+  const extensions = isWinEnv
+    ? ['anvil.ps1', 'anvil.cmd', 'anvil.sh', 'anvil']
+    : ['anvil.sh', 'anvil', 'anvil.ps1', 'anvil.cmd'];
 
   const candidates: string[] = [];
 
@@ -76,8 +85,10 @@ function findAnvilScript(workDir: string): string | null {
     // Framework root not available — skip framework candidates
   }
 
-  for (const path of candidates) {
-    if (existsSync(path)) return path;
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return candidate;
+    }
   }
   return null;
 }
@@ -89,8 +100,10 @@ function anvilCommand(anvilPath: string, args: string): string {
   if (anvilPath.endsWith('.cmd')) {
     return `"${anvilPath}" ${args}`;
   }
-  // On Windows, convert backslash paths to forward slashes for bash/sh compatibility
-  const safePath = IS_WINDOWS ? anvilPath.replace(/\\/g, '/') : anvilPath;
+  // Convert backslash paths to forward slashes for bash compatibility (native Windows + Git Bash)
+  const safePath = (IS_WINDOWS || hasWindowsDrivePath(anvilPath))
+    ? anvilPath.replace(/\\/g, '/')
+    : anvilPath;
   return `bash "${safePath}" ${args}`;
 }
 

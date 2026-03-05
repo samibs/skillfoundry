@@ -51,19 +51,21 @@ function validateFrameworkRoot(dir) {
 }
 /**
  * Get the path to the anvil script in the framework root.
- * On Windows, looks for .ps1/.cmd; on Unix, looks for .sh or extensionless.
+ * On Windows-like environments, prefers .ps1/.cmd but falls back to .sh
+ * (Git Bash / WSL can run bash scripts with Windows drive-letter paths).
  * Returns null if the script does not exist.
  */
 export function getAnvilScript() {
     const root = getFrameworkRoot();
-    const isWindows = process.platform === 'win32';
-    const extensions = isWindows
-        ? ['anvil.ps1', 'anvil.cmd']
-        : ['anvil.sh', 'anvil'];
+    // Detect Windows: process.platform OR drive-letter paths (Git Bash / WSL)
+    const isWinEnv = process.platform === 'win32' || /^[A-Za-z]:[/\\]/.test(root);
+    const extensions = isWinEnv
+        ? ['anvil.ps1', 'anvil.cmd', 'anvil.sh', 'anvil']
+        : ['anvil.sh', 'anvil', 'anvil.ps1', 'anvil.cmd'];
     for (const ext of extensions) {
-        const path = join(root, 'scripts', ext);
-        if (existsSync(path))
-            return path;
+        const p = join(root, 'scripts', ext);
+        if (existsSync(p))
+            return p;
     }
     return null;
 }
