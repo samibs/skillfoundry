@@ -239,7 +239,7 @@ export interface PipelineCallbacks {
     onPhaseComplete?: (phase: string, status: PipelinePhaseStatus) => void;
     onStoryStart?: (story: string, index: number, total: number) => void;
     onStoryComplete?: (story: string, passed: boolean, cost: number) => void;
-    onGateResult?: (tier: string, status: string) => void;
+    onGateResult?: (tier: string, status: string, detail?: string) => void;
     onMicroGateResult?: (result: MicroGateResult) => void;
     onFinisherCheck?: (result: FinisherCheckResult) => void;
     requestPermission?: (toolCall: ToolCall, reason: string) => Promise<'allow' | 'deny'>;

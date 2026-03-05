@@ -313,7 +313,7 @@ export async function runPipeline(options) {
         }
         // Quick T1 gate check after story implementation
         const t1Result = runSingleGate('T1', workDir, '.');
-        callbacks?.onGateResult?.('T1', t1Result.status);
+        callbacks?.onGateResult?.('T1', t1Result.status, t1Result.detail);
         const mgFailed = mgResults.some((r) => r.verdict === 'FAIL');
         if (t1Result.status === 'fail' || mgFailed) {
             // Fixer loop: attempt to fix T1 violations and/or micro-gate failures
@@ -385,7 +385,7 @@ export async function runPipeline(options) {
         workDir,
         target: '.',
         onGateComplete: (result) => {
-            callbacks?.onGateResult?.(result.tier, result.status);
+            callbacks?.onGateResult?.(result.tier, result.status, result.detail);
         },
     });
     gateVerdict = gateSummary.verdict;
