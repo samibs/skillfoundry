@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.27] - 2026-03-05
+
+### Fixed — Forge Pipeline Skips Already-Completed Stories
+
+- **PLAN phase**: Now checks for existing stories before generating new ones. Reports per-PRD: `Found 5 existing stories for auth-system (3 done, 2 pending)` — only calls the AI when stories don't exist yet.
+- **FORGE phase**: Skips stories already marked `status: DONE/COMPLETED/IMPLEMENTED`. Previously re-implemented every story on each `/forge` run, wasting API calls and time.
+- Progress output now shows: `Implementing 2 stories (3 already done, skipped)` so users know exactly what's happening.
+
+### Added
+
+- **`/model` command**: List known models for the active provider and switch models instantly (`/model gpt-4.1-mini`). More discoverable than `/config model`.
+
+### Fixed — Graceful Error Handling for Model Access Errors
+
+- CLI no longer crashes when the configured AI model is inaccessible. Errors are classified (model access, auth, billing, SSL, network) with actionable fix instructions.
+- `NON_RETRYABLE` regex expanded to fail fast on model access and billing errors instead of retrying 3 times.
+
+---
+
 ## [2.0.26] - 2026-03-05
 
 ### Fixed — Graceful Error Handling for Model Access Errors
