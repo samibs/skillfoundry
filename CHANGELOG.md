@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.30] - 2026-03-05
+
+### Fixed — Pipeline Reliability Overhaul (First Real-Use Fixes)
+
+Four fundamental issues discovered during the first real `/forge` pipeline run where all 20 stories failed:
+
+**Post-story T1 gate is now advisory (does not block story completion)**
+- Previously, the post-story T1 scan checked the entire project directory and found pre-existing TODOs in documentation, genesis files, and framework code — causing every single story to fail. T1 is now advisory after each story; only micro-gate FAILs (MG1 security, MG2 standards) trigger the fixer loop. The full T1-T6 TEMPER phase remains the real quality gate.
+
+**T1 gate excludes framework and documentation directories**
+- T1 banned-pattern scan now excludes `genesis/`, `docs/`, `memory_bank/`, `.claude/`, `scratchpads/`, `coverage/`, and other non-application directories. Also excludes `CHANGELOG.md` and test files where TODO/FIXME patterns are legitimate.
+
+**Windows path fix in INSPECT phase**
+- The security audit phase passed a Windows-style path (`C:\apps\...`) to `/bin/bash`, causing the script to fail. Backslashes are now converted to forward slashes on Windows.
+
+**Resilient micro-gate response parser**
+- The parser expected AI output in an exact format (`VERDICT: PASS`, `FINDINGS:` with `- [SEVERITY]`). Real AI output uses markdown formatting (`**VERDICT:** WARN`), numbered lists, bullet variants (`*`, `•`), and sometimes omits the SUMMARY line. The parser now handles all these variations with fallback summary generation.
+
+**Pipeline tests updated** to reflect new T1-advisory behavior (380/380 passing).
+
+---
+
 ## [2.0.29] - 2026-03-05
 
 ### Fixed — Pipeline Cost Tracking + Story Execution Quality
