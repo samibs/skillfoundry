@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.36] - 2026-03-05
+
+### Added — Automatic Memory Harvesting in Pipeline
+
+- **New `memory-harvest.ts` module** — `harvestRunMemory()` automatically writes knowledge entries to `memory_bank/knowledge/*.jsonl` after every forge run. No AI prompt dependency — works identically on every platform.
+- **Harvested entry types**: run summary facts, failed story errors, MG FAIL finding errors, and gate verdict facts. All entries follow the full JSONL schema documented in `memory_bank/knowledge/README.md`.
+- **Deduplication**: reads last 50 lines of target file before appending, skips entries with identical content.
+- **Pipeline integration**: called during DEBRIEF phase after persisting the run bundle. DEBRIEF detail now includes harvest count.
+- **14 new tests** (13 in `memory-harvest.test.ts`, 1 in `pipeline.test.ts`) covering schema compliance, deduplication, zero-story runs, MG findings, gate verdicts, and pipeline integration.
+
+---
+
 ## [2.0.35] - 2026-03-05
 
 ### Changed — Two-Pass Pipeline (FORGE + POLISH)

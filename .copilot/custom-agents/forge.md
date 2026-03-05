@@ -59,8 +59,9 @@ Execute these phases in order:
 ```
 /gohm
 ```
-- Extract lessons learned to memory bank
-- Decisions, corrections, patterns recorded
+- Extract lessons learned to `memory_bank/` (NOT Copilot's built-in memory-tool)
+- Decisions, corrections, patterns recorded to `memory_bank/knowledge/*.jsonl`
+- Do NOT use Copilot's internal `WorkspaceStorage/` — it is not portable across platforms
 
 **PHASE 6: DEBRIEF** — Write session summary
 - Auto-write a scratchpad summary to `.claude/scratchpad.md`

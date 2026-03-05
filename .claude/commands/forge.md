@@ -59,8 +59,9 @@ Execute these phases in order:
 ```
 /gohm
 ```
-- Extract lessons learned to memory bank
-- Decisions, corrections, patterns recorded
+- Extract lessons learned to `memory_bank/` (NOT any platform-internal memory tool)
+- Decisions, corrections, patterns recorded to `memory_bank/knowledge/*.jsonl`
+- All knowledge must be portable across platforms — never save to platform-specific storage
 
 **PHASE 6: DEBRIEF** — Write session summary
 - Auto-write a scratchpad summary to `.claude/scratchpad.md`

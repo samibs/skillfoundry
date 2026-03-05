@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.35** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, structured logging, and local-first development.
+> **v2.0.36** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, structured logging, and local-first development.
 
 ---
 
