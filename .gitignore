@@ -66,6 +66,7 @@ node_modules/
 __pycache__/
 *.pyc
 dist/
+!sf_cli/dist/
 build/
 .next/
 .nuxt/

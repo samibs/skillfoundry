@@ -1,0 +1,47 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useCallback } from 'react';
+import { Box, useApp } from 'ink';
+import { Header } from './components/Header.js';
+import { MessageList } from './components/MessageList.js';
+import { StreamingMessage } from './components/StreamingMessage.js';
+import { ToolCallDisplay } from './components/ToolCall.js';
+import { PermissionPrompt } from './components/PermissionPrompt.js';
+import { Input } from './components/Input.js';
+import { StatusBar } from './components/StatusBar.js';
+import { useSession } from './hooks/useSession.js';
+import { useStream } from './hooks/useStream.js';
+import { parseSlashCommand, getCommand, initCommands, } from './commands/index.js';
+initCommands();
+export function App({ workDir }) {
+    const { exit } = useApp();
+    const { messages, config, policy, state, permissionMode, activeAgent, activeTeam, addMessage, sessionContext, } = useSession(workDir);
+    const { isStreaming, streamContent, thinkingContent, activeTools, pendingPermission, sendMessage, abort, handlePermissionResponse, streamingAgent, streamingTurnCount, sessionInputTokens, sessionOutputTokens, } = useStream(config, policy, addMessage, workDir);
+    const sessionCost = messages
+        .filter((m) => m.metadata?.costUsd)
+        .reduce((sum, m) => sum + (m.metadata.costUsd || 0), 0);
+    const handleSubmit = useCallback(async (input) => {
+        const parsed = parseSlashCommand(input);
+        if (parsed) {
+            if (parsed.name === 'exit' || parsed.name === 'quit') {
+                exit();
+                return;
+            }
+            const cmd = getCommand(parsed.name);
+            if (cmd) {
+                const result = await cmd.execute(parsed.args, sessionContext);
+                if (result) {
+                    addMessage({ role: 'system', content: result });
+                }
+                return;
+            }
+            addMessage({
+                role: 'system',
+                content: `Unknown command: /${parsed.name}. Type /help for available commands.`,
+            });
+            return;
+        }
+        await sendMessage(input, messages, permissionMode, activeAgent, activeTeam);
+    }, [messages, sendMessage, addMessage, sessionContext, exit, permissionMode, activeAgent, activeTeam]);
+    return (_jsxs(Box, { flexDirection: "column", children: [_jsx(Header, { provider: config.provider, model: config.model, costSession: sessionCost, budgetMonthly: config.monthly_budget_usd, messageCount: messages.length, state: state.current_state, activeAgent: activeAgent, activeTeam: activeTeam, sessionInputTokens: sessionInputTokens, sessionOutputTokens: sessionOutputTokens }), _jsxs(Box, { flexDirection: "column", paddingX: 1, marginY: 1, children: [_jsx(MessageList, { messages: messages }), activeTools.map((tool) => (_jsx(ToolCallDisplay, { toolCall: tool.toolCall, result: tool.result, isExecuting: tool.isExecuting }, tool.toolCall.id))), pendingPermission && (_jsx(PermissionPrompt, { toolCall: pendingPermission.toolCall, reason: pendingPermission.reason, onRespond: handlePermissionResponse })), isStreaming && !pendingPermission && (_jsx(StreamingMessage, { content: streamContent, isStreaming: isStreaming, thinkingContent: thinkingContent, agentName: streamingAgent, turnCount: streamingTurnCount, sessionInputTokens: sessionInputTokens, sessionOutputTokens: sessionOutputTokens }))] }), _jsx(Input, { onSubmit: handleSubmit, isDisabled: isStreaming }), _jsx(StatusBar, { provider: config.provider, permissionMode: permissionMode, isStreaming: isStreaming, activeAgent: activeAgent, activeTeam: activeTeam, streamingAgent: streamingAgent, streamingTurnCount: streamingTurnCount })] }));
+}
+//# sourceMappingURL=app.js.map
