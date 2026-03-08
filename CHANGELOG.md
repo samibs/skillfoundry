@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.38] - 2026-03-08
+
+### Added — Correctness Contracts
+
+- **MG0 — Pre-generation AC validation gate**: Validates `done_when` / acceptance criteria are objectively verifiable before the coder fires. Returns WARN for legacy stories without `done_when` (backward compatible). Checks for subjective language like "works correctly", "looks good", "handles edge cases properly".
+- **T0 — Correctness Contract gate**: Zero-cost static check added as the first Anvil tier (T0, before T1). Fuzzy-matches `done_when` items against test file content using keyword extraction. No AI calls, no build required — runs in milliseconds.
+- **MG1.5 — Test documentation gate**: AI review checking `@test-suite` headers, `@story`/`@rationale` metadata, GIVEN/WHEN/THEN structure comments, and WHY comments explaining what contract each test enforces. On FAIL, re-triggers the tester agent (not fixer) to add intent documentation.
+- **Story format: `done_when` / `fail_when` blocks**: Story generation prompt now includes correctness contract sections with objectivity guidance. Every `done_when` item must be testable without human judgment.
+- **Pipeline integration**: MG0 wired before coder in FORGE phase, MG1.5 wired in POLISH phase (between MG1/MG2), T0 wired in TEMPER phase (before T1). MG1.5 failures trigger tester re-run capped at 1 retry.
+- **`/ac` skill**: Acceptance criteria validator — checks `done_when` items for subjective language across all stories.
+- **`/doc-tests` skill**: Test documentation checker — validates `@test-suite` headers, GWT+WHY comments across test files.
+- **Anvil upgraded to 7-tier** (T0-T6): `_anvil-protocol.md` updated with T0 Correctness Contract tier.
+- **Tester agent Phase 3.5**: `ruthless-tester.md` updated with test intent documentation requirements and escalation rule.
+- **7 new tests** for MG0, MG1.5, and safety overrides in `micro-gates.test.ts`. Pipeline and gate test counts updated. **405 total tests passing.**
+
+---
+
 ## [2.0.37] - 2026-03-05
 
 ### Added — Platform Memory Migration

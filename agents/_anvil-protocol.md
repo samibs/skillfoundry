@@ -1,4 +1,4 @@
-# The Anvil — 6-Tier Quality Gate Protocol
+# The Anvil — 7-Tier Quality Gate Protocol
 
 **Version**: 1.0
 **Status**: ACTIVE
@@ -8,16 +8,17 @@
 
 ## Purpose
 
-The Anvil is a multi-tier validation system that runs between every agent phase in the story execution pipeline. It catches issues at the source — before they cascade through the chain and require expensive re-runs.
+The Anvil is a 7-tier validation system that runs between every agent phase in the story execution pipeline. It catches issues at the source — before they cascade through the chain and require expensive re-runs.
 
 **Core insight**: LLMs generate code optimistically (forward, single-pass) but debug analytically (backwards from evidence). The Anvil forces analytical validation at every handoff point, not just at the end.
 
 ---
 
-## The 6 Tiers
+## The 7 Tiers
 
 | Tier | Name | Type | When | What It Catches |
 |------|------|------|------|-----------------|
+| **T0** | Correctness Contract | Static check (no LLM, no build) | Before any agent runs | Missing tests for completed story acceptance criteria — every `done_when` item must have a corresponding test |
 | **T1** | Shell Pre-Flight | Shell script (no LLM) | Between EVERY agent handoff | Syntax errors, banned patterns, missing files, broken imports |
 | **T2** | Canary Smoke Test | Quick execution test | After Coder, before Tester | Fundamental breakage — module won't import, won't compile |
 | **T3** | Self-Adversarial Review | Coder self-critique | After Coder writes code | Coder's blind spots, untested failure modes |
@@ -33,6 +34,10 @@ The Anvil is a multi-tier validation system that runs between every agent phase 
 
 ```
 FOR EACH story:
+
+  0. ANVIL T0: Correctness Contract check
+     └── For completed stories: verify every done_when item has a matching test
+     └── Uses fuzzy keyword matching against test file content (no AI, no build)
 
   1. Architect designs solution
      └── ANVIL T1: Validate file references in architect output
@@ -52,6 +57,7 @@ FOR EACH story:
 
 ### Fast-Fail Behavior
 
+- **T0 FAIL** → Block pipeline, done_when items lack test coverage — route to Tester
 - **T1 FAIL after Architect** → Block Coder, route to Fixer
 - **T1 FAIL after Coder** → Block Tester, route to Fixer
 - **T2 FAIL (canary)** → Skip Tester entirely, route to Fixer
@@ -149,6 +155,7 @@ Each tier has a dedicated protocol file:
 
 | Tier | Protocol File |
 |------|--------------|
+| T0 | Static check — fuzzy keyword match of `done_when` items against test files (no external script) |
 | T1 | `scripts/anvil.sh` (shell script) |
 | T2 | `agents/_canary-smoke-test.md` |
 | T3 | `agents/_self-adversarial-review.md` |
@@ -164,6 +171,7 @@ Track Anvil effectiveness:
 
 | Metric | Target |
 |--------|--------|
+| T0 coverage gap detection (missing tests for done_when) | >90% of untested criteria caught |
 | T1 catch rate (issues caught before LLM agents) | >40% of all violations |
 | T2 canary catch rate (broken code before Tester) | >80% of import/compile errors |
 | T3 adversarial miss rate (failures coder missed) | <20% unmitigated failure modes |
@@ -175,7 +183,7 @@ Track Anvil effectiveness:
 
 ## Design Principles
 
-1. **Cheap checks first**: T1 (shell) catches 60%+ of issues with zero LLM cost
+1. **Cheap checks first**: T0 (static) and T1 (shell) catch 60%+ of issues with zero LLM cost
 2. **Fast-fail**: Don't run expensive agents on broken code
 3. **Non-destructive**: Anvil only reads and validates — never modifies code
 4. **Additive**: Anvil supplements existing Gate-Keeper, never replaces it

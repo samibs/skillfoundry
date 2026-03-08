@@ -6,7 +6,7 @@
 // T5: Build verification (npm run build / cargo build / etc.)
 // T6: Scope validation (anvil.sh scope)
 import { execSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getFrameworkRoot } from './framework.js';
 import { getLogger } from '../utils/logger.js';
@@ -84,6 +84,98 @@ function detectProjectType(workDir) {
         hasPython: existsSync(join(workDir, 'requirements.txt')) || existsSync(join(workDir, 'pyproject.toml')),
         hasCargo: existsSync(join(workDir, 'Cargo.toml')),
         hasDotnet: existsSync(join(workDir, '*.csproj')) || existsSync(join(workDir, '*.sln')),
+    };
+}
+// T0: Correctness Contract — checks that each done_when item has a corresponding test
+// Zero-cost static check: grep for @done_when tags in test files, match against story ACs.
+function runT0(workDir) {
+    const start = Date.now();
+    const storiesDir = join(workDir, 'docs', 'stories');
+    if (!existsSync(storiesDir)) {
+        return {
+            tier: 'T0',
+            name: 'Correctness Contract',
+            status: 'skip',
+            detail: 'No stories directory found',
+            durationMs: Date.now() - start,
+        };
+    }
+    // Collect done_when items from all PENDING/in-progress stories
+    let totalDoneWhen = 0;
+    let coveredDoneWhen = 0;
+    const uncovered = [];
+    // Find all test files with @done_when tags
+    let testContent = '';
+    const testPatterns = ['**/*.test.ts', '**/*.spec.ts', '**/*.test.js', '**/*.spec.js', '**/test_*.py'];
+    for (const pattern of testPatterns) {
+        try {
+            const { ok, output } = runCommand(`grep -r "@done_when\\|@story\\|@test-suite" --include="${pattern.split('/').pop()}" "${workDir}" 2>/dev/null || true`, workDir, 10_000);
+            if (ok)
+                testContent += output;
+        }
+        catch {
+            // Best-effort search
+        }
+    }
+    // Scan story directories for done_when items
+    try {
+        const storyDirs = readdirSync(storiesDir, { withFileTypes: true })
+            .filter((d) => d.isDirectory());
+        for (const dir of storyDirs) {
+            const storyDirPath = join(storiesDir, dir.name);
+            const storyFiles = readdirSync(storyDirPath)
+                .filter((f) => f.startsWith('STORY-') && f.endsWith('.md'));
+            for (const sf of storyFiles) {
+                const content = readFileSync(join(storyDirPath, sf), 'utf-8');
+                // Only check stories that were recently implemented (status: DONE)
+                if (!/status:\s*DONE/i.test(content))
+                    continue;
+                // Extract done_when items (lines starting with - [ ] under done_when section)
+                const doneWhenMatch = content.match(/done_when:?\s*\n([\s\S]*?)(?=\n(?:fail_when|##|\n\n))/i);
+                if (!doneWhenMatch)
+                    continue;
+                const items = doneWhenMatch[1]
+                    .split('\n')
+                    .map((l) => l.replace(/^\s*-\s*\[.\]\s*/, '').trim())
+                    .filter((l) => l.length > 10);
+                for (const item of items) {
+                    totalDoneWhen++;
+                    // Check if any test file references this item (fuzzy substring match)
+                    const itemWords = item.toLowerCase().split(/\s+/).filter((w) => w.length > 4).slice(0, 3);
+                    const hasMatch = itemWords.length > 0 && itemWords.every((w) => testContent.toLowerCase().includes(w));
+                    if (hasMatch) {
+                        coveredDoneWhen++;
+                    }
+                    else {
+                        uncovered.push(`${sf}: "${item.slice(0, 80)}"`);
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        // Best-effort
+    }
+    if (totalDoneWhen === 0) {
+        return {
+            tier: 'T0',
+            name: 'Correctness Contract',
+            status: 'skip',
+            detail: 'No done_when items found in completed stories',
+            durationMs: Date.now() - start,
+        };
+    }
+    const coveragePercent = Math.round((coveredDoneWhen / totalDoneWhen) * 100);
+    const status = uncovered.length === 0 ? 'pass' : (coveragePercent >= 50 ? 'warn' : 'fail');
+    const detail = uncovered.length === 0
+        ? `All ${totalDoneWhen} done_when items have corresponding tests (${coveragePercent}% coverage)`
+        : `${coveredDoneWhen}/${totalDoneWhen} done_when items covered (${coveragePercent}%):\n${uncovered.slice(0, 5).join('\n')}`;
+    return {
+        tier: 'T0',
+        name: 'Correctness Contract',
+        status,
+        detail,
+        durationMs: Date.now() - start,
     };
 }
 // T1: Banned patterns + syntax (via anvil.sh or inline)
@@ -332,6 +424,7 @@ export async function runAllGates(options) {
     const resolvedTarget = resolve(workDir, target);
     const gates = [];
     const tiers = [
+        { run: () => runT0(workDir), tier: 'T0', name: 'Correctness Contract' },
         { run: () => runT1(workDir, resolvedTarget), tier: 'T1', name: 'Banned Patterns & Syntax' },
         { run: () => runT2(workDir), tier: 'T2', name: 'Type Check' },
         { run: () => runT3(workDir), tier: 'T3', name: 'Tests' },
@@ -372,6 +465,7 @@ export function runSingleGate(tier, workDir, target = '.', storyFile) {
         case 'T3': return runT3(workDir);
         case 'T4': return runT4(workDir, resolvedTarget);
         case 'T5': return runT5(workDir);
+        case 'T0': return runT0(workDir);
         case 'T6': return runT6(workDir, storyFile);
         default:
             return {

@@ -5,8 +5,9 @@ import { join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { runAgentLoop } from './ai-runner.js';
 import { runAllGates, runSingleGate } from './gates.js';
-import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from './micro-gates.js';
+import { runPostStoryGates, runPreTemperGate, runPreGenerationGate, runTestDocGate, formatFindingsForFixer } from './micro-gates.js';
 import { runFinisher } from './finisher.js';
+import { harvestRunMemory } from './memory-harvest.js';
 import { ALL_TOOLS } from './tools.js';
 import { getLogger } from '../utils/logger.js';
 const RUNS_DIR = '.skillfoundry/runs';
@@ -90,12 +91,24 @@ blocks: [list of STORY numbers this blocks, or empty]
 - [ ] <criterion 1>
 - [ ] <criterion 2>
 
+done_when:
+- [ ] <objectively verifiable condition 1 — must be testable without human judgment>
+- [ ] <objectively verifiable condition 2>
+
+fail_when:
+- [ ] <condition that indicates incorrect implementation>
+- [ ] <edge case or error scenario that must be handled>
+
 ## Technical Approach
 <how to implement, including file paths and patterns>
 
 ## Files Affected
 - <file path>: <what changes>
 ---STORY---
+
+IMPORTANT: Every done_when item must be objectively verifiable — no subjective language
+like "works correctly", "looks good", or "handles edge cases properly".
+Use concrete, measurable conditions that an automated test can verify.
 
 Number stories sequentially starting at 001. Be specific about file paths and code patterns.`;
 // ── Story execution system prompt ──────────────────────────────
@@ -145,6 +158,12 @@ Write REAL, PRODUCTION-READY code. Implement the story below completely.`;
 const FIXER_PROMPT = `You are a senior engineer fixing quality gate violations.
 The previous implementation triggered the following gate failures.
 Fix ALL violations — do not introduce new issues. Keep changes minimal and targeted.`;
+const POLISH_FIXER_PROMPT = `You are a senior engineer polishing code across an entire codebase.
+The following quality issues were found across multiple stories/files.
+Fix ALL violations — apply consistent patterns across the codebase.
+For example: if input validation is missing in one controller, add it to ALL controllers.
+If documentation is missing, add it to ALL public methods.
+Keep changes targeted and minimal — fix the reported issues, don't refactor unrelated code.`;
 // ── Pipeline execution ─────────────────────────────────────────
 function makePhase(name) {
     return { name, status: 'pending', durationMs: 0 };
@@ -160,6 +179,7 @@ export async function runPipeline(options) {
         makePhase('IGNITE'),
         makePhase('PLAN'),
         makePhase('FORGE'),
+        makePhase('POLISH'),
         makePhase('TEMPER'),
         makePhase('INSPECT'),
         makePhase('DEBRIEF'),
@@ -334,6 +354,18 @@ export async function runPipeline(options) {
             fixerAttempts: 0,
         };
         storyExecutions[storyFile] = execution;
+        // ── MG0: Pre-generation AC validation ──
+        const mg0Result = await runPreGenerationGate(storyFile, storyContent, {
+            config, policy, workDir,
+        });
+        allMicroGateResults.push(mg0Result);
+        totalCostUsd += mg0Result.costUsd;
+        callbacks?.onMicroGateResult?.(mg0Result);
+        if (mg0Result.verdict === 'FAIL') {
+            log.warn('pipeline', 'mg0_fail', { story: storyFile, summary: mg0Result.summary });
+            // MG0 FAIL is advisory — log the warning but continue with implementation.
+            // The done_when items will still be checked by T0 gate in TEMPER phase.
+        }
         // Execute the story
         const storyMessages = [
             {
@@ -356,33 +388,25 @@ export async function runPipeline(options) {
         totalCostUsd += storyRunnerResult.totalCostUsd;
         totalInputTokens += storyRunnerResult.totalInputTokens;
         totalOutputTokens += storyRunnerResult.totalOutputTokens;
-        // ── Micro-gates: post-story AI review (MG1 security, MG2 standards) ──
-        const mgResults = await runPostStoryGates(storyFile, storyContent, {
-            config, policy, workDir,
-        });
-        execution.microGateResults = mgResults;
-        for (const mgr of mgResults) {
-            allMicroGateResults.push(mgr);
-            execution.costUsd += mgr.costUsd;
-            totalCostUsd += mgr.costUsd;
-            callbacks?.onMicroGateResult?.(mgr);
-        }
-        // Quick T1 gate check after story implementation (advisory — does not block story completion)
-        const t1Result = runSingleGate('T1', workDir, '.');
-        callbacks?.onGateResult?.('T1', t1Result.status, t1Result.detail);
-        // Micro-gate FAIL triggers fixer (MG1 security FAIL = real problem in story code)
-        // Exclude provider errors — no real review happened, can't fix what wasn't checked
-        const mgFailed = mgResults.some((r) => r.verdict === 'FAIL' && !r.skippedDueToError);
-        if (mgFailed) {
-            // Fixer loop: attempt to fix critical micro-gate failures only
+        // ── Smoke test: does the code compile and build? (T2 + T5) ──
+        const t2Result = runSingleGate('T2', workDir, '.');
+        const t5Result = runSingleGate('T5', workDir, '.');
+        callbacks?.onGateResult?.('T2', t2Result.status, t2Result.detail);
+        callbacks?.onGateResult?.('T5', t5Result.status, t5Result.detail);
+        const compileFailed = t2Result.status === 'fail' || t5Result.status === 'fail';
+        if (compileFailed) {
+            // Fixer loop: fix compilation errors (max 2 attempts)
             let fixed = false;
             for (let attempt = 0; attempt < MAX_FIXER_ATTEMPTS && !fixed; attempt++) {
                 execution.fixerAttempts++;
-                const microGateFindings = formatFindingsForFixer(mgResults);
+                const compileFindings = [
+                    t2Result.status === 'fail' ? `[T2] Type Check — FAIL\n  ${t2Result.detail}` : '',
+                    t5Result.status === 'fail' ? `[T5] Build — FAIL\n  ${t5Result.detail}` : '',
+                ].filter(Boolean).join('\n\n');
                 const fixerMessages = [
                     {
                         role: 'user',
-                        content: `${FIXER_PROMPT}\n\n${microGateFindings}\n\nFix all issues in the codebase. Focus on the files mentioned in the findings.`,
+                        content: `${FIXER_PROMPT}\n\n${compileFindings}\n\nFix all compilation and build errors. Focus on the reported issues.`,
                     },
                 ];
                 const fixerResult = await runAgentLoop(fixerMessages, {
@@ -399,13 +423,10 @@ export async function runPipeline(options) {
                 totalCostUsd += fixerResult.totalCostUsd;
                 totalInputTokens += fixerResult.totalInputTokens;
                 totalOutputTokens += fixerResult.totalOutputTokens;
-                // Re-run micro-gates to check if fixes worked
-                const recheckMg = await runPostStoryGates(storyFile, storyContent, {
-                    config, policy, workDir,
-                });
-                execution.costUsd += recheckMg.reduce((s, r) => s + r.costUsd, 0);
-                totalCostUsd += recheckMg.reduce((s, r) => s + r.costUsd, 0);
-                if (!recheckMg.some((r) => r.verdict === 'FAIL')) {
+                // Re-run T2/T5 to check if fixes worked
+                const recheckT2 = runSingleGate('T2', workDir, '.');
+                const recheckT5 = runSingleGate('T5', workDir, '.');
+                if (recheckT2.status !== 'fail' && recheckT5.status !== 'fail') {
                     fixed = true;
                 }
             }
@@ -417,8 +438,7 @@ export async function runPipeline(options) {
                 continue;
             }
         }
-        // Story completed — T1 warnings and MG WARNs don't block completion.
-        // The full T1-T6 TEMPER phase runs after all stories and serves as the real gate.
+        // Story completed — T2/T5 pass. Quality review deferred to POLISH phase.
         execution.status = 'completed';
         storiesCompleted++;
         markStoryDone(storyPath);
@@ -429,6 +449,108 @@ export async function runPipeline(options) {
     updatePhase('FORGE', forgeStatus, Date.now() - forgeStart, `${storiesCompleted}/${allStoryFiles.length} stories completed`);
     log.info('pipeline', 'phase_complete', { phase: 'FORGE', status: forgeStatus, durationMs: Date.now() - forgeStart });
     callbacks?.onPhaseComplete?.('FORGE', forgeStatus);
+    // ── Phase 3b: POLISH ─────────────────────────────────────
+    log.info('pipeline', 'phase_start', { phase: 'POLISH', detail: 'Running quality review on completed stories' });
+    callbacks?.onPhaseStart?.('POLISH', 'Running quality review on completed stories');
+    const polishStart = Date.now();
+    // Run MG1 + MG2 on every story completed in this run
+    const polishFindings = [];
+    for (const { storyFile, storyPath } of allStoryFiles.filter((s) => !s.alreadyDone)) {
+        if (storyExecutions[storyFile]?.status !== 'completed')
+            continue;
+        const storyContent = readFileSync(storyPath, 'utf-8');
+        const mgResults = await runPostStoryGates(storyFile, storyContent, {
+            config, policy, workDir,
+        });
+        for (const mgr of mgResults) {
+            polishFindings.push(mgr);
+            allMicroGateResults.push(mgr);
+            totalCostUsd += mgr.costUsd;
+            callbacks?.onMicroGateResult?.(mgr);
+        }
+        // ── MG1.5: Test documentation gate ──
+        const mg15Result = await runTestDocGate(storyFile, storyContent, {
+            config, policy, workDir,
+        });
+        polishFindings.push(mg15Result);
+        allMicroGateResults.push(mg15Result);
+        totalCostUsd += mg15Result.costUsd;
+        callbacks?.onMicroGateResult?.(mg15Result);
+        // MG1.5 FAIL → re-trigger tester (not fixer) to add intent documentation
+        if (mg15Result.verdict === 'FAIL' && !mg15Result.skippedDueToError) {
+            log.info('pipeline', 'mg15_retrigger_tester', { story: storyFile });
+            const testDocFixMessages = [
+                {
+                    role: 'user',
+                    content: `The test documentation gate (MG1.5) FAILED for story: ${storyFile}\n\n` +
+                        `Findings:\n${mg15Result.findings.map((f) => `- [${f.severity}] ${f.description}${f.location ? ` (${f.location})` : ''}`).join('\n')}\n\n` +
+                        `Add intent documentation to ALL test files for this story:\n` +
+                        `1. Add @test-suite, @story, @rationale header comments\n` +
+                        `2. Add GIVEN/WHEN/THEN (or Arrange/Act/Assert) structure comments in each test body\n` +
+                        `3. Add WHY comments explaining what contract each test enforces\n\n` +
+                        `Story content:\n${storyContent}`,
+                },
+            ];
+            const testerResult = await runAgentLoop(testDocFixMessages, {
+                config,
+                policy,
+                systemPrompt: `You are a test documentation specialist. Add clear intent documentation to test files. Do NOT modify test logic — only add comments that explain WHY each test exists, what it proves, and what failure it prevents.`,
+                tools: ALL_TOOLS,
+                maxTurns: 10,
+                workDir,
+            }, {
+                requestPermission: callbacks?.requestPermission,
+            });
+            totalCostUsd += testerResult.totalCostUsd;
+            totalInputTokens += testerResult.totalInputTokens;
+            totalOutputTokens += testerResult.totalOutputTokens;
+        }
+        storyExecutions[storyFile].microGateResults = [...mgResults, mg15Result];
+    }
+    // Aggregate findings — if any MG FAILs exist, run holistic fixer
+    const hasMgFailures = polishFindings.some((r) => r.verdict === 'FAIL' && !r.skippedDueToError);
+    if (hasMgFailures) {
+        const allFindings = formatFindingsForFixer(polishFindings);
+        const polishFixerMessages = [
+            {
+                role: 'user',
+                content: `${POLISH_FIXER_PROMPT}\n\n${allFindings}\n\nFix all issues across the codebase. Apply consistent patterns.`,
+            },
+        ];
+        const fixerResult = await runAgentLoop(polishFixerMessages, {
+            config,
+            policy,
+            systemPrompt: POLISH_FIXER_PROMPT,
+            tools: ALL_TOOLS,
+            maxTurns: 15,
+            workDir,
+        }, {
+            requestPermission: callbacks?.requestPermission,
+        });
+        totalCostUsd += fixerResult.totalCostUsd;
+        totalInputTokens += fixerResult.totalInputTokens;
+        totalOutputTokens += fixerResult.totalOutputTokens;
+        // Re-run MG on all completed stories to verify fixes
+        for (const { storyFile, storyPath } of allStoryFiles.filter((s) => !s.alreadyDone)) {
+            if (storyExecutions[storyFile]?.status !== 'completed')
+                continue;
+            const storyContent = readFileSync(storyPath, 'utf-8');
+            const recheckMg = await runPostStoryGates(storyFile, storyContent, {
+                config, policy, workDir,
+            });
+            storyExecutions[storyFile].microGateResults = recheckMg;
+            for (const mgr of recheckMg) {
+                allMicroGateResults.push(mgr);
+                totalCostUsd += mgr.costUsd;
+                callbacks?.onMicroGateResult?.(mgr);
+            }
+        }
+    }
+    const polishFails = polishFindings.filter((r) => r.verdict === 'FAIL').length;
+    // POLISH failures don't block — TEMPER is the real gate
+    updatePhase('POLISH', 'passed', Date.now() - polishStart, `${polishFindings.length} reviews, ${polishFails} issues${hasMgFailures ? ' (fixer applied)' : ''}`);
+    log.info('pipeline', 'phase_complete', { phase: 'POLISH', status: 'passed', durationMs: Date.now() - polishStart });
+    callbacks?.onPhaseComplete?.('POLISH', 'passed');
     // ── Pre-TEMPER: Cross-story review (MG3 — advisory only) ──
     const completedStoryFiles = Object.entries(storyExecutions)
         .filter(([, ex]) => ex.status === 'completed')
@@ -443,8 +565,8 @@ export async function runPipeline(options) {
         callbacks?.onMicroGateResult?.(preTemperResult);
     }
     // ── Phase 4: TEMPER ────────────────────────────────────
-    log.info('pipeline', 'phase_start', { phase: 'TEMPER', detail: 'Running quality gates T1-T6' });
-    callbacks?.onPhaseStart?.('TEMPER', 'Running quality gates T1-T6');
+    log.info('pipeline', 'phase_start', { phase: 'TEMPER', detail: 'Running quality gates T0-T6' });
+    callbacks?.onPhaseStart?.('TEMPER', 'Running quality gates T0-T6');
     const temperStart = Date.now();
     gateSummary = await runAllGates({
         workDir,
@@ -516,7 +638,24 @@ export async function runPipeline(options) {
         },
     };
     writeFileSync(join(runsDir, `${runId}.json`), JSON.stringify(runBundle, null, 2), 'utf-8');
-    updatePhase('DEBRIEF', 'passed', Date.now() - debriefStart, `Run saved: ${RUNS_DIR}/${runId}.json`);
+    // Harvest knowledge entries to memory_bank/knowledge/*.jsonl
+    const harvestResult = harvestRunMemory({
+        runId,
+        workDir,
+        storiesCompleted,
+        storiesFailed,
+        storiesTotal: allStoryFiles.length,
+        totalCostUsd,
+        gateVerdict,
+        gateSummary: gateSummary
+            ? { passed: gateSummary.passed, failed: gateSummary.failed, warned: gateSummary.warned }
+            : null,
+        storyExecutions,
+        microGateResults: allMicroGateResults,
+        prdFiles: prds.map((p) => `genesis/${p.file}`),
+    });
+    log.info('pipeline', 'memory_harvest', { entriesWritten: harvestResult.entriesWritten });
+    updatePhase('DEBRIEF', 'passed', Date.now() - debriefStart, `Run saved: ${RUNS_DIR}/${runId}.json | ${harvestResult.entriesWritten} knowledge entries`);
     callbacks?.onPhaseComplete?.('DEBRIEF', 'passed');
     // ── Phase 7: FINISH ────────────────────────────────────
     callbacks?.onPhaseStart?.('FINISH', 'Running finisher checks');

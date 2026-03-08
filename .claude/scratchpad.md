@@ -1,7 +1,46 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-02-27T10:15:00Z
+> Last updated: 2026-03-08T12:47:00Z
 > Platform: claude-code
+
+## Forge Session — 2026-03-08
+- PRDs: 1 processed (correctness-contracts)
+- Stories: 5/5
+- Issues: 0 critical, 0 high — all gates passing
+- Security: PASS
+- Knowledge: Decisions harvested below
+- Tests: 405/405 passing (7 new micro-gates + pipeline test updates)
+- Version: 2.0.37 (no bump — code feature, not release)
+
+### Features Implemented
+1. **MG0 — Pre-generation AC validation gate**: Validates done_when/acceptance criteria are objectively verifiable before coder fires. Returns WARN for legacy stories (backward compat).
+2. **T0 — Correctness Contract gate**: Zero-cost static check in Anvil (T0 before T1). Fuzzy-matches done_when items against test file content. No AI calls.
+3. **MG1.5 — Test documentation gate**: AI review checking @test-suite headers, GWT+WHY comments. On FAIL, re-triggers tester (not fixer).
+4. **Pipeline wiring**: MG0 in FORGE phase (before coder), MG1.5 in POLISH phase (between MG1/MG2), T0 in TEMPER phase (before T1).
+5. **Story format update**: STORY_GENERATION_PROMPT now includes done_when/fail_when blocks with objectivity guidance.
+6. **Skills**: `/ac` (acceptance criteria validator), `/doc-tests` (test documentation checker)
+7. **Agent updates**: ruthless-tester.md Phase 3.5 (intent docs), _anvil-protocol.md T0 tier
+
+### Key Decisions
+- MG0 FAIL is advisory (warn, don't block) — enforced by T0 in TEMPER
+- MG1.5 re-triggers tester agent, not fixer — test docs need test expertise
+- T0 uses fuzzy word matching (extract key words from done_when, check substring in test content)
+- done_when/fail_when in story format is guidance, not enforcement at generation time
+
+### Files Created
+- `.claude/commands/ac.md`, `.claude/commands/doc-tests.md`
+- `docs/stories/correctness-contracts/` (INDEX.md + 5 story files)
+
+### Files Modified
+- `sf_cli/src/core/micro-gates.ts`: Added MG0_AC_VALIDATION, MG1_5_TEST_DOCS configs + runPreGenerationGate(), runTestDocGate()
+- `sf_cli/src/core/gates.ts`: Added runT0(), wired into runAllGates() + runSingleGate()
+- `sf_cli/src/core/pipeline.ts`: Added MG0 before coder, MG1.5 in POLISH, updated story gen prompt
+- `sf_cli/src/types.ts`: Updated MicroGateResult comment
+- `sf_cli/src/__tests__/micro-gates.test.ts`: 7 new tests (MG0, MG1.5, safety override)
+- `sf_cli/src/__tests__/pipeline.test.ts`: Updated mocks + counts for MG0/MG1.5
+- `sf_cli/src/__tests__/gates.test.ts`: Updated for 7-tier (T0-T6)
+- `agents/_anvil-protocol.md`: Added T0 tier
+- `agents/ruthless-tester.md`: Added Phase 3.5 test intent documentation
 
 ## Forge Session — 2026-02-27
 - PRDs: 1 processed (local-first-development)

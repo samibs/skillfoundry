@@ -71,10 +71,10 @@ describe('runSingleGate', () => {
 });
 
 describe('runAllGates', () => {
-  it('should run all 6 gates', async () => {
+  it('should run all 7 gates (T0-T6)', async () => {
     const summary = await runAllGates({ workDir: TEST_DIR });
-    expect(summary.gates).toHaveLength(6);
-    expect(summary.passed + summary.failed + summary.warned + summary.skipped).toBe(6);
+    expect(summary.gates).toHaveLength(7);
+    expect(summary.passed + summary.failed + summary.warned + summary.skipped).toBe(7);
   });
 
   it('should report pass verdict for clean project', async () => {
@@ -93,8 +93,8 @@ describe('runAllGates', () => {
       onGateComplete: (result) => completed.push(result.tier),
     });
 
-    expect(started).toEqual(['T1', 'T2', 'T3', 'T4', 'T5', 'T6']);
-    expect(completed).toEqual(['T1', 'T2', 'T3', 'T4', 'T5', 'T6']);
+    expect(started).toEqual(['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']);
+    expect(completed).toEqual(['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']);
   });
 
   it('should track total duration', async () => {

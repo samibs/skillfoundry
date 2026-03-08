@@ -6,7 +6,7 @@ import { join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { runAgentLoop } from './ai-runner.js';
 import { runAllGates, runSingleGate } from './gates.js';
-import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from './micro-gates.js';
+import { runPostStoryGates, runPreTemperGate, runPreGenerationGate, runTestDocGate, formatFindingsForFixer } from './micro-gates.js';
 import { runFinisher } from './finisher.js';
 import { harvestRunMemory } from './memory-harvest.js';
 import type { GateRunSummary } from './gates.js';
@@ -123,12 +123,24 @@ blocks: [list of STORY numbers this blocks, or empty]
 - [ ] <criterion 1>
 - [ ] <criterion 2>
 
+done_when:
+- [ ] <objectively verifiable condition 1 — must be testable without human judgment>
+- [ ] <objectively verifiable condition 2>
+
+fail_when:
+- [ ] <condition that indicates incorrect implementation>
+- [ ] <edge case or error scenario that must be handled>
+
 ## Technical Approach
 <how to implement, including file paths and patterns>
 
 ## Files Affected
 - <file path>: <what changes>
 ---STORY---
+
+IMPORTANT: Every done_when item must be objectively verifiable — no subjective language
+like "works correctly", "looks good", or "handles edge cases properly".
+Use concrete, measurable conditions that an automated test can verify.
 
 Number stories sequentially starting at 001. Be specific about file paths and code patterns.`;
 
@@ -419,6 +431,20 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     };
     storyExecutions[storyFile] = execution;
 
+    // ── MG0: Pre-generation AC validation ──
+    const mg0Result = await runPreGenerationGate(storyFile, storyContent, {
+      config, policy, workDir,
+    });
+    allMicroGateResults.push(mg0Result);
+    totalCostUsd += mg0Result.costUsd;
+    callbacks?.onMicroGateResult?.(mg0Result);
+
+    if (mg0Result.verdict === 'FAIL') {
+      log.warn('pipeline', 'mg0_fail', { story: storyFile, summary: mg0Result.summary });
+      // MG0 FAIL is advisory — log the warning but continue with implementation.
+      // The done_when items will still be checked by T0 gate in TEMPER phase.
+    }
+
     // Execute the story
     const storyMessages: AnthropicMessage[] = [
       {
@@ -538,7 +564,49 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
       totalCostUsd += mgr.costUsd;
       callbacks?.onMicroGateResult?.(mgr);
     }
-    storyExecutions[storyFile].microGateResults = mgResults;
+
+    // ── MG1.5: Test documentation gate ──
+    const mg15Result = await runTestDocGate(storyFile, storyContent, {
+      config, policy, workDir,
+    });
+    polishFindings.push(mg15Result);
+    allMicroGateResults.push(mg15Result);
+    totalCostUsd += mg15Result.costUsd;
+    callbacks?.onMicroGateResult?.(mg15Result);
+
+    // MG1.5 FAIL → re-trigger tester (not fixer) to add intent documentation
+    if (mg15Result.verdict === 'FAIL' && !mg15Result.skippedDueToError) {
+      log.info('pipeline', 'mg15_retrigger_tester', { story: storyFile });
+      const testDocFixMessages: AnthropicMessage[] = [
+        {
+          role: 'user',
+          content: `The test documentation gate (MG1.5) FAILED for story: ${storyFile}\n\n` +
+            `Findings:\n${mg15Result.findings.map((f) => `- [${f.severity}] ${f.description}${f.location ? ` (${f.location})` : ''}`).join('\n')}\n\n` +
+            `Add intent documentation to ALL test files for this story:\n` +
+            `1. Add @test-suite, @story, @rationale header comments\n` +
+            `2. Add GIVEN/WHEN/THEN (or Arrange/Act/Assert) structure comments in each test body\n` +
+            `3. Add WHY comments explaining what contract each test enforces\n\n` +
+            `Story content:\n${storyContent}`,
+        },
+      ];
+
+      const testerResult = await runAgentLoop(testDocFixMessages, {
+        config,
+        policy,
+        systemPrompt: `You are a test documentation specialist. Add clear intent documentation to test files. Do NOT modify test logic — only add comments that explain WHY each test exists, what it proves, and what failure it prevents.`,
+        tools: ALL_TOOLS,
+        maxTurns: 10,
+        workDir,
+      }, {
+        requestPermission: callbacks?.requestPermission,
+      });
+
+      totalCostUsd += testerResult.totalCostUsd;
+      totalInputTokens += testerResult.totalInputTokens;
+      totalOutputTokens += testerResult.totalOutputTokens;
+    }
+
+    storyExecutions[storyFile].microGateResults = [...mgResults, mg15Result];
   }
 
   // Aggregate findings — if any MG FAILs exist, run holistic fixer
@@ -608,8 +676,8 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
 
   // ── Phase 4: TEMPER ────────────────────────────────────
 
-  log.info('pipeline', 'phase_start', { phase: 'TEMPER', detail: 'Running quality gates T1-T6' });
-  callbacks?.onPhaseStart?.('TEMPER', 'Running quality gates T1-T6');
+  log.info('pipeline', 'phase_start', { phase: 'TEMPER', detail: 'Running quality gates T0-T6' });
+  callbacks?.onPhaseStart?.('TEMPER', 'Running quality gates T0-T6');
   const temperStart = Date.now();
 
   gateSummary = await runAllGates({

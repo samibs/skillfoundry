@@ -5,6 +5,60 @@
 import { runAgentLoop } from './ai-runner.js';
 import { getAgentSystemPrompt, TOOL_SETS } from './agent-registry.js';
 import { getLogger } from '../utils/logger.js';
+const MG0_AC_VALIDATION = {
+    gate: 'MG0',
+    agent: 'ac-validator',
+    prompt: `You are reviewing the acceptance criteria for a story BEFORE code generation begins.
+Your job is to ensure every criterion is objectively verifiable — no subjective language allowed.
+
+For each done_when / acceptance criteria item, check:
+1. Is this criterion objectively verifiable WITHOUT human judgment?
+2. Can an automated test check this criterion?
+3. Is the criterion specific enough that two developers would agree on pass/fail?
+
+FAIL if ANY criterion uses subjective language like:
+- "looks good", "works correctly", "is well-structured", "handles edge cases properly"
+- "appropriate", "reasonable", "clean", "efficient" (without a measurable threshold)
+- Any criterion that requires human judgment to evaluate
+
+PASS if ALL criteria are objectively verifiable with concrete, measurable conditions.
+
+If no done_when or acceptance criteria section exists at all, FAIL with finding:
+"[HIGH] No acceptance criteria found — story cannot be implemented without a verifiable contract."
+
+Respond in this EXACT format:
+VERDICT: PASS | FAIL | WARN
+FINDINGS:
+- [SEVERITY] Description
+SUMMARY: One-line summary`,
+    maxTurns: 1,
+};
+const MG1_5_TEST_DOCS = {
+    gate: 'MG1.5',
+    agent: 'test-docs',
+    prompt: `You are reviewing test files for documentation quality.
+Tests without intent documentation cause correction loops — fixers guess at what the test was supposed to prove.
+
+For each test file in the diff, check:
+1. Does the file have a header comment with @test-suite, @story, @rationale (or equivalent)?
+2. Does each test body have GIVEN/WHEN/THEN (or Arrange/Act/Assert) structure comments?
+3. Does each test explain WHY it exists (what contract it enforces, what failure it prevents)?
+4. Could a new developer understand each test WITHOUT reading the source code under test?
+
+FAIL if ANY test file is missing intent documentation.
+WARN if documentation exists but is incomplete (e.g., missing WHY comments).
+PASS if ALL tests are self-documenting with clear intent.
+
+Note: Simple utility tests (pure function, obvious behavior) need minimal docs.
+Complex integration/security tests need full GWT+WHY documentation.
+
+Respond in this EXACT format:
+VERDICT: PASS | FAIL | WARN
+FINDINGS:
+- [SEVERITY] Description (file:line)
+SUMMARY: One-line summary`,
+    maxTurns: 3,
+};
 const MG1_SECURITY = {
     gate: 'MG1',
     agent: 'security',
@@ -190,6 +244,45 @@ async function runSingleMicroGate(mgConfig, storyContext, options) {
         turnCount: result.turnCount,
         durationMs: Date.now() - start,
     };
+}
+/**
+ * Run MG0 pre-generation AC validation on a story before the coder fires.
+ * Returns PASS if acceptance criteria are measurable, FAIL if vague or missing.
+ * For legacy stories without done_when, returns WARN (not BLOCK).
+ */
+export async function runPreGenerationGate(storyFile, storyContent, options) {
+    // Quick check: if story has no acceptance criteria section at all, return WARN (legacy compat)
+    const hasAC = /done_when|acceptance\s+criteria|##\s+acceptance/i.test(storyContent);
+    if (!hasAC) {
+        const log = getLogger();
+        log.warn('microgate', 'mg0_no_ac', { story: storyFile, detail: 'No acceptance criteria found — legacy story, skipping MG0 (WARN)' });
+        return {
+            gate: 'MG0',
+            agent: 'ac-validator',
+            verdict: 'WARN',
+            findings: [{ severity: 'MEDIUM', description: 'No done_when or acceptance criteria section found in story — legacy format' }],
+            summary: 'Legacy story without acceptance criteria — WARN (not blocked)',
+            costUsd: 0,
+            turnCount: 0,
+            durationMs: 0,
+        };
+    }
+    const storyContext = `Story being validated: ${storyFile}\n\n` +
+        `Story content:\n${storyContent}\n\n` +
+        `Validate the acceptance criteria in this story. Check if each criterion is objectively verifiable.`;
+    return runSingleMicroGate(MG0_AC_VALIDATION, storyContext, options);
+}
+/**
+ * Run MG1.5 test documentation gate on test files.
+ * Called in POLISH phase after MG1 security + before MG2 standards.
+ * On FAIL, the tester (not fixer) should be re-triggered.
+ */
+export async function runTestDocGate(storyFile, storyContent, options) {
+    const storyContext = `Story being reviewed: ${storyFile}\n\n` +
+        `Story content:\n${storyContent}\n\n` +
+        `Review the TEST FILES written for this story. Check if each test file has intent documentation ` +
+        `(@test-suite header, @rationale, GWT+WHY comments). Use tools to find and read the test files.`;
+    return runSingleMicroGate(MG1_5_TEST_DOCS, storyContext, options);
 }
 /**
  * Run post-story micro-gates (MG1 security + MG2 standards).

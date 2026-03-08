@@ -21,6 +21,8 @@ import {
   parseMicroGateResponse,
   runPostStoryGates,
   runPreTemperGate,
+  runPreGenerationGate,
+  runTestDocGate,
   formatFindingsForFixer,
 } from '../core/micro-gates.js';
 import { runAgentLoop } from '../core/ai-runner.js';
@@ -335,5 +337,112 @@ describe('formatFindingsForFixer', () => {
     expect(output).not.toContain('MG1');
     expect(output).toContain('[MG2] standards');
     expect(output).toContain('[LOW] Missing jsdoc');
+  });
+});
+
+// ── MG0 tests (runPreGenerationGate) ─────────────────────────
+
+describe('runPreGenerationGate', () => {
+  it('returns WARN for stories without done_when/acceptance criteria section (legacy compat)', async () => {
+    const storyContent = '# STORY-001: Legacy Feature\n## Description\nSome old story without AC.';
+
+    const result = await runPreGenerationGate(
+      'STORY-001-legacy.md',
+      storyContent,
+      { config: mockConfig, policy: mockPolicy, workDir: '/tmp/test' },
+    );
+
+    expect(result.gate).toBe('MG0');
+    expect(result.agent).toBe('ac-validator');
+    expect(result.verdict).toBe('WARN');
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0].severity).toBe('MEDIUM');
+    expect(result.findings[0].description).toContain('legacy');
+    expect(result.costUsd).toBe(0);
+    expect(result.turnCount).toBe(0);
+    expect(runAgentLoop).not.toHaveBeenCalled();
+  });
+
+  it('calls runSingleMicroGate when story has done_when section', async () => {
+    vi.mocked(runAgentLoop).mockResolvedValueOnce({
+      content: 'VERDICT: PASS\nFINDINGS:\nSUMMARY: All criteria are measurable',
+      turnCount: 1,
+      totalInputTokens: 300,
+      totalOutputTokens: 100,
+      totalCostUsd: 0.003,
+      aborted: false,
+    });
+
+    const storyContent = '# STORY-002: New Feature\n## done_when\n- API returns 200 on valid input\n- Error returns 400 with message';
+
+    const result = await runPreGenerationGate(
+      'STORY-002-feature.md',
+      storyContent,
+      { config: mockConfig, policy: mockPolicy, workDir: '/tmp/test' },
+    );
+
+    expect(result.gate).toBe('MG0');
+    expect(result.agent).toBe('ac-validator');
+    expect(result.verdict).toBe('PASS');
+    expect(runAgentLoop).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── MG1.5 tests (runTestDocGate) ─────────────────────────────
+
+describe('runTestDocGate', () => {
+  it('calls runSingleMicroGate with correct gate and agent', async () => {
+    vi.mocked(runAgentLoop).mockResolvedValueOnce({
+      content: 'VERDICT: FAIL\nFINDINGS:\n- [HIGH] Missing @test-suite header in test file (src/__tests__/auth.test.ts:1)\nSUMMARY: Test docs incomplete',
+      turnCount: 2,
+      totalInputTokens: 500,
+      totalOutputTokens: 200,
+      totalCostUsd: 0.005,
+      aborted: false,
+    });
+
+    const result = await runTestDocGate(
+      'STORY-003-auth.md',
+      '# STORY-003: Auth\n## done_when\n- Login works',
+      { config: mockConfig, policy: mockPolicy, workDir: '/tmp/test' },
+    );
+
+    expect(result.gate).toBe('MG1.5');
+    expect(result.agent).toBe('test-docs');
+    expect(result.verdict).toBe('FAIL');
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0].severity).toBe('HIGH');
+    expect(runAgentLoop).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ── Additional parseMicroGateResponse tests ──────────────────
+
+describe('parseMicroGateResponse — MG0 and safety overrides', () => {
+  it('parses response with MG0 verdict format (no-AC finding)', () => {
+    const content = `VERDICT: FAIL
+FINDINGS:
+- [HIGH] No acceptance criteria found — story cannot be implemented without a verifiable contract.
+SUMMARY: Story missing acceptance criteria`;
+
+    const result = parseMicroGateResponse(content);
+    expect(result.verdict).toBe('FAIL');
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0].severity).toBe('HIGH');
+    expect(result.findings[0].description).toContain('acceptance criteria');
+    expect(result.summary).toBe('Story missing acceptance criteria');
+  });
+
+  it('safety override: PASS with CRITICAL findings becomes FAIL', () => {
+    const content = `VERDICT: PASS
+FINDINGS:
+- [CRITICAL] Acceptance criterion uses subjective language: "works correctly" (story.md:15)
+SUMMARY: One criterion is vague`;
+
+    const result = parseMicroGateResponse(content);
+    expect(result.verdict).toBe('FAIL');
+    expect(result.findings).toHaveLength(1);
+    expect(result.findings[0].severity).toBe('CRITICAL');
+    expect(result.findings[0].location).toBe('story.md:15');
   });
 });

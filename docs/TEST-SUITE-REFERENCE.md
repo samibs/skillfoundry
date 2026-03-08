@@ -1,8 +1,8 @@
 # SkillFoundry Test Suite Reference
 
-> Complete documentation of all 400 TypeScript unit tests and 198+ shell integration tests.
+> Complete documentation of all 405 TypeScript unit tests and 198+ shell integration tests.
 
-**Version:** 2.0.37
+**Version:** 2.0.38
 **Last Updated:** 2026-03-05
 **Test Framework:** Vitest (TypeScript), Custom bash runner (Shell)
 
