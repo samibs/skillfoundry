@@ -242,8 +242,8 @@ export interface MicroGateFinding {
 }
 
 export interface MicroGateResult {
-  gate: string;       // 'MG1' | 'MG2' | 'MG3'
-  agent: string;      // 'security' | 'standards' | 'review'
+  gate: string;       // 'MG0' | 'MG1' | 'MG1.5' | 'MG2' | 'MG3'
+  agent: string;      // 'ac-validator' | 'security' | 'test-docs' | 'standards' | 'review'
   verdict: MicroGateVerdict;
   findings: MicroGateFinding[];
   summary: string;

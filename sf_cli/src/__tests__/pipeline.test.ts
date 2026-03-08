@@ -18,6 +18,8 @@ vi.mock('../core/gates.js', () => ({
 vi.mock('../core/micro-gates.js', () => ({
   runPostStoryGates: vi.fn(),
   runPreTemperGate: vi.fn(),
+  runPreGenerationGate: vi.fn(),
+  runTestDocGate: vi.fn(),
   formatFindingsForFixer: vi.fn(() => ''),
 }));
 
@@ -34,7 +36,7 @@ vi.mock('../core/memory-harvest.js', () => ({
 import { runPipeline, scanPRDs, scanStories } from '../core/pipeline.js';
 import { runAgentLoop } from '../core/ai-runner.js';
 import { runAllGates, runSingleGate } from '../core/gates.js';
-import { runPostStoryGates, runPreTemperGate, formatFindingsForFixer } from '../core/micro-gates.js';
+import { runPostStoryGates, runPreTemperGate, runPreGenerationGate, runTestDocGate, formatFindingsForFixer } from '../core/micro-gates.js';
 import { runFinisher } from '../core/finisher.js';
 import { harvestRunMemory } from '../core/memory-harvest.js';
 import type { SfConfig, SfPolicy, FinisherSummary } from '../types.js';
@@ -76,6 +78,12 @@ beforeEach(() => {
   ]);
   vi.mocked(runPreTemperGate).mockResolvedValue({
     gate: 'MG3', agent: 'review', verdict: 'PASS', findings: [], summary: 'Consistent', costUsd: 0, turnCount: 1, durationMs: 50,
+  });
+  vi.mocked(runPreGenerationGate).mockResolvedValue({
+    gate: 'MG0', agent: 'ac-validator', verdict: 'PASS', findings: [], summary: 'All criteria verifiable', costUsd: 0, turnCount: 1, durationMs: 50,
+  });
+  vi.mocked(runTestDocGate).mockResolvedValue({
+    gate: 'MG1.5', agent: 'test-docs', verdict: 'PASS', findings: [], summary: 'All tests documented', costUsd: 0, turnCount: 1, durationMs: 50,
   });
 
   // Default finisher mock: all ok
@@ -654,8 +662,8 @@ describe('runPipeline', () => {
     expect(runPostStoryGates).toHaveBeenCalledTimes(1);
     expect(runPreTemperGate).toHaveBeenCalledTimes(1);
     expect(result.microGateSummary).toBeDefined();
-    expect(result.microGateSummary!.totalRun).toBe(3);
-    expect(result.microGateSummary!.totalPassed).toBe(3);
+    expect(result.microGateSummary!.totalRun).toBe(5); // MG0 + MG1 + MG2 + MG1.5 + MG3
+    expect(result.microGateSummary!.totalPassed).toBe(5);
     expect(result.totalCostUsd).toBeGreaterThan(0.001);
   });
 
@@ -731,8 +739,8 @@ describe('runPipeline', () => {
       callbacks: { onMicroGateResult },
     });
 
-    // MG1 + MG2 in POLISH phase + MG3 pre-temper = 3 callbacks
-    expect(onMicroGateResult).toHaveBeenCalledTimes(3);
+    // MG0 (FORGE) + MG1 + MG2 + MG1.5 (POLISH) + MG3 (pre-temper) = 5 callbacks
+    expect(onMicroGateResult).toHaveBeenCalledTimes(5);
     expect(onMicroGateResult).toHaveBeenCalledWith(
       expect.objectContaining({ gate: 'MG1' }),
     );

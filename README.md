@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.37-blue)
+![Version](https://img.shields.io/badge/version-2.0.38-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -18,7 +18,7 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 63 skill
 ### Why SkillFoundry?
 
 - **Works where you already code** — Claude Code, Cursor, GitHub Copilot, OpenAI Codex, Google Gemini. No new IDE to learn.
-- **Quality gates your AI can't bypass** — The Anvil runs 6 tiers of checks (banned patterns, type checking, tests, security, build, scope) between every agent handoff. Code that fails doesn't ship.
+- **Quality gates your AI can't bypass** — The Anvil runs 7 tiers of checks (correctness contracts, banned patterns, type checking, tests, security, build, scope) between every agent handoff. Code that fails doesn't ship.
 - **Persistent memory across sessions** — Decisions, errors, and patterns are stored in `memory_bank/` and recalled automatically. Your AI doesn't repeat the same mistakes.
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
@@ -65,7 +65,7 @@ C:\DevTools\skillfoundry\install.ps1
        ├── Validate PRD         Are requirements complete?
        ├── Generate stories     Break into implementable units
        ├── Implement            Architect → Coder → Tester pipeline
-       ├── Quality gates        The Anvil (T1-T6) + Micro-Gates (MG1-MG3)
+       ├── Quality gates        The Anvil (T0-T6) + Micro-Gates (MG0-MG3)
        ├── Security audit       OWASP scan + credential check
        └── Harvest knowledge    Save lessons to memory_bank/
 ```
