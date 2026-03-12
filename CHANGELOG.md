@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.39] - 2026-03-12
+
+### Added — Native Debugger Integration
+
+- **Chrome DevTools Protocol (CDP) adapter** (`debugger-cdp.ts`): Full CDP client with MinimalWebSocket for Node 20 compatibility. Handles Debugger and Runtime domains — breakpoints, stepping, scope inspection, expression evaluation, call stack retrieval.
+- **Debug session manager** (`debugger.ts`): Singleton session lifecycle with `node --inspect-brk=0 --enable-source-maps` process spawning. Auto-detects runtime from project files (tsconfig.json → node, requirements.txt → python, Cargo.toml → lldb). Configurable timeout (default 60s, max 5min) with SIGTERM → SIGKILL escalation.
+- **6 debug tools** for AI agents: `debug_start`, `debug_breakpoint`, `debug_inspect`, `debug_evaluate`, `debug_step`, `debug_stop`. All return structured JSON responses — no raw terminal output.
+- **Async tool execution**: `executeTool()` now returns `ToolResult | Promise<ToolResult>`. The agentic loop in `ai-runner.ts` handles both sync and async tools via `await Promise.resolve()`.
+- **DEBUG tool category**: New agent tool category giving agents the full 5-tool set plus all 6 debug tools. The `debugger` agent reassigned from OPS to DEBUG.
+- **`/debug` skill**: Interactive debugger skill for IDE use — `/debug <file>`, `/debug <file>:<line>`, `/debug test <test-file>`.
+- **18 new tests** covering CDP adapter state, runtime detection, session lifecycle, tool definitions, executor routing, and integration.
+
+### Security
+
+- **Localhost-only WebSocket**: `CDPAdapter.connect()` rejects connections to non-localhost hosts (127.0.0.1, localhost, ::1 only).
+- **Test runner whitelist**: `ALLOWED_TEST_RUNNERS` prevents command injection via `testCommand` parameter.
+- **Stderr buffer limit**: 1 MB cap prevents memory exhaustion from malicious child process output.
+- **Signal handler cleanup**: Process event handlers removed in `stop()` to prevent accumulation across sessions.
+
+### Changed
+
+- `LogCategory` type extended with `'debugger'`.
+- Agent registry `VALID_CATEGORIES` updated to include `'DEBUG'`.
+- **423 total tests passing** (18 new, 0 regressions).
+
+---
+
 ## [2.0.38] - 2026-03-08
 
 ### Added — Correctness Contracts

@@ -102,6 +102,8 @@ export const TOOL_GREP = {
         required: ['pattern'],
     },
 };
+// Re-export debug tools for unified access
+export { ALL_DEBUG_TOOLS, DEBUG_TOOL_NAMES } from './debugger-tools.js';
 export const ALL_TOOLS = [
     TOOL_BASH,
     TOOL_READ,

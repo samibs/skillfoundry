@@ -1,0 +1,11 @@
+import type { ToolDefinition } from './tools.js';
+import type { ToolResult } from '../types.js';
+export declare const TOOL_DEBUG_START: ToolDefinition;
+export declare const TOOL_DEBUG_BREAKPOINT: ToolDefinition;
+export declare const TOOL_DEBUG_INSPECT: ToolDefinition;
+export declare const TOOL_DEBUG_EVALUATE: ToolDefinition;
+export declare const TOOL_DEBUG_STEP: ToolDefinition;
+export declare const TOOL_DEBUG_STOP: ToolDefinition;
+export declare const ALL_DEBUG_TOOLS: ToolDefinition[];
+export declare const DEBUG_TOOL_NAMES: Set<string>;
+export declare function executeDebugTool(toolName: string, input: Record<string, unknown>, workDir: string): Promise<ToolResult>;

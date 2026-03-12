@@ -12,6 +12,7 @@ export declare const TOOL_READ: ToolDefinition;
 export declare const TOOL_WRITE: ToolDefinition;
 export declare const TOOL_GLOB: ToolDefinition;
 export declare const TOOL_GREP: ToolDefinition;
+export { ALL_DEBUG_TOOLS, DEBUG_TOOL_NAMES } from './debugger-tools.js';
 export declare const ALL_TOOLS: ToolDefinition[];
 export declare const TOOL_MAP: Record<string, ToolDefinition>;
 export declare const SHELL_TOOLS: Set<string>;

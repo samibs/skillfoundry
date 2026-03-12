@@ -11,7 +11,7 @@ import {
 import { ALL_TOOLS } from '../core/tools.js';
 import type { ToolCategory } from '../core/agent-registry.js';
 
-const VALID_CATEGORIES: ToolCategory[] = ['FULL', 'CODE', 'REVIEW', 'OPS', 'INSPECT', 'NONE'];
+const VALID_CATEGORIES: ToolCategory[] = ['FULL', 'CODE', 'REVIEW', 'OPS', 'INSPECT', 'NONE', 'DEBUG'];
 
 describe('agent-registry', () => {
   it('registers exactly 60 agents', () => {

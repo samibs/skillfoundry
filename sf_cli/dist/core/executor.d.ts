@@ -4,5 +4,5 @@ interface ExecutorContext {
     workDir: string;
     policy: SfPolicy;
 }
-export declare function executeTool(toolName: string, input: Record<string, unknown>, ctx: ExecutorContext): ToolResult;
+export declare function executeTool(toolName: string, input: Record<string, unknown>, ctx: ExecutorContext): ToolResult | Promise<ToolResult>;
 export {};

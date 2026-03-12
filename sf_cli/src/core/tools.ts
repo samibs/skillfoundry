@@ -123,6 +123,9 @@ export const TOOL_GREP: ToolDefinition = {
   },
 };
 
+// Re-export debug tools for unified access
+export { ALL_DEBUG_TOOLS, DEBUG_TOOL_NAMES } from './debugger-tools.js';
+
 export const ALL_TOOLS: ToolDefinition[] = [
   TOOL_BASH,
   TOOL_READ,
