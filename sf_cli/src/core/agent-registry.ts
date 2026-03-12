@@ -4,20 +4,22 @@
 
 import type { ToolDefinition } from './tools.js';
 import { TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP, ALL_TOOLS } from './tools.js';
+import { ALL_DEBUG_TOOLS } from './debugger-tools.js';
 
 // ---------------------------------------------------------------------------
 // Tool categories
 // ---------------------------------------------------------------------------
 
-export type ToolCategory = 'FULL' | 'CODE' | 'REVIEW' | 'OPS' | 'INSPECT' | 'NONE';
+export type ToolCategory = 'FULL' | 'CODE' | 'REVIEW' | 'OPS' | 'INSPECT' | 'DEBUG' | 'NONE';
 
 export const TOOL_SETS: Record<ToolCategory, ToolDefinition[]> = {
-  FULL:    [TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP], // ~350 tokens
-  CODE:    [TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP],            // ~280 tokens
-  REVIEW:  [TOOL_READ, TOOL_GLOB, TOOL_GREP],                        // ~210 tokens
-  OPS:     [TOOL_BASH, TOOL_READ, TOOL_GLOB, TOOL_GREP],             // ~280 tokens
-  INSPECT: [TOOL_READ, TOOL_GLOB],                                    // ~140 tokens
-  NONE:    [],                                                         //   0 tokens
+  FULL:    [TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP],                     // ~350 tokens
+  CODE:    [TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP],                                 // ~280 tokens
+  REVIEW:  [TOOL_READ, TOOL_GLOB, TOOL_GREP],                                             // ~210 tokens
+  OPS:     [TOOL_BASH, TOOL_READ, TOOL_GLOB, TOOL_GREP],                                  // ~280 tokens
+  INSPECT: [TOOL_READ, TOOL_GLOB],                                                         // ~140 tokens
+  DEBUG:   [TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP, ...ALL_DEBUG_TOOLS],  // ~700 tokens
+  NONE:    [],                                                                              //   0 tokens
 };
 
 // ---------------------------------------------------------------------------
@@ -228,8 +230,8 @@ export const AGENT_REGISTRY: Record<string, AgentDefinition> = {
 
   // ── OPS (9 agents) ───────────────────────────────────────────────────
   debugger: {
-    name: 'debugger', displayName: 'Debug Hunter', toolCategory: 'OPS',
-    systemPrompt: operatorPrompt('Debug Hunter', 'Relentless bug hunter tracing issues through logs and stack traces'),
+    name: 'debugger', displayName: 'Debug Hunter', toolCategory: 'DEBUG',
+    systemPrompt: implementerPrompt('Debug Hunter', 'Relentless bug hunter with full debugger access — set breakpoints, inspect variables, step through code', 'bug fixing, runtime inspection, root cause analysis via breakpoints and variable inspection'),
   },
   dependency: {
     name: 'dependency', displayName: 'Dependency Manager', toolCategory: 'OPS',

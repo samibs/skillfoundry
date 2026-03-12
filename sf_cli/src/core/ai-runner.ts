@@ -340,11 +340,11 @@ export async function runAgentLoop(
         }
       }
 
-      // Execute the tool
-      const execResult = executeTool(toolCall.name, toolCall.input, {
+      // Execute the tool (may be async for debug tools)
+      const execResult = await Promise.resolve(executeTool(toolCall.name, toolCall.input, {
         workDir,
         policy,
-      });
+      }));
       execResult.toolCallId = toolCall.id;
 
       callbacks?.onToolComplete?.(toolCall, execResult);

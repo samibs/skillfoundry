@@ -1,5 +1,5 @@
 import type { ToolDefinition } from './tools.js';
-export type ToolCategory = 'FULL' | 'CODE' | 'REVIEW' | 'OPS' | 'INSPECT' | 'NONE';
+export type ToolCategory = 'FULL' | 'CODE' | 'REVIEW' | 'OPS' | 'INSPECT' | 'DEBUG' | 'NONE';
 export declare const TOOL_SETS: Record<ToolCategory, ToolDefinition[]>;
 export interface AgentDefinition {
     name: string;

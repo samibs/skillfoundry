@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.38-blue)
+![Version](https://img.shields.io/badge/version-2.0.39-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -168,12 +168,13 @@ Routing is keyword-based with weighted patterns — no extra LLM calls, determin
 
 ### Quality Gates (The Anvil + Micro-Gates)
 
-Every handoff passes through a 6-tier quality pipeline plus AI-powered micro-gates:
+Every handoff passes through a 7-tier quality pipeline plus AI-powered micro-gates:
 
 ```
  ◆ The Anvil
 
-   ┣━ T1  ◉  Banned Patterns & Syntax      0.2s
+   ┣━ T0  ◉  Correctness Contract           0.1s
+   ┣━ T1  ◉  Banned Patterns & Syntax       0.2s
    ┣━ T2  ◉  Type Check                     1.1s
    ┣━ T3  ◉  Tests                          3.4s
    ┣━ T4  ◉  Security Scan                  0.8s
@@ -181,17 +182,19 @@ Every handoff passes through a 6-tier quality pipeline plus AI-powered micro-gat
    ┗━ T6  ◉  Scope Validation               0.3s
 
    ┌──────────────────────────────────────────┐
-   │ ✓ VERDICT: PASS  5P 0F 0W 1S (7.9s)    │
+   │ ✓ VERDICT: PASS  6P 0F 0W 1S (8.0s)    │
    └──────────────────────────────────────────┘
 
  ◆ Micro-Gates (per story)
 
-   ┣━ MG1  ◉  Security Review (AI)          PASS
-   ┣━ MG2  ◉  Standards Review (AI)         PASS
-   ┗━ MG3  ◉  Cross-Story Review (AI)       PASS  (advisory)
+   ┣━ MG0   ◉  AC Validation (static)       PASS
+   ┣━ MG1   ◉  Security Review (AI)         PASS
+   ┣━ MG1.5 ◉  Test Documentation (AI)      PASS
+   ┣━ MG2   ◉  Standards Review (AI)        PASS
+   ┗━ MG3   ◉  Cross-Story Review (AI)      PASS  (advisory)
 ```
 
-Micro-gates are lightweight AI reviews at pipeline handoff points. MG1 (security) and MG2 (standards) run after each story — if they fail, the fixer is triggered automatically. MG3 reviews cross-story consistency before the TEMPER phase (advisory only). Cost: ~15% pipeline increase.
+Micro-gates are lightweight reviews at pipeline handoff points. MG0 validates acceptance criteria are objectively testable (static, no AI). MG1 (security) and MG2 (standards) run after each story — if they fail, the fixer is triggered automatically. MG1.5 checks test documentation quality (re-triggers tester on failure). MG3 reviews cross-story consistency before the TEMPER phase (advisory only).
 
 ### PRD-First Development
 
@@ -307,8 +310,31 @@ The AI executes tools with permission controls and dangerous command blocking:
 | `write` | `◈` | Create or overwrite files |
 | `glob` | `✶` | Find files by pattern |
 | `grep` | `≣` | Search file contents |
+| `debug_start` | | Start a debug session (Node.js) |
+| `debug_breakpoint` | | Set/remove/list breakpoints |
+| `debug_inspect` | | Inspect scope, callstack, variables |
+| `debug_evaluate` | | Evaluate expressions in paused frame |
+| `debug_step` | | Step over/into/out/continue/pause |
+| `debug_stop` | | Terminate debug session |
 
 Permission modes: `auto` (read auto-approved, write asks), `ask` (prompt every time), `trusted` (allow all), `deny` (block all).
+
+### Interactive Debugger
+
+AI agents can debug your code with real breakpoints, variable inspection, and expression evaluation — using the Chrome DevTools Protocol (CDP) over WebSocket.
+
+```
+/debug src/server.ts              # Start a debug session, paused at entry
+/debug src/server.ts:42           # Start and set breakpoint at line 42
+/debug test src/auth.test.ts      # Debug a test file via test runner
+```
+
+The debugger:
+- Spawns `node --inspect-brk=0` with source map support
+- Connects via a custom MinimalWebSocket (Node 20 compatible, no polyfills)
+- Enforces singleton sessions (one at a time) with configurable timeout (default 60s, max 5min)
+- Localhost-only WebSocket connections (security hardened)
+- SIGTERM → SIGKILL escalation for process cleanup
 
 ### Persistent Memory (Lessons Learned)
 
@@ -454,6 +480,7 @@ These work inside your AI coding tool, not in the `sf` CLI:
 | `/review` | Code review |
 | `/security` | Security audit (OWASP, credentials, banned patterns) |
 | `/architect` | System design and architecture |
+| `/debug` | Interactive debugger (breakpoints, scope, evaluate) |
 | `/layer-check` | Three-layer validation (DB → Backend → Frontend) |
 | `/memory` | Knowledge management |
 | `/gohm` | Harvest lessons from current session |
@@ -492,7 +519,7 @@ Install multiple platforms at once:
 ```
 skillfoundry/
 ├── sf_cli/                  Interactive CLI (Node.js + React/Ink)
-│   ├── src/core/            Provider adapters, tools, permissions, gates, micro-gates, budget, compaction, health checks
+│   ├── src/core/            Provider adapters, tools, permissions, gates, micro-gates, budget, compaction, debugger (CDP)
 │   ├── src/components/      Terminal UI: Header, Input, Message, GateTimeline, ...
 │   ├── src/commands/        Slash command handlers (/team, /agent, /plan, ...)
 │   └── src/hooks/           Session state and streaming hooks

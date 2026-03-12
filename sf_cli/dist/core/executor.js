@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, lstatSync
 import { resolve, isAbsolute, dirname } from 'node:path';
 import { globSync } from 'glob';
 import { getLogger } from '../utils/logger.js';
+import { DEBUG_TOOL_NAMES, executeDebugTool } from './debugger-tools.js';
 const MAX_OUTPUT_CHARS = 30000;
 const DEFAULT_BASH_TIMEOUT = 120_000;
 const MAX_BASH_TIMEOUT = 600_000;
@@ -315,6 +316,13 @@ export function executeTool(toolName, input, ctx) {
     const log = getLogger();
     const start = Date.now();
     log.debug('tool', 'call_start', { name: toolName });
+    // Debug tools are async — route to debugger-tools executor
+    if (DEBUG_TOOL_NAMES.has(toolName)) {
+        return executeDebugTool(toolName, input, ctx.workDir).then((result) => {
+            log.debug('tool', 'call_complete', { name: toolName, durationMs: Date.now() - start, isError: result.isError });
+            return result;
+        });
+    }
     let result;
     switch (toolName) {
         case 'bash':

@@ -2,12 +2,14 @@
 // and system prompt. Used by useStream to send only the tools each agent
 // needs, reducing token costs by 70-350 tokens per request.
 import { TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP, ALL_TOOLS } from './tools.js';
+import { ALL_DEBUG_TOOLS } from './debugger-tools.js';
 export const TOOL_SETS = {
     FULL: [TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP], // ~350 tokens
     CODE: [TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP], // ~280 tokens
     REVIEW: [TOOL_READ, TOOL_GLOB, TOOL_GREP], // ~210 tokens
     OPS: [TOOL_BASH, TOOL_READ, TOOL_GLOB, TOOL_GREP], // ~280 tokens
     INSPECT: [TOOL_READ, TOOL_GLOB], // ~140 tokens
+    DEBUG: [TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP, ...ALL_DEBUG_TOOLS], // ~700 tokens
     NONE: [], //   0 tokens
 };
 // ---------------------------------------------------------------------------
@@ -198,8 +200,8 @@ export const AGENT_REGISTRY = {
     },
     // ── OPS (9 agents) ───────────────────────────────────────────────────
     debugger: {
-        name: 'debugger', displayName: 'Debug Hunter', toolCategory: 'OPS',
-        systemPrompt: operatorPrompt('Debug Hunter', 'Relentless bug hunter tracing issues through logs and stack traces'),
+        name: 'debugger', displayName: 'Debug Hunter', toolCategory: 'DEBUG',
+        systemPrompt: implementerPrompt('Debug Hunter', 'Relentless bug hunter with full debugger access — set breakpoints, inspect variables, step through code', 'bug fixing, runtime inspection, root cause analysis via breakpoints and variable inspection'),
     },
     dependency: {
         name: 'dependency', displayName: 'Dependency Manager', toolCategory: 'OPS',

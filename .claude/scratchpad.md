@@ -1,7 +1,54 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-03-08T12:47:00Z
+> Last updated: 2026-03-12T10:25:00Z
 > Platform: claude-code
+
+## Forge Session — 2026-03-12
+- PRDs: 1 processed (native-debugger-integration)
+- Stories: 6/6
+- Issues: 0 critical, 2 high (fixed), 3 medium (fixed)
+- Security: PASS (all HIGH/MEDIUM findings remediated)
+- Knowledge: Decisions harvested below
+- Tests: 423/423 passing (18 new debugger tests)
+- Version: 2.0.38 → 2.0.39
+
+### Features Implemented
+1. **CDP Protocol Adapter** (`debugger-cdp.ts`): MinimalWebSocket for Node 20 compat, full CDP command/event handling
+2. **Debug Session Manager** (`debugger.ts`): Singleton enforcement, `node --inspect-brk=0` process spawning, timeout with SIGTERM→SIGKILL escalation
+3. **6 Debug Tools**: debug_start, debug_breakpoint, debug_inspect, debug_evaluate, debug_step, debug_stop
+4. **Async Tool Execution**: `executeTool` now returns `ToolResult | Promise<ToolResult>`, ai-runner uses `await Promise.resolve()`
+5. **DEBUG Tool Category**: New agent tool category with FULL tools + 6 debug tools
+6. **Security Hardening**: Localhost-only WebSocket, test runner whitelist, stderr buffer limit, signal handler cleanup
+
+### Key Decisions
+- MinimalWebSocket over native WebSocket for Node 20 compatibility (no polyfills)
+- Singleton debug session (one at a time) — simplifies resource management
+- `send()` made public on CDPAdapter to allow DebugSession direct CDP calls
+- DebugSession uses static `start()` factory (private constructor) — enforces singleton pattern
+- Test runner whitelist (jest, vitest, mocha, etc.) prevents command injection via testCommand
+
+### Security Fixes
+1. HIGH: Added localhost-only validation in CDPAdapter.connect() (prevents debug data exfiltration)
+2. HIGH: Test runner whitelist (ALLOWED_TEST_RUNNERS) prevents command injection
+3. MEDIUM: Stderr buffer limited to 1 MB (prevents memory exhaustion DoS)
+4. MEDIUM: Signal handler cleanup in stop() (prevents handler accumulation leak)
+5. LOW: Race condition awareness in error cleanup (use finally block)
+
+### Files Created
+- `src/core/debugger-cdp.ts`: CDP adapter (MinimalWebSocket + CDPAdapter)
+- `src/core/debugger.ts`: Debug session lifecycle manager
+- `src/core/debugger-tools.ts`: Tool definitions + executeDebugTool()
+- `src/__tests__/debugger.test.ts`: 18 unit tests
+- `.claude/commands/debug.md`: /debug skill definition
+- `docs/stories/native-debugger-integration/INDEX.md`: Story index
+
+### Files Modified
+- `src/core/executor.ts`: Async debug tool routing
+- `src/core/ai-runner.ts`: await Promise.resolve() for async tools
+- `src/core/agent-registry.ts`: DEBUG tool category + debugger agent reassignment
+- `src/core/tools.ts`: Re-exports debug tools
+- `src/utils/logger.ts`: Added 'debugger' LogCategory
+- `src/__tests__/agent-registry.test.ts`: Added DEBUG to VALID_CATEGORIES
 
 ## Forge Session — 2026-03-08
 - PRDs: 1 processed (correctness-contracts)
