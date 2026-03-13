@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.41] - 2026-03-13
+
+### Added — Smart Output Compression
+
+- **Output compressor** (`output-compressor.ts`): Command-aware output compression that reduces tool output tokens by 60-90% before they reach the LLM context. Detects command type via regex pattern matching (<1ms overhead) and applies type-specific compression. Ten compressor strategies:
+  - `git status` — strips hint lines and section headers, keeps file paths (~80% reduction)
+  - `git push/pull/add/commit/fetch/checkout/merge/stash` — reduces verbose output to one-liners (~90%)
+  - `git log` — one line per commit: `abc1234 message` (~80%)
+  - `git diff` — strips index/mode metadata, collapses unchanged regions (~60%)
+  - Test runners (vitest, jest, pytest, cargo test, go test) — all-pass → summary only, failures → failure blocks only (~90%)
+  - Build/lint (tsc, eslint, biome, ruff, clippy) — groups errors by file, deduplicates identical messages (~80%)
+  - Package install (npm, pnpm, pip, cargo build) — strips progress bars and warnings, keeps summary (~85%)
+  - Docker/kubectl — compact tables, deduplicated logs (~75%)
+  - Log deduplication — heuristic fallback that collapses consecutive repeated lines with counts (~60%)
+  - Default — passthrough to existing 30KB truncation (unchanged behavior)
+- **35 new tests** in `output-compressor.test.ts` covering all compressor strategies, command detection ordering, error-aware behavior, and edge cases.
+
+### Changed
+
+- `executor.ts` — `executeBash()` now calls `compressOutput()` before `truncate()`. Compression runs first, truncation acts as safety net.
+- **458 total tests passing** (35 new, 0 regressions).
+
+---
+
 ## [2.0.40] - 2026-03-13
 
 ### Added — Pipeline Resilience

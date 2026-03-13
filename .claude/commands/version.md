@@ -176,6 +176,7 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 2.0.41 | 2026-03-13 | Smart output compression — 60-90% token savings on tool output |
 | 2.0.40 | 2026-03-13 | Pipeline resilience — batch execution, delivery audit, git pre-flight |
 | 2.0.39 | 2026-03-12 | Native debugger integration (CDP + 6 debug tools) |
 | 2.0.38 | 2026-03-08 | Correctness contracts (T0, MG0, MG1.5) |

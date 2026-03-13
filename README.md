@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.40-blue)
+![Version](https://img.shields.io/badge/version-2.0.41-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -299,6 +299,20 @@ context_window = 0              # 0 = auto-detect from model
 /provider set lmstudio           → Switch to LM Studio
 ```
 
+### Smart Output Compression
+
+Tool outputs are automatically compressed before reaching the AI context — saving 60-90% of tokens on common operations. No configuration needed.
+
+| Command | Before | After | Savings |
+|---------|--------|-------|---------|
+| `git status` | ~2,000 tokens | ~400 tokens | -80% |
+| `git push/commit` | ~1,600 tokens | ~120 tokens | -92% |
+| `npm test` (all pass) | ~25,000 tokens | ~2,500 tokens | -90% |
+| `tsc --noEmit` | ~8,000 tokens | ~1,600 tokens | -80% |
+| `npm install` | ~3,000 tokens | ~450 tokens | -85% |
+
+The compressor detects command type via regex (<1ms), applies type-specific filtering (strip noise, group errors, deduplicate, show failures only), and falls back to standard truncation for unrecognized commands. Full output is preserved on errors for debugging context.
+
 ### Tool System
 
 The AI executes tools with permission controls and dangerous command blocking:
@@ -519,7 +533,7 @@ Install multiple platforms at once:
 ```
 skillfoundry/
 ├── sf_cli/                  Interactive CLI (Node.js + React/Ink)
-│   ├── src/core/            Provider adapters, tools, permissions, gates, micro-gates, budget, compaction, debugger (CDP)
+│   ├── src/core/            Provider adapters, tools, permissions, gates, micro-gates, budget, compaction, output compression, debugger (CDP)
 │   ├── src/components/      Terminal UI: Header, Input, Message, GateTimeline, ...
 │   ├── src/commands/        Slash command handlers (/team, /agent, /plan, ...)
 │   └── src/hooks/           Session state and streaming hooks

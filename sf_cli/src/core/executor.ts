@@ -16,6 +16,7 @@ import type { ToolResult } from '../types.js';
 import type { SfPolicy } from '../types.js';
 import { getLogger } from '../utils/logger.js';
 import { DEBUG_TOOL_NAMES, executeDebugTool } from './debugger-tools.js';
+import { compressOutput } from './output-compressor.js';
 
 const MAX_OUTPUT_CHARS = 30000;
 const DEFAULT_BASH_TIMEOUT = 120_000;
@@ -122,9 +123,10 @@ function executeBash(
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
+    const compressed = compressOutput(input.command, result || '(no output)', false);
     return {
       toolCallId: '',
-      output: truncate(result || '(no output)'),
+      output: truncate(compressed.compressed),
       isError: false,
     };
   } catch (err: unknown) {
@@ -132,9 +134,10 @@ function executeBash(
     const stderr = execErr.stderr || '';
     const stdout = execErr.stdout || '';
     const combined = stdout + (stderr ? '\nSTDERR:\n' + stderr : '');
+    const compressed = compressOutput(input.command, combined || execErr.message || 'Command failed', true);
     return {
       toolCallId: '',
-      output: truncate(combined || execErr.message || 'Command failed'),
+      output: truncate(compressed.compressed),
       isError: true,
     };
   }
