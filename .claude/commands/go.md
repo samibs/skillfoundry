@@ -220,6 +220,34 @@ Phase 1 Complete
 
 ---
 
+## PRE-FLIGHT: PROJECT READINESS
+
+Before any phase begins, verify the project is ready for structured development.
+
+### Git Repository Check
+
+```
+IF NOT a git repository (no .git/ directory):
+  OUTPUT:
+    ⚠️  NO GIT REPOSITORY DETECTED
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    /go requires git for rollback, state tracking, and safe execution.
+
+    Initialize now?
+      git init && git add -A && git commit -m "initial commit"
+
+    Or initialize manually and re-run /go.
+
+  WAIT for user confirmation before proceeding.
+  IF user confirms: run git init, stage all files, create initial commit.
+  IF user declines: EXIT.
+```
+
+This check runs ONCE at the start — before Phase 0 context preparation.
+
+---
+
 ## PHASE 0: CONTEXT PREPARATION (Required First)
 
 Before any implementation work, prepare the context for efficient token usage.
@@ -556,8 +584,13 @@ FOR EACH validated PRD:
        └── Create dependency graph
        └── Update scratchpad with story count
 
-    2. STORY EXECUTION (in dependency order)
-       FOR EACH story:
+    2. STORY EXECUTION (batched, in dependency order)
+
+       BATCH STORIES into groups of 3-5 (respecting dependencies).
+       Execute one batch at a time. After each batch, persist state and compact.
+
+       FOR EACH BATCH (3-5 stories):
+         FOR EACH story in batch:
            ┌── PRE-STORY CONTEXT CHECK
            │   └── Estimate story complexity (simple/medium/complex)
            │   └── If budget + estimate > 100K: Compact first
@@ -589,10 +622,12 @@ FOR EACH validated PRD:
            │
            └── Mark story DONE (or BLOCKED)
 
-       EVERY 5 STORIES:
+         END OF BATCH:
+           └── Persist state to .claude/state.json (completed stories, remaining stories)
            └── Force context compaction
-           └── Summarize progress to scratchpad
-           └── Reload minimal context
+           └── Summarize batch results to scratchpad
+           └── Reload minimal context (CLAUDE-SUMMARY.md + current PRD + next batch)
+           └── If context is critically low, output RESUME INSTRUCTIONS (see below)
 
     3. FEATURE COMPLETION
        └── All stories DONE
@@ -684,6 +719,83 @@ LAYERS:
 ├── Backend:   [status]
 └── Frontend:  [status]
 ```
+
+---
+
+## PHASE 3.5: DELIVERY AUDIT GATE
+
+After all stories are executed (or the pipeline stops), run a mandatory delivery audit
+that compares **planned deliverables** against **actual deliverables**.
+
+### Audit Process
+
+```
+DELIVERY AUDIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. READ the story index (docs/stories/[prd-name]/INDEX.md)
+   - Extract every STORY-XXX entry
+   - Extract every file/page/component listed in each story
+
+2. SCAN the filesystem
+   - For each planned file: does it exist?
+   - For each planned component/page: is the route/export present?
+   - For each planned test file: does it exist and contain tests?
+
+3. COMPARE planned vs actual
+
+4. OUTPUT the delta report
+```
+
+### Delta Report Format
+
+```
+DELIVERY AUDIT REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PRD: [filename]
+Stories: [completed]/[total]
+
+DELIVERED:
+  ✓ STORY-001: [title] — all files present
+  ✓ STORY-002: [title] — all files present
+  ✓ STORY-003: [title] — all files present
+
+MISSING:
+  ✗ STORY-004: [title]
+    Missing files:
+      - src/pages/settings.tsx (listed in story, not created)
+      - src/components/SettingsForm.tsx (listed in story, not created)
+    Missing tests:
+      - src/__tests__/settings.test.tsx
+
+  ✗ STORY-006: [title]
+    Missing files:
+      - src/pages/reports.tsx
+
+SUMMARY:
+  Planned: [X] stories, [Y] files
+  Delivered: [A] stories complete, [B] files present
+  Missing: [C] stories incomplete, [D] files absent
+  Completion: [Z]%
+
+IF completion < 100%:
+  ⚠️  INCOMPLETE DELIVERY — [C] stories have missing deliverables.
+
+  To complete remaining work:
+    /go --from STORY-[first-missing]
+
+  Or resume from saved state:
+    /go --resume
+```
+
+### Rules
+
+- The delivery audit runs AUTOMATICALLY — it is not optional
+- It runs after Phase 3 story execution completes (whether fully or partially)
+- If any stories are missing deliverables, the PRD status is PARTIAL, not COMPLETE
+- The audit output MUST be shown to the user — never suppress it
+- Missing items are written to `.claude/state.json` under `delivery_audit.missing`
 
 ---
 
@@ -895,6 +1007,40 @@ EMERGENCY PROTOCOL:
 
 Resume instructions will be provided.
 ```
+
+### Context Exhaustion Prevention (Batch-Aware)
+
+When the pipeline detects it cannot complete all remaining stories in the current
+session (context budget too low, or batch boundary reached with high usage):
+
+```
+⏸️  PIPELINE CHECKPOINT — BATCH [N] COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Completed: [X] / [Y] stories ([Z]%)
+Remaining: [R] stories in [B] batches
+
+State saved to: .claude/state.json
+
+TO RESUME in a new session:
+  /go --resume
+
+Resume will:
+  1. Read .claude/state.json
+  2. Skip completed stories (STORY-001 through STORY-[X])
+  3. Continue from STORY-[X+1]
+  4. Run delivery audit on completion
+
+DO NOT start a fresh /go — it will re-execute completed stories.
+```
+
+**CRITICAL**: Always output resume instructions when:
+- More than 60% of context budget is consumed
+- Current batch completes but more batches remain
+- Any context compaction fails or is insufficient
+- The pipeline has been running for 8+ stories
+
+This prevents the user from losing work when context runs out silently.
 
 ---
 

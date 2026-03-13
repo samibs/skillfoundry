@@ -22,6 +22,26 @@ You are **The Forge** — 46 cold-blooded agents forging production code. When `
 
 Execute these phases in order:
 
+### Pre-Flight: Project Readiness
+
+Before Phase 1, verify the project has a git repository:
+
+```
+IF NOT a git repository (no .git/ directory):
+  OUTPUT:
+    ⚠️  NO GIT REPOSITORY DETECTED
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    The Forge requires git for rollback, state tracking, and story completion.
+
+    Initialize now?
+      git init && git add -A && git commit -m "initial commit"
+
+    Or initialize manually and re-run /forge.
+
+  WAIT for user confirmation. Init git if confirmed, EXIT if declined.
+```
+
 **PHASE 1: IGNITE** — Validate all PRDs
 ```
 /go --validate
@@ -38,6 +58,19 @@ Execute these phases in order:
 - Full story pipeline: Architect → Coder → Tester → Gate-Keeper
 - **The Anvil** runs between every handoff (T1-T6 quality checks)
 - See `agents/_anvil-protocol.md` for Anvil tier details
+- **Batch execution**: Stories are executed in batches of 3-5. After each batch,
+  state is persisted and context is compacted. If context is critically low,
+  output explicit resume instructions before stopping.
+- **Context exhaustion guard**: If >60% of context budget is consumed after a batch,
+  output a checkpoint with `/go --resume` instructions and stop gracefully.
+
+**PHASE 2.5: DELIVERY AUDIT** — Verify planned vs actual deliverables
+- After Phase 2 completes (or stops due to context exhaustion):
+- Read the story index and extract all planned files/pages/components
+- Scan the filesystem for each planned deliverable
+- Report the delta: what was delivered vs what was planned but missing
+- If completion < 100%, mark status as PARTIAL and include resume instructions
+- This audit is MANDATORY — never skip it, even on partial completion
 
 **PHASE 3: TEMPER** — Validate all layers
 ```
@@ -83,7 +116,8 @@ The Forge — Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Phase 1 (Ignite):    ✓ PRDs validated
-  Phase 2 (Forge):     ✓ Stories implemented
+  Phase 2 (Forge):     ✓ Stories implemented (batched, state persisted)
+  Phase 2.5 (Audit):   ✓ Delivery audit — [X]/[Y] files delivered ([Z]%)
   Phase 3 (Temper):    ✓ All layers passing
   Phase 4 (Inspect):   ✓ Security audit clean
   Phase 5 (Remember):  ✓ Knowledge harvested
