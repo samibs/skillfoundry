@@ -41,4 +41,8 @@ export declare const AVAILABLE_PROVIDERS: Record<string, {
     defaultModel: string;
 }>;
 export declare function createProvider(name: string): ProviderAdapter;
+export type ModelTier = 1 | 2 | 3 | 4;
+export declare function getModelTier(model: string): ModelTier;
+export declare function getModelTierLabel(tier: ModelTier): string;
+export declare function checkModelTierWarning(model: string, feature: string): string | null;
 export declare function detectAvailableProviders(): string[];

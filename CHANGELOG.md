@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.42] - 2026-03-13
+
+### Added — Developer Experience & Adoption Improvements
+
+- **Lightweight npm installation** (`package.json` + `bin/skillfoundry.js`): Three-tier installation path — `npx skillfoundry init` (quickest), `npm install -g skillfoundry` (persistent CLI), or `git clone` (contributors). Delegates to existing `install.sh`/`install.ps1` with platform flags and non-interactive mode support. Resolves [#7](https://github.com/samibs/skillfoundry/issues/7).
+- **Model compatibility matrix** (`docs/model-compatibility.md`): Four-tier classification of AI models — Tier 1 (Full Pipeline: Claude Sonnet/Opus, GPT-4o, Grok-3), Tier 2 (Capable: Haiku, Gemini Flash, GPT-4o-mini), Tier 3 (Limited: large local models), Tier 4 (Basic: small local models). Documents feature requirements per tier, gate strictness configuration, and cost-optimized setups. Resolves [#8](https://github.com/samibs/skillfoundry/issues/8).
+- **Model tier awareness in CLI** (`provider.ts`): `getModelTier()`, `getModelTierLabel()`, and `checkModelTierWarning()` functions detect configured model capabilities and emit warnings when using below-recommended tiers for pipeline features. Tier mappings for 18 known models with prefix-match fallback.
+- **Example project** (`examples/todo-api/`): Complete Todo REST API example with a production-quality PRD (`genesis/todo-api.md`) — 6 user stories with Gherkin acceptance criteria, technical requirements (Express, SQLite, Zod, Vitest), security section, and data model. Demonstrates the full SkillFoundry workflow from PRD to `/forge`. Resolves [#9](https://github.com/samibs/skillfoundry/issues/9).
+
+### Changed
+
+- **README.md** — Quick Start section rewritten with three installation tiers (npx, npm global, git clone). Added Windows equivalents for all options. Added references to model compatibility docs and example project. Documentation table expanded with new entries.
+
+---
+
 ## [2.0.41] - 2026-03-13
 
 ### Added — Smart Output Compression

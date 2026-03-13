@@ -248,6 +248,86 @@ export function createProvider(name: string): ProviderAdapter {
   }
 }
 
+// Model capability tiers for CLI warnings and gate configuration.
+// Tier 1: Full pipeline support (all gates, autonomous mode, multi-story)
+// Tier 2: Individual skills + basic pipeline (most gates, simple autonomous)
+// Tier 3: Individual skills only (limited gates, no pipeline)
+// Tier 4: Basic tasks only (no gates, no pipeline, no tool use)
+export type ModelTier = 1 | 2 | 3 | 4;
+
+const MODEL_TIERS: Record<string, ModelTier> = {
+  // Tier 1 — Full pipeline
+  'claude-opus-4-6': 1,
+  'claude-opus-4-20250514': 1,
+  'claude-sonnet-4-20250514': 1,
+  'claude-sonnet-4-6': 1,
+  'gpt-4o': 1,
+  'gpt-4-turbo': 1,
+  'grok-3': 1,
+  'grok-4': 1,
+  'gemini-2.5-pro': 1,
+  // Tier 2 — Capable
+  'claude-haiku-4-5-20251001': 2,
+  'gemini-2.5-flash': 2,
+  'gpt-4o-mini': 2,
+  'grok-3-mini': 2,
+  // Tier 3 — Limited (large local models)
+  'llama3.1': 3,
+  'llama3.1:70b': 3,
+  'mixtral-8x22b': 3,
+  'deepseek-coder-v2': 3,
+  'qwen2.5-coder:32b': 3,
+  // Tier 4 — Basic (small local models)
+  'llama3.1:8b': 4,
+  'qwen2.5-coder-7b': 4,
+  'phi-3-mini': 4,
+  'codellama:7b': 4,
+};
+
+const TIER_LABELS: Record<ModelTier, string> = {
+  1: 'Full Pipeline',
+  2: 'Capable',
+  3: 'Limited',
+  4: 'Basic',
+};
+
+export function getModelTier(model: string): ModelTier {
+  // Exact match
+  if (MODEL_TIERS[model] !== undefined) {
+    return MODEL_TIERS[model];
+  }
+  // Prefix match (e.g. "claude-sonnet-4" matches "claude-sonnet-4-20250514")
+  for (const [pattern, tier] of Object.entries(MODEL_TIERS)) {
+    if (model.startsWith(pattern) || pattern.startsWith(model)) {
+      return tier;
+    }
+  }
+  // Default: cloud providers → Tier 2, local → Tier 3
+  return 2;
+}
+
+export function getModelTierLabel(tier: ModelTier): string {
+  return TIER_LABELS[tier];
+}
+
+export function checkModelTierWarning(model: string, feature: string): string | null {
+  const tier = getModelTier(model);
+  if (tier === 1) return null;
+
+  const pipelineFeatures = ['/forge', '/go', '/goma', '/gosm', 'pipeline', 'autonomous'];
+  const gateFeatures = ['/gates', 'anvil', 'micro-gate', 'quality gate'];
+  const isPipeline = pipelineFeatures.some((f) => feature.toLowerCase().includes(f));
+  const isGate = gateFeatures.some((f) => feature.toLowerCase().includes(f));
+
+  if (tier === 2 && isPipeline) {
+    return `Model "${model}" (Tier 2: Capable) may need retries for complex pipelines. Recommended: claude-sonnet-4, gpt-4o, or grok-3 for ${feature}. See: docs/model-compatibility.md`;
+  }
+  if (tier >= 3 && (isPipeline || isGate)) {
+    return `Model "${model}" (Tier ${tier}: ${TIER_LABELS[tier]}) does not support ${feature}. Recommended: Use a Tier 1 model (claude-sonnet-4, gpt-4o, grok-3). See: docs/model-compatibility.md`;
+  }
+  return null;
+}
+
 export function detectAvailableProviders(): string[] {
   const available: string[] = [];
   for (const [key, info] of Object.entries(AVAILABLE_PROVIDERS)) {
