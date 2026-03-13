@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.40] - 2026-03-13
+
+### Added — Pipeline Resilience
+
+- **Early git pre-flight check**: `/go`, `/forge`, `/goma`, and `/gosm` now verify the project is a git repository before starting any work. `/goma` also blocks on dirty working trees. `/prd` advises git init after PRD creation. Prevents late-stage failures when git is needed for rollback and state tracking.
+- **Batch-aware story execution**: Stories are now executed in batches of 3-5 (respecting dependency order). After each batch, state is persisted to `.claude/state.json` and context is compacted. If context budget exceeds 60%, the pipeline stops gracefully with explicit resume instructions (`/go --resume`, `/goma --resume`, `/gosm --resume`). Prevents context exhaustion from silently killing long-running pipelines.
+- **Delivery audit gate**: Mandatory post-execution audit that compares planned deliverables (from story index) against actually created files. Reports the delta with specific missing files listed. Runs automatically in `/go` (Phase 3.5), `/forge` (Phase 2.5), `/goma` (Phase 3.0), and `/gosm` (Phase 4). Prevents the scenario where stories are listed as complete but their files were never created.
+
+### Changed
+
+- `/go` story execution flow restructured from per-story to batched execution with state persistence between batches.
+- `/forge` output format updated to include Phase 2.5 (Delivery Audit) in pipeline summary.
+- `/goma` section numbering updated (2.3-2.5) to accommodate new batch execution section.
+- `/gosm` gains new Phase 4 (Delivery Audit) and section 2.3 (Batch Execution).
+- `/version` in-app help updated with current framework stats (56 agents, 63 skills, 5 platforms, 6 providers) and recent milestone history.
+
+---
+
 ## [2.0.39] - 2026-03-12
 
 ### Added — Native Debugger Integration

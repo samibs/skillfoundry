@@ -38,6 +38,42 @@ IF no PRDs found:
   EXIT.
 ```
 
+### 1.1.5 Git Repository Check
+
+```
+IF NOT a git repository (no .git/ directory):
+  OUTPUT:
+    ⚠️  NO GIT REPOSITORY — AUTONOMOUS MODE BLOCKED
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Autonomous mode REQUIRES git for safe rollback.
+
+    Initialize now?
+      git init && git add -A && git commit -m "initial commit"
+
+    Or initialize manually and re-run /goma.
+
+  WAIT for user confirmation. Init git if confirmed, EXIT if declined.
+
+IF git working tree is dirty (uncommitted changes):
+  OUTPUT:
+    ⚠️  DIRTY GIT WORKING TREE — AUTONOMOUS MODE BLOCKED
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Uncommitted changes detected. Autonomous mode requires a clean
+    working tree to guarantee safe rollback.
+
+    Options:
+      git add -A && git commit -m "save work before /goma"
+      git stash
+
+    Or use /gosm (semi-auto mode allows dirty tree with warning).
+
+  WAIT for user confirmation. EXIT if declined.
+```
+
+This MUST run before the risk warning (1.2) and before any execution begins.
+
 ### 1.2 Autonomous Risk Warning
 
 ```
@@ -109,7 +145,39 @@ Dispatch to `/go --mode=autonomous` and let it run to completion.
 | Breaking API change | Implement with deprecation warning | Log to ESCALATION-DEFERRED |
 | Auto-fix fails 3x | Skip violation, log for review | Log to ESCALATION-DEFERRED |
 
-### 2.3 Safety Guardrails
+### 2.3 Batch Execution & Context Exhaustion Prevention
+
+Stories are executed in batches of 3-5 (respecting dependency order). After each batch:
+
+1. Persist state to `.claude/state.json` (completed stories, remaining stories, files created)
+2. Force context compaction
+3. Evaluate remaining context budget
+
+```
+IF context budget > 60% consumed after a batch:
+  OUTPUT:
+    ⏸️  AUTONOMOUS CHECKPOINT — BATCH [N] COMPLETE
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    Completed: [X] / [Y] stories ([Z]%)
+    Remaining: [R] stories
+
+    Context budget is running low. Saving state and stopping gracefully.
+
+    TO RESUME:
+      /goma --resume
+
+    State saved to: .claude/state.json
+    All completed work is preserved.
+
+  STOP execution gracefully (do NOT continue until context runs out silently).
+```
+
+**CRITICAL**: Never let context run out without outputting resume instructions.
+The user's previous experience of "worked for 1 hour then gave me the hand" must
+never happen again. Always stop at a batch boundary with clear instructions.
+
+### 2.4 Safety Guardrails
 
 These conditions trigger an **emergency stop** even in autonomous mode:
 
@@ -121,7 +189,7 @@ These conditions trigger an **emergency stop** even in autonomous mode:
 | State file corruption | HALT -- cannot guarantee rollback |
 | 10+ deferred escalations accumulated | WARN (continue but flag for review) |
 
-### 2.4 Deferred Escalation Format
+### 2.5 Deferred Escalation Format
 
 Every decision that would normally require user input is logged:
 
@@ -143,7 +211,40 @@ Every decision that would normally require user input is logged:
 
 ## PHASE 3: POST-EXECUTION REVIEW
 
-After autonomous execution completes, present a structured review.
+After autonomous execution completes (or stops at a batch checkpoint), run the
+mandatory delivery audit and then present a structured review.
+
+### 3.0 Delivery Audit (MANDATORY)
+
+Before any other post-execution review, compare planned vs actual deliverables:
+
+```
+1. READ the story index (docs/stories/[prd-name]/INDEX.md)
+   - Extract every STORY-XXX entry and its planned files/pages/components
+2. SCAN the filesystem for each planned deliverable
+3. REPORT the delta
+
+DELIVERY AUDIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Planned: [X] stories, [Y] files
+Delivered: [A] stories complete, [B] files present
+Missing: [C] stories incomplete, [D] files absent
+Completion: [Z]%
+
+MISSING ITEMS:
+  ✗ STORY-[N]: [title]
+    - [file path] (not created)
+    - [file path] (not created)
+
+IF completion < 100%:
+  ⚠️  INCOMPLETE DELIVERY
+  To complete remaining work: /goma --resume
+```
+
+This audit runs regardless of whether execution completed fully or stopped at a
+checkpoint. It prevents the scenario where stories are listed but their files
+were never created.
 
 ### 3.1 Deferred Escalation Review
 

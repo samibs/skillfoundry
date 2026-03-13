@@ -386,4 +386,23 @@ Instead, ask clarifying questions until requirements are concrete.
 /prd status              - List all PRDs and their status
 ```
 
+---
+
+### Post-Creation: Git Recommendation
+
+After saving the PRD:
+
+```
+IF NOT a git repository (no .git/ directory):
+  OUTPUT:
+    💡 TIP: Initialize git before running /forge or /go:
+       git init && git add -A && git commit -m "initial commit"
+
+    Git enables rollback, state tracking, and safe autonomous execution.
+```
+
+This is advisory only — PRD creation should not be blocked by missing git.
+
+---
+
 **Remember: The PRD is the foundation. Weak foundation = weak feature.**

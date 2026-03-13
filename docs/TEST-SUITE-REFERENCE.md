@@ -2,8 +2,8 @@
 
 > Complete documentation of all 423 TypeScript unit tests and 198+ shell integration tests.
 
-**Version:** 2.0.39
-**Last Updated:** 2026-03-12
+**Version:** 2.0.40
+**Last Updated:** 2026-03-13
 **Test Framework:** Vitest (TypeScript), Custom bash runner (Shell)
 
 ---
