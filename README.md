@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.41-blue)
+![Version](https://img.shields.io/badge/version-2.0.42-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -23,16 +23,27 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 63 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### Quick Start
+### Quick Start (5 Minutes)
+
+Three ways to install — pick what fits your workflow:
 
 ```bash
-# 1. Clone
+# Option A: npx (quickest — no clone needed)
+cd ~/my-project
+npx skillfoundry init
+
+# Option B: npm global install (persistent CLI)
+npm install -g skillfoundry
+cd ~/my-project && skillfoundry init
+
+# Option C: git clone (full source — for contributors and power users)
 git clone https://github.com/samibs/skillfoundry.git ~/dev-tools/skillfoundry
-
-# 2. Install into your project
 cd ~/my-project && ~/dev-tools/skillfoundry/install.sh
+```
 
-# 3. Use it
+Then use it in your AI IDE:
+
+```bash
 /prd "add user authentication"     # write requirements
 /forge                             # build everything with quality gates
 ```
@@ -43,6 +54,15 @@ That's it. The installer copies agents and skills into your project, builds the 
 <summary><strong>Windows (PowerShell)</strong></summary>
 
 ```powershell
+# Option A: npx
+cd C:\MyProject
+npx skillfoundry init
+
+# Option B: npm global
+npm install -g skillfoundry
+cd C:\MyProject; skillfoundry init
+
+# Option C: git clone
 git clone https://github.com/samibs/skillfoundry.git C:\DevTools\skillfoundry
 cd C:\MyProject
 C:\DevTools\skillfoundry\install.ps1
@@ -52,6 +72,8 @@ C:\DevTools\skillfoundry\install.ps1
 
 > **Requires Node.js v20+** for the standalone CLI. IDE skills work without Node.js.
 > **Cross-platform:** Works on Linux, macOS, Windows (native, Git Bash, and WSL). Quality gates and anvil scripts auto-detect the environment.
+>
+> **New to SkillFoundry?** See the [Todo API example](examples/todo-api/) — a complete project built from a single PRD in two commands. For model recommendations, see [Model Compatibility](docs/model-compatibility.md).
 
 ---
 
@@ -643,8 +665,10 @@ Update all registered projects at once:
 | [Autonomous Mode](docs/AUTONOMOUS-EXECUTION.md) | Autonomous developer loop details |
 | [Knowledge Sync](docs/PERSISTENT-MEMORY-IMPLEMENTATION.md) | Cross-project knowledge sync |
 | [Anti-Patterns](docs/ANTI_PATTERNS_DEPTH.md) | Security anti-patterns to avoid |
+| [Model Compatibility](docs/model-compatibility.md) | Which AI models work, tier recommendations |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues and fixes |
 | [Changelog](CHANGELOG.md) | Version history |
+| [Todo API Example](examples/todo-api/) | Complete example project built from a single PRD |
 
 ---
 

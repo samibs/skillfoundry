@@ -1,0 +1,56 @@
+{
+  "name": "skillfoundry",
+  "version": "2.0.42",
+  "description": "AI engineering framework — turn requirements into tested, production-ready code with quality gates your AI can't skip",
+  "type": "module",
+  "bin": {
+    "skillfoundry": "./bin/skillfoundry.js"
+  },
+  "scripts": {
+    "postinstall": "cd sf_cli && npm install && npm run build",
+    "test": "cd sf_cli && npm test"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "bin/",
+    "sf_cli/",
+    "agents/",
+    "scripts/",
+    "genesis/",
+    "install.sh",
+    "install.ps1",
+    "update.sh",
+    "update.ps1",
+    ".version",
+    "CLAUDE.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "ai",
+    "agents",
+    "coding-assistant",
+    "quality-gates",
+    "prd",
+    "skillfoundry",
+    "claude",
+    "copilot",
+    "cursor",
+    "codex",
+    "gemini",
+    "multi-agent",
+    "developer-tools"
+  ],
+  "homepage": "https://github.com/samibs/skillfoundry",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samibs/skillfoundry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/samibs/skillfoundry/issues"
+  },
+  "author": "SBS (https://github.com/samibs)",
+  "license": "MIT"
+}
