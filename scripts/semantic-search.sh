@@ -91,8 +91,9 @@ fi
 # ═══════════════════════════════════════════════════════════════
 
 # Tokenize a query into words (lowercase, remove punctuation)
+# Uses sed instead of tr -cs for macOS BSD compatibility
 tokenize() {
-    echo "$1" | tr '[:upper:]' '[:lower:]' | tr -cs '[:alnum:]' '\n' | grep -v '^$' | sort -u
+    echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/ /g' | tr ' ' '\n' | grep -v '^$' | sort -u
 }
 
 # Score a knowledge entry against the query
@@ -108,7 +109,8 @@ score_entry() {
     local score=0
 
     # Exact phrase match (highest score)
-    if echo "$content_lower" | grep -qi "$query_lower" 2>/dev/null; then
+    # Use grep -F (fixed string) to avoid regex interpretation of query characters
+    if echo "$content_lower" | grep -Fqi "$query_lower" 2>/dev/null; then
         score=$((score + 100))
     fi
 
@@ -120,7 +122,7 @@ score_entry() {
         if [ ${#word} -le 2 ]; then
             continue
         fi
-        if echo "$content_lower" | grep -qi "$word" 2>/dev/null; then
+        if echo "$content_lower" | grep -Fqi "$word" 2>/dev/null; then
             score=$((score + 10))
         fi
     done
@@ -139,8 +141,9 @@ score_entry() {
     weight=$(echo "$entry" | grep -o '"weight":[0-9.]*' 2>/dev/null | head -1 | cut -d':' -f2 || true)
     if [ -n "$weight" ]; then
         # Multiply by 10 and truncate to integer for bonus (force base-10)
+        # Use cut instead of head -c for macOS BSD compatibility
         local weight_bonus
-        weight_bonus=$(echo "$weight" | sed 's/\.//' | head -c 2)
+        weight_bonus=$(echo "$weight" | sed 's/\.//' | cut -c1-2)
         weight_bonus=${weight_bonus:-0}
         # Strip leading zeros to prevent octal interpretation
         weight_bonus=$((10#$weight_bonus))
@@ -148,14 +151,15 @@ score_entry() {
     fi
 
     # Tags match bonus
+    # Use sed to extract tags array — BSD grep handles [^]] inconsistently
     local tags
-    tags=$(echo "$entry" | grep -o '"tags":\[[^]]*\]' 2>/dev/null | head -1 || true)
+    tags=$(echo "$entry" | sed -n 's/.*"tags":\(\[[^]]*\]\).*/\1/p' 2>/dev/null | head -1 || true)
     if [ -n "$tags" ]; then
         for word in $words; do
             if [ ${#word} -le 2 ]; then
                 continue
             fi
-            if echo "$tags" | grep -qi "$word" 2>/dev/null; then
+            if echo "$tags" | grep -Fqi "$word" 2>/dev/null; then
                 score=$((score + 5))
             fi
         done
@@ -234,7 +238,9 @@ if [ "$result_count" -eq 0 ]; then
 fi
 
 # Sort results by score (descending)
-sorted_results=$(printf '%s\n' "${results[@]}" | sort -t'|' -k1 -rn | head -n "$LIMIT")
+# Use awk instead of head to avoid SIGPIPE when pipefail is set
+# (head exits early on large result sets, causing sort to get SIGPIPE)
+sorted_results=$(printf '%s\n' "${results[@]}" | sort -t'|' -k1 -rn | awk -v n="$LIMIT" 'NR<=n')
 
 if [ "$JSON_OUTPUT" = true ]; then
     echo '{"query":"'"$QUERY"'","results":['
