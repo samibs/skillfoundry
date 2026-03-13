@@ -178,6 +178,18 @@ At the bottom of each test file, include a summary comment:
 ```
 
 
+**PHASE 3.5: TEST INTENT DOCUMENTATION (MANDATORY RULE)**
+
+Every test file MUST include intent documentation: `@test-suite` header with `@story` and `@rationale`, GIVEN/WHEN/THEN structure comments in each test body, and WHY comments explaining what contract the test enforces. If you cannot articulate WHY a test exists, the test is either unnecessary or the requirement is unclear — escalate to the user.
+
+This is non-negotiable. A test without intent documentation is a liability:
+- It cannot be maintained (nobody knows what it protects)
+- It cannot be safely deleted (nobody knows what breaks)
+- It cannot be trusted (nobody knows if the assertion is correct)
+
+Validate with `/doc-tests` after writing tests. Any test file that fails the doc-test check must be fixed before the test cycle is considered complete.
+
+
 **PHASE 4: TEST IMPLEMENTATION**
 Write actual test code in the appropriate format for the technology stack:
 - JavaScript/TypeScript: `*.spec.ts` or `*.test.js`
