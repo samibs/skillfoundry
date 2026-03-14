@@ -39,10 +39,11 @@ describe('runSingleGate', () => {
     expect(result.status).toBe('skip');
   });
 
-  it('T3 should skip when no test runner', () => {
+  it('T3 should fail when no test runner and no test files', () => {
     const result = runSingleGate('T3', TEST_DIR);
     expect(result.tier).toBe('T3');
-    expect(result.status).toBe('skip');
+    // With no test runner AND no test files, T3 now fails (tests are mandatory)
+    expect(result.status).toBe('fail');
   });
 
   it('T4 should pass on clean files', () => {
@@ -77,10 +78,11 @@ describe('runAllGates', () => {
     expect(summary.passed + summary.failed + summary.warned + summary.skipped).toBe(7);
   });
 
-  it('should report pass verdict for clean project', async () => {
+  it('should report fail verdict when no test files exist', async () => {
     const summary = await runAllGates({ workDir: TEST_DIR });
-    // With no build/test tools, most gates skip, so verdict should be PASS
-    expect(['PASS', 'WARN']).toContain(summary.verdict);
+    // With no test files, T3 fails — tests are mandatory
+    expect(['PASS', 'WARN']).not.toContain(summary.verdict);
+    expect(summary.verdict).toBe('FAIL');
   });
 
   it('should call onGateStart and onGateComplete callbacks', async () => {

@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.44] - 2026-03-14
+
+### Added — Slash-Command Safeguard Parity
+
+All pipeline safeguards from the CLI (`sf forge`) are now enforced in slash-command mode (`/forge`, `/go`) when running inside Claude Code, Copilot, Cursor, Codex, or Gemini. Previously, the TypeScript enforcement (test gates, circuit breaker, session recorder, anomaly detection) only ran through the CLI — slash commands followed markdown instructions that lacked these protections.
+
+**forge.md — 5 Mandatory Safeguards:**
+- **Build Health Baseline**: Verify the project builds (type check + build) before starting any story execution. Pre-existing errors are tracked separately from story-induced failures.
+- **Test Existence Gate**: After each story, verify test files were created. Triggers tester remediation if missing. Rejects vacuous passes (test runner exits 0 with zero test files).
+- **Circuit Breaker**: Track error signatures across stories. If 2+ consecutive stories fail with the same error pattern (e.g., `Can't resolve 'tailwindcss'`), halt the pipeline immediately with root cause guidance instead of burning tokens on a systemic blocker.
+- **Session Issue Tracking**: Maintain a running issue log (severity, category, story, detail, remediation) for every gate failure, test gap, build warning, and circuit breaker activation.
+- **Anomaly Detection**: Post-pipeline checklist catches contradictions — zero tests with completions, PASS verdict with failures, recurring errors that weren't halted, high cost with zero delivery.
+
+**go.md — Story Execution Hardening:**
+- Build baseline check inserted as step 1.5 before first story.
+- Circuit breaker state (`consecutiveFailures`, `lastErrorSignature`) maintained across all stories with check at the top of each story loop.
+- Test existence gate added after implementation, before marking story DONE.
+- Error signature extraction and tracking on story failure; reset on success.
+- Anomaly detection and issue report compilation in feature completion phase (step 3a) — blocks COMPLETE status if anomalies detected.
+
+### Changed
+
+- **`forge.md`**: Phase 2 now includes "MANDATORY SAFEGUARDS" section with 5 numbered safeguards and pseudocode decision logic.
+- **`go.md`**: Story execution flow restructured with circuit breaker check, test existence gate, error tracking on failure/success, and anomaly detection before completion.
+
+---
+
+## [2.0.43] - 2026-03-14
+
+### Added — Test Enforcement & Circuit Breaker
+
+**Test Enforcement Pipeline Gates:**
+- **Test existence gate** in FORGE phase (`pipeline.ts`): After each story completes T2/T5, the pipeline now checks if test files were created/modified via `git diff` and `git ls-files`. If no test files are found, a tester remediation agent is triggered to write tests. Stories that still lack tests after remediation are flagged with `testsMissing: true`.
+- **Tester remediation prompt** (`TESTER_REMEDIATION_PROMPT`): Dedicated prompt for the tester agent that creates test files for implementations that shipped without tests. Runs with `maxTurns: 15` and is given the story content for context.
+- **T3 gate enhancement** (`gates.ts`): T3 now fails on vacuous passes — when the test runner exits 0 but zero test files exist in the project. Also warns when completed stories have no matching test files via `checkStoriesHaveTests()`.
+- **`countTestFiles()` and `checkStoriesHaveTests()`** helpers in `gates.ts`: Count test files across 9 naming conventions (`.test.ts`, `.spec.ts`, `.test.js`, `.spec.js`, `.test.tsx`, `.spec.tsx`, `test_*.py`, `*_test.go`, `*Tests.cs`) and cross-reference completed stories' "Files Affected" sections.
+- **`testsMissing` field** on `StoryExecution` type: Tracks stories that completed implementation but failed to produce test files even after remediation.
+
+**Circuit Breaker (Goal-Completion Bias Prevention):**
+- **Pre-FORGE build health baseline** (`checkBuildHealth()`): Before starting any stories, the pipeline runs T2+T5 to establish whether the project builds cleanly. Emits `BUILD_BASELINE` warning if pre-existing build failures exist, so the pipeline can distinguish "story broke the build" from "build was already broken."
+- **Repeated error detection** (`extractErrorSignature()`, `errorSimilarity()`): After each story failure, the pipeline extracts a normalized error fingerprint (stripping file paths, line numbers, and variable parts) and compares it to the previous story's failure. If similarity exceeds 60%, the failures are counted as consecutive.
+- **Consecutive failure halt** (threshold: 2): When 2+ consecutive stories fail with the same error pattern, the pipeline halts with a `CIRCUIT_BREAKER` failure. Remaining stories are skipped instead of wasting tokens on a systemic blocker. FORGE phase status is set to `failed` with a detailed halt reason.
+- **Blocker detection in `STORY_EXECUTION_PROMPT`**: New "BLOCKER DETECTION (CRITICAL)" section instructs the agent to stop and diagnose root causes when encountering the same error twice, instead of working around it. Specific guidance for dependency resolution failures (`Can't resolve`, `Module not found`) including workspace root verification.
+
+### Changed
+
+- **`STORY_EXECUTION_PROMPT`** (`pipeline.ts`): Now explicitly mandates writing test files (TEST REQUIREMENTS section) and includes blocker detection instructions (BLOCKER DETECTION section) that tell the agent to stop, diagnose, and report rather than loop.
+- **`STORY_GENERATION_PROMPT`** (`pipeline.ts`): Stories now require a "Test Requirements" section and test files in "Files Affected". Includes enforcement warning that stories without test deliverables will be rejected.
+- **`forge.md`** skill: Added TEST ENFORCEMENT documentation explaining the three-layer test gate (existence check → tester remediation → T3 TEMPER gate).
+- **`stories.md`** skill: "Expected Changes (Anvil T4)" section now documents the mandatory test file requirement.
+
+### Fixed
+
+- **T3 vacuous pass bug**: Previously, `vitest run` or `npm test` exiting 0 with zero test files reported "All tests passed" — now correctly returns FAIL with "vacuous pass" explanation.
+- **Zero-test forge runs**: The pipeline could previously complete 21 stories with zero test files and report PASS. Now impossible — test existence is enforced at story level (FORGE) and project level (TEMPER T3).
+
+**Session Recorder (Issue Tracking & Anomaly Detection):**
+- **`SessionRecorder` class** (`session-recorder.ts`): Real-time issue tracker that hooks into pipeline callbacks to capture gate failures, build errors, test gaps, security findings, and anomalies. Categorizes issues by severity (CRITICAL/HIGH/MEDIUM/LOW/INFO) and category (BLOCKER/TEST_GAP/BUILD_FAILURE/SECURITY/QUALITY/ANOMALY/CIRCUIT_BREAKER/DEPENDENCY/GATE_FAILURE).
+- **Anomaly detection engine** (`detectAnomalies()`): Post-pipeline analysis that detects contradictions between reported status and actual evidence — zero tests with completions, PASS verdict with failures, all stories passed but TEMPER failed, high cost with zero completion, all micro-gates skipped.
+- **Error pattern correlation** (`trackErrorPattern()`): Tracks normalized error signatures across stories and flags recurring patterns (2+ occurrences) as systemic blockers with likely root cause.
+- **Dual-format reports**: Each pipeline run now produces `{runId}-issues.json` (machine-readable) and `{runId}-issues.md` (human-readable) alongside the run bundle. Markdown report includes: summary table, top remediations, blockers section, other issues table, anomalies, and recurring error patterns.
+- **Pipeline integration**: Recorder is automatically instantiated at pipeline start and merged into callbacks. All existing user callbacks continue to work — the recorder is transparent. Report is written during DEBRIEF phase. `PipelineResult.sessionReport` field added with issue/blocker/anomaly counts and report path.
+- **20 new tests** in `session-recorder.test.ts` covering issue recording, blocker counting, anomaly detection (5 anomaly types), callback integration (gate failures, circuit breaker, build baseline, test gaps, micro-gates, provider errors), report generation, file persistence, and error pattern tracking.
+
+---
+
 ## [2.0.42] - 2026-03-13
 
 ### Added — Developer Experience & Adoption Improvements

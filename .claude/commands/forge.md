@@ -58,11 +58,153 @@ IF NOT a git repository (no .git/ directory):
 - Full story pipeline: Architect → Coder → Tester → Gate-Keeper
 - **The Anvil** runs between every handoff (T1-T6 quality checks)
 - See `agents/_anvil-protocol.md` for Anvil tier details
+- **TEST ENFORCEMENT**: Every story MUST produce test files. The pipeline runs a
+  test existence gate after each story. If no test files are created:
+  1. A tester remediation agent is triggered to write tests
+  2. If remediation fails, the story is flagged with `testsMissing: true`
+  3. T3 gate in TEMPER phase will FAIL if zero test files exist
 - **Batch execution**: Stories are executed in batches of 3-5. After each batch,
   state is persisted and context is compacted. If context is critically low,
   output explicit resume instructions before stopping.
 - **Context exhaustion guard**: If >60% of context budget is consumed after a batch,
   output a checkpoint with `/go --resume` instructions and stop gracefully.
+
+### MANDATORY SAFEGUARDS (Phase 2)
+
+These rules are NON-NEGOTIABLE. They prevent the forge from producing broken output that looks successful.
+
+#### Safeguard 1: Build Health Baseline
+
+**BEFORE starting any story execution**, verify the project builds:
+```
+1. Run the project's type checker (tsc --noEmit, or equivalent)
+2. Run the project's build command (npm run build, or equivalent)
+
+IF EITHER FAILS:
+  → Record as BUILD_BASELINE warning
+  → Log: "⚠️ BUILD BASELINE: Project does not build cleanly before forge"
+  → Continue, but track pre-existing errors separately from new errors
+  → Do NOT count pre-existing build errors as story failures
+```
+
+#### Safeguard 2: Test Existence Gate (Per Story)
+
+**AFTER each story is implemented**, before marking it DONE:
+```
+1. Check: Did this story create or modify ANY test files?
+   Test file patterns: *.test.ts, *.spec.ts, *.test.tsx, *.spec.tsx,
+                       test_*.py, *_test.py, *_test.go, *.Tests.cs,
+                       *.test.js, *.spec.js
+
+2. IF NO test files were created/modified:
+   → DO NOT mark the story as DONE
+   → Trigger tester remediation: Write tests for the code just implemented
+   → Re-check for test files after remediation
+   → If STILL no tests: flag story with testsMissing=true, log as TEST_GAP issue
+
+3. NEVER accept "All tests passed" when zero test files exist
+   → A test runner exiting 0 with no test files is a VACUOUS PASS
+   → This is a FAIL, not a PASS
+```
+
+#### Safeguard 3: Circuit Breaker (Blocker Detection)
+
+**Track error patterns across stories.** If the same error repeats, STOP.
+```
+STATE:
+  consecutiveFailures = 0
+  lastErrorSignature = ""
+
+AFTER EACH STORY FAILURE:
+  1. Extract the error signature:
+     - Strip file paths, line numbers, timestamps
+     - Keep the core error message (e.g., "Can't resolve 'tailwindcss'")
+
+  2. Compare with lastErrorSignature:
+     - If similar (same dependency, same error type): consecutiveFailures++
+     - If different: consecutiveFailures = 1
+
+  3. Update lastErrorSignature
+
+  4. IF consecutiveFailures >= 2:
+     → HALT THE PIPELINE IMMEDIATELY
+     → Output:
+       🛑 CIRCUIT BREAKER ACTIVATED
+       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       [consecutiveFailures] consecutive stories failed with the same error:
+       "[error signature]"
+
+       This is a systemic blocker, NOT a per-story issue.
+       Continuing will waste tokens on the same failure.
+
+       Likely root causes:
+       - Missing dependency (npm install / pip install)
+       - Wrong import path or workspace configuration
+       - Environment misconfiguration
+
+       Recommended: Fix the root cause, then resume with /go --resume
+     → DO NOT continue to the next story
+     → DO NOT mark remaining stories as "completed" or "skipped"
+
+AFTER EACH STORY SUCCESS:
+  → Reset: consecutiveFailures = 0, lastErrorSignature = ""
+```
+
+#### Safeguard 4: Session Issue Tracking
+
+**Maintain a running issue log throughout the forge session:**
+```
+ISSUE LOG (track in scratchpad or memory):
+
+For each issue encountered, record:
+  - Severity: CRITICAL | HIGH | MEDIUM | LOW
+  - Category: BLOCKER | TEST_GAP | BUILD_FAILURE | SECURITY | DEPENDENCY
+  - Story: which story triggered it
+  - Detail: the actual error output
+  - Remediation: what should be done to fix it
+
+AUTOMATICALLY RECORD:
+  - Every gate failure (T1-T6, Anvil)
+  - Every test existence failure
+  - Every circuit breaker activation
+  - Every build baseline warning
+  - Every micro-gate failure or skip
+```
+
+#### Safeguard 5: Anomaly Detection (Post-Pipeline)
+
+**AFTER all stories complete, before DEBRIEF, check for these anomalies:**
+```
+□ ZERO_TESTS_WITH_COMPLETIONS
+  Stories completed > 0 AND total test files created = 0
+  → This means the forge produced code with NO test coverage
+  → Flag as CRITICAL anomaly
+
+□ PASS_WITH_FAILURES
+  Final verdict is "PASS" or "FORGED" AND storiesFailed > 0
+  → Contradictory: you can't pass with failures
+  → Downgrade verdict to PARTIAL
+
+□ ALL_PASSED_BUT_TEMPER_FAILED
+  All stories passed AND Phase 3 (Temper/layer-check) failed
+  → Stories may have passed vacuously
+  → Flag as HIGH anomaly
+
+□ HIGH_COST_ZERO_COMPLETION
+  Token cost > $2 AND storiesCompleted = 0
+  → Burned budget with nothing to show
+  → Flag as CRITICAL anomaly
+
+□ RECURRING_ERROR_NOT_HALTED
+  Same error appeared in 3+ stories but pipeline didn't stop
+  → Circuit breaker should have fired
+  → Flag as CRITICAL anomaly
+
+IF ANY anomalies detected:
+  → Include in DEBRIEF output
+  → Do NOT report "FORGED — Ready for deployment"
+  → Report "PARTIAL — [N] anomalies detected, review required"
+```
 
 **PHASE 2.5: DELIVERY AUDIT** — Verify planned vs actual deliverables
 - After Phase 2 completes (or stops due to context exhaustion):

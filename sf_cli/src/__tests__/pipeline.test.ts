@@ -219,7 +219,8 @@ describe('runPipeline', () => {
     expect(result.phases[1].status).toBe('passed'); // PLAN (reused existing)
     expect(result.storiesTotal).toBe(1);
     expect(result.storiesCompleted).toBe(1);
-    expect(runAgentLoop).toHaveBeenCalledTimes(1); // Only story execution, no generation
+    // 1 story execution + 1 tester remediation (no test files in temp dir)
+    expect(runAgentLoop).toHaveBeenCalledTimes(2);
   });
 
   it('generates stories from PRD when none exist', async () => {
@@ -338,8 +339,8 @@ describe('runPipeline', () => {
     // T2/T5 pass — story should complete, no fixer triggered during FORGE
     expect(result.storiesCompleted).toBe(1);
     expect(result.storiesFailed).toBe(0);
-    // 1 story execution, no FORGE fixer (POLISH micro-gates all PASS via default mock)
-    expect(runAgentLoop).toHaveBeenCalledTimes(1);
+    // 1 story execution + 1 tester remediation (no test files in temp dir)
+    expect(runAgentLoop).toHaveBeenCalledTimes(2);
   });
 
   it('marks story as failed when T2/T5 fixer retries exhausted', async () => {
@@ -441,7 +442,7 @@ describe('runPipeline', () => {
     const runsDir = join(TEST_DIR, '.skillfoundry', 'runs');
     expect(existsSync(runsDir)).toBe(true);
 
-    const runFiles = readdirSync(runsDir).filter((f) => f.endsWith('.json'));
+    const runFiles = readdirSync(runsDir).filter((f) => f.endsWith('.json') && !f.includes('-issues'));
     expect(runFiles).toHaveLength(1);
 
     const runData = JSON.parse(readFileSync(join(runsDir, runFiles[0]), 'utf-8'));
@@ -619,7 +620,8 @@ describe('runPipeline', () => {
     expect(result.storiesCompleted).toBe(2); // 1 already done + 1 newly completed
     expect(onStoryStart).toHaveBeenCalledTimes(1); // Only STORY-002
     expect(onStoryStart).toHaveBeenCalledWith('STORY-002-pending.md', 0, 1);
-    expect(runAgentLoop).toHaveBeenCalledTimes(1); // Only STORY-002 executed
+    // 1 story execution + 1 tester remediation (no test files in temp dir)
+    expect(runAgentLoop).toHaveBeenCalledTimes(2);
   });
 
   // ── Micro-gate integration tests ──────────────────────────
@@ -703,8 +705,8 @@ describe('runPipeline', () => {
       config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
     });
 
-    // POLISH fixer should have been called (runAgentLoop: 1 story + 1 POLISH fixer)
-    expect(runAgentLoop).toHaveBeenCalledTimes(2);
+    // 1 story execution + 1 tester remediation + 1 POLISH fixer
+    expect(runAgentLoop).toHaveBeenCalledTimes(3);
     expect(result.storiesCompleted).toBe(1);
     // Story was NOT failed — POLISH doesn't block stories
     expect(result.storiesFailed).toBe(0);
@@ -931,11 +933,107 @@ describe('runPipeline', () => {
       callbacks: { onGateResult },
     });
 
-    // T2 + T5 called per story = 2 stories × 2 gates = 4 runSingleGate calls
-    expect(runSingleGate).toHaveBeenCalledTimes(4);
+    // Build baseline (T2+T5) + per-story T2+T5 = 2 + (2 stories × 2 gates) = 6 calls
+    expect(runSingleGate).toHaveBeenCalledTimes(6);
     // onGateResult called for each T2 and T5 per story
     expect(onGateResult).toHaveBeenCalledWith('T2', expect.any(String), expect.any(String));
     expect(onGateResult).toHaveBeenCalledWith('T5', expect.any(String), expect.any(String));
+  });
+
+  // ── Circuit breaker tests ─────────────────────────────────
+
+  it('halts pipeline when consecutive stories fail with same error pattern', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-cb.md'), '# CB Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'cb');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-first.md'), '# STORY-001: First\nstatus: PENDING\n');
+    writeFileSync(join(storyDir, 'STORY-002-second.md'), '# STORY-002: Second\nstatus: PENDING\n');
+    writeFileSync(join(storyDir, 'STORY-003-third.md'), '# STORY-003: Third\nstatus: PENDING\n');
+
+    // Story execution succeeds but T2/T5 fail with the same error pattern every time
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    // Build baseline passes, but per-story T2/T5 always fail with same error
+    let callCount = 0;
+    vi.mocked(runSingleGate).mockImplementation((tier: string) => {
+      callCount++;
+      // First 2 calls are build baseline (pass)
+      if (callCount <= 2) {
+        return { tier, name: 'Baseline', status: 'pass' as const, detail: '', durationMs: 10 };
+      }
+      // All subsequent T2 calls fail with same error pattern
+      if (tier === 'T2') {
+        return {
+          tier: 'T2', name: 'Type Check', status: 'fail' as const,
+          detail: "error TS2307: Cannot find module 'tailwindcss' or its corresponding type declarations.\nsrc/app/layout.tsx:3:8",
+          durationMs: 50,
+        };
+      }
+      return { tier, name: 'Build', status: 'pass' as const, detail: '', durationMs: 10 };
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 1, warned: 0, skipped: 0, totalMs: 0, verdict: 'FAIL',
+    });
+
+    const onGateResult = vi.fn();
+    const result = await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+      callbacks: { onGateResult },
+    });
+
+    // All 3 stories should fail (2 attempted + fixer retries, 1 skipped by circuit breaker)
+    expect(result.storiesFailed).toBe(3);
+    // Circuit breaker should have fired
+    expect(onGateResult).toHaveBeenCalledWith('CIRCUIT_BREAKER', 'fail', expect.stringContaining('Circuit breaker'));
+    // FORGE phase should be failed
+    const forgePhase = result.phases.find((p) => p.name === 'FORGE');
+    expect(forgePhase?.status).toBe('failed');
+  });
+
+  it('fires BUILD_BASELINE warning when project does not build before FORGE', async () => {
+    const genesisDir = join(TEST_DIR, 'genesis');
+    mkdirSync(genesisDir, { recursive: true });
+    writeFileSync(join(genesisDir, '2026-01-01-bl.md'), '# Baseline Test\n\nstatus: APPROVED\n');
+
+    const storyDir = join(TEST_DIR, 'docs', 'stories', 'bl');
+    mkdirSync(storyDir, { recursive: true });
+    writeFileSync(join(storyDir, 'STORY-001-test.md'), '# STORY-001: Test\nstatus: PENDING\n');
+
+    vi.mocked(runAgentLoop).mockResolvedValue({
+      content: 'Done.', turnCount: 1,
+      totalInputTokens: 100, totalOutputTokens: 50, totalCostUsd: 0.001, aborted: false,
+    });
+
+    // Build baseline fails (T2 fail), per-story gates pass
+    let callCount = 0;
+    vi.mocked(runSingleGate).mockImplementation((tier: string) => {
+      callCount++;
+      // First call is T2 baseline — fail
+      if (callCount === 1 && tier === 'T2') {
+        return { tier: 'T2', name: 'Type Check', status: 'fail' as const, detail: 'Pre-existing type errors', durationMs: 10 };
+      }
+      return { tier, name: 'Gate', status: 'pass' as const, detail: '', durationMs: 10 };
+    });
+
+    vi.mocked(runAllGates).mockResolvedValue({
+      gates: [], passed: 0, failed: 0, warned: 0, skipped: 0, totalMs: 0, verdict: 'PASS',
+    });
+
+    const onGateResult = vi.fn();
+    await runPipeline({
+      config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
+      callbacks: { onGateResult },
+    });
+
+    // Should have fired BUILD_BASELINE warning
+    expect(onGateResult).toHaveBeenCalledWith('BUILD_BASELINE', 'warn', expect.stringContaining('does not build cleanly'));
   });
 
   // ── Finisher integration tests ─────────────────────────────
