@@ -117,7 +117,35 @@ This matrix defines what gets auto-fixed vs. what gets escalated:
 | **Database** | Schema design choice | ESCALATE | Data modeling decision |
 | **API** | Breaking change to consumers | ESCALATE | Versioning decision |
 
-### 2.3 Execution Monitoring
+### 2.3 Batch Execution & Context Exhaustion Prevention
+
+Stories are executed in batches of 3-5 (respecting dependency order). After each batch:
+
+1. Persist state to `.claude/state.json`
+2. Force context compaction
+3. Evaluate remaining context budget
+
+If context budget > 60% consumed after a batch, present a checkpoint:
+
+```
+⏸️  CONTEXT CHECKPOINT — BATCH [N] COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Completed: [X] / [Y] stories ([Z]%)
+Remaining: [R] stories
+
+Context budget is running low. State has been saved.
+
+Options:
+  1. Continue (will compact and proceed)
+  2. Stop and resume later: /gosm --resume
+
+State saved to: .claude/state.json
+```
+
+**CRITICAL**: Always output resume instructions before context runs out.
+
+### 2.4 Execution Monitoring
 
 During execution, track and report:
 
@@ -204,6 +232,34 @@ Escalations:  [N] resolved by developer
 
 Proceed to Phase [N+1]? (Y/n)
 ```
+
+---
+
+## PHASE 4: DELIVERY AUDIT (MANDATORY)
+
+After execution completes (or stops at a checkpoint), compare planned vs actual:
+
+```
+1. READ story index (docs/stories/[prd-name]/INDEX.md)
+2. Extract all planned files/pages/components from each story
+3. SCAN filesystem for each planned deliverable
+4. REPORT delta
+
+DELIVERY AUDIT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Planned: [X] stories, [Y] files
+Delivered: [A] stories complete, [B] files present
+Missing: [C] stories incomplete, [D] files absent
+Completion: [Z]%
+
+IF completion < 100%:
+  ⚠️  INCOMPLETE DELIVERY
+  Missing items listed above.
+  To complete: /gosm --resume
+```
+
+This audit is mandatory and runs even on partial completion.
 
 ---
 

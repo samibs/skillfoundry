@@ -392,4 +392,23 @@ Instead, ask clarifying questions until requirements are concrete.
 /prd status              - List all PRDs and their status
 ```
 
+---
+
+### Post-Creation: Auto-Init Git
+
+After saving the PRD:
+
+```
+IF NOT a git repository (no .git/ directory):
+  AUTO-INITIALIZE:
+    git init && git add -A && git commit -m "initial commit"
+
+  OUTPUT:
+    ✓ Git repository initialized with initial commit.
+```
+
+Git is required for rollback, state tracking, and safe execution. Auto-initialized on first use.
+
+---
+
 **Remember: The PRD is the foundation. Weak foundation = weak feature.**

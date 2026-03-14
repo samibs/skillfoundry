@@ -371,6 +371,61 @@ Lineage preserved. History updated.
 [Confirmed stored/Updated/Retrieved X items]
 ```
 
+
+## AUTO-CAPTURE ARCHITECTURAL DECISIONS
+
+**MANDATORY**: When any agent makes a significant architectural or design decision during implementation, the memory curator MUST automatically capture it.
+
+### What to Capture
+
+| Decision Type | Trigger | Example |
+|--------------|---------|---------|
+| Technology choice | Agent selects a library, framework, or tool | "Chose Zod over Joi for schema validation" |
+| Architecture pattern | Agent structures code a specific way | "Repository pattern for data access layer" |
+| Trade-off decision | Agent chooses between competing approaches | "Chose speed over memory: in-memory cache vs Redis" |
+| Security decision | Agent makes a security-relevant choice | "BCrypt with cost=12 for password hashing" |
+| Convention | Agent establishes a naming/structural convention | "All API routes prefixed with /api/v1/" |
+
+### Capture Format
+
+```json
+{
+  "id": "decision-<uuid>",
+  "type": "decision",
+  "content": "<what was decided and why>",
+  "created_at": "<ISO-8601>",
+  "created_by": "<agent-name>",
+  "session_id": "<story-id or session-id>",
+  "context": {
+    "prd_id": "<if applicable>",
+    "story_id": "<if applicable>",
+    "phase": "<implementation|architecture|security>"
+  },
+  "weight": 0.6,
+  "tags": ["<domain>", "<technology>"],
+  "reality_anchor": {
+    "has_tests": false,
+    "test_file": null,
+    "test_passing": false
+  },
+  "lineage": {
+    "parent_id": null,
+    "supersedes": [],
+    "superseded_by": null
+  }
+}
+```
+
+### Auto-Capture Rules
+
+1. **Listen for decision language**: "I'll use...", "Choosing X over Y", "The approach is...", "Going with..."
+2. **Capture immediately** — don't wait for the session to end
+3. **Include alternatives considered** — "Chose X over Y because Z"
+4. **Deduplicate** — check if this decision already exists before storing
+5. **Write to** `memory_bank/knowledge/decisions.jsonl`
+
+**Why**: Decisions made during implementation are the most valuable and the most frequently lost. If an agent makes a choice, it must be recorded so future sessions understand the rationale.
+
 ---
 
 ## Usage in GitHub Copilot CLI

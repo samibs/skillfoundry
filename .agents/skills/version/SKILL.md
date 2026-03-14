@@ -167,22 +167,28 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**Claude AS Framework v1.7.0.0**
+**SkillFoundry v2.0.40**
 
-- **41 Agents** - Complete development lifecycle coverage
-- **Triple Platform** - Claude Code, GitHub Copilot CLI, Cursor
+- **56 Agents, 63 Skills** - Complete development lifecycle coverage
+- **5 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini
+- **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
 - **Auto-Remediation** - 90%+ violations fixed autonomously
 - **Execution Modes** - Supervised, Semi-Autonomous, Autonomous
+- **Native Debugger** - CDP-based interactive debugging for AI agents
+- **Batch Execution** - Context exhaustion prevention with resume support
+- **Delivery Audit** - Planned vs actual deliverable verification
 
 ### Recent Milestones
 
 | Version | Date | Milestone |
 |---------|------|-----------|
-| 1.7.0.0 | 2026-02-05 | Auto-remediation & autonomous execution |
-| 1.6.0.0 | 2026-02-03 | The Dream Team (38+2 agents) |
-| 1.5.0.0 | 2026-01-25 | Observability & tracing |
-| 1.4.0.0 | 2026-01-15 | Persistent memory & MCP integration |
-| 1.3.0.0 | 2026-01-05 | State machine & recovery |
+| 2.0.41 | 2026-03-13 | Smart output compression — 60-90% token savings on tool output |
+| 2.0.40 | 2026-03-13 | Pipeline resilience — batch execution, delivery audit, git pre-flight |
+| 2.0.39 | 2026-03-12 | Native debugger integration (CDP + 6 debug tools) |
+| 2.0.38 | 2026-03-08 | Correctness contracts (T0, MG0, MG1.5) |
+| 2.0.37 | 2026-03-05 | Platform memory migration |
+| 2.0.36 | 2026-03-03 | Automatic memory harvesting |
+| 2.0.35 | 2026-03-01 | Two-pass pipeline (FORGE + POLISH) |
 
 ## Implementation
 

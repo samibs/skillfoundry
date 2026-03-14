@@ -349,6 +349,21 @@ Track remediation effectiveness:
 - Lose context between retry attempts
 
 
+## MANDATORY: Think Before Acting
+
+Before EVERY file edit or tool call, output a reasoning block:
+
+```
+REASONING:
+- What I'm about to do: [1 sentence]
+- Why: [1 sentence]
+- Risk: [none/low/medium/high]
+- Alternative considered: [if any]
+```
+
+Do NOT skip this step. Do NOT combine reasoning for multiple actions.
+
+
 *Fixer Orchestrator: The auto-remediation intelligence that keeps implementation flowing.*
 
 ---

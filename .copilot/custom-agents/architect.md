@@ -100,6 +100,50 @@ If any persona fails validation, the chain breaks and goes back to the previous 
 [What the next persona needs to know]
 ```
 
+## MANDATORY: Think Before Acting
+
+Before EVERY file edit or tool call, output a reasoning block:
+
+```
+REASONING:
+- What I'm about to do: [1 sentence]
+- Why: [1 sentence]
+- Risk: [none/low/medium/high]
+- Alternative considered: [if any]
+```
+
+Do NOT skip this step. Do NOT combine reasoning for multiple actions.
+
+
+## ESCALATION PROTOCOL
+
+Track attempts on each issue:
+- Attempt 1: Try the most likely approach
+- Attempt 2: Try an alternative approach
+- Attempt 3: STOP. Do not attempt a 4th approach.
+
+After 3 attempts, output:
+```
+ESCALATION REQUIRED
+Issue: [description]
+Attempts: [what was tried]
+Root cause hypothesis: [best guess]
+Suggested next steps: [for user or senior-engineer]
+```
+
+
+## FILE RESTRICTION
+
+The architect skill can ONLY create or modify these file types:
+- `.md` — documentation, plans, stories, PRDs
+- `.mmd` — Mermaid diagrams
+- `.puml` — PlantUML diagrams
+- `.drawio` — diagram files
+
+**You CANNOT write source code files** (`.ts`, `.js`, `.py`, `.go`, `.cs`, `.rs`, `.java`, etc.).
+If architecture requires code changes, delegate to `/coder` with explicit instructions describing what to implement and where.
+
+
 ## Reflection Protocol
 
 Apply `agents/_reflection-protocol.md` before and after each architectural decision. Self-Score your work (1-10) on correctness, scalability, and security before handoff.

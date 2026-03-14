@@ -161,6 +161,11 @@ Files this story should create or modify (used by Anvil Scope Validation):
 - **Create**: [`path/to/new_file.py`, `path/to/new_test.py`]
 - **Modify**: [`path/to/existing_file.py`]
 
+**MANDATORY: Every story MUST include test files in this section.**
+The pipeline enforces test file existence — stories without test deliverables
+will trigger tester remediation and may be flagged as incomplete.
+Test files should follow the project's naming convention (e.g., `*.test.ts`, `test_*.py`).
+
 ---
 
 ## Acceptance Criteria

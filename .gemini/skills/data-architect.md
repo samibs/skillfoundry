@@ -413,3 +413,46 @@ NORMALIZATION: [level] - [appropriate for use case: YES|NO]
 MIGRATION RISK: [LOW|MEDIUM|HIGH]
 NEXT STEP: [specific action]
 ```
+
+
+## MIGRATION FILE REQUIRED
+
+**ABSOLUTE RULE**: Every schema change MUST have a corresponding migration file. No exceptions.
+
+### Migration Checklist
+
+```
+BEFORE any schema change is considered complete:
+
+1. □ Migration file created (with timestamp prefix)
+   Format: YYYYMMDD_HHMMSS_description.sql (or framework equivalent)
+
+2. □ UP migration: applies the change
+   - CREATE TABLE, ALTER TABLE, ADD COLUMN, etc.
+
+3. □ DOWN migration: reverses the change
+   - DROP TABLE, ALTER TABLE DROP COLUMN, etc.
+   - Must be tested — actually run the rollback
+
+4. □ Data migration included (if schema change affects existing data)
+   - Transform existing rows to match new schema
+   - Handle NULL values, defaults, type conversions
+
+5. □ Migration is idempotent (safe to run twice)
+   - Use IF NOT EXISTS, IF EXISTS guards
+
+6. □ Migration tested against:
+   - Empty database (fresh install)
+   - Database with existing data (upgrade path)
+   - Rollback after apply (down migration works)
+```
+
+### Rejection Criteria
+
+**REJECT** any schema change that:
+- Modifies a table/column directly without a migration file
+- Has an UP migration but no DOWN migration
+- Drops data without a data preservation step
+- Lacks idempotency guards
+
+**Why**: Direct schema changes create drift between environments. Migrations are the single source of truth for database state.
