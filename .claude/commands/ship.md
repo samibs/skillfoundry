@@ -482,4 +482,41 @@ Before executing Phase 4 (release), ship MUST challenge:
 
 ---
 
+## PRE-COMMIT SECRET SCANNING
+
+**BEFORE every commit or push**, scan staged changes for secrets:
+
+### Patterns to Detect
+
+| Pattern | Regex | Severity |
+|---------|-------|----------|
+| AWS Key | `AKIA[0-9A-Z]{16}` | BLOCKER |
+| Generic API Key | `(?i)(api[_-]?key\|apikey)\s*[:=]\s*['"][A-Za-z0-9]{20,}` | BLOCKER |
+| Generic Secret | `(?i)(secret\|password\|passwd\|token)\s*[:=]\s*['"][^'"]{8,}` | BLOCKER |
+| Private Key | `-----BEGIN (RSA\|DSA\|EC\|OPENSSH) PRIVATE KEY-----` | BLOCKER |
+| Connection String | `(?i)(mongodb\+srv\|postgres\|mysql\|redis)://[^\\s'"]+@` | BLOCKER |
+| JWT Token | `eyJ[A-Za-z0-9-_]+\.eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_.+/=]+` | HIGH |
+| .env content | Files named `.env`, `.env.local`, `.env.production` | BLOCKER |
+
+### Scanning Protocol
+
+```
+BEFORE git commit or git push:
+1. Run: git diff --cached --name-only (list staged files)
+2. For each staged file:
+   a. Skip binary files
+   b. Scan content against ALL patterns above
+   c. If match found:
+      → HALT commit
+      → Show: file, line number, matched pattern
+      → Suggest: "Move to .env or secrets manager"
+3. Also check: are any .env files staged?
+   → If yes: HALT, warn, suggest .gitignore addition
+4. Only proceed with commit if ALL scans pass
+```
+
+**A secret in git history is a secret leaked forever. Block it at the gate.**
+
+---
+
 *Release Pipeline Commander - SkillFoundry Framework*

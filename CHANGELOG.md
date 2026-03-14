@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.46] - 2026-03-15
+
+### Added — Industry Prompt Patterns Integration
+
+Integrated 11 high-impact patterns distilled from an analysis of 12 leading AI coding tools (Cursor, Devin, Lovable, Manus, Bolt, Cline, Codex CLI, RooCode, Replit, Same.dev, v0, Windsurf) into SkillFoundry's skill library. These patterns represent techniques that multiple tools independently converged on — making them de facto industry standards.
+
+**Phase 1 — Agent Behavior Hardening:**
+- **Think-before-act reasoning gate** (FR-001): 8 skills (architect, coder, debugger, fixer, review, refactor, tester, secure-coder) now require a mandatory reasoning block before every file edit or tool call. Agents must state what they'll do, why, risk level, and alternatives considered.
+- **Post-edit verification** (FR-002): The coder skill now runs the project's type-checker/linter after every file edit, not just at the end of the pipeline.
+- **3-attempt escalation protocol** (FR-003): 7 skills now stop and escalate after 3 failed attempts with a structured failure report, instead of looping indefinitely.
+- **Never-modify-tests rule** (FR-004): The tester skill is restricted to test files only — it cannot edit application code to make tests pass.
+- **Safe/unsafe command classification** (FR-005): The secure-coder classifies all shell commands as SAFE, UNSAFE, or BLOCKED before execution.
+- **Pre-commit secret scanning** (FR-006): Ship and release skills scan staged files for API keys, tokens, passwords, private keys, and `.env` files before every commit.
+
+**Phase 2 — Specialized Skill Enhancements:**
+- **Architect file restriction** (FR-007): Architect can only create/modify `.md`, `.mmd`, `.puml`, `.drawio` — must delegate code to coder.
+- **Auto-capture decisions to memory** (FR-008): Memory curator automatically captures architectural decisions during agent execution.
+- **Bulk refactor mode** (FR-009): Refactor skill supports regex+LLM bulk operations for 10+ location changes.
+- **Migration-file-required** (FR-010): Data-architect rejects schema changes without migration files.
+- **Accessibility checklist** (FR-011): UX/UI skill includes mandatory a11y checklist (semantic HTML, ARIA, keyboard, contrast, forms, media).
+
+All changes applied to agent sources (`agents/`) and synced across 5 platforms (220 files). PRD: `genesis/2026-03-15-prompt-analysis-integration.md`.
+
+---
+
 ## [2.0.45] - 2026-03-14
 
 ### Changed — Auto-Init Git for New Projects

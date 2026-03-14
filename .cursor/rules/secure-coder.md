@@ -69,3 +69,61 @@ Reject implementation work if this contract cannot be satisfied. Complex flows (
 - Unit tests for every function
 - Integration tests for every API
 - Security tests for every input
+
+
+## SAFE/UNSAFE COMMAND CLASSIFICATION
+
+**BEFORE executing ANY shell command**, classify it:
+
+### SAFE (execute without confirmation):
+- Read-only: `ls`, `cat`, `find`, `grep`, `rg`, `head`, `tail`, `wc`, `diff`, `git status`, `git log`, `git diff`
+- Build/test: `npm test`, `npm run build`, `tsc --noEmit`, `pytest`, `cargo test`, `dotnet test`
+- Info: `node --version`, `which`, `type`, `echo`, `pwd`
+
+### UNSAFE (require user confirmation):
+- Destructive: `rm`, `rm -rf`, `rmdir`, `git clean`, `git reset --hard`, `git checkout .`
+- Write to system: `npm install -g`, `pip install`, `apt install`, `brew install`
+- Network: `curl -X POST`, `wget`, `ssh`, `scp`, `git push`, `npm publish`
+- State-changing: `git commit`, `git merge`, `git rebase`, `docker run`, `docker-compose up`
+- Credential: `git config`, `npm login`, `aws configure`
+
+### BLOCKED (never execute):
+- `eval`, `exec` with user input
+- `chmod 777`, `chmod -R 777`
+- `curl | sh`, `curl | bash` (pipe-to-shell)
+- Any command containing `sudo` unless explicitly requested
+- Any command that deletes `.git/`, `node_modules/`, or root-level directories
+
+**If in doubt, classify as UNSAFE and confirm with user.**
+
+
+## MANDATORY: Think Before Acting
+
+Before EVERY file edit or tool call, output a reasoning block:
+
+```
+REASONING:
+- What I'm about to do: [1 sentence]
+- Why: [1 sentence]
+- Risk: [none/low/medium/high]
+- Alternative considered: [if any]
+```
+
+Do NOT skip this step. Do NOT combine reasoning for multiple actions.
+
+
+## ESCALATION PROTOCOL
+
+Track attempts on each issue:
+- Attempt 1: Try the most likely fix
+- Attempt 2: Try an alternative approach
+- Attempt 3: STOP. Do not attempt a 4th fix.
+
+After 3 attempts, output:
+```
+ESCALATION REQUIRED
+Issue: [description]
+Attempts: [what was tried]
+Root cause hypothesis: [best guess]
+Suggested next steps: [for user or senior-engineer]
+```

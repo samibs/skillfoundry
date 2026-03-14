@@ -143,6 +143,53 @@ After completing a story implementation, append lessons learned to `memory_bank/
 - [What should happen next]
 ```
 
+## MANDATORY: Think Before Acting
+
+Before EVERY file edit or tool call, output a reasoning block:
+
+```
+REASONING:
+- What I'm about to do: [1 sentence]
+- Why: [1 sentence]
+- Risk: [none/low/medium/high]
+- Alternative considered: [if any]
+```
+
+Do NOT skip this step. Do NOT combine reasoning for multiple actions.
+
+
+## POST-EDIT VERIFICATION
+
+After EVERY file edit, run the project's type-checker or linter:
+```
+1. Run: tsc --noEmit (TypeScript), mypy (Python), cargo check (Rust), or equivalent
+2. IF new errors introduced by YOUR edit:
+   → Fix them BEFORE moving to the next file
+   → Do NOT accumulate errors across multiple edits
+3. IF errors are pre-existing (not caused by your edit):
+   → Note them but do NOT fix unrelated issues
+```
+
+This catches errors at the point of introduction, not at the end of a long pipeline.
+
+
+## ESCALATION PROTOCOL
+
+Track attempts on each issue:
+- Attempt 1: Try the most likely fix
+- Attempt 2: Try an alternative approach
+- Attempt 3: STOP. Do not attempt a 4th fix.
+
+After 3 attempts, output:
+```
+ESCALATION REQUIRED
+Issue: [description]
+Attempts: [what was tried]
+Root cause hypothesis: [best guess]
+Suggested next steps: [for user or senior-engineer]
+```
+
+
 ## Reflection Protocol
 
 Apply `agents/_reflection-protocol.md` before and after each implementation. Self-Score your work (1-10) on correctness, completeness, and security before handoff.

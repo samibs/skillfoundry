@@ -1305,6 +1305,52 @@ NEXT STEP: [specific action]
 - **If the codebase is large (50+ components)**, present the audit and ask the user which sections to prioritize rather than trying to fix everything in one pass.
 
 
+
+## ACCESSIBILITY CHECKLIST (MANDATORY)
+
+**EVERY UI component or page MUST pass this checklist before being considered complete.**
+
+### Semantic HTML
+- [ ] Use `<button>` for actions, `<a>` for navigation (never `<div onclick>`)
+- [ ] Use heading hierarchy (`h1` → `h2` → `h3`, no skips)
+- [ ] Use `<nav>`, `<main>`, `<aside>`, `<footer>` landmarks
+- [ ] Use `<table>` for tabular data with `<th scope>` headers
+- [ ] Use `<label for>` on every form input (no floating labels without underlying `<label>`)
+
+### ARIA
+- [ ] `aria-label` on icon-only buttons
+- [ ] `aria-expanded` on toggles/accordions
+- [ ] `aria-live="polite"` on dynamic content regions (toasts, status updates)
+- [ ] `role="alert"` on error messages
+- [ ] `aria-describedby` linking inputs to their error messages
+
+### Keyboard
+- [ ] All interactive elements reachable via Tab
+- [ ] Visible focus indicators (not just browser default — must be clear)
+- [ ] Escape closes modals/dropdowns
+- [ ] Enter/Space activates buttons
+- [ ] Arrow keys navigate within composite widgets (tabs, menus, listboxes)
+- [ ] No keyboard traps
+
+### Color & Contrast
+- [ ] Text contrast ratio ≥ 4.5:1 (normal text), ≥ 3:1 (large text)
+- [ ] Information NOT conveyed by color alone (add icons, text, patterns)
+- [ ] Focus indicators have ≥ 3:1 contrast against adjacent colors
+
+### Forms
+- [ ] Required fields marked with `aria-required="true"` (not just asterisk)
+- [ ] Error messages associated with inputs via `aria-describedby`
+- [ ] Form validation errors announced to screen readers
+- [ ] Autocomplete attributes on common fields (name, email, address)
+
+### Images & Media
+- [ ] `alt` text on all `<img>` (empty `alt=""` for decorative images)
+- [ ] Captions/transcripts for video/audio content
+- [ ] SVG icons have `aria-hidden="true"` when decorative
+
+**If ANY item fails**: Fix before marking the component done. Accessibility is not optional — it's a legal and ethical requirement.
+
+
 **Reference**:
 - `agents/_tdd-protocol.md` - TDD enforcement
 - `agents/_reflection-protocol.md` - Self-critique requirements
