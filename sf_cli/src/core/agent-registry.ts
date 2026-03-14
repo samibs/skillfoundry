@@ -5,6 +5,7 @@
 import type { ToolDefinition } from './tools.js';
 import { TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP, ALL_TOOLS } from './tools.js';
 import { ALL_DEBUG_TOOLS } from './debugger-tools.js';
+import { loadAgentPromptFromFile } from './agent-prompt-loader.js';
 
 // ---------------------------------------------------------------------------
 // Tool categories
@@ -333,9 +334,14 @@ export function getAgentTools(name: string): ToolDefinition[] {
 }
 
 export function getAgentSystemPrompt(name: string): string {
+  // Try loading the full markdown prompt from the agent's source file.
+  // This gives the CLI the same detailed instructions as IDE slash-commands.
+  const filePrompt = loadAgentPromptFromFile(name);
+  if (filePrompt) return filePrompt;
+
+  // Fallback to hardcoded one-liner or default prompt
   const agent = AGENT_REGISTRY[name];
-  if (!agent) return DEFAULT_PROMPT;
-  return agent.systemPrompt;
+  return agent ? agent.systemPrompt : DEFAULT_PROMPT;
 }
 
 export function getAllAgentNames(): string[] {

@@ -1,6 +1,7 @@
 // Pipeline execution engine — the real Forge.
 // Chains: discover PRDs → validate → generate stories → execute stories → gates → report.
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { runAgentLoop } from './ai-runner.js';
@@ -8,10 +9,130 @@ import { runAllGates, runSingleGate } from './gates.js';
 import { runPostStoryGates, runPreTemperGate, runPreGenerationGate, runTestDocGate, formatFindingsForFixer } from './micro-gates.js';
 import { runFinisher } from './finisher.js';
 import { harvestRunMemory } from './memory-harvest.js';
+import { SessionRecorder } from './session-recorder.js';
 import { ALL_TOOLS } from './tools.js';
 import { getLogger } from '../utils/logger.js';
 const RUNS_DIR = '.skillfoundry/runs';
 const MAX_FIXER_ATTEMPTS = 2;
+const MAX_TESTER_REMEDIATION_ATTEMPTS = 1;
+const CONSECUTIVE_FAILURE_HALT_THRESHOLD = 2;
+const ERROR_SIMILARITY_THRESHOLD = 0.6; // 60% word overlap = "same error"
+// ── Test file existence check ──────────────────────────────────
+const TEST_FILE_PATTERNS = [
+    /\.test\.[tj]sx?$/,
+    /\.spec\.[tj]sx?$/,
+    /^test_.*\.py$/,
+    /.*_test\.go$/,
+    /.*Tests?\.cs$/,
+];
+/**
+ * Check if any test files were created/modified since the story started.
+ * Uses git diff to detect new or modified test files in the working tree.
+ * Falls back to scanning common test directories if not in a git repo.
+ */
+function checkTestFilesExist(workDir) {
+    const log = getLogger();
+    // Try git diff first — most reliable way to detect new test files
+    try {
+        const { ok, output } = runCommand('git diff --name-only HEAD 2>/dev/null || git diff --name-only --cached 2>/dev/null || true', workDir, 10_000);
+        if (ok && output.trim()) {
+            const changedFiles = output.trim().split('\n');
+            const testFiles = changedFiles.filter((f) => TEST_FILE_PATTERNS.some((p) => p.test(f.split('/').pop() || '')));
+            if (testFiles.length > 0) {
+                return {
+                    hasTests: true,
+                    testFiles,
+                    detail: `${testFiles.length} test file(s) created/modified`,
+                };
+            }
+        }
+    }
+    catch {
+        log.debug('pipeline', 'test_check_git_failed', { msg: 'git diff failed, falling back to file scan' });
+    }
+    // Fallback: check for untracked test files
+    try {
+        const { ok, output } = runCommand('git ls-files --others --exclude-standard 2>/dev/null || true', workDir, 10_000);
+        if (ok && output.trim()) {
+            const untrackedFiles = output.trim().split('\n');
+            const testFiles = untrackedFiles.filter((f) => TEST_FILE_PATTERNS.some((p) => p.test(f.split('/').pop() || '')));
+            if (testFiles.length > 0) {
+                return {
+                    hasTests: true,
+                    testFiles,
+                    detail: `${testFiles.length} new test file(s) detected`,
+                };
+            }
+        }
+    }
+    catch {
+        // Best effort
+    }
+    return {
+        hasTests: false,
+        testFiles: [],
+        detail: 'No test files created or modified for this story',
+    };
+}
+// ── Shell command runner (shared with gates.ts) ────────────────
+function runCommand(cmd, cwd, timeoutMs = 30_000) {
+    try {
+        const output = execSync(cmd, {
+            cwd,
+            timeout: timeoutMs,
+            encoding: 'utf-8',
+            stdio: ['pipe', 'pipe', 'pipe'],
+        });
+        return { ok: true, output: output || '' };
+    }
+    catch (err) {
+        const execErr = err;
+        return { ok: false, output: (execErr.stdout || '') + (execErr.stderr || '') };
+    }
+}
+// ── Error similarity detection (circuit breaker) ───────────────
+/**
+ * Extract a normalized error signature from build/compile output.
+ * Strips file paths, line numbers, and variable parts to compare error *patterns*.
+ * Returns the top N unique error messages as a fingerprint.
+ */
+function extractErrorSignature(output) {
+    const lines = output.split('\n')
+        .map((l) => l.trim())
+        .filter((l) => /error|Error|ERR|FAIL|Can't resolve|Cannot find|Module not found/i.test(l))
+        .map((l) => l
+        .replace(/\/[^\s:]+/g, '<PATH>') // normalize file paths
+        .replace(/:\d+:\d+/g, ':<LINE>') // normalize line:col
+        .replace(/\d+/g, '<N>') // normalize numbers
+        .trim())
+        .filter((l) => l.length > 10);
+    // Deduplicate and take top 5 error patterns
+    return [...new Set(lines)].slice(0, 5);
+}
+/**
+ * Compare two error signatures. Returns similarity ratio (0-1).
+ * High similarity means the same root cause is recurring.
+ */
+function errorSimilarity(sig1, sig2) {
+    if (sig1.length === 0 || sig2.length === 0)
+        return 0;
+    const set1 = new Set(sig1);
+    const overlap = sig2.filter((s) => set1.has(s)).length;
+    return overlap / Math.max(sig1.length, sig2.length);
+}
+/**
+ * Run a pre-FORGE build health baseline check.
+ * If the project doesn't compile/build before we start, we need to know.
+ */
+function checkBuildHealth(workDir) {
+    const t2 = runSingleGate('T2', workDir, '.');
+    const t5 = runSingleGate('T5', workDir, '.');
+    return {
+        healthy: t2.status !== 'fail' && t5.status !== 'fail',
+        t2Detail: t2.status === 'fail' ? t2.detail : '',
+        t5Detail: t5.status === 'fail' ? t5.detail : '',
+    };
+}
 export function scanPRDs(workDir) {
     const genesisDir = join(workDir, 'genesis');
     if (!existsSync(genesisDir))
@@ -75,6 +196,7 @@ RULES:
 - Stories are ordered by dependency: foundational work first, features second, integration last.
 - Each story has: title, description, acceptance criteria, technical approach, and files affected.
 - Output stories separated by "---STORY---" markers for reliable parsing.
+- EVERY story MUST include test files in its "Files Affected" section. No story ships without tests.
 
 OUTPUT FORMAT (repeat for each story):
 ---STORY---
@@ -104,11 +226,20 @@ fail_when:
 
 ## Files Affected
 - <file path>: <what changes>
+- <test file path>: <what tests are added — MANDATORY: every story must list test files>
+
+## Test Requirements
+- Unit tests for all new functions/methods
+- Integration tests for API endpoints (if applicable)
+- Edge case tests for error paths and boundary conditions
 ---STORY---
 
 IMPORTANT: Every done_when item must be objectively verifiable — no subjective language
 like "works correctly", "looks good", or "handles edge cases properly".
 Use concrete, measurable conditions that an automated test can verify.
+
+IMPORTANT: Every story MUST include test files in "Files Affected". A story without test
+deliverables is incomplete and will be rejected by the pipeline's test existence gate.
 
 Number stories sequentially starting at 001. Be specific about file paths and code patterns.`;
 // ── Story execution system prompt ──────────────────────────────
@@ -118,7 +249,38 @@ RULES:
 - Read the codebase first to understand existing patterns before writing code.
 - Implement the story requirements exactly as specified.
 - Follow existing code conventions (naming, structure, patterns).
-- Run tests after implementation to verify correctness.
+- WRITE TESTS for every module, function, and endpoint you create or modify.
+- Run tests after implementation to verify they pass.
+
+BLOCKER DETECTION (CRITICAL — do NOT ignore repeated failures):
+
+If you encounter the same error more than twice, STOP and diagnose the root cause:
+1. DO NOT keep trying the same fix. If an approach fails twice, it is wrong.
+2. DO NOT work around build/dependency errors by continuing to other files.
+3. Instead: isolate the failure, check dependency installation, verify import paths,
+   check workspace/project root configuration, and verify the build runs from the correct directory.
+4. If the error is a dependency resolution failure (e.g., "Can't resolve", "Module not found"):
+   - Check package.json for the dependency
+   - Check node_modules/ exists in the correct directory
+   - Check import paths are correct (not relative paths into node_modules)
+   - Check if the project has a monorepo/workspace structure that affects resolution
+   - Run the build/dev command from the correct directory
+5. Report blockers clearly: state what failed, what you tried, and what the root cause likely is.
+   Do NOT report success when builds are failing.
+
+TEST REQUIREMENTS (MANDATORY — the pipeline will reject stories without test files):
+
+You MUST create test files for your implementation. This is a hard gate — stories without
+tests will be marked FAILED and sent back for remediation.
+
+- For each source file you create, create a corresponding test file:
+  - TypeScript: \`*.test.ts\` or \`*.spec.ts\` alongside or in \`__tests__/\`
+  - Python: \`test_*.py\` in a \`tests/\` directory
+  - JavaScript: \`*.test.js\` or \`*.spec.js\`
+- Tests must cover: happy path, error cases, edge cases, and input validation
+- Tests must be runnable (import correctly, mock external dependencies)
+- Tests must have descriptive names that explain what behavior they verify
+- Add @test-suite and @story tags in test file headers for traceability
 
 QUALITY STANDARDS (your code will be checked against these — violations cause failures):
 
@@ -154,10 +316,22 @@ QUALITY STANDARDS (your code will be checked against these — violations cause 
    - Consistent naming conventions throughout
 
 You have tools to read files, write files, search the codebase, and execute shell commands.
-Write REAL, PRODUCTION-READY code. Implement the story below completely.`;
+Write REAL, PRODUCTION-READY code with REAL TESTS. Implement the story below completely.`;
 const FIXER_PROMPT = `You are a senior engineer fixing quality gate violations.
 The previous implementation triggered the following gate failures.
 Fix ALL violations — do not introduce new issues. Keep changes minimal and targeted.`;
+const TESTER_REMEDIATION_PROMPT = `You are a senior test engineer. The previous implementation created source files but NO test files.
+This is a mandatory requirement — every story must ship with tests.
+
+Your job:
+1. Read the source files that were created/modified for this story.
+2. Create corresponding test files with real, runnable tests.
+3. Cover: happy path, error cases, edge cases, and input validation.
+4. Follow the project's existing test patterns and framework.
+5. Add @test-suite and @story header tags for traceability.
+6. Run the tests to verify they pass.
+
+DO NOT modify source code. ONLY create test files.`;
 const POLISH_FIXER_PROMPT = `You are a senior engineer polishing code across an entire codebase.
 The following quality issues were found across multiple stories/files.
 Fix ALL violations — apply consistent patterns across the codebase.
@@ -169,12 +343,47 @@ function makePhase(name) {
     return { name, status: 'pending', durationMs: 0 };
 }
 export async function runPipeline(options) {
-    const { config, policy, workDir, prdFilter, callbacks } = options;
+    const { config, policy, workDir, prdFilter, callbacks: userCallbacks } = options;
     const runId = `forge-${Date.now()}-${randomUUID().slice(0, 8)}`;
     const pipelineStart = Date.now();
     const log = getLogger();
     log.startRunLog(runId);
     log.cleanupOldLogs();
+    // ── Session Recorder: tracks issues, anomalies, and remediation actions ──
+    const recorder = new SessionRecorder(runId);
+    const recorderCallbacks = recorder.createCallbacks();
+    // Merge recorder callbacks with user callbacks so both receive events
+    const callbacks = {
+        onPhaseStart: (phase, detail) => {
+            recorderCallbacks.onPhaseStart?.(phase, detail);
+            userCallbacks?.onPhaseStart?.(phase, detail);
+        },
+        onPhaseComplete: (phase, status) => {
+            recorderCallbacks.onPhaseComplete?.(phase, status);
+            userCallbacks?.onPhaseComplete?.(phase, status);
+        },
+        onStoryStart: (story, index, total) => {
+            recorderCallbacks.onStoryStart?.(story, index, total);
+            userCallbacks?.onStoryStart?.(story, index, total);
+        },
+        onStoryComplete: (story, passed, cost) => {
+            recorderCallbacks.onStoryComplete?.(story, passed, cost);
+            userCallbacks?.onStoryComplete?.(story, passed, cost);
+        },
+        onGateResult: (tier, status, detail) => {
+            recorderCallbacks.onGateResult?.(tier, status, detail);
+            userCallbacks?.onGateResult?.(tier, status, detail);
+        },
+        onMicroGateResult: (result) => {
+            recorderCallbacks.onMicroGateResult?.(result);
+            userCallbacks?.onMicroGateResult?.(result);
+        },
+        onFinisherCheck: (result) => {
+            recorderCallbacks.onFinisherCheck?.(result);
+            userCallbacks?.onFinisherCheck?.(result);
+        },
+        requestPermission: userCallbacks?.requestPermission,
+    };
     const phases = [
         makePhase('IGNITE'),
         makePhase('PLAN'),
@@ -331,6 +540,22 @@ export async function runPipeline(options) {
     const forgeStart = Date.now();
     let storiesCompleted = skippedCount; // Count already-done as completed
     let storiesFailed = 0;
+    // ── Pre-FORGE build health baseline ──
+    // Record whether the project builds cleanly BEFORE we start implementing.
+    // This lets us distinguish "story broke the build" from "build was already broken".
+    const buildBaseline = checkBuildHealth(workDir);
+    if (!buildBaseline.healthy) {
+        log.warn('pipeline', 'build_baseline_unhealthy', {
+            t2: buildBaseline.t2Detail.slice(0, 200),
+            t5: buildBaseline.t5Detail.slice(0, 200),
+        });
+        callbacks?.onGateResult?.('BUILD_BASELINE', 'warn', `Project does not build cleanly before FORGE — pre-existing issues may affect stories`);
+    }
+    // ── Circuit breaker state: track consecutive failures with similar error patterns ──
+    let consecutiveFailures = 0;
+    let lastErrorSignature = [];
+    let pipelineHalted = false;
+    let haltReason = '';
     // Record skipped stories in execution log
     for (const skipped of allStoryFiles.filter((s) => s.alreadyDone)) {
         storyExecutions[skipped.storyFile] = {
@@ -342,6 +567,21 @@ export async function runPipeline(options) {
         };
     }
     for (let i = 0; i < pendingStoryFiles.length; i++) {
+        // ── Circuit breaker check: halt if repeated systemic failures ──
+        if (pipelineHalted) {
+            const { storyFile: haltedStory } = pendingStoryFiles[i];
+            storyExecutions[haltedStory] = {
+                storyFile: haltedStory,
+                status: 'failed',
+                turnCount: 0,
+                costUsd: 0,
+                fixerAttempts: 0,
+            };
+            storiesFailed++;
+            log.warn('pipeline', 'story_skipped_circuit_breaker', { story: haltedStory, reason: haltReason });
+            callbacks?.onStoryComplete?.(haltedStory, false, 0);
+            continue;
+        }
         const { storyFile, storyPath } = pendingStoryFiles[i];
         log.info('pipeline', 'story_start', { story: storyFile, index: i, total: pendingStoryFiles.length });
         callbacks?.onStoryStart?.(storyFile, i, pendingStoryFiles.length);
@@ -435,8 +675,90 @@ export async function runPipeline(options) {
                 storiesFailed++;
                 log.error('pipeline', 'story_failed', { story: storyFile, cost: execution.costUsd, fixerAttempts: execution.fixerAttempts });
                 callbacks?.onStoryComplete?.(storyFile, false, execution.costUsd);
+                // ── Circuit breaker: detect repeated systemic failures ──
+                const failOutput = [
+                    t2Result.status === 'fail' ? t2Result.detail : '',
+                    t5Result.status === 'fail' ? t5Result.detail : '',
+                ].join('\n');
+                const currentSignature = extractErrorSignature(failOutput);
+                if (lastErrorSignature.length > 0 && errorSimilarity(currentSignature, lastErrorSignature) >= ERROR_SIMILARITY_THRESHOLD) {
+                    consecutiveFailures++;
+                }
+                else {
+                    consecutiveFailures = 1; // New error pattern — reset counter
+                }
+                lastErrorSignature = currentSignature;
+                if (consecutiveFailures >= CONSECUTIVE_FAILURE_HALT_THRESHOLD) {
+                    pipelineHalted = true;
+                    haltReason = `Circuit breaker: ${consecutiveFailures} consecutive stories failed with the same error pattern. ` +
+                        `This indicates a systemic blocker (dependency resolution, workspace config, or infrastructure issue) ` +
+                        `that cannot be fixed per-story. Remaining stories skipped.\n` +
+                        `Error pattern: ${currentSignature.slice(0, 3).join(' | ')}`;
+                    log.error('pipeline', 'circuit_breaker_halt', {
+                        consecutiveFailures,
+                        errorPattern: currentSignature.slice(0, 3).join(' | '),
+                        storiesRemaining: pendingStoryFiles.length - i - 1,
+                    });
+                    callbacks?.onGateResult?.('CIRCUIT_BREAKER', 'fail', haltReason);
+                }
                 continue;
             }
+        }
+        // Story compilation passed — reset circuit breaker
+        consecutiveFailures = 0;
+        lastErrorSignature = [];
+        // ── Test existence gate: verify test files were created ──
+        const testCheck = checkTestFilesExist(workDir);
+        if (!testCheck.hasTests) {
+            log.warn('pipeline', 'no_test_files', { story: storyFile, detail: testCheck.detail });
+            callbacks?.onGateResult?.('TEST_EXIST', 'fail', `No test files found for ${storyFile}`);
+            // Trigger tester remediation — one attempt to create test files
+            let testsCreated = false;
+            for (let testerAttempt = 0; testerAttempt < MAX_TESTER_REMEDIATION_ATTEMPTS && !testsCreated; testerAttempt++) {
+                log.info('pipeline', 'tester_remediation', { story: storyFile, attempt: testerAttempt + 1 });
+                const testerMessages = [
+                    {
+                        role: 'user',
+                        content: `${TESTER_REMEDIATION_PROMPT}\n\nStory being implemented:\n\n${storyContent}\n\n` +
+                            `Create test files for this story. The implementation is complete but has NO tests.`,
+                    },
+                ];
+                const testerResult = await runAgentLoop(testerMessages, {
+                    config,
+                    policy,
+                    systemPrompt: TESTER_REMEDIATION_PROMPT,
+                    tools: ALL_TOOLS,
+                    maxTurns: 15,
+                    workDir,
+                }, {
+                    requestPermission: callbacks?.requestPermission,
+                });
+                execution.costUsd += testerResult.totalCostUsd;
+                totalCostUsd += testerResult.totalCostUsd;
+                totalInputTokens += testerResult.totalInputTokens;
+                totalOutputTokens += testerResult.totalOutputTokens;
+                // Re-check for test files
+                const recheck = checkTestFilesExist(workDir);
+                if (recheck.hasTests) {
+                    testsCreated = true;
+                    log.info('pipeline', 'tester_remediation_success', { story: storyFile, testFiles: recheck.testFiles.length });
+                    callbacks?.onGateResult?.('TEST_EXIST', 'pass', `Tester created ${recheck.testFiles.length} test file(s)`);
+                    // Re-run T2 to ensure test files compile
+                    const recheckT2 = runSingleGate('T2', workDir, '.');
+                    if (recheckT2.status === 'fail') {
+                        log.warn('pipeline', 'test_compile_fail', { story: storyFile, detail: recheckT2.detail.slice(0, 200) });
+                    }
+                }
+            }
+            if (!testsCreated) {
+                log.error('pipeline', 'no_tests_after_remediation', { story: storyFile });
+                // Mark as completed but flag the missing tests — TEMPER T0 will catch this
+                execution.testsMissing = true;
+            }
+        }
+        else {
+            log.info('pipeline', 'test_files_found', { story: storyFile, count: testCheck.testFiles.length });
+            callbacks?.onGateResult?.('TEST_EXIST', 'pass', testCheck.detail);
         }
         // Story completed — T2/T5 pass. Quality review deferred to POLISH phase.
         execution.status = 'completed';
@@ -445,8 +767,11 @@ export async function runPipeline(options) {
         log.info('pipeline', 'story_complete', { story: storyFile, passed: true, cost: execution.costUsd, turns: execution.turnCount });
         callbacks?.onStoryComplete?.(storyFile, true, execution.costUsd);
     }
-    const forgeStatus = storiesFailed === 0 ? 'passed' : (storiesCompleted > 0 ? 'passed' : 'failed');
-    updatePhase('FORGE', forgeStatus, Date.now() - forgeStart, `${storiesCompleted}/${allStoryFiles.length} stories completed`);
+    const forgeStatus = pipelineHalted ? 'failed' : (storiesFailed === 0 ? 'passed' : (storiesCompleted > 0 ? 'passed' : 'failed'));
+    const forgeStatusDetail = pipelineHalted
+        ? `HALTED: ${storiesCompleted}/${allStoryFiles.length} stories completed — ${haltReason.split('\n')[0]}`
+        : `${storiesCompleted}/${allStoryFiles.length} stories completed`;
+    updatePhase('FORGE', forgeStatus, Date.now() - forgeStart, forgeStatusDetail);
     log.info('pipeline', 'phase_complete', { phase: 'FORGE', status: forgeStatus, durationMs: Date.now() - forgeStart });
     callbacks?.onPhaseComplete?.('FORGE', forgeStatus);
     // ── Phase 3b: POLISH ─────────────────────────────────────
@@ -655,7 +980,21 @@ export async function runPipeline(options) {
         prdFiles: prds.map((p) => `genesis/${p.file}`),
     });
     log.info('pipeline', 'memory_harvest', { entriesWritten: harvestResult.entriesWritten });
-    updatePhase('DEBRIEF', 'passed', Date.now() - debriefStart, `Run saved: ${RUNS_DIR}/${runId}.json | ${harvestResult.entriesWritten} knowledge entries`);
+    // ── Session Recorder: detect anomalies and write issue report ──
+    recorder.detectAnomalies(result);
+    const issueReport = recorder.writeReport(workDir);
+    const issueCount = recorder.getIssueCount();
+    const blockerCount = recorder.getBlockerCount();
+    log.info('pipeline', 'session_report', {
+        issues: issueCount,
+        blockers: blockerCount,
+        anomalies: recorder.getAnomalies().length,
+        reportPath: issueReport.mdPath,
+    });
+    const debriefDetail = issueCount > 0
+        ? `Run saved: ${RUNS_DIR}/${runId}.json | ${harvestResult.entriesWritten} knowledge entries | ${issueCount} issues (${blockerCount} blockers) → ${basename(issueReport.mdPath)}`
+        : `Run saved: ${RUNS_DIR}/${runId}.json | ${harvestResult.entriesWritten} knowledge entries | Clean run`;
+    updatePhase('DEBRIEF', 'passed', Date.now() - debriefStart, debriefDetail);
     callbacks?.onPhaseComplete?.('DEBRIEF', 'passed');
     // ── Phase 7: FINISH ────────────────────────────────────
     callbacks?.onPhaseStart?.('FINISH', 'Running finisher checks');
@@ -669,6 +1008,13 @@ export async function runPipeline(options) {
         },
     });
     result.finisherSummary = finisherSummary;
+    // Attach session report summary
+    result.sessionReport = {
+        issues: issueCount,
+        blockers: blockerCount,
+        anomalies: recorder.getAnomalies().length,
+        reportPath: issueReport.mdPath,
+    };
     // Append finisher results to the run bundle
     const runBundlePath = join(runsDir, `${runId}.json`);
     if (existsSync(runBundlePath)) {

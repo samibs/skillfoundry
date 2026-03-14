@@ -255,49 +255,90 @@ function runT2(workDir) {
         durationMs: Date.now() - start,
     };
 }
-// T3: Tests
+// T3: Tests — runs tests AND verifies test files exist for completed stories
 function runT3(workDir) {
     const start = Date.now();
     const project = detectProjectType(workDir);
+    // Step 1: Count test files in the project
+    const testFileCount = countTestFiles(workDir);
+    // Step 2: Check if completed stories have corresponding test files
+    const storyTestCheck = checkStoriesHaveTests(workDir);
+    // Step 3: Run the test suite
+    let runnerResult = null;
     if (project.hasPackageJson) {
         // Check for test script in package.json
         try {
             const pkg = JSON.parse(readFileSync(join(workDir, 'package.json'), 'utf-8'));
             if (pkg.scripts?.test && pkg.scripts.test !== 'echo "Error: no test specified" && exit 1') {
                 const { ok, output } = runCommand('npm test 2>&1', workDir, 300_000);
-                return {
-                    tier: 'T3',
-                    name: 'Tests',
-                    status: ok ? 'pass' : 'fail',
-                    detail: ok ? 'All tests passed' : output.slice(-500),
-                    durationMs: Date.now() - start,
-                };
+                runnerResult = { ok, output, detail: ok ? 'All tests passed' : output.slice(-500) };
             }
         }
         catch {
             // Fall through
         }
-        // Try vitest directly
-        const { ok: hasVitest } = runCommand(`npx vitest --version 2>${NULL_DEVICE}`, workDir);
-        if (hasVitest) {
-            const { ok, output } = runCommand('npx vitest run 2>&1', workDir, 300_000);
-            return {
-                tier: 'T3',
-                name: 'Tests',
-                status: ok ? 'pass' : 'fail',
-                detail: ok ? 'All tests passed' : output.slice(-500),
-                durationMs: Date.now() - start,
-            };
+        if (!runnerResult) {
+            // Try vitest directly
+            const { ok: hasVitest } = runCommand(`npx vitest --version 2>${NULL_DEVICE}`, workDir);
+            if (hasVitest) {
+                const { ok, output } = runCommand('npx vitest run 2>&1', workDir, 300_000);
+                runnerResult = { ok, output, detail: ok ? 'All tests passed' : output.slice(-500) };
+            }
         }
     }
-    if (project.hasPython) {
+    if (!runnerResult && project.hasPython) {
         const pythonCmd = IS_WINDOWS ? 'python' : 'python3';
         const { ok, output } = runCommand(`${pythonCmd} -m pytest 2>&1`, workDir, 300_000);
+        runnerResult = { ok, output, detail: ok ? 'All tests passed' : output.slice(-500) };
+    }
+    // Step 4: Determine verdict
+    // If test runner passed but zero test files exist → FAIL (vacuous pass)
+    if (runnerResult?.ok && testFileCount === 0) {
         return {
             tier: 'T3',
             name: 'Tests',
-            status: ok ? 'pass' : 'fail',
-            detail: ok ? 'All tests passed' : output.slice(-500),
+            status: 'fail',
+            detail: `Test runner passed but 0 test files found in project — vacuous pass. Create test files for your implementation.`,
+            durationMs: Date.now() - start,
+        };
+    }
+    // If test runner passed but completed stories have no matching tests → WARN
+    if (runnerResult?.ok && storyTestCheck.storiesWithoutTests > 0) {
+        return {
+            tier: 'T3',
+            name: 'Tests',
+            status: 'warn',
+            detail: `Tests passed (${testFileCount} test files) but ${storyTestCheck.storiesWithoutTests} completed story/stories have no matching test files:\n${storyTestCheck.uncoveredStories.slice(0, 5).join('\n')}`,
+            durationMs: Date.now() - start,
+        };
+    }
+    // If test runner failed → FAIL
+    if (runnerResult && !runnerResult.ok) {
+        return {
+            tier: 'T3',
+            name: 'Tests',
+            status: 'fail',
+            detail: runnerResult.detail,
+            durationMs: Date.now() - start,
+        };
+    }
+    // If test runner passed with actual test files → PASS
+    if (runnerResult?.ok) {
+        return {
+            tier: 'T3',
+            name: 'Tests',
+            status: 'pass',
+            detail: `All tests passed (${testFileCount} test files)`,
+            durationMs: Date.now() - start,
+        };
+    }
+    // No test runner detected
+    if (testFileCount === 0) {
+        return {
+            tier: 'T3',
+            name: 'Tests',
+            status: 'fail',
+            detail: 'No test runner detected and no test files found. Tests are mandatory.',
             durationMs: Date.now() - start,
         };
     }
@@ -305,9 +346,71 @@ function runT3(workDir) {
         tier: 'T3',
         name: 'Tests',
         status: 'skip',
-        detail: 'No test runner detected',
+        detail: `No test runner detected (${testFileCount} test files found — configure a test runner)`,
         durationMs: Date.now() - start,
     };
+}
+/** Count test files in the project (excluding node_modules, .git, dist) */
+function countTestFiles(workDir) {
+    try {
+        const { ok, output } = runCommand(`find "${workDir}" -type f \\( -name "*.test.ts" -o -name "*.spec.ts" -o -name "*.test.js" -o -name "*.spec.js" -o -name "*.test.tsx" -o -name "*.spec.tsx" -o -name "test_*.py" -o -name "*_test.go" -o -name "*Tests.cs" \\) -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/dist/*" 2>/dev/null | wc -l`, workDir, 10_000);
+        return ok ? parseInt(output.trim(), 10) || 0 : 0;
+    }
+    catch {
+        return 0;
+    }
+}
+/** Check if completed stories in docs/stories/ have corresponding test files */
+function checkStoriesHaveTests(workDir) {
+    const storiesDir = join(workDir, 'docs', 'stories');
+    if (!existsSync(storiesDir))
+        return { storiesWithoutTests: 0, uncoveredStories: [] };
+    const uncoveredStories = [];
+    try {
+        const storyDirs = readdirSync(storiesDir, { withFileTypes: true })
+            .filter((d) => d.isDirectory());
+        for (const dir of storyDirs) {
+            const storyDirPath = join(storiesDir, dir.name);
+            const storyFiles = readdirSync(storyDirPath)
+                .filter((f) => f.startsWith('STORY-') && f.endsWith('.md'));
+            for (const sf of storyFiles) {
+                const content = readFileSync(join(storyDirPath, sf), 'utf-8');
+                if (!/status:\s*DONE/i.test(content))
+                    continue;
+                // Extract "Files Affected" section to find expected test files
+                const filesSection = content.match(/## Files Affected\n([\s\S]*?)(?=\n##|\n---|\z)/i);
+                if (!filesSection)
+                    continue;
+                // Check if any listed file is a test file
+                const listedFiles = filesSection[1].split('\n').map((l) => l.trim()).filter((l) => l.startsWith('-'));
+                const hasTestInPlan = listedFiles.some((l) => /\.(test|spec)\.[tj]sx?|test_.*\.py|.*_test\.go|.*Tests?\.cs/.test(l));
+                // Also check if test files exist on disk for this story's source files
+                const sourceFiles = listedFiles
+                    .map((l) => l.replace(/^-\s*/, '').replace(/:.*$/, '').replace(/`/g, '').trim())
+                    .filter((f) => f && !f.includes('test') && !f.includes('spec'));
+                let hasTestOnDisk = false;
+                for (const src of sourceFiles) {
+                    const testVariants = [
+                        src.replace(/\.ts$/, '.test.ts'),
+                        src.replace(/\.ts$/, '.spec.ts'),
+                        src.replace(/\.js$/, '.test.js'),
+                        src.replace(/\.py$/, '').replace(/([^/]+)$/, 'test_$1') + '.py',
+                    ];
+                    if (testVariants.some((t) => existsSync(join(workDir, t)))) {
+                        hasTestOnDisk = true;
+                        break;
+                    }
+                }
+                if (!hasTestInPlan && !hasTestOnDisk) {
+                    uncoveredStories.push(sf);
+                }
+            }
+        }
+    }
+    catch {
+        // Best effort
+    }
+    return { storiesWithoutTests: uncoveredStories.length, uncoveredStories };
 }
 // T4: Security scan
 function runT4(workDir, target) {
