@@ -42,18 +42,13 @@ IF no PRDs found:
 
 ```
 IF NOT a git repository (no .git/ directory):
+  AUTO-INITIALIZE:
+    git init && git add -A && git commit -m "initial commit"
+
   OUTPUT:
-    ⚠️  NO GIT REPOSITORY — AUTONOMOUS MODE BLOCKED
-    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ✓ Git repository initialized with initial commit.
 
-    Autonomous mode REQUIRES git for safe rollback.
-
-    Initialize now?
-      git init && git add -A && git commit -m "initial commit"
-
-    Or initialize manually and re-run /goma.
-
-  WAIT for user confirmation. Init git if confirmed, EXIT if declined.
+  CONTINUE.
 
 IF git working tree is dirty (uncommitted changes):
   OUTPUT:

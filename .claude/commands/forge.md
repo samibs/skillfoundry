@@ -28,18 +28,13 @@ Before Phase 1, verify the project has a git repository:
 
 ```
 IF NOT a git repository (no .git/ directory):
+  AUTO-INITIALIZE:
+    git init && git add -A && git commit -m "initial commit"
+
   OUTPUT:
-    ⚠️  NO GIT REPOSITORY DETECTED
-    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ✓ Git repository initialized with initial commit.
 
-    The Forge requires git for rollback, state tracking, and story completion.
-
-    Initialize now?
-      git init && git add -A && git commit -m "initial commit"
-
-    Or initialize manually and re-run /forge.
-
-  WAIT for user confirmation. Init git if confirmed, EXIT if declined.
+  CONTINUE to Phase 1.
 ```
 
 **PHASE 1: IGNITE** — Validate all PRDs

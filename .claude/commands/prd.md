@@ -388,20 +388,20 @@ Instead, ask clarifying questions until requirements are concrete.
 
 ---
 
-### Post-Creation: Git Recommendation
+### Post-Creation: Auto-Init Git
 
 After saving the PRD:
 
 ```
 IF NOT a git repository (no .git/ directory):
-  OUTPUT:
-    💡 TIP: Initialize git before running /forge or /go:
-       git init && git add -A && git commit -m "initial commit"
+  AUTO-INITIALIZE:
+    git init && git add -A && git commit -m "initial commit"
 
-    Git enables rollback, state tracking, and safe autonomous execution.
+  OUTPUT:
+    ✓ Git repository initialized with initial commit.
 ```
 
-This is advisory only — PRD creation should not be blocked by missing git.
+Git is required for rollback, state tracking, and safe execution. Auto-initialized on first use.
 
 ---
 

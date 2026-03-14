@@ -228,20 +228,13 @@ Before any phase begins, verify the project is ready for structured development.
 
 ```
 IF NOT a git repository (no .git/ directory):
+  AUTO-INITIALIZE:
+    git init && git add -A && git commit -m "initial commit"
+
   OUTPUT:
-    ⚠️  NO GIT REPOSITORY DETECTED
-    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ✓ Git repository initialized with initial commit.
 
-    /go requires git for rollback, state tracking, and safe execution.
-
-    Initialize now?
-      git init && git add -A && git commit -m "initial commit"
-
-    Or initialize manually and re-run /go.
-
-  WAIT for user confirmation before proceeding.
-  IF user confirms: run git init, stage all files, create initial commit.
-  IF user declines: EXIT.
+  CONTINUE to Phase 0.
 ```
 
 This check runs ONCE at the start — before Phase 0 context preparation.
