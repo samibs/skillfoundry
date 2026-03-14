@@ -313,6 +313,7 @@ export interface StoryExecution {
   costUsd: number;
   fixerAttempts: number;
   microGateResults?: MicroGateResult[];
+  testsMissing?: boolean;
 }
 
 export interface PipelineResult {
@@ -334,4 +335,10 @@ export interface PipelineResult {
     preTemperAdvisory?: MicroGateResult;
   };
   finisherSummary?: FinisherSummary;
+  sessionReport?: {
+    issues: number;
+    blockers: number;
+    anomalies: number;
+    reportPath: string;
+  };
 }
