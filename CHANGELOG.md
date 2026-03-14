@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.45] - 2026-03-14
+
+### Changed — Auto-Init Git for New Projects
+
+- **`forge.md`**, **`go.md`**, **`goma.md`**, **`prd.md`**: Git repository check no longer halts the pipeline and asks for user confirmation. When no `.git/` directory is detected, the framework now automatically runs `git init && git add -A && git commit -m "initial commit"` and continues. Git is a prerequisite for rollback, state tracking, and story completion — there is no valid reason to skip it, so the confirmation prompt was unnecessary friction on new projects.
+
+---
+
 ## [2.0.44] - 2026-03-14
 
 ### Added — Slash-Command Safeguard Parity
