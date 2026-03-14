@@ -3,6 +3,7 @@
 // needs, reducing token costs by 70-350 tokens per request.
 import { TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP, ALL_TOOLS } from './tools.js';
 import { ALL_DEBUG_TOOLS } from './debugger-tools.js';
+import { loadAgentPromptFromFile } from './agent-prompt-loader.js';
 export const TOOL_SETS = {
     FULL: [TOOL_BASH, TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP], // ~350 tokens
     CODE: [TOOL_READ, TOOL_WRITE, TOOL_GLOB, TOOL_GREP], // ~280 tokens
@@ -298,6 +299,12 @@ export function getAgentSystemPrompt(name) {
     const agent = AGENT_REGISTRY[name];
     if (!agent)
         return DEFAULT_PROMPT;
+    // Try loading the full markdown prompt from the agent's source file.
+    // This gives the CLI the same detailed instructions as IDE slash-commands.
+    const filePrompt = loadAgentPromptFromFile(name);
+    if (filePrompt)
+        return filePrompt;
+    // Fallback to hardcoded one-liner if no markdown file exists for this agent
     return agent.systemPrompt;
 }
 export function getAllAgentNames() {
