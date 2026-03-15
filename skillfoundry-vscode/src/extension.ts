@@ -25,14 +25,32 @@ export function activate(context: vscode.ExtensionContext): void {
     return;
   }
 
-  // Check for .skillfoundry/config.toml to confirm SF is installed
+  // Detect SkillFoundry installation:
+  // 1. Primary: .skillfoundry/config.toml (new installs)
+  // 2. Fallback: platform folders from older installs (.claude/commands, agents/, etc.)
   const configPath = path.join(workDir, '.skillfoundry', 'config.toml');
-  if (!fs.existsSync(configPath)) {
+  const hasConfigToml = fs.existsSync(configPath);
+  const hasLegacyInstall = (
+    fs.existsSync(path.join(workDir, '.claude', 'commands')) ||
+    fs.existsSync(path.join(workDir, '.copilot', 'custom-agents')) ||
+    fs.existsSync(path.join(workDir, '.cursor', 'rules')) ||
+    fs.existsSync(path.join(workDir, '.agents', 'skills')) ||
+    fs.existsSync(path.join(workDir, '.gemini', 'skills'))
+  ) && fs.existsSync(path.join(workDir, 'agents'));
+
+  if (!hasConfigToml && !hasLegacyInstall) {
     vscode.window.showInformationMessage(
-      'SkillFoundry not detected in this workspace. Run the install script or `npx skillfoundry init` to set up.',
+      'SkillFoundry not detected in this workspace. Run the install script or `skillfoundry init` to set up.',
     );
     registerPlaceholderCommands(context);
     return;
+  }
+
+  // Prompt to update if legacy install lacks config.toml
+  if (!hasConfigToml && hasLegacyInstall) {
+    vscode.window.showInformationMessage(
+      'SkillFoundry detected (legacy install). Run `update.sh` to enable full VS Code integration.',
+    );
   }
 
   // Initialize bridge
