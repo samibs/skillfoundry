@@ -296,16 +296,14 @@ export function getAgentTools(name) {
     return TOOL_SETS[agent.toolCategory];
 }
 export function getAgentSystemPrompt(name) {
-    const agent = AGENT_REGISTRY[name];
-    if (!agent)
-        return DEFAULT_PROMPT;
     // Try loading the full markdown prompt from the agent's source file.
     // This gives the CLI the same detailed instructions as IDE slash-commands.
     const filePrompt = loadAgentPromptFromFile(name);
     if (filePrompt)
         return filePrompt;
-    // Fallback to hardcoded one-liner if no markdown file exists for this agent
-    return agent.systemPrompt;
+    // Fallback to hardcoded one-liner or default prompt
+    const agent = AGENT_REGISTRY[name];
+    return agent ? agent.systemPrompt : DEFAULT_PROMPT;
 }
 export function getAllAgentNames() {
     return Object.keys(AGENT_REGISTRY).sort();

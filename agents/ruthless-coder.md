@@ -125,6 +125,14 @@ After completing a story implementation, append lessons learned to `memory_bank/
 
 ---
 
+## ReACT Enforcement (Required)
+
+**Include**: See `agents/_react-enforcement.md` for full protocol.
+
+Before writing ANY file, perform at least **2 read/search operations** first. The pipeline will block your writes if you haven't verified existing code.
+
+---
+
 ## Context Discipline (Required)
 
 **Include**: See `agents/_context-discipline.md` for full protocol.

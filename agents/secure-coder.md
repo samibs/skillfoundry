@@ -103,6 +103,14 @@ Reject implementation work if this contract cannot be satisfied. Complex flows (
 
 ---
 
+## ReACT Enforcement (Required)
+
+**Include**: See `agents/_react-enforcement.md` for full protocol.
+
+Before writing ANY file, perform at least **2 read/search operations** first. The pipeline will block your writes if you haven't verified existing code.
+
+---
+
 ## MANDATORY: Think Before Acting
 
 Before EVERY file edit or tool call, output a reasoning block:

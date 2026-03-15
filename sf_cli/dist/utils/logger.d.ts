@@ -1,5 +1,5 @@
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger';
+export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger' | 'repair' | 'react' | 'persist' | 'memory' | 'decision';
 /**
  * Structured JSONL logger.
  * Writes entries as one JSON object per line to session.log and optionally a per-run log.

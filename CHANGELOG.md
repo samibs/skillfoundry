@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.47] - 2026-03-15
+
+### Added — Swarm Intelligence Patterns (inspired by MiroFish)
+
+Integrated 5 resilience and quality patterns from multi-agent swarm intelligence research into the SkillFoundry pipeline. These address truncated LLM output recovery, research-before-acting enforcement, progressive artifact persistence, batched memory writes, and agent introspection.
+
+**Phase 1 — Output Resilience:**
+- **LLM output repair** (`output-repair.ts`): Structural auto-repair for truncated LLM responses — closes unclosed JSON brackets/braces (nesting-aware stack), removes trailing commas, strips markdown fences, closes unclosed code blocks. Never modifies content between delimiters.
+- **Temperature decay retry** (`withTemperatureDecay()`): When output is malformed, retries with progressively lower temperatures (0.7 → 0.4 → 0.1). Attempts structural repair before retrying. Returns best available repair if all attempts fail.
+- **JSON validation** (`isValidJSON()`): Quick validation utility for repair pipeline.
+
+**Phase 2 — Research Enforcement:**
+- **ReACT gate** (`react-gate.ts`): Blocks file writes (Edit/Write) until the agent has performed at least 2 read operations (Read/Grep/Glob/Bash). Enforced for coder, secure-coder, data-architect, and refactor agents. Exempt: tester, docs, ops. Tracks per-agent compliance stats.
+- **ReACT enforcement protocol** (`agents/_react-enforcement.md`): Shared protocol document included by 4 code-generating agents. Requires verification summary before each write.
+- **Agent protocol updates**: ruthless-coder, secure-coder, data-architect, and refactoring-strategist now include ReACT enforcement.
+
+**Phase 3 — Progressive Persistence:**
+- **Story deliverable persistence** (`progressive-persist.ts`): After each story completes, writes a delivery manifest to `delivery/{prd-id}/STORY-{N}.md` with file lists, test files, commit stubs, and decisions. Survives context exhaustion.
+- **Forge state snapshots** (`saveForgeState()/loadForgeState()`): Persists pipeline state to `.skillfoundry/forge-state.json` after each batch. Enables resume after interruption.
+
+**Phase 4 — Knowledge Buffering:**
+- **Memory write buffer** (`memory-buffer.ts`): Queues knowledge entries during forge execution and flushes to `memory_bank/knowledge/*.jsonl` every 3 completed stories. Auto-flushes on pipeline exit. Deduplicates against existing content. Canonical schema compliant.
+
+**Phase 5 — Agent Introspection:**
+- **Decision trail** (`decision-trail.ts`): Ring buffer (max 50 entries) capturing agent decisions — what was considered, what was chosen, and why. Per-agent filtering, markdown formatting for `/explain last`, session singleton.
+
+**Infrastructure:**
+- 5 new log categories added to logger: `repair`, `react`, `persist`, `memory`, `decision`
+- 87 new tests across 5 test files (total: 589 tests, 37 files)
+- All 5 platforms synced (220 files)
+
+---
+
 ## [2.0.46] - 2026-03-15
 
 ### Added — Industry Prompt Patterns Integration
