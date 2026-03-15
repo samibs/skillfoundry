@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const configPath = path.join(workDir, '.skillfoundry', 'config.toml');
   if (!fs.existsSync(configPath)) {
     vscode.window.showInformationMessage(
-      'SkillFoundry not detected in this workspace. Run `npx skillfoundry init` to set up.',
+      'SkillFoundry not detected in this workspace. Run the install script or `npx skillfoundry init` to set up.',
     );
     registerPlaceholderCommands(context);
     return;
@@ -162,7 +162,7 @@ function registerPlaceholderCommands(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
       vscode.commands.registerCommand(cmd, () => {
         vscode.window.showInformationMessage(
-          'SkillFoundry not detected. Run `npx skillfoundry init` in this workspace first.',
+          'SkillFoundry not detected. Run the install script or `npx skillfoundry init` in this workspace first.',
         );
       }),
     );

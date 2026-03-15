@@ -371,6 +371,11 @@ DEBUG=false
 YES_MODE=false
 DRY_RUN=false
 
+# Auto-enable YES_MODE when stdin is not a TTY (e.g., invoked via npx/execSync)
+if [ ! -t 0 ]; then
+    YES_MODE=true
+fi
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         --platform)
