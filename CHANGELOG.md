@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.49] - 2026-03-15
+
+### Added — Quality Intelligence & Developer Integration Layer
+
+Closes the measurability gap: SkillFoundry can now prove its quality gates work with hard numbers. Adds telemetry, dependency scanning, git hooks, quality reports, benchmarks, and memory weight learning.
+
+**Quality Telemetry Engine (`telemetry.ts`):**
+- Append-only JSONL event tracking (`.skillfoundry/telemetry.jsonl`) for forge runs, gate executions, security scans, dependency scans, hook executions, and benchmarks
+- Auto-rotation at 5MB with 2 archives. Non-blocking writes — never breaks the pipeline
+- Rolling window aggregation with trend detection (improving/declining/stable)
+- Industry baseline comparison: Veracode 45% vuln rate, CodeRabbit 1.7x issue ratio, GitClear 5.7% churn, Stack Overflow 29% AI trust
+
+**Dependency Vulnerability Scanner (`dependency-scanner.ts`):**
+- Auto-detects project type: Node.js (npm audit), Python (pip-audit), .NET (dotnet list), Rust (cargo-audit), Go
+- Integrated into T4 security gate alongside Semgrep SAST — combined verdict
+- Findings merged into SecurityReport with severity levels (critical/high/moderate/low)
+- Command allowlist prevents shell injection (security hardened)
+
+**Git Hook Integration (`hook.ts`):**
+- `sf hook install` — installs pre-commit (T0+T1) and pre-push (T2+T4) quality gates as standard git hooks
+- `sf hook uninstall` — removes SF hooks, restores backups
+- `sf hook status` — shows current hook state
+- Configurable via `.skillfoundry/hooks.toml` (which gates, fail action, timeouts)
+- Backs up existing hooks to `.bak` files before overwriting
+
+**Memory Weight Learning (`weight-learner.ts`):**
+- Retrieval boost (+0.05/retrieval), validation pass boost (+0.03), validation fail penalty (-0.1)
+- Time-based decay (-0.01/week for unretrieved entries), floor 0.1, ceiling 1.0
+- Path traversal protection on reality_anchor.test_file checks
+
+**Quality Report Generator (`report-generator.ts`):**
+- Markdown and JSON export with executive summary, security posture, gate performance, trends
+- Industry baseline comparison tables with delta and percentile
+- Actionable recommendations based on data
+
+**5 New CLI Commands:**
+- `/gate <t0-t6|all> [target]` — Run single or all quality gates with telemetry recording
+- `/metrics [--window N] [--baseline] [--json]` — Quality metrics dashboard with trends
+- `/report [--format md|json] [--output path]` — Generate exportable quality reports
+- `/benchmark` — Compare quality against industry baselines
+- `/hook install|uninstall|status` — Manage git hook integration
+
+**Security Hardening (6 findings remediated):**
+- HIGH: Command injection — allowlist in dependency-scanner.ts `isCommandAvailable()`
+- MEDIUM: Path traversal — `resolve()` + `startsWith()` guard in report.ts `--output`
+- MEDIUM: Shell injection — gate name regex `/^t[0-6]$/` + timeout sanitization in hook.ts
+- MEDIUM: Shell metachar rejection in gate.ts target parameter
+- MEDIUM: Path traversal guard in weight-learner.ts reality_anchor
+- MEDIUM: fail_action enum restriction in hook.ts
+
+**Infrastructure:**
+- 3 new LogCategory values: `telemetry`, `weight-learner`, `dep-scanner`
+- 101 new tests across 6 test files (telemetry: 21, dependency-scanner: 20, weight-learner: 19, report-generator: 13, hook: 11, commands-new: 19)
+- Total: 836 tests, 49 test files, 0 TypeScript errors
+- CLI commands: 15 → 20
+
+---
+
 ## [2.0.48] - 2026-03-15
 
 ### Added — Passive Memory Engine (inspired by claude-mem)
