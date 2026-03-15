@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.50] - 2026-03-15
+
+### Added — VS Code Extension (`skillfoundry-vscode`)
+
+Native VS Code extension that brings quality gates, telemetry dashboards, and forge pipeline monitoring directly into the editor. A UI layer over the existing sf_cli engine — not a rewrite.
+
+**New Package: `skillfoundry-vscode/`**
+
+*Sidebar Providers (7):*
+- **Quality Dashboard** (`dashboard.ts`): TreeDataProvider showing gate pass rate, total runs, trend, security findings, cost, duration, tests, and window — color-coded by status
+- **Gate Timeline** (`gate-timeline.ts`): T0-T6 gate results with pass/fail/warn icons, duration, and expandable detail per tier
+- **Dependency CVE Tree** (`dependency.ts`): Vulnerable dependencies grouped by severity (critical→high→moderate→low), clickable advisory links
+- **Forge Monitor** (`forge-monitor.ts`): Real-time forge pipeline progress — watches `forge-state.json` for phase transitions, story count, elapsed time
+- **Inline Diagnostics** (`diagnostics.ts`): Maps gate findings to VS Code DiagnosticCollection — squiggly underlines on banned patterns (T1) and security issues (T4)
+- **CodeLens** (`codelens.ts`): "Run T3 (Tests)" above test files, "Run T1 (Patterns)" + "Run T4 (Security)" above source files
+- **Status Bar** (`statusbar.ts`): Gate pass rate with color coding (green ≥90%, yellow ≥70%, red <70%), click to open metrics
+
+*Commands (12):*
+- `skillfoundry.gateAll` — Run all quality gates (T0-T6) with progress notification
+- `skillfoundry.gate` — Run single gate tier via QuickPick selection
+- `skillfoundry.gateFile` — Run gate on current file (T1, T4, or T1+T4)
+- `skillfoundry.forge` — Start forge pipeline in integrated terminal (Full/Blitz/Dry Run)
+- `skillfoundry.metrics` — View quality metrics in output channel
+- `skillfoundry.report` — Quality report in webview panel with CSP headers
+- `skillfoundry.memory` — Memory recall QuickPick with fuzzy search
+- `skillfoundry.prd` — Create PRD via sf CLI (input validated against shell injection)
+- `skillfoundry.scanDeps` — Run dependency vulnerability scan
+- `skillfoundry.benchmark` — Run quality benchmark in terminal
+- `skillfoundry.hook` — Git hook management (install/uninstall/status)
+- `skillfoundry.refresh` — Refresh all sidebar providers
+
+*Architecture:*
+- Bridge pattern: `SfBridge` class wraps sf_cli core modules via `require()` — no subprocess spawning, no HTTP server
+- esbuild bundling: 41.6kb CJS bundle targeting Node 20 (< 5MB marketplace limit)
+- File watcher: `FileSystemWatcher` on `telemetry.jsonl` with 2-second debounced auto-refresh
+- Graceful degradation: placeholder commands when `.skillfoundry/config.toml` not found
+
+**Security Hardening (8 findings remediated):**
+- CRITICAL: Command injection — shell metacharacter rejection + env var passthrough for PRD input
+- HIGH: Path traversal — `__dirname`-relative sf_cli path resolution, removed workspace-parent traversal
+- HIGH: Unsafe `require()` — pinned to resolved absolute paths only
+- HIGH: Missing CSP — added `Content-Security-Policy` meta tag to webview panels
+- MEDIUM: Incomplete HTML escaping — added `"` and `'` to `escapeHtml()`
+- MEDIUM: Unvalidated URL — scheme check (`https://`/`http://` only) for advisory links
+- MEDIUM: Path traversal in diagnostics — workspace boundary validation on parsed file paths
+- MEDIUM: No schema validation — runtime type checking on all parsed JSON entries from workspace
+
+**Tests:**
+- 28 tests across 2 test files (bridge: 13, providers: 15)
+- Full vscode module mock for provider testing
+- 0 TypeScript errors, clean esbuild bundle
+
+---
+
 ## [2.0.49] - 2026-03-15
 
 ### Added — Quality Intelligence & Developer Integration Layer

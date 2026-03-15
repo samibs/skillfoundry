@@ -3,13 +3,13 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.49-blue)
+![Version](https://img.shields.io/badge/version-2.0.50-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that installs 56 agents and 64 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes.
+SkillFoundry is an AI engineering framework that installs 56 agents and 64 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes. Now with a native VS Code extension for inline gate results, telemetry dashboards, and one-click forge runs.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -466,6 +466,44 @@ Complex features automatically get a PRD generated in `genesis/`, stories broken
 /autonomous status                         Check if autonomous mode is active
 ```
 
+### VS Code Extension
+
+SkillFoundry ships a native VS Code extension that brings quality gates, telemetry, and forge runs directly into your editor — no terminal switching required.
+
+```
+┌──────────┬──────────────────────────────┬───────────────┐
+│ Explorer │ Editor                       │ SF Sidebar    │
+│          │                              │               │
+│          │  src/auth.ts                 │ ◆ Dashboard   │
+│          │  ─────────────────           │  Pass Rate 94%│
+│          │  1 │ import { hash }         │  Last Forge ✓ │
+│          │  2 │ // TODO: add rate  ⚠    │  CVEs: 2 high │
+│          │    │ ▸ Run T1 (Patterns)     │               │
+│          │    │ ▸ Run T4 (Security)     │ ◆ Gate Status │
+│          │                              │  T0-T6 results│
+│          │                              │               │
+│          │                              │ ◆ Forge       │
+│          │                              │  Phase: TEMPER│
+│          │                              │  Story: 5/8   │
+├──────────┴──────────────────────────────┴───────────────┤
+│ SF: 94% gates │ sf:coder │ $0.12               Output   │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Features:**
+- **Sidebar dashboard** — gate pass rate, security findings, telemetry trends, dependency CVEs
+- **Inline diagnostics** — gate findings appear as squiggly underlines (like ESLint)
+- **CodeLens** — "Run T3 (Tests)" above test files, "Run T1/T4" above source files
+- **Command palette** — 12 commands: gate, forge, metrics, report, memory recall, PRD, hooks, benchmark
+- **Forge monitor** — real-time phase progress in sidebar, runs in integrated terminal
+- **Status bar** — gate pass rate with color coding, click to open metrics
+- **File watcher** — auto-refreshes dashboard when telemetry updates
+
+```bash
+cd skillfoundry-vscode && npm install && npm run build
+# Then install via: code --install-extension skillfoundry-0.1.0.vsix
+```
+
 ### Agent Evolution
 
 Agents improve over time through a debate-implement-iterate loop:
@@ -566,6 +604,11 @@ skillfoundry/
 │   ├── src/components/      Terminal UI: Header, Input, Message, GateTimeline, ...
 │   ├── src/commands/        Slash command handlers (/team, /agent, /plan, ...)
 │   └── src/hooks/           Session state and streaming hooks
+├── skillfoundry-vscode/     VS Code Extension (bridge to sf_cli)
+│   ├── src/extension.ts     Activation, lifecycle, file watcher
+│   ├── src/bridge.ts        Thin adapter calling sf_cli core modules
+│   ├── src/providers/       Dashboard, gate timeline, dependency CVE tree, forge monitor, diagnostics, CodeLens, status bar
+│   └── src/commands/        Gate, forge, memory, PRD, metrics, report commands
 ├── agents/                  56 agent contracts and orchestration protocols
 ├── genesis/                 PRD templates and your feature documents
 ├── memory_bank/             Persistent knowledge across sessions

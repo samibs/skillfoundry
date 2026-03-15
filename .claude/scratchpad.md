@@ -3,6 +3,39 @@
 > Last updated: 2026-03-15T17:00:00Z
 > Platform: claude-code
 
+## Forge Session — 2026-03-15 (VS Code Extension)
+- PRDs: 1 processed (vscode-extension)
+- Stories: 15/18 (Phase 1-3 complete, Phase 4 marketplace/CI deferred)
+- Tests: 28/28 passing (2 test files)
+- Issues: 1 CRITICAL + 3 HIGH + 4 MEDIUM security findings found, all 8 remediated
+- Security: PASS after remediation (0 critical, 0 high remaining)
+- Knowledge: 3 entries (2 decisions, 1 fact)
+- New package: skillfoundry-vscode/ (entire VS Code extension)
+  - src/extension.ts — Entry point, activation, lifecycle
+  - src/bridge.ts — Thin adapter to sf_cli core modules
+  - src/providers/ — 7 providers (dashboard, gate-timeline, dependency, forge-monitor, diagnostics, codelens, statusbar)
+  - src/commands/ — 3 command groups (gate, forge, memory) with 12 registered commands
+  - __tests__/ — bridge.test.ts (13 tests), providers.test.ts (15 tests)
+- Bundle: 41.6kb (esbuild, CJS, Node 20 target)
+- Architecture: Bridge pattern — direct require() of sf_cli modules, not subprocess
+- Key decisions:
+  1. Bridge uses require() with __dirname-relative path resolution (not workspace-relative)
+  2. Forge runs in integrated terminal (too heavy for direct import), monitored via forge-state.json
+  3. Webview panels use strict CSP (default-src 'none'; style-src 'unsafe-inline')
+  4. PRD command passes user input via env var to prevent shell injection
+  5. All parsed JSON from workspace files gets runtime type validation
+- Security fixes applied:
+  1. CRITICAL: Command injection — shell metacharacter rejection + env var passthrough in PRD command
+  2. HIGH: Path traversal — __dirname-relative sf_cli path resolution, removed workspace-parent traversal
+  3. HIGH: Unsafe require() — pinned to resolved absolute paths only
+  4. HIGH: Missing CSP — added Content-Security-Policy meta tag to webview
+  5. MEDIUM: Incomplete HTML escaping — added " and ' to escapeHtml
+  6. MEDIUM: Unvalidated URL — scheme check (https/http only) for advisory links
+  7. MEDIUM: Path traversal in diagnostics — workspace boundary validation on parsed file paths
+  8. MEDIUM: No schema validation — runtime type checking on all parsed JSON entries
+- Delivery: 14/14 FRs covered, 19/25 planned files delivered (76%), 6 missing are optional/inline
+- Build: 0 tsc errors, 28/28 tests, 41.6kb bundle
+
 ## Forge Session — 2026-03-15 (Quality Intelligence Layer)
 - PRDs: 1 processed (quality-intelligence-layer)
 - Stories: 12/12 completed (3 batches)
