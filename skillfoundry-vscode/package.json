@@ -1,0 +1,170 @@
+{
+  "name": "skillfoundry",
+  "displayName": "SkillFoundry",
+  "description": "Quality gates, telemetry dashboard, dependency scanning, and forge pipeline — directly in VS Code",
+  "version": "0.1.0",
+  "publisher": "skillfoundry",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Testing",
+    "Other"
+  ],
+  "keywords": [
+    "quality",
+    "gates",
+    "security",
+    "AI",
+    "forge",
+    "telemetry",
+    "skillfoundry"
+  ],
+  "activationEvents": [
+    "workspaceContains:.skillfoundry/config.toml"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "skillfoundry",
+          "title": "SkillFoundry",
+          "icon": "$(shield)"
+        }
+      ]
+    },
+    "views": {
+      "skillfoundry": [
+        {
+          "id": "sf.dashboard",
+          "name": "Quality Dashboard"
+        },
+        {
+          "id": "sf.gates",
+          "name": "Gate Timeline"
+        },
+        {
+          "id": "sf.forge",
+          "name": "Forge Monitor"
+        },
+        {
+          "id": "sf.dependencies",
+          "name": "Dependencies"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "skillfoundry.gateAll",
+        "title": "SkillFoundry: Run All Gates"
+      },
+      {
+        "command": "skillfoundry.gate",
+        "title": "SkillFoundry: Run Gate"
+      },
+      {
+        "command": "skillfoundry.gateFile",
+        "title": "SkillFoundry: Run Gate on This File"
+      },
+      {
+        "command": "skillfoundry.forge",
+        "title": "SkillFoundry: Start Forge Pipeline"
+      },
+      {
+        "command": "skillfoundry.metrics",
+        "title": "SkillFoundry: Show Metrics"
+      },
+      {
+        "command": "skillfoundry.report",
+        "title": "SkillFoundry: View Quality Report"
+      },
+      {
+        "command": "skillfoundry.benchmark",
+        "title": "SkillFoundry: Run Benchmark"
+      },
+      {
+        "command": "skillfoundry.hook",
+        "title": "SkillFoundry: Manage Hooks"
+      },
+      {
+        "command": "skillfoundry.memory",
+        "title": "SkillFoundry: Recall Memory"
+      },
+      {
+        "command": "skillfoundry.prd",
+        "title": "SkillFoundry: Create PRD"
+      },
+      {
+        "command": "skillfoundry.scanDeps",
+        "title": "SkillFoundry: Scan Dependencies"
+      },
+      {
+        "command": "skillfoundry.refresh",
+        "title": "SkillFoundry: Refresh Dashboard"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "skillfoundry.gateFile",
+          "group": "skillfoundry"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "skillfoundry.gateFile",
+          "group": "skillfoundry"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "SkillFoundry",
+      "properties": {
+        "skillfoundry.autoRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-refresh dashboard when telemetry changes"
+        },
+        "skillfoundry.gateTimeout": {
+          "type": "number",
+          "default": 30,
+          "description": "Gate execution timeout in seconds"
+        },
+        "skillfoundry.showCodeLens": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show gate CodeLens actions above code"
+        },
+        "skillfoundry.inlineDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show gate findings as inline diagnostics"
+        },
+        "skillfoundry.metricsWindow": {
+          "type": "number",
+          "default": 10,
+          "description": "Default metrics window (last N forge runs)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node20 --sourcemap",
+    "watch": "npm run build -- --watch",
+    "package": "vsce package",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.0.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
