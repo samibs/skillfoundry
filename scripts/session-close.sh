@@ -92,6 +92,18 @@ echo -e "    Errors:     $errors_count"
 echo ""
 
 # ═══════════════════════════════════════════════════════════════
+# STEP 2.5: Regenerate context primer for next session
+# ═══════════════════════════════════════════════════════════════
+
+PRIMER_SCRIPT="$FRAMEWORK_DIR/scripts/generate-primer.sh"
+
+if [ -f "$PRIMER_SCRIPT" ] && [ -x "$PRIMER_SCRIPT" ]; then
+    echo -e "${BLUE}  Regenerating context primer for next session...${NC}"
+    bash "$PRIMER_SCRIPT" --project="$PROJECT_DIR" 2>/dev/null || true
+    echo ""
+fi
+
+# ═══════════════════════════════════════════════════════════════
 # STEP 3: Force a final knowledge sync
 # ═══════════════════════════════════════════════════════════════
 

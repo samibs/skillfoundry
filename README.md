@@ -3,13 +3,13 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.47-blue)
+![Version](https://img.shields.io/badge/version-2.0.48-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that installs 56 agents and 63 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes.
+SkillFoundry is an AI engineering framework that installs 56 agents and 64 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -107,11 +107,11 @@ Or use autonomous mode — just type what you want in plain English:
 
 SkillFoundry has two independent systems. They share the same agents and philosophy, but work differently:
 
-| | **IDE Skills** (63 skills) | **Standalone CLI** (`sf`) |
+| | **IDE Skills** (64 skills) | **Standalone CLI** (`sf`) |
 |---|---|---|
 | **What it is** | Markdown instruction files your AI reads | Terminal app with its own AI connection |
 | **Runs inside** | Claude Code, Copilot, Cursor, Codex, Gemini | Your terminal (any OS) |
-| **Full pipeline** | `/forge`, `/go`, `/goma` (all 63 skills) | `/forge`, `/plan`, `/gates` (14 commands) |
+| **Full pipeline** | `/forge`, `/go`, `/goma` (all 64 skills) | `/forge`, `/plan`, `/gates` (14 commands) |
 | **Autonomous mode** | `/goma` — full autonomous with safety gates | Not available |
 | **Provider switching** | Uses your IDE's provider | Built-in: 6 providers, switch at runtime |
 | **Budget controls** | Not available | Per-run and monthly cost caps |
@@ -122,7 +122,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 1. Inside Your IDE (Recommended)
 
-63 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
+64 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
 
 | Platform | Invocation | Example |
 |----------|-----------|---------|
@@ -147,7 +147,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 2. The Standalone CLI (`sf`)
 
-A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 15 native commands (not all 63 skills).
+A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 15 native commands (not all 64 skills).
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -530,15 +530,15 @@ These work inside your AI coding tool, not in the `sf` CLI:
 
 ## Supported Platforms
 
-The framework generates platform-specific configurations during install. Each platform gets the same 63 skills adapted to its native format:
+The framework generates platform-specific configurations during install. Each platform gets the same 64 skills adapted to its native format:
 
 | Platform | What Gets Installed | How to Invoke | Notes |
 |----------|-------------------|---------------|-------|
-| **Claude Code** | `.claude/commands/` (63 skills) | `/command` | Slash commands in Claude Code CLI |
+| **Claude Code** | `.claude/commands/` (64 skills) | `/command` | Slash commands in Claude Code CLI |
 | **GitHub Copilot** | `.copilot/custom-agents/` (60 agents) | `@agent` in chat | Custom agents in Copilot Chat |
 | **Cursor** | `.cursor/rules/` (60 rules) | Auto-loaded | Rules activate based on context |
-| **OpenAI Codex** | `.agents/skills/` (63 skills) | `$command` | Dollar-prefix commands in Codex CLI |
-| **Google Gemini** | `.gemini/skills/` (63 skills) | Skill invocation | Available in Gemini sessions |
+| **OpenAI Codex** | `.agents/skills/` (64 skills) | `$command` | Dollar-prefix commands in Codex CLI |
+| **Google Gemini** | `.gemini/skills/` (64 skills) | Skill invocation | Available in Gemini sessions |
 
 Install multiple platforms at once:
 
@@ -547,7 +547,7 @@ Install multiple platforms at once:
 ./install.ps1 -Platform "claude,cursor,copilot"     # Windows
 ```
 
-**All 63 skills work identically across platforms.** The installer translates agent contracts from `agents/` into each platform's native format. When you update the framework, `update.sh` / `update.ps1` regenerates all platform files.
+**All 64 skills work identically across platforms.** The installer translates agent contracts from `agents/` into each platform's native format. When you update the framework, `update.sh` / `update.ps1` regenerates all platform files.
 
 ---
 
@@ -577,11 +577,11 @@ skillfoundry/
 ├── observability/           Audit logging, metrics collection, trace viewer
 │
 │  Platform skill files (generated by installer):
-├── .claude/commands/        Claude Code (63 skills)
+├── .claude/commands/        Claude Code (64 skills)
 ├── .copilot/custom-agents/  GitHub Copilot (60 agents)
 ├── .cursor/rules/           Cursor (60 rules)
-├── .agents/skills/          OpenAI Codex (63 skills)
-└── .gemini/skills/          Google Gemini (63 skills)
+├── .agents/skills/          OpenAI Codex (64 skills)
+└── .gemini/skills/          Google Gemini (64 skills)
 ```
 
 ---

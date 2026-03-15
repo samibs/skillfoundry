@@ -512,9 +512,9 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 2.0.47
+**Framework Version**: 2.0.48
 **Documentation Updated**: March 15, 2026
-**Total Agents**: 56 core agents / 63 skills
+**Total Agents**: 56 core agents / 64 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
 **Total Documentation Size**: ~700 KB
 **Documentation Files**: 60+ files

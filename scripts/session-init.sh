@@ -154,6 +154,20 @@ else
 fi
 
 # ═══════════════════════════════════════════════════════════════
+# STEP 5: Generate context primer
+# ═══════════════════════════════════════════════════════════════
+
+PRIMER_SCRIPT="$FRAMEWORK_DIR/scripts/generate-primer.sh"
+
+if [ -f "$PRIMER_SCRIPT" ] && [ -x "$PRIMER_SCRIPT" ]; then
+    echo -e "${BLUE}  Generating context primer...${NC}"
+    bash "$PRIMER_SCRIPT" --project="$PROJECT_DIR" 2>/dev/null || true
+    echo ""
+else
+    echo -e "${YELLOW}  generate-primer.sh not found. Skipping context primer.${NC}"
+fi
+
+# ═══════════════════════════════════════════════════════════════
 # SUMMARY
 # ═══════════════════════════════════════════════════════════════
 
