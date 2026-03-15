@@ -11,6 +11,11 @@ import { setupCommand } from './setup.js';
 import { agentCommand } from './agent.js';
 import { teamCommand } from './team.js';
 import { modelCommand } from './model.js';
+import { gateCommand } from './gate.js';
+import { hookCommand } from './hook.js';
+import { reportCommand } from './report.js';
+import { benchmarkCommand } from './benchmark.js';
+import { metricsCommand } from './metrics.js';
 const registry = new Map();
 export function registerCommand(cmd) {
     registry.set(cmd.name, cmd);
@@ -50,5 +55,10 @@ export function initCommands() {
     registerCommand(agentCommand);
     registerCommand(teamCommand);
     registerCommand(modelCommand);
+    registerCommand(gateCommand);
+    registerCommand(hookCommand);
+    registerCommand(reportCommand);
+    registerCommand(benchmarkCommand);
+    registerCommand(metricsCommand);
 }
 //# sourceMappingURL=index.js.map

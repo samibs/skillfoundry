@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.51] - 2026-03-15
+
+### Fixed — Installer Non-Interactive Mode & npm Link
+
+- **TTY auto-detection in `install.sh`**: Installer now auto-enables `YES_MODE` when stdin is not a TTY (e.g., invoked via `npx skillfoundry init` or `execSync`). Previously, interactive `read` prompts would fail silently when existing platform directories were detected, causing the installer to abort.
+- **`npm link` setup**: Configured user-owned npm prefix (`~/.npm-global`) so `skillfoundry` CLI can be linked globally without `sudo`. Running `npm link` from the framework root makes `skillfoundry init` available from any directory.
+- **Extension activation messages**: Updated VS Code extension messages to reference the install script as primary method alongside `npx skillfoundry init`.
+- **Root `package.json` version sync**: Aligned root package version with framework version (was stuck at 2.0.42).
+
+---
+
 ## [2.0.50] - 2026-03-15
 
 ### Added — VS Code Extension (`skillfoundry-vscode`)
