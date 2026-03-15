@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.48] - 2026-03-15
+
+### Added — Passive Memory Engine (inspired by claude-mem)
+
+Integrated 3 memory intelligence patterns from claude-mem research into the SkillFoundry pipeline. These address manual harvest dependency, blind session starts, and flat recall inefficiency.
+
+**Phase 1 — Auto-Harvest Hooks:**
+- **Rule-based extraction engine** (`auto-harvest.ts`): Passively captures knowledge from pipeline events — story completions, gate failures, fixer interventions, and session summaries. Zero secondary LLM calls. Produces canonical JSONL entries via `MemoryBuffer`.
+- **4 extraction rules**: FILE_CREATED → fact, DEPENDENCY_ADDED → decision, GATE_FAILURE → error, FIXER_SUCCESS → error. Tags auto-extracted from file paths.
+- **Pipeline integration**: Hooks into story completion, Anvil gate failures, and fixer runs. Entries auto-flush every 3 stories via existing `MemoryBuffer`.
+
+**Phase 2 — Context Primer:**
+- **Primer generator** (`context-primer.ts`): Generates a compact (~400-800 token) markdown index from all `memory_bank/knowledge/*.jsonl` files. Shows entry counts by type, top-5 by weight, 5 most recent, estimated token costs.
+- **Staleness detection**: Warns if newest entry is >7 days old.
+- **Session integration**: `session-init.sh` now generates primer at session start (Step 5). `session-close.sh` regenerates primer for next session (Step 2.5).
+- **Shell script** (`generate-primer.sh`): Standalone primer generation with jq-based JSON parsing.
+
+**Phase 3 — Layered Recall:**
+- **Progressive disclosure** (`layered-recall.ts`): Three search modes — index (compact table, ~400 tokens), preview (200-char summaries, ~600 tokens), full (complete canonical entries). 3-5x token savings over flat dump.
+- **TF-IDF scoring**: Matches `semantic-search.sh` algorithm — exact phrase (+100), word match (+10), type bonus (+20), weight bonus (+10*w), tag bonus (+5).
+- **Filter support**: `--type`, `--min-weight`, `--since` (relative: 7d/30d/4w, or ISO date), `--tags`, `--limit`.
+- **New `/recall` command**: Progressive recall with index → preview → full workflow. Synced to all 5 platforms.
+
+**Infrastructure:**
+- 3 new log categories: `harvest`, `recall`, `primer`
+- 54 new tests across 3 test files (13 + 22 + 19)
+- Total: 643 tests, 40 test files
+- `/recall` command synced to all 5 platforms (Claude Code, Copilot, Cursor, Codex, Gemini)
+
+---
+
 ## [2.0.47] - 2026-03-15
 
 ### Added — Swarm Intelligence Patterns (inspired by MiroFish)

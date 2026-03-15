@@ -5,7 +5,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync, rea
 import { join } from 'node:path';
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger' | 'repair' | 'react' | 'persist' | 'memory' | 'decision';
+export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger' | 'repair' | 'react' | 'persist' | 'memory' | 'decision' | 'harvest' | 'recall' | 'primer';
 
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
   DEBUG: 0,

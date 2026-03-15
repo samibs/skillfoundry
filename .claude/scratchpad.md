@@ -1,7 +1,20 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-03-12T10:25:00Z
+> Last updated: 2026-03-15T13:35:00Z
 > Platform: claude-code
+
+## Forge Session — 2026-03-15 (Passive Memory Engine)
+- PRDs: 1 processed (passive-memory-engine)
+- Stories: 7/7 completed (3 batches)
+- Tests: 643/643 passing (54 new)
+- Issues: 1 found (formatRelativeAge NaN on invalid date), 1 auto-fixed
+- Security: PASS (0 critical, 0 high)
+- Knowledge: 4 entries harvested (3 decisions, 1 fact)
+- New modules: auto-harvest.ts, context-primer.ts, layered-recall.ts
+- New scripts: generate-primer.sh
+- New command: /recall (synced to 5 platforms)
+- Session scripts updated: session-init.sh (Step 5: primer), session-close.sh (Step 2.5: primer regen)
+- Inspiration: claude-mem (github.com/thedotmack/claude-mem) — took 3 patterns, rejected 6
 
 ## Forge Session — 2026-03-12
 - PRDs: 1 processed (native-debugger-integration)
