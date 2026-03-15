@@ -124,6 +124,13 @@ After completing a story implementation, append lessons learned to `memory_bank/
 **Rules**: Only record real lessons. Never record secrets. If nothing was learned, skip.
 
 
+## ReACT Enforcement (Required)
+
+**Include**: See `agents/_react-enforcement.md` for full protocol.
+
+Before writing ANY file, perform at least **2 read/search operations** first. The pipeline will block your writes if you haven't verified existing code.
+
+
 ## Summary
 [1-3 sentences: what was implemented]
 
