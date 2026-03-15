@@ -3,7 +3,7 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.48-blue)
+![Version](https://img.shields.io/badge/version-2.0.49-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -89,8 +89,9 @@ C:\DevTools\skillfoundry\install.ps1
        ├── Implement            Architect → Coder → Tester pipeline
        ├── Quality gates        The Anvil (T0-T6) + Micro-Gates (MG0-MG3)
        ├── Circuit breaker      Halt on repeated systemic errors
-       ├── Security audit       OWASP scan + credential check
-       └── Harvest knowledge    Save lessons to memory_bank/
+       ├── Security audit       OWASP scan + dependency CVEs + credential check
+       ├── Harvest knowledge    Save lessons to memory_bank/
+       └── Quality metrics      Track gate pass rates, trends, and industry baselines
 ```
 
 Or use autonomous mode — just type what you want in plain English:
@@ -111,7 +112,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 |---|---|---|
 | **What it is** | Markdown instruction files your AI reads | Terminal app with its own AI connection |
 | **Runs inside** | Claude Code, Copilot, Cursor, Codex, Gemini | Your terminal (any OS) |
-| **Full pipeline** | `/forge`, `/go`, `/goma` (all 64 skills) | `/forge`, `/plan`, `/gates` (14 commands) |
+| **Full pipeline** | `/forge`, `/go`, `/goma` (all 64 skills) | `/forge`, `/plan`, `/gates` (20 commands) |
 | **Autonomous mode** | `/goma` — full autonomous with safety gates | Not available |
 | **Provider switching** | Uses your IDE's provider | Built-in: 6 providers, switch at runtime |
 | **Budget controls** | Not available | Per-run and monthly cost caps |
@@ -147,7 +148,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 2. The Standalone CLI (`sf`)
 
-A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 15 native commands (not all 64 skills).
+A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 20 native commands (not all 64 skills).
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -480,7 +481,7 @@ scripts/evolve.sh run                      Full evolution cycle
 
 ## Command Reference
 
-### sf CLI Commands (15 native)
+### sf CLI Commands (20 native)
 
 These work inside the `sf` terminal app:
 
@@ -494,6 +495,7 @@ These work inside the `sf` terminal app:
 | `/plan <task>` | Generate an implementation plan |
 | `/apply [plan-id]` | Execute a plan with quality gates |
 | `/gates [target]` | Run The Anvil quality gates (T1-T6) |
+| `/gate <t0-t6\|all>` | Run a single quality gate or all gates |
 | `/forge` | Pipeline: validate PRDs → implement → gate → report |
 | `/forge --dry-run` | Read-only scan without execution |
 | `/provider [set <name>]` | Switch AI provider |
@@ -501,6 +503,10 @@ These work inside the `sf` terminal app:
 | `/cost` | Token usage and cost report |
 | `/memory [stats\|recall]` | Query or record knowledge |
 | `/config [key] [value]` | View or edit configuration |
+| `/metrics [--window N]` | Quality metrics dashboard with trends |
+| `/report [--format md\|json]` | Generate exportable quality report |
+| `/benchmark` | Compare quality against industry baselines |
+| `/hook install\|uninstall\|status` | Manage git hook integration for quality gates |
 
 ### IDE Skills (63 — Claude Code, Copilot, Cursor, Codex, Gemini)
 

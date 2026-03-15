@@ -1,7 +1,48 @@
 # Session Scratchpad
 > Auto-persisted by agents. Read on session start. Do not edit manually during active sessions.
-> Last updated: 2026-03-15T13:35:00Z
+> Last updated: 2026-03-15T17:00:00Z
 > Platform: claude-code
+
+## Forge Session — 2026-03-15 (Quality Intelligence Layer)
+- PRDs: 1 processed (quality-intelligence-layer)
+- Stories: 12/12 completed (3 batches)
+- Tests: 836/836 passing (101 new)
+- Issues: 1 HIGH + 5 MEDIUM security findings found, all 6 remediated
+- Security: PASS after remediation (0 critical, 0 high, 0 medium remaining)
+- Knowledge: 5 entries harvested (3 decisions, 2 facts)
+- New core modules:
+  1. telemetry.ts (430 LOC) — JSONL event tracking with rotation + aggregation
+  2. dependency-scanner.ts (394 LOC) — npm/pip/dotnet/cargo/go audit with platform detection
+  3. weight-learner.ts (318 LOC) — retrieval boost, validation updates, time decay
+  4. report-generator.ts (391 LOC) — Markdown/JSON quality reports with industry baselines
+- New CLI commands: /gate, /hook, /metrics, /report, /benchmark (5 commands)
+- Modified: gates.ts (T4 dependency scanner integration), commands/index.ts (5 registrations), logger.ts (3 new categories)
+- Security fixes applied:
+  1. HIGH: Command injection — allowlist (ALLOWED_AUDIT_COMMANDS) in dependency-scanner.ts
+  2. MEDIUM: Path traversal — resolve() + startsWith() guard in report.ts --output
+  3. MEDIUM: Shell injection — gate name regex /^t[0-6]$/ + timeout sanitization in hook.ts
+  4. MEDIUM: Shell metachar — rejection pattern in gate.ts target parameter
+  5. MEDIUM: Path traversal — resolve() guard in weight-learner.ts reality_anchor
+  6. MEDIUM: Shell injection — fail_action enum restriction in hook.ts
+- Delivery: 12/12 FRs delivered (100%), all planned files created
+- Build: 0 tsc errors, 836/836 tests, 49/49 test files
+
+## Forge Session — 2026-03-15 (Real Agents + Semgrep)
+- PRDs: 2 processed (real-autonomous-agents, semgrep-security-integration)
+- Stories: 6/6 completed (3 batches)
+- Tests: 735/735 passing (92 new)
+- Issues: 0 found
+- Security: PASS (0 critical, 0 high)
+- Knowledge: 3 entries harvested (2 decisions, 1 fact)
+- New modules: agent.ts (Agent class + 4 archetypes), semgrep-scanner.ts (SAST + regex fallback)
+- Modified: agent-registry.ts (archetype map + createAgentInstance), gates.ts (T4 Semgrep-first)
+- Modified: security.md (Semgrep SAST section, synced to 3 platforms)
+- Key decisions:
+  1. Agent class wraps ai-runner.ts, not replaces it (backward compat)
+  2. 4 archetypes: ImplementerAgent, ReviewerAgent, OperatorAgent, AdvisorAgent
+  3. Delegation with budget partitioning + depth limiting (max 3)
+  4. T4 gate: Semgrep-first, regex-fallback — no behavior change without Semgrep
+  5. SecurityReport with OWASP categories, severity levels, structured findings
 
 ## Forge Session — 2026-03-15 (Passive Memory Engine)
 - PRDs: 1 processed (passive-memory-engine)

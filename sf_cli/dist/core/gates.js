@@ -412,9 +412,32 @@ function checkStoriesHaveTests(workDir) {
     }
     return { storiesWithoutTests: uncoveredStories.length, uncoveredStories };
 }
-// T4: Security scan
+// T4: Security scan — Semgrep-first, regex-fallback
 function runT4(workDir, target) {
     const start = Date.now();
+    // Try Semgrep-based scanning first (real OWASP SAST)
+    try {
+        const { runSecurityScan, formatSecurityReport } = require('./semgrep-scanner.js');
+        const report = runSecurityScan(target);
+        const detail = report.scannerVersion === 'regex-fallback'
+            ? `[regex fallback] ${report.findings.length} finding(s) — install Semgrep for full OWASP coverage`
+            : `[Semgrep ${report.scannerVersion}] ${report.findings.length} finding(s) across ${report.owaspCoverage.length}/10 OWASP categories`;
+        const findingSummary = report.findings.length > 0
+            ? `\nCRITICAL: ${report.summary.critical}, HIGH: ${report.summary.high}, MEDIUM: ${report.summary.medium}, LOW: ${report.summary.low}` +
+                report.findings.slice(0, 5).map((f) => `\n  [${f.severity}] ${f.file}:${f.line} — ${f.message}`).join('')
+            : '';
+        return {
+            tier: 'T4',
+            name: 'Security Scan',
+            status: report.verdict === 'FAIL' ? 'fail' : (report.verdict === 'WARN' ? 'warn' : 'pass'),
+            detail: (detail + findingSummary).slice(0, 800),
+            durationMs: Date.now() - start,
+        };
+    }
+    catch {
+        // If semgrep-scanner module fails to load, fall through to legacy scanning
+    }
+    // Legacy fallback: anvil.sh pattern matching
     const anvil = findAnvilScript(workDir);
     if (anvil) {
         const { ok, output } = runCommand(anvilCommand(anvil, `patterns "${target}"`), workDir);

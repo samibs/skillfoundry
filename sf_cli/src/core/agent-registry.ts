@@ -354,3 +354,159 @@ export function getAgentsByCategory(category: ToolCategory): string[] {
     .map(([name]) => name)
     .sort();
 }
+
+// ---------------------------------------------------------------------------
+// Archetype mapping: every agent → one of 4 archetypes
+// ---------------------------------------------------------------------------
+
+export type AgentArchetype = 'implementer' | 'reviewer' | 'operator' | 'advisor';
+
+/**
+ * Maps each registered agent to its archetype for the real Agent class system.
+ * - implementer: writes code, runs tools, produces artifacts
+ * - reviewer: reads code, produces findings (never writes)
+ * - operator: runs diagnostics, produces reports
+ * - advisor: answers questions (no tool access)
+ */
+export const AGENT_ARCHETYPE_MAP: Record<string, AgentArchetype> = {
+  // FULL agents → implementer (they write code and modify files)
+  auto: 'implementer',
+  architect: 'implementer',
+  anvil: 'implementer',
+  blitz: 'implementer',
+  coder: 'implementer',
+  delegate: 'implementer',
+  fixer: 'implementer',
+  forge: 'implementer',
+  go: 'implementer',
+  gohm: 'implementer',
+  goma: 'implementer',
+  gosm: 'implementer',
+  migration: 'implementer',
+  nuke: 'implementer',
+  ops: 'implementer',
+  orchestrate: 'implementer',
+  refactor: 'implementer',
+  release: 'implementer',
+  ship: 'implementer',
+  swarm: 'implementer',
+  undo: 'implementer',
+  workflow: 'implementer',
+
+  // CODE agents → implementer (they create/modify files)
+  'api-design': 'implementer',
+  'data-architect': 'implementer',
+  docs: 'implementer',
+  educate: 'implementer',
+  i18n: 'implementer',
+  memory: 'implementer',
+  prd: 'implementer',
+  'senior-engineer': 'implementer',
+  stories: 'implementer',
+  'ux-ui': 'implementer',
+
+  // REVIEW agents → reviewer (read-only analysis)
+  accessibility: 'reviewer',
+  evaluator: 'reviewer',
+  'gate-keeper': 'reviewer',
+  'layer-check': 'reviewer',
+  'math-check': 'reviewer',
+  review: 'reviewer',
+  security: 'reviewer',
+  'security-scanner': 'reviewer',
+  standards: 'reviewer',
+
+  // OPS/DEBUG agents → operator (diagnostics + commands)
+  debugger: 'operator',
+  dependency: 'operator',
+  devops: 'operator',
+  health: 'operator',
+  metrics: 'operator',
+  performance: 'operator',
+  sre: 'operator',
+  'tech-lead': 'operator',
+  tester: 'operator',
+
+  // INSPECT agents → operator (read + report)
+  analytics: 'operator',
+  context: 'operator',
+  cost: 'operator',
+  explain: 'operator',
+  profile: 'operator',
+  replay: 'operator',
+  status: 'operator',
+  version: 'operator',
+
+  // NONE agents → advisor (no tools, pure knowledge)
+  bpsbs: 'advisor',
+  learn: 'advisor',
+};
+
+/**
+ * Get the archetype for a given agent name.
+ * Returns 'implementer' as default for unknown agents.
+ */
+export function getAgentArchetype(name: string): AgentArchetype {
+  return AGENT_ARCHETYPE_MAP[name] || 'implementer';
+}
+
+// ---------------------------------------------------------------------------
+// Real Agent instance creation
+// ---------------------------------------------------------------------------
+
+import {
+  type Agent,
+  type AgentFactoryDefinition,
+  createAgent,
+} from './agent.js';
+
+/**
+ * Create a real Agent class instance from the registry.
+ * This is the bridge between the old flat registry and the new Agent system.
+ */
+export function createAgentInstance(name: string): Agent {
+  const def = AGENT_REGISTRY[name];
+  if (!def) {
+    // Create a default implementer for unknown agents
+    return createAgent({
+      name,
+      displayName: name,
+      toolCategory: 'FULL',
+      archetype: 'implementer',
+      role: 'General-purpose agent',
+      focus: 'task completion',
+    });
+  }
+
+  const archetype = getAgentArchetype(name);
+  const factoryDef: AgentFactoryDefinition = {
+    name: def.name,
+    displayName: def.displayName,
+    toolCategory: def.toolCategory,
+    archetype,
+    role: extractRole(def.systemPrompt),
+    focus: archetype === 'implementer' ? extractFocus(def.systemPrompt) : undefined,
+    domain: archetype === 'advisor' ? extractDomain(def.systemPrompt) : undefined,
+  };
+
+  return createAgent(factoryDef);
+}
+
+/** Extract role from existing system prompt (best-effort). */
+function extractRole(prompt: string): string {
+  // Prompts follow pattern: "You are X, a SkillFoundry agent. ROLE."
+  const match = prompt.match(/SkillFoundry agent\.\s*(.+?)\./);
+  return match ? match[1] : 'Agent';
+}
+
+/** Extract focus from existing system prompt (best-effort). */
+function extractFocus(prompt: string): string {
+  const match = prompt.match(/Focus:\s*(.+?)\.?\s*(?:Follow|Be|$)/);
+  return match ? match[1] : '';
+}
+
+/** Extract domain from advisor prompt. */
+function extractDomain(prompt: string): string {
+  const match = prompt.match(/questions about\s+(.+?)\./);
+  return match ? match[1] : '';
+}
