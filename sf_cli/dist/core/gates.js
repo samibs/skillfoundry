@@ -426,11 +426,33 @@ function runT4(workDir, target) {
             ? `\nCRITICAL: ${report.summary.critical}, HIGH: ${report.summary.high}, MEDIUM: ${report.summary.medium}, LOW: ${report.summary.low}` +
                 report.findings.slice(0, 5).map((f) => `\n  [${f.severity}] ${f.file}:${f.line} — ${f.message}`).join('')
             : '';
+        // Also run dependency scanning (non-blocking addition)
+        let depDetail = '';
+        try {
+            const { runDependencyScan } = require('./dependency-scanner.js');
+            const depReport = runDependencyScan(workDir);
+            if (depReport.total_vulnerable > 0) {
+                depDetail = `\nDependencies: ${depReport.summary.critical} critical, ${depReport.summary.high} high, ${depReport.summary.moderate} moderate CVEs`;
+                // Upgrade verdict if dependency scan found critical/high
+                if (depReport.verdict === 'FAIL' && report.verdict !== 'FAIL') {
+                    return {
+                        tier: 'T4',
+                        name: 'Security Scan',
+                        status: 'fail',
+                        detail: (detail + findingSummary + depDetail).slice(0, 800),
+                        durationMs: Date.now() - start,
+                    };
+                }
+            }
+        }
+        catch {
+            // Dependency scanner not available — non-blocking
+        }
         return {
             tier: 'T4',
             name: 'Security Scan',
             status: report.verdict === 'FAIL' ? 'fail' : (report.verdict === 'WARN' ? 'warn' : 'pass'),
-            detail: (detail + findingSummary).slice(0, 800),
+            detail: (detail + findingSummary + depDetail).slice(0, 800),
             durationMs: Date.now() - start,
         };
     }

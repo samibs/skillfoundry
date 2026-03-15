@@ -512,7 +512,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 2.0.50
+**Framework Version**: 2.0.51
 **Documentation Updated**: March 15, 2026
 **Total Agents**: 56 core agents / 64 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

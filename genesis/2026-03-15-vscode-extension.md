@@ -553,7 +553,7 @@ export class SfBridge {
 
 | Phase | Name | Scope | Dependencies | Size |
 |-------|------|-------|--------------|------|
-| 1 | Foundation | Extension scaffold, bridge layer, esbuild proof-of-concept, sidebar dashboard (FR-001), command palette (FR-004), status bar (FR-006) | sf_cli v2.0.50 | L |
+| 1 | Foundation | Extension scaffold, bridge layer, esbuild proof-of-concept, sidebar dashboard (FR-001), command palette (FR-004), status bar (FR-006) | sf_cli v2.0.51 | L |
 | 2 | Gate Integration | Gate timeline (FR-002), inline diagnostics (FR-003), CodeLens (FR-007), gate on file (FR-013), output channel (FR-008) | Phase 1 |  L |
 | 3 | Forge & Intelligence | Forge monitor (FR-005), dependency tree (FR-009), report webview (FR-010), memory recall (FR-011), file watcher (FR-012), PRD creation (FR-014) | Phase 2 | L |
 | 4 | Polish & Publish | Marketplace assets (icon, screenshots, README), CI for extension, cross-platform testing, publisher account, first release | Phase 3 | M |
