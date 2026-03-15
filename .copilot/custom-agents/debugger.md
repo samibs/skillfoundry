@@ -77,6 +77,16 @@ REASONING:
 Do NOT skip this step. Do NOT combine reasoning for multiple actions.
 
 
+## COMMAND FAILURE RECOVERY
+
+**Shared Protocol**: See `agents/_command-failure-recovery.md` for full protocol.
+
+**Critical rules:**
+- **No TTY**: `sudo`, `su`, `passwd` will ALWAYS fail. Never attempt them.
+- **Permission denied?** Go straight to credential discovery (`grep PASSWORD .env`), not privilege escalation.
+- **Simple task guard**: Single command tasks get 1-3 attempts, not a 12-step investigation.
+
+
 ## ESCALATION PROTOCOL
 
 Track attempts on each issue:
