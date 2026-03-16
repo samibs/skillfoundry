@@ -3,7 +3,8 @@
 **Turn requirements into tested, production-ready code — with quality gates your AI can't skip.**
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
-![Version](https://img.shields.io/badge/version-2.0.51-blue)
+[![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
+![Version](https://img.shields.io/badge/version-2.0.52-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -23,9 +24,32 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
+### What's New in v2.0.52
+
+- **Docusaurus documentation site** — Full searchable docs at [skillfoundry.work](https://skillfoundry.work) with getting started, architecture, configuration, and recipe guides.
+- **Telemetry baseline** — Capture a quality snapshot with `sf metrics baseline` and track improvements over time.
+- **HTML quality reports** — Generate shareable HTML reports with `sf report --html` for stakeholders and audits.
+- **Consent system** — Telemetry data collection is opt-in with explicit user consent management.
+
+### Quick Install
+
+```bash
+# npm (recommended)
+npm install -g skillfoundry
+
+# Homebrew (macOS)
+brew install samibs/tap/skillfoundry
+
+# One-liner (Linux/macOS)
+curl -fsSL https://raw.githubusercontent.com/samibs/skillfoundry/main/scripts/install-global.sh | bash
+
+# npx (no install needed)
+npx skillfoundry init
+```
+
 ### Quick Start (5 Minutes)
 
-Three ways to install — pick what fits your workflow:
+Five ways to install — pick what fits your workflow:
 
 ```bash
 # Option A: npx (quickest — no clone needed)
@@ -36,7 +60,15 @@ npx skillfoundry init
 npm install -g skillfoundry
 cd ~/my-project && skillfoundry init
 
-# Option C: git clone (full source — for contributors and power users)
+# Option C: Homebrew (macOS)
+brew install samibs/tap/skillfoundry
+cd ~/my-project && skillfoundry init
+
+# Option D: curl one-liner (Linux/macOS — installs via npm)
+curl -fsSL https://raw.githubusercontent.com/samibs/skillfoundry/main/scripts/install-global.sh | bash
+cd ~/my-project && skillfoundry init
+
+# Option E: git clone (full source — for contributors and power users)
 git clone https://github.com/samibs/skillfoundry.git ~/dev-tools/skillfoundry
 cd ~/my-project && ~/dev-tools/skillfoundry/install.sh
 ```
@@ -500,8 +532,13 @@ SkillFoundry ships a native VS Code extension that brings quality gates, telemet
 - **File watcher** — auto-refreshes dashboard when telemetry updates
 
 ```bash
+# From VS Code Marketplace (recommended)
+# Search "SkillFoundry" in the Extensions panel, or:
+code --install-extension skillfoundry.skillfoundry
+
+# Or build from source
 cd skillfoundry-vscode && npm install && npm run build
-# Then install via: code --install-extension skillfoundry-0.1.0.vsix
+code --install-extension skillfoundry-0.1.0.vsix
 ```
 
 ### Agent Evolution

@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 2.0.10** | Last Updated: 2026-02-26
+> **Version 2.0.52** | Last Updated: 2026-03-16
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -895,6 +895,58 @@ AGENT PERFORMANCE
 | Errors | By type, by agent, recovery rate |
 | Context | Budget usage, compactions |
 
+### Capturing a Baseline *(v2.0.52)*
+
+Capture a quality snapshot to track improvements over time:
+
+```bash
+# Capture current metrics as the baseline
+sf metrics baseline
+
+# Compare current metrics against the saved baseline
+sf metrics --compare-baseline
+```
+
+The baseline is saved to `.skillfoundry/metrics/baseline.json` and includes gate pass rates, test counts, security findings, and agent performance at the time of capture.
+
+### Generating HTML Reports *(v2.0.52)*
+
+Generate shareable HTML quality reports for stakeholders and audits:
+
+```bash
+# Generate an HTML report
+sf report --html
+
+# Generate with custom output path
+sf report --html --output ./reports/quality-report.html
+
+# Generate in other formats
+sf report --format md       # Markdown
+sf report --format json     # JSON
+```
+
+The HTML report includes gate pass rates, trend charts, security findings, and comparison against industry baselines. Reports open automatically in the default browser.
+
+### Managing Telemetry Consent *(v2.0.52)*
+
+SkillFoundry collects anonymous usage telemetry to improve the framework. Data collection is opt-in and requires explicit consent:
+
+```bash
+# Check current consent status
+sf consent status
+
+# Opt in to telemetry
+sf consent grant
+
+# Opt out of telemetry
+sf consent revoke
+
+# View what data is collected
+sf consent info
+```
+
+Consent state is stored in `~/.config/skillfoundry/consent.json`. No data is collected until consent is explicitly granted.
+
 ---
 
 ## 11. Context Management
@@ -1609,6 +1661,9 @@ git checkout -- path/to/file
 | `/go` | Main entry point - PRD to implementation |
 | `/prd "idea"` | Create new PRD |
 | `/metrics` | View execution metrics |
+| `/metrics baseline` | Capture quality baseline snapshot *(v2.0.52)* |
+| `/report --html` | Generate HTML quality report *(v2.0.52)* |
+| `/consent` | Manage telemetry consent *(v2.0.52)* |
 | `/context` | Manage context budget |
 
 ### /go Flags

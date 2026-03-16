@@ -161,7 +161,7 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v2.0.40**
+**SkillFoundry v2.0.52**
 
 - **56 Agents, 63 Skills** - Complete development lifecycle coverage
 - **5 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini
@@ -171,11 +171,14 @@ See CHANGELOG.md for full details
 - **Native Debugger** - CDP-based interactive debugging for AI agents
 - **Batch Execution** - Context exhaustion prevention with resume support
 - **Delivery Audit** - Planned vs actual deliverable verification
+- **Metrics Baseline** - `sf metrics baseline` for quality snapshot capture
+- **HTML Reports** - `sf report --html` for self-contained quality reports
 
 ### Recent Milestones
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 2.0.52 | 2026-03-16 | Metrics baseline, HTML reports, Docusaurus docs site |
 | 2.0.41 | 2026-03-13 | Smart output compression — 60-90% token savings on tool output |
 | 2.0.40 | 2026-03-13 | Pipeline resilience — batch execution, delivery audit, git pre-flight |
 | 2.0.39 | 2026-03-12 | Native debugger integration (CDP + 6 debug tools) |

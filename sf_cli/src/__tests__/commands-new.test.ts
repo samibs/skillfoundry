@@ -5,6 +5,7 @@ import { gateCommand } from '../commands/gate.js';
 import { reportCommand } from '../commands/report.js';
 import { metricsCommand } from '../commands/metrics.js';
 import { benchmarkCommand } from '../commands/benchmark.js';
+import { clearConsentCache } from '../core/consent.js';
 import type { SessionContext, SfConfig, SfPolicy, SfState, Message } from '../types.js';
 import type { TelemetryEvent } from '../core/telemetry.js';
 
@@ -50,11 +51,18 @@ function writeEvent(event: Partial<TelemetryEvent>) {
 }
 
 beforeEach(() => {
+  clearConsentCache();
   mkdirSync(join(TEST_DIR, '.skillfoundry'), { recursive: true });
   writeFileSync(join(TEST_DIR, 'package.json'), JSON.stringify({ name: 'test-project' }));
+  // Set telemetry consent to opted_in so metrics tests can run aggregate reporting
+  writeFileSync(
+    join(TEST_DIR, '.skillfoundry', 'config.toml'),
+    '[telemetry]\nconsent = "opted_in"\nconsent_date = "2026-01-01T00:00:00.000Z"\nconsent_version = 1\n',
+  );
 });
 
 afterEach(() => {
+  clearConsentCache();
   rmSync(TEST_DIR, { recursive: true, force: true });
 });
 

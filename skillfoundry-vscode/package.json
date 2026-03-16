@@ -2,15 +2,36 @@
   "name": "skillfoundry",
   "displayName": "SkillFoundry",
   "description": "Quality gates, telemetry dashboard, dependency scanning, and forge pipeline — directly in VS Code",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "publisher": "skillfoundry",
   "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/samibs/skillfoundry"
+  },
+  "galleryBanner": {
+    "color": "#1a1a2e",
+    "theme": "dark"
+  },
+  "badges": [
+    {
+      "url": "https://img.shields.io/npm/v/skillfoundry",
+      "href": "https://www.npmjs.com/package/skillfoundry",
+      "description": "npm version"
+    },
+    {
+      "url": "https://img.shields.io/github/stars/samibs/skillfoundry",
+      "href": "https://github.com/samibs/skillfoundry",
+      "description": "GitHub stars"
+    }
+  ],
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
+    "Programming Languages",
     "Linters",
-    "Testing",
     "Other"
   ],
   "keywords": [
@@ -100,6 +121,10 @@
       {
         "command": "skillfoundry.scanDeps",
         "title": "SkillFoundry: Scan Dependencies"
+      },
+      {
+        "command": "skillfoundry.openReport",
+        "title": "SkillFoundry: Open Last Report"
       },
       {
         "command": "skillfoundry.refresh",

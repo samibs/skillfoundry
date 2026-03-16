@@ -1,0 +1,55 @@
+# Publish SkillFoundry VS Code Extension to Marketplace
+#
+# Triggers:
+#   - Manual dispatch (workflow_dispatch)
+#   - Tag push matching vscode-v* (e.g., vscode-v1.0.0)
+#
+# Prerequisites:
+#   - VSCE_PAT repository secret must be configured with a
+#     Visual Studio Marketplace Personal Access Token.
+#     Create one at: https://dev.azure.com → User Settings → Personal Access Tokens
+#     Scope: Marketplace → Manage
+
+name: Publish VS Code Extension
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'vscode-v*'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: skillfoundry-vscode
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build extension
+        run: npm run build
+
+      - name: Lint (type-check)
+        run: npm run lint
+
+      - name: Package extension (.vsix)
+        run: npx @vscode/vsce package
+
+      - name: Publish to VS Code Marketplace
+        run: npx @vscode/vsce publish
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

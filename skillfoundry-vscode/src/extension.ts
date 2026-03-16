@@ -121,6 +121,20 @@ export function activate(context: vscode.ExtensionContext): void {
   registerForgeCommands(context, bridge, forgeMonitorProvider, outputChannel);
   registerMemoryCommands(context, bridge, outputChannel);
 
+  // Open Last Report command — opens .skillfoundry/report.html in browser
+  context.subscriptions.push(
+    vscode.commands.registerCommand('skillfoundry.openReport', () => {
+      const reportPath = path.join(workDir, '.skillfoundry', 'report.html');
+      if (fs.existsSync(reportPath)) {
+        vscode.env.openExternal(vscode.Uri.file(reportPath));
+      } else {
+        vscode.window.showInformationMessage(
+          'No report found. Run `sf report --html` to generate one.',
+        );
+      }
+    }),
+  );
+
   // Refresh command — refreshes all providers
   context.subscriptions.push(
     vscode.commands.registerCommand('skillfoundry.refresh', () => {
@@ -174,7 +188,8 @@ function registerPlaceholderCommands(context: vscode.ExtensionContext): void {
     'skillfoundry.gateAll', 'skillfoundry.gate', 'skillfoundry.gateFile',
     'skillfoundry.forge', 'skillfoundry.metrics', 'skillfoundry.report',
     'skillfoundry.benchmark', 'skillfoundry.hook', 'skillfoundry.memory',
-    'skillfoundry.prd', 'skillfoundry.scanDeps', 'skillfoundry.refresh',
+    'skillfoundry.prd', 'skillfoundry.scanDeps', 'skillfoundry.openReport',
+    'skillfoundry.refresh',
   ];
   for (const cmd of commands) {
     context.subscriptions.push(
