@@ -113,23 +113,30 @@ function runInit(args) {
     process.exit(1);
   }
 
-  const installArgs = [`--platform=${platform}`];
-  if (nonInteractive) {
-    installArgs.push('-y');
-  }
-  installArgs.push(projectDir);
-
   console.log('  ▸  Running installer...\n');
 
   try {
     if (isWindows) {
+      // PowerShell uses -ParamName syntax, not --param=value
+      const psArgs = [
+        `-Platform "${platform}"`,
+        `-TargetDir "${projectDir}"`,
+      ];
+      if (nonInteractive) {
+        psArgs.push('-Yes');
+      }
       execSync(
-        `powershell -ExecutionPolicy Bypass -File "${installScript}" ${installArgs.map(a => `"${a}"`).join(' ')}`,
+        `powershell -ExecutionPolicy Bypass -File "${installScript}" ${psArgs.join(' ')}`,
         { stdio: 'inherit', cwd: projectDir },
       );
     } else {
+      const shArgs = [`--platform=${platform}`];
+      if (nonInteractive) {
+        shArgs.push('-y');
+      }
+      shArgs.push(projectDir);
       execSync(
-        `bash "${installScript}" ${installArgs.map(a => `"${a}"`).join(' ')}`,
+        `bash "${installScript}" ${shArgs.map(a => `"${a}"`).join(' ')}`,
         { stdio: 'inherit', cwd: projectDir },
       );
     }
