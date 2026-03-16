@@ -19,6 +19,9 @@ import { benchmarkCommand } from './benchmark.js';
 import { metricsCommand } from './metrics.js';
 import { runtimeCommand } from './runtime.js';
 import { prdReviewCommand } from './prd-review.js';
+import { publishCommand } from './publish.js';
+import { upgradeCommand } from './upgrade.js';
+import { auditCommand } from './audit.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -72,4 +75,7 @@ export function initCommands(): void {
   registerCommand(metricsCommand);
   registerCommand(runtimeCommand);
   registerCommand(prdReviewCommand);
+  registerCommand(publishCommand);
+  registerCommand(upgradeCommand);
+  registerCommand(auditCommand);
 }
