@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.56] - 2026-03-16
+
+### Added — Phase 3: Make It the Standard
+
+**Team & Cloud Mode (Epic 7):**
+- **Team Config** (`team-config.ts`): Load and validate `skillfoundry.team.json` with org-wide gate thresholds, banned patterns, approved models, memory sync, and skill version pins
+- **Audit Log** (`audit-log.ts`): Append-only JSONL gate decision log with UUID, actor detection (GitHub/GitLab/Azure/CircleCI), streaming reader, rotation at 10K entries
+- **Policy Engine** (`policy-engine.ts`): Policy-as-code enforcement checking approved models, memory sync status, and skill version pins against team config
+
+**Pipeline Performance (Epic 8):**
+- **Parallel Gates** (`gates.ts`): Wave-based parallel execution — T0+T1+T2 concurrent → T3 sequential → T4+T5 concurrent → T6 sequential
+- **Gate Cache** (`gate-cache.ts`): SHA256 file-hash caching with composite key (`gate:hash:version`), 24h TTL, auto-invalidation on gate logic version bump
+- **P95 Tracker** (`perf-tracker.ts`): Gate latency recording to `perf.jsonl`, percentile computation, P95 threshold enforcement (T3 excluded)
+
+**Automated Distribution (Epic 9):**
+- **sf publish** (`publish.ts`): Discover skills from `agents/`, transform to 5 platform formats (Claude, Cursor, Copilot, Codex, Gemini), skip unchanged files, dry-run mode
+- **sf upgrade** (`upgrade.ts`): Check npm registry for latest version, semver comparison, `--check` flag for CI
+- **sf audit** (`audit.ts`): Query audit log with `--recent N`, `--gate T1`, `--verdict fail`, `--json`, `--rotate`
+
+**Benchmark & Mutation Testing (Epic 10):**
+- **Quality Benchmark** (`quality-benchmark.ts`): 50 static scenarios (25 bad + 25 good) with deterministic regex classifier, >90% accuracy, per-category breakdown
+
+### Security
+- Path traversal hardening: `resolve()` normalization applied to `audit-log.ts`, `gate-cache.ts`, `perf-tracker.ts`, `publish.ts` (matching `team-config.ts` pattern)
+- 0 critical, 0 high, 0 medium vulnerabilities (4 MEDIUM findings remediated)
+
+### Tests
+- 179 new tests across 8 test files (team-config, audit-log, gate-cache, policy-engine, publish, upgrade, quality-benchmark, perf-tracker)
+- Total: 1,758 tests passing across 77 files
+
+---
+
 ## [2.0.55] - 2026-03-16
 
 ### Added — Phase 2: Make It Excellent

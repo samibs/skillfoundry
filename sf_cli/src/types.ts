@@ -128,6 +128,98 @@ export interface SfConfig {
   local_model: string;
   context_window: number; // 0 = auto-detect from model
   log_level: string; // debug | info | warn | error
+  // Team config file reference (v2.0.55)
+  team_config?: string;
+}
+
+// ── Team Configuration (Epic 9: Team & Cloud Mode) ────────────────────────────
+
+/** Gate threshold overrides per tier */
+export interface GateThresholds {
+  /** Minimum correctness contract coverage (0-100). Default 50 */
+  t0_min_coverage?: number;
+  /** T1 banned patterns: 'strict' (zero tolerance) or 'warn' (report only). Default 'strict' */
+  t1_mode?: 'strict' | 'warn';
+  /** T3 minimum test file count. Default 1 */
+  t3_min_test_files?: number;
+  /** T4 security: fail on 'critical', 'high', or 'medium'. Default 'high' */
+  t4_fail_severity?: 'critical' | 'high' | 'medium';
+  /** T5 build: required or optional. Default 'required' */
+  t5_build?: 'required' | 'optional';
+}
+
+/** Shared memory bank configuration */
+export interface TeamMemoryConfig {
+  /** Git remote URL for shared memory */
+  remote: string;
+  /** Branch name. Default 'main' */
+  branch?: string;
+  /** Auto-sync on pipeline start. Default false */
+  auto_sync?: boolean;
+}
+
+/** Version-pinned skill references */
+export interface SkillPinConfig {
+  /** Pinned version string (semver). e.g., '2.0.55' */
+  version: string;
+  /** Lock file path for integrity check */
+  lock_file?: string;
+}
+
+/** Organization-wide team configuration */
+export interface TeamConfig {
+  /** Config schema version (semver) */
+  version: string;
+  /** Organization name (1-100 chars) */
+  org: string;
+  /** Per-tier gate threshold overrides */
+  gates?: GateThresholds;
+  /** Additional banned patterns beyond defaults */
+  banned_patterns?: string[];
+  /** Allowed AI model identifiers */
+  approved_models?: string[];
+  /** Shared memory bank configuration */
+  memory?: TeamMemoryConfig;
+  /** Version-pinned skill references */
+  skills?: SkillPinConfig;
+}
+
+/** Single entry in the append-only audit log */
+export interface AuditEntry {
+  /** Unique entry identifier (UUID v4) */
+  id: string;
+  /** ISO 8601 timestamp */
+  timestamp: string;
+  /** User or CI identity (1-200 chars) */
+  actor: string;
+  /** Gate tier name (T0-T6, MG0, etc.) */
+  gate: string;
+  /** Gate result */
+  verdict: 'pass' | 'fail' | 'warn' | 'skip';
+  /** Human-readable explanation (1-2000 chars) */
+  reason: string;
+  /** Gate execution time in milliseconds */
+  duration_ms: number;
+  /** Story file being evaluated (optional) */
+  story_file?: string;
+  /** SHA256 of primary file evaluated (optional) */
+  file_sha?: string;
+}
+
+/** SHA256-keyed gate cache entry */
+export interface GateCacheEntry {
+  /** SHA256 hash of the file contents */
+  file_sha256: string;
+  /** Which gate tier produced this result */
+  gate: string;
+  /** Cached verdict */
+  verdict: 'pass' | 'fail' | 'warn';
+  /** Cached reason */
+  reason: string;
+  /** ISO 8601 when cached */
+  cached_at: string;
+  /** ISO 8601 cache expiry */
+  expires_at: string;
 }
 
 // Policy schema matching existing .skillfoundry/policy.toml
