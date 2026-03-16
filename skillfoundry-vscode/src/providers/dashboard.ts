@@ -12,8 +12,10 @@ export class DashboardProvider implements vscode.TreeDataProvider<DashboardItem>
   constructor(private bridge: SfBridge) {}
 
   refresh(): void {
-    this.metrics = this.bridge.getMetrics();
-    this._onDidChangeTreeData.fire(undefined);
+    this.bridge.getMetrics().then((metrics) => {
+      this.metrics = metrics;
+      this._onDidChangeTreeData.fire(undefined);
+    });
   }
 
   getTreeItem(element: DashboardItem): vscode.TreeItem {
@@ -22,10 +24,6 @@ export class DashboardProvider implements vscode.TreeDataProvider<DashboardItem>
 
   getChildren(element?: DashboardItem): DashboardItem[] {
     if (element) return [];
-
-    if (!this.metrics) {
-      this.metrics = this.bridge.getMetrics();
-    }
 
     if (!this.metrics || this.metrics.total_runs === 0) {
       return [
