@@ -1,5 +1,5 @@
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger' | 'repair' | 'react' | 'persist' | 'memory' | 'decision' | 'harvest' | 'recall' | 'primer' | 'telemetry' | 'weight-learner' | 'dep-scanner' | 'consent' | 'baseline' | 'embedding' | 'message-bus' | 'gitleaks' | 'agent-pool' | 'checkov' | 'license' | 'prd-scorer' | 'vector-store' | 'security-report' | 'agent-logger' | 'memory-search' | 'prd-review' | 'memory-benchmark';
+export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger' | 'repair' | 'react' | 'persist' | 'memory' | 'decision' | 'harvest' | 'recall' | 'primer' | 'telemetry' | 'weight-learner' | 'dep-scanner' | 'consent' | 'baseline' | 'embedding' | 'message-bus' | 'gitleaks' | 'agent-pool' | 'checkov' | 'license' | 'prd-scorer' | 'vector-store' | 'security-report' | 'agent-logger' | 'memory-search' | 'prd-review' | 'memory-benchmark' | 'team-config' | 'audit' | 'gate-cache' | 'policy' | 'publish' | 'upgrade' | 'benchmark' | 'perf';
 /**
  * Structured JSONL logger.
  * Writes entries as one JSON object per line to session.log and optionally a per-run log.

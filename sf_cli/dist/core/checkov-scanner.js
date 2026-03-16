@@ -2,9 +2,9 @@
 // Wraps the Checkov CLI to detect Infrastructure-as-Code misconfigurations.
 // Supports Dockerfile, Terraform, CloudFormation, Kubernetes, and ARM templates.
 // Gracefully degrades when Checkov is not installed — logs a warning and skips.
-import { execFileSync, execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync } from 'node:fs';
-import { join, normalize, isAbsolute, relative } from 'node:path';
+import { join, normalize, isAbsolute } from 'node:path';
 import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { getLogger } from '../utils/logger.js';
@@ -301,25 +301,30 @@ const COMMON_CHECKOV_PATHS = [
     '/home/linuxbrew/.linuxbrew/bin/checkov',
 ];
 /**
- * Locate the Checkov binary by checking PATH and common installation directories.
+ * Locate the Checkov binary by checking common paths and PATH.
+ * Uses only existsSync and execFileSync — never shells out via execSync.
  *
  * @returns Absolute path to the Checkov binary, or null when not found.
  */
 export function findCheckovBinary() {
+    // 1. Check well-known install paths first (no shell needed)
+    for (const p of COMMON_CHECKOV_PATHS) {
+        if (existsSync(p))
+            return p;
+    }
+    // 2. Check PATH via execFileSync (safe — no shell interpolation)
+    const whichBin = process.platform === 'win32' ? 'where' : 'which';
     try {
-        const result = execSync('which checkov 2>/dev/null', {
+        const result = execFileSync(whichBin, ['checkov'], {
             encoding: 'utf-8',
             timeout: 5_000,
-        }).trim();
+            stdio: ['pipe', 'pipe', 'pipe'],
+        }).trim().split('\n')[0].trim();
         if (result && existsSync(result))
             return result;
     }
     catch {
-        // `which` failed or binary not in PATH
-    }
-    for (const p of COMMON_CHECKOV_PATHS) {
-        if (existsSync(p))
-            return p;
+        // Binary not in PATH
     }
     return null;
 }
@@ -508,6 +513,16 @@ export class CheckovScanner {
      * Build the argument array for execFileSync.
      * All values are passed as separate array elements (no shell interpolation).
      */
+    /**
+     * Validate that a user-provided value matches a safe pattern.
+     * Rejects anything with shell metacharacters or traversal attempts.
+     */
+    static validateArgValue(label, value) {
+        // Allow only alphanumeric, hyphens, underscores, dots (e.g. "CKV_DOCKER_3", "terraform")
+        if (!/^[a-zA-Z0-9_.-]+$/.test(value)) {
+            throw new TypeError(`${label}: unsafe value rejected — got "${value}"`);
+        }
+    }
     buildArgs(opts) {
         const args = [
             '--directory', opts.targetPath,
@@ -515,10 +530,18 @@ export class CheckovScanner {
             '--output-file-path', opts.tmpDir,
         ];
         if (opts.frameworks.length > 0) {
+            // Validate each framework name against whitelist pattern
+            for (const fw of opts.frameworks) {
+                CheckovScanner.validateArgValue('framework', fw);
+            }
             // Checkov v3 accepts comma-separated frameworks via a single --framework flag
             args.push('--framework', opts.frameworks.join(','));
         }
         if (opts.skipChecks.length > 0) {
+            // Validate each check ID against whitelist pattern
+            for (const check of opts.skipChecks) {
+                CheckovScanner.validateArgValue('skipCheck', check);
+            }
             args.push('--skip-check', opts.skipChecks.join(','));
         }
         if (opts.compact) {
@@ -569,8 +592,4 @@ export function getCheckovInstallInstructions() {
     lines.push('See: https://www.checkov.io/1.Welcome/Quick%20Start.html');
     return lines.join('\n');
 }
-// ---------------------------------------------------------------------------
-// Unused import guard — relative used in this module
-// ---------------------------------------------------------------------------
-void relative; // relative imported from node:path, used in parseCheckovOutput indirectly
 //# sourceMappingURL=checkov-scanner.js.map

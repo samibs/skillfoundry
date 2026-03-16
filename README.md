@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.56-blue)
+![Version](https://img.shields.io/badge/version-2.0.57-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,13 +24,13 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.56
+### What's New in v2.0.57
 
-- **Team & Cloud Mode** — Team config (`skillfoundry.team.json`) with org-wide gate thresholds, banned patterns, approved models, and policy-as-code enforcement.
-- **Pipeline Performance** — Parallel gate execution (T0+T1+T2 concurrent), SHA256 file-hash gate caching with TTL, P95 latency enforcement.
-- **Automated Distribution** — `sf publish` distributes skills to all 5 platforms, `sf upgrade` checks npm registry, `sf audit` queries gate decision history.
-- **Quality Benchmark** — 50 static scenarios (25 bad + 25 good) with deterministic regex classifier, >90% accuracy.
-- **1,758 tests** — 179 new tests across 8 files. All passing.
+- **VS Code Extension — Live Gate Execution** — Extension now runs real quality gates (T0-T6) via `sf-runner.mjs` subprocess bridge. No more empty panels or static references.
+- **sf-runner.mjs** — ESM wrapper script that bridges VS Code's CJS bundle to sf_cli's ESM core modules. Supports `--gate-all`, `--gate T1`, `--scan-deps`, `--report`, `--metrics`.
+- **Real Dependency Scanning** — "Scan Dependencies" command executes actual npm/pip/dotnet vulnerability analysis and displays results in the sidebar.
+- **Real Report Generation** — "View Quality Report" renders live quality reports from telemetry data, not placeholder text.
+- **npm Package Includes sf_cli** — `sf_cli/bin/` and `sf_cli/dist/` now included in the npm package so the extension works after `npm install -g skillfoundry`.
 
 ### Quick Install
 

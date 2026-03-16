@@ -76,7 +76,8 @@ export declare function parseCheckovOutput(jsonOutput: string, targetPath: strin
     scannedFiles: number;
 };
 /**
- * Locate the Checkov binary by checking PATH and common installation directories.
+ * Locate the Checkov binary by checking common paths and PATH.
+ * Uses only existsSync and execFileSync — never shells out via execSync.
  *
  * @returns Absolute path to the Checkov binary, or null when not found.
  */
@@ -119,6 +120,11 @@ export declare class CheckovScanner {
      * Build the argument array for execFileSync.
      * All values are passed as separate array elements (no shell interpolation).
      */
+    /**
+     * Validate that a user-provided value matches a safe pattern.
+     * Rejects anything with shell metacharacters or traversal attempts.
+     */
+    private static validateArgValue;
     private buildArgs;
 }
 /**

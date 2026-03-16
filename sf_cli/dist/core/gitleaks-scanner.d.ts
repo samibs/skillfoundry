@@ -77,7 +77,8 @@ export declare function parseGitleaksVersion(versionOutput: string): [number, nu
  */
 export declare function isSupportedVersion(version: [number, number, number]): boolean;
 /**
- * Locate the Gitleaks binary by checking PATH and common installation directories.
+ * Locate the Gitleaks binary by checking common installation directories and PATH.
+ * Uses only existsSync and execFileSync — never shells out via execSync.
  * Returns the absolute path to the binary, or null when not found.
  */
 export declare function findGitleaksBinary(): string | null;

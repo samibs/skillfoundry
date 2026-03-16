@@ -151,7 +151,7 @@ export function registerMemoryCommands(
         async () => {
           const report = await bridge.scanDependencies();
           if (!report) {
-            vscode.window.showErrorMessage('Dependency scan failed. Is sf_cli installed?');
+            vscode.window.showErrorMessage('Dependency scan failed. Ensure sf_cli is built (cd sf_cli && npm run build).');
             return;
           }
 

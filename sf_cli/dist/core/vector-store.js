@@ -13,7 +13,7 @@
  * @module vector-store
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync, unlinkSync, } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, normalize } from 'node:path';
 import { EmbeddingUnavailableError } from './embedding-service.js';
 import { getLogger } from '../utils/logger.js';
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -74,10 +74,20 @@ export class VectorStore {
      * @param workDir - Project root directory. All paths are resolved relative to this.
      * @param options - Optional store configuration overrides.
      */
+    workDir;
     constructor(embeddingService, workDir, options = {}) {
         this.embeddingService = embeddingService;
+        this.workDir = resolve(workDir);
         this.options = { ...DEFAULT_OPTIONS, ...options };
-        this.storePath = join(workDir, this.options.persistPath);
+        this.storePath = join(this.workDir, this.options.persistPath);
+        // Validate sourceDirs are confined within workDir (prevent path traversal)
+        for (const dir of this.options.sourceDirs) {
+            const resolved = resolve(this.workDir, dir);
+            const normalised = normalize(resolved);
+            if (!normalised.startsWith(this.workDir)) {
+                throw new TypeError(`sourceDirs: "${dir}" resolves outside of workDir — path traversal rejected`);
+            }
+        }
     }
     // ── Lifecycle ─────────────────────────────────────────────────────────────
     /**
@@ -457,15 +467,16 @@ export class VectorStore {
         const documents = [];
         const seenIds = new Set();
         for (const sourceDir of this.options.sourceDirs) {
-            if (!existsSync(sourceDir)) {
-                log.debug('vector-store', 'source_dir_missing', { dir: sourceDir });
+            const resolvedDir = resolve(this.workDir, sourceDir);
+            if (!existsSync(resolvedDir)) {
+                log.debug('vector-store', 'source_dir_missing', { dir: resolvedDir });
                 continue;
             }
-            const files = readdirSync(sourceDir, { withFileTypes: true });
+            const files = readdirSync(resolvedDir, { withFileTypes: true });
             for (const dirent of files) {
                 if (!dirent.isFile() || !dirent.name.endsWith('.jsonl'))
                     continue;
-                const filePath = join(sourceDir, dirent.name);
+                const filePath = join(resolvedDir, dirent.name);
                 try {
                     const content = readFileSync(filePath, 'utf-8');
                     const lines = content.split('\n');

@@ -2,11 +2,11 @@
 // Wraps the Gitleaks CLI to detect hardcoded secrets before the T4 gate.
 // Gracefully degrades when Gitleaks is not installed — logs a warning and skips.
 // Never logs or persists raw secret values; all output is redacted.
-import { execFileSync, execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve, isAbsolute, normalize } from 'node:path';
 import { tmpdir } from 'node:os';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHash } from 'node:crypto';
 import { getLogger } from '../utils/logger.js';
 // ---------------------------------------------------------------------------
 // Minimum required Gitleaks version
@@ -94,26 +94,29 @@ const COMMON_INSTALL_PATHS = [
     '/home/linuxbrew/.linuxbrew/bin/gitleaks',
 ];
 /**
- * Locate the Gitleaks binary by checking PATH and common installation directories.
+ * Locate the Gitleaks binary by checking common installation directories and PATH.
+ * Uses only existsSync and execFileSync — never shells out via execSync.
  * Returns the absolute path to the binary, or null when not found.
  */
 export function findGitleaksBinary() {
-    // 1. Check PATH via `which`/`where`
+    // 1. Check well-known install paths first (no shell needed)
+    for (const p of COMMON_INSTALL_PATHS) {
+        if (existsSync(p))
+            return p;
+    }
+    // 2. Check PATH via execFileSync (safe — no shell interpolation)
+    const whichBin = process.platform === 'win32' ? 'where' : 'which';
     try {
-        const result = execSync('which gitleaks 2>/dev/null', {
+        const result = execFileSync(whichBin, ['gitleaks'], {
             encoding: 'utf-8',
             timeout: 5_000,
-        }).trim();
+            stdio: ['pipe', 'pipe', 'pipe'],
+        }).trim().split('\n')[0].trim();
         if (result && existsSync(result))
             return result;
     }
     catch {
-        // `which` failed or binary not in PATH — fall through to common paths
-    }
-    // 2. Check well-known install paths
-    for (const p of COMMON_INSTALL_PATHS) {
-        if (existsSync(p))
-            return p;
+        // Binary not in PATH
     }
     return null;
 }
@@ -162,6 +165,10 @@ export function parseGitleaksOutput(jsonOutput, targetPath, suppressedFingerprin
         if (file.startsWith(resolvedTarget)) {
             relativePath = file.slice(resolvedTarget.length).replace(/^\//, '');
         }
+        // Hash the secret for dedup — raw value is never stored in any data structure
+        const secretHash = rawSecret
+            ? createHash('sha256').update(rawSecret).digest('hex')
+            : '';
         return {
             description,
             file: relativePath || file,
@@ -170,7 +177,7 @@ export function parseGitleaksOutput(jsonOutput, targetPath, suppressedFingerprin
             startColumn,
             endColumn,
             match: redactSecret(rawMatch || rawSecret),
-            secret: rawSecret, // kept in memory only — never logged
+            secretHash,
             rule,
             entropy,
             fingerprint,
