@@ -296,7 +296,8 @@ function Detect-Platform {
 function Test-ValidProject {
     param([string]$ProjectDir)
     
-    return (Test-Path (Join-Path $ProjectDir ".claude")) -or
+    return (Test-Path (Join-Path $ProjectDir ".skillfoundry\config.toml")) -or
+           (Test-Path (Join-Path $ProjectDir ".claude")) -or
            (Test-Path (Join-Path $ProjectDir ".copilot")) -or
            (Test-Path (Join-Path $ProjectDir ".cursor")) -or
            (Test-Path (Join-Path $ProjectDir ".agents\skills")) -or
