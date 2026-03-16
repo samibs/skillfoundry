@@ -74,11 +74,24 @@ function runInit(args) {
     console.log('  ⚠  No .git directory found. Consider running "git init" first.');
   }
 
-  // Check if already initialized
+  // Check if already initialized — config.toml exists AND at least one platform dir
   if (existsSync(join(projectDir, '.skillfoundry', 'config.toml'))) {
-    console.log('  ℹ  SkillFoundry is already initialized in this project.');
-    console.log('     Run the update script to refresh: update.sh or update.ps1\n');
-    process.exit(0);
+    const hasPlatformDir =
+      existsSync(join(projectDir, '.claude')) ||
+      existsSync(join(projectDir, '.copilot')) ||
+      existsSync(join(projectDir, '.cursor')) ||
+      existsSync(join(projectDir, '.agents', 'skills')) ||
+      existsSync(join(projectDir, '.gemini', 'skills')) ||
+      existsSync(join(projectDir, 'CLAUDE.md'));
+
+    if (hasPlatformDir) {
+      console.log('  ℹ  SkillFoundry is already initialized in this project.');
+      console.log('     Run the update script to refresh: update.sh or update.ps1\n');
+      process.exit(0);
+    } else {
+      console.log('  ⚠  Incomplete installation detected (config exists but no platform files).');
+      console.log('     Re-running installer...\n');
+    }
   }
 
   const platform = flags.platform || 'claude';

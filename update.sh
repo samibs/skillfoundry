@@ -114,8 +114,8 @@ print_header() {
 
 is_valid_project() {
     local project_dir="$1"
-    # A valid SkillFoundry project has at least one platform folder
-    if [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ] || [ -d "$project_dir/.gemini/skills" ]; then
+    # A valid SkillFoundry project has config.toml or at least one platform folder
+    if [ -f "$project_dir/.skillfoundry/config.toml" ] || [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ] || [ -d "$project_dir/.gemini/skills" ]; then
         return 0
     fi
     return 1
