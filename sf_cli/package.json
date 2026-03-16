@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/cli",
-  "version": "2.0.54",
+  "version": "2.0.55",
   "description": "SkillFoundry interactive CLI — AI-assisted development with governance",
   "type": "module",
   "bin": {
@@ -11,7 +11,8 @@
     "dev": "tsc --watch",
     "start": "node bin/sf.js",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "benchmark:memory": "vitest run src/__tests__/memory-benchmark.test.ts"
   },
   "engines": {
     "node": ">=20.0.0"

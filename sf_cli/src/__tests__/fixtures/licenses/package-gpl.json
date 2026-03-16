@@ -1,0 +1,13 @@
+{
+  "name": "my-commercial-app",
+  "version": "1.0.0",
+  "description": "Test fixture: package.json with a GPL-licensed dependency",
+  "dependencies": {
+    "some-gpl-lib": "^2.0.0",
+    "lodash": "^4.17.21",
+    "express": "^4.18.0"
+  },
+  "devDependencies": {
+    "another-agpl-tool": "^1.0.0"
+  }
+}

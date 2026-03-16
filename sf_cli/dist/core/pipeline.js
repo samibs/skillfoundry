@@ -10,6 +10,8 @@ import { runPostStoryGates, runPreTemperGate, runPreGenerationGate, runTestDocGa
 import { runFinisher } from './finisher.js';
 import { harvestRunMemory } from './memory-harvest.js';
 import { SessionRecorder } from './session-recorder.js';
+import { scorePrd, PrdNotDetectedError, PrdScoringError } from './prd-scorer.js';
+import { AnthropicAdapter } from './provider.js';
 import { ALL_TOOLS } from './tools.js';
 import { getLogger } from '../utils/logger.js';
 const RUNS_DIR = '.skillfoundry/runs';
@@ -17,6 +19,101 @@ const MAX_FIXER_ATTEMPTS = 2;
 const MAX_TESTER_REMEDIATION_ATTEMPTS = 1;
 const CONSECUTIVE_FAILURE_HALT_THRESHOLD = 2;
 const ERROR_SIMILARITY_THRESHOLD = 0.6; // 60% word overlap = "same error"
+// ── PRD Quality Block Error ─────────────────────────────────────
+/**
+ * Thrown when a PRD fails semantic quality scoring before pipeline entry.
+ * The pipeline hard block (FR-015) raises this to halt before story generation.
+ */
+export class PrdQualityBlockError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'PrdQualityBlockError';
+    }
+}
+// ── PRD quality validation (pre-pipeline hard block) ───────────
+/**
+ * Validate PRD quality for all discovered PRDs using the LLM scorer.
+ * Throws PrdQualityBlockError if any PRD scores below the threshold on any dimension.
+ * Non-breaking: if the provider cannot be initialised, logs a warning and continues.
+ *
+ * @param prdPaths - Array of { file, slug, content } objects from scanPRDs.
+ * @param model - Model identifier string from SfConfig.
+ * @param workDir - Project working directory (used for building absolute paths).
+ * @param genesisDir - Absolute path to the genesis/ directory.
+ */
+async function validatePrdQuality(prds, model, genesisDir) {
+    const log = getLogger();
+    const THRESHOLD = 6;
+    let provider;
+    try {
+        provider = new AnthropicAdapter();
+    }
+    catch (err) {
+        log.warn('pipeline', 'prd_quality_check_skipped', {
+            reason: 'Provider initialisation failed — PRD quality check skipped',
+            error: err instanceof Error ? err.message : String(err),
+        });
+        return;
+    }
+    for (const prd of prds) {
+        const prdPath = `${genesisDir}/${prd.file}`;
+        log.info('pipeline', 'prd_quality_check_start', { prdPath });
+        let score;
+        try {
+            score = await scorePrd(prd.content, prdPath, provider, model);
+        }
+        catch (err) {
+            if (err instanceof PrdNotDetectedError) {
+                // Not a PRD — skip (scanPRDs already filters by .md extension; edge case)
+                log.warn('pipeline', 'prd_not_detected', { prdPath });
+                continue;
+            }
+            if (err instanceof PrdScoringError) {
+                // Scoring failed after retry — warn and continue (don't block on LLM failure)
+                log.warn('pipeline', 'prd_quality_scoring_failed', {
+                    prdPath,
+                    error: err.message,
+                    action: 'Proceeding without quality gate — LLM scoring unavailable',
+                });
+                continue;
+            }
+            // Unknown error — warn and continue
+            log.warn('pipeline', 'prd_quality_check_error', {
+                prdPath,
+                error: err instanceof Error ? err.message : String(err),
+            });
+            continue;
+        }
+        if (!score.pass) {
+            const failingDimensions = [];
+            const dims = [
+                ['completeness', score.completeness.score],
+                ['specificity', score.specificity.score],
+                ['consistency', score.consistency.score],
+                ['scope', score.scope.score],
+            ];
+            for (const [name, val] of dims) {
+                if (val < THRESHOLD) {
+                    failingDimensions.push(`${name}: ${val}/10`);
+                }
+            }
+            log.error('pipeline', 'prd_quality_blocked', {
+                prdPath,
+                failingDimensions,
+                threshold: THRESHOLD,
+            });
+            throw new PrdQualityBlockError(`PRD blocked: ${prd.file} — failing dimensions: ${failingDimensions.join(', ')} (minimum ${THRESHOLD}/10)\n` +
+                `Run 'sf prd review ${prdPath}' for detailed feedback and suggestions.`);
+        }
+        log.info('pipeline', 'prd_quality_check_passed', {
+            prdPath,
+            completeness: score.completeness.score,
+            specificity: score.specificity.score,
+            consistency: score.consistency.score,
+            scope: score.scope.score,
+        });
+    }
+}
 // ── Test file existence check ──────────────────────────────────
 const TEST_FILE_PATTERNS = [
     /\.test\.[tj]sx?$/,
@@ -343,7 +440,7 @@ function makePhase(name) {
     return { name, status: 'pending', durationMs: 0 };
 }
 export async function runPipeline(options) {
-    const { config, policy, workDir, prdFilter, callbacks: userCallbacks } = options;
+    const { config, policy, workDir, prdFilter, callbacks: userCallbacks, skipPrdReview } = options;
     const runId = `forge-${Date.now()}-${randomUUID().slice(0, 8)}`;
     const pipelineStart = Date.now();
     const log = getLogger();
@@ -423,6 +520,35 @@ export async function runPipeline(options) {
         log.error('pipeline', 'phase_failed', { phase: 'IGNITE', detail: 'No PRDs found in genesis/' });
         callbacks?.onPhaseComplete?.('IGNITE', 'failed');
         return buildResult(runId, phases, storyExecutions, gateVerdict, totalCostUsd, totalInputTokens, totalOutputTokens, pipelineStart, prds, workDir);
+    }
+    // ── PRD Semantic Quality Gate (FR-015) ──────────────────────
+    // Blocks pipeline if any PRD scores < 6/10 on any dimension.
+    // Bypass with skipPrdReview: true (--skip-prd-review flag) for emergency cases.
+    if (skipPrdReview) {
+        log.warn('pipeline', 'prd_quality_check_skipped_manual_override', {
+            detail: 'PRD quality check skipped — manual override (--skip-prd-review)',
+            prdCount: prds.length,
+        });
+        callbacks?.onPhaseStart?.('IGNITE', 'PRD quality check skipped — manual override');
+    }
+    else {
+        callbacks?.onPhaseStart?.('IGNITE', 'Running PRD semantic quality check...');
+        const genesisDir = `${workDir}/genesis`;
+        try {
+            await validatePrdQuality(prds, config.model, genesisDir);
+        }
+        catch (err) {
+            if (err instanceof PrdQualityBlockError) {
+                updatePhase('IGNITE', 'failed', Date.now() - igniteStart, err.message);
+                log.error('pipeline', 'phase_failed', { phase: 'IGNITE', detail: err.message });
+                callbacks?.onPhaseComplete?.('IGNITE', 'failed');
+                throw err;
+            }
+            // Other unexpected errors during validation: log and continue
+            log.warn('pipeline', 'prd_quality_validation_error', {
+                error: err instanceof Error ? err.message : String(err),
+            });
+        }
     }
     updatePhase('IGNITE', 'passed', Date.now() - igniteStart, `${prds.length} PRD(s) validated`);
     log.info('pipeline', 'phase_complete', { phase: 'IGNITE', status: 'passed', durationMs: Date.now() - igniteStart });

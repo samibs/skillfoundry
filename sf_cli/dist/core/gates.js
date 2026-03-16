@@ -412,12 +412,106 @@ function checkStoriesHaveTests(workDir) {
     }
     return { storiesWithoutTests: uncoveredStories.length, uncoveredStories };
 }
-// T4: Security scan — Semgrep-first, regex-fallback
+// T4: Security scan — Gitleaks (mandatory pre-check) + Semgrep-first, regex-fallback
 function runT4(workDir, target) {
     const start = Date.now();
-    // Try Semgrep-based scanning first (real OWASP SAST)
+    const log = getLogger();
+    // ── Pre-check: Gitleaks secrets scan (mandatory gate blocker) ──────────────
+    // Uses exported pure synchronous helpers from gitleaks-scanner.ts directly
+    // to avoid introducing async/await into the synchronous gate pipeline.
+    let gitleaksDetail = '';
     try {
-        const { runSecurityScan, formatSecurityReport } = require('./semgrep-scanner.js');
+        const { findGitleaksBinary, parseGitleaksVersion, isSupportedVersion, loadGitleaksIgnore, parseGitleaksOutput, } = require('./gitleaks-scanner.js');
+        const { execFileSync: gitleaksExec } = require('node:child_process');
+        const { join: pjoin } = require('node:path');
+        const { tmpdir: ptmpdir } = require('node:os');
+        const { randomUUID: puuid } = require('node:crypto');
+        const { existsSync: pexists, unlinkSync: punlink, readFileSync: pread } = require('node:fs');
+        const binaryPath = findGitleaksBinary();
+        if (!binaryPath) {
+            log.warn('gate', 'gitleaks_not_installed', {
+                installGuide: 'https://github.com/gitleaks/gitleaks#installation',
+            });
+            gitleaksDetail = '[gitleaks] Skipped — not installed (https://github.com/gitleaks/gitleaks#installation)';
+        }
+        else {
+            // Verify version
+            let versionOk = false;
+            try {
+                const vOut = gitleaksExec(binaryPath, ['version'], { encoding: 'utf-8', timeout: 10_000 }).trim();
+                versionOk = isSupportedVersion(parseGitleaksVersion(vOut));
+            }
+            catch {
+                versionOk = false;
+            }
+            if (!versionOk) {
+                gitleaksDetail = '[gitleaks] Skipped — version too old (required >= 8.18.0)';
+                log.warn('gate', 'gitleaks_version_unsupported', { minVersion: '8.18.0' });
+            }
+            else {
+                const reportPath = pjoin(ptmpdir(), `sf-gitleaks-gate-${puuid()}.json`);
+                try {
+                    const args = [
+                        'detect',
+                        '--source', target,
+                        '--report-format', 'json',
+                        '--report-path', reportPath,
+                        '--exit-code', '0',
+                        '--no-git',
+                        '--log-level', 'warn',
+                    ];
+                    try {
+                        gitleaksExec(binaryPath, args, { encoding: 'utf-8', timeout: 120_000, maxBuffer: 10 * 1024 * 1024 });
+                    }
+                    catch (e) {
+                        // Exit 1 = findings found (normal). Any other non-zero exit is an error.
+                        const ee = e;
+                        if (ee.status !== 1 && ee.status !== 0) {
+                            log.error('gate', 'gitleaks_exec_error', { exitCode: ee.status });
+                            gitleaksDetail = `[gitleaks] Execution error (exit ${ee.status}) — skipped`;
+                        }
+                    }
+                    const suppressed = loadGitleaksIgnore(target);
+                    const rawContent = pexists(reportPath) ? pread(reportPath, 'utf-8') : '';
+                    const findings = parseGitleaksOutput(rawContent, target, suppressed);
+                    const activeFindings = findings.filter((f) => !f.suppressed);
+                    if (activeFindings.length > 0) {
+                        // Gate FAILS — unsuppressed secrets found
+                        const findingLines = activeFindings
+                            .slice(0, 10)
+                            .map((f) => `  ${f.file}:${f.startLine} — ${f.description} (${f.rule})`);
+                        log.warn('gate', 'gitleaks_secrets_found', { count: activeFindings.length });
+                        return {
+                            tier: 'T4',
+                            name: 'Security Scan',
+                            status: 'fail',
+                            detail: `[gitleaks] Found ${activeFindings.length} secret(s) — commit blocked:\n${findingLines.join('\n')}`.slice(0, 800),
+                            durationMs: Date.now() - start,
+                        };
+                    }
+                    const suppressedCount = findings.length - activeFindings.length;
+                    gitleaksDetail = suppressedCount > 0
+                        ? `[gitleaks] Clean (${suppressedCount} suppressed)`
+                        : '[gitleaks] Clean';
+                    log.info('gate', 'gitleaks_clean', { suppressedCount });
+                }
+                finally {
+                    try {
+                        if (pexists(reportPath))
+                            punlink(reportPath);
+                    }
+                    catch { /* best-effort cleanup */ }
+                }
+            }
+        }
+    }
+    catch {
+        // gitleaks-scanner module unavailable — non-blocking, continue to SAST checks
+        gitleaksDetail = '[gitleaks] Module unavailable — skipped';
+    }
+    // ── SAST: Semgrep-first, regex-fallback ───────────────────────────────────
+    try {
+        const { runSecurityScan } = require('./semgrep-scanner.js');
         const report = runSecurityScan(target);
         const detail = report.scannerVersion === 'regex-fallback'
             ? `[regex fallback] ${report.findings.length} finding(s) — install Semgrep for full OWASP coverage`
@@ -439,7 +533,7 @@ function runT4(workDir, target) {
                         tier: 'T4',
                         name: 'Security Scan',
                         status: 'fail',
-                        detail: (detail + findingSummary + depDetail).slice(0, 800),
+                        detail: (gitleaksDetail + '\n' + detail + findingSummary + depDetail).slice(0, 800),
                         durationMs: Date.now() - start,
                     };
                 }
@@ -448,11 +542,14 @@ function runT4(workDir, target) {
         catch {
             // Dependency scanner not available — non-blocking
         }
+        const fullDetail = gitleaksDetail
+            ? `${gitleaksDetail}\n${detail}${findingSummary}${depDetail}`
+            : `${detail}${findingSummary}${depDetail}`;
         return {
             tier: 'T4',
             name: 'Security Scan',
             status: report.verdict === 'FAIL' ? 'fail' : (report.verdict === 'WARN' ? 'warn' : 'pass'),
-            detail: (detail + findingSummary + depDetail).slice(0, 800),
+            detail: fullDetail.slice(0, 800),
             durationMs: Date.now() - start,
         };
     }

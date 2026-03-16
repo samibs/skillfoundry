@@ -1,0 +1,861 @@
+{
+  "version": "1.0",
+  "description": "Memory precision benchmark — 50 query/expected-result pairs across 8 categories",
+  "passThreshold": 0.75,
+  "topK": 5,
+  "pairs": [
+    {
+      "id": "BP-001",
+      "query": "how are user sessions managed",
+      "expectedIds": ["mem-jwt-session", "mem-cookie-config", "mem-session-timeout"],
+      "category": "authentication",
+      "difficulty": "easy",
+      "notes": "Direct keyword overlap with session-related memories"
+    },
+    {
+      "id": "BP-002",
+      "query": "login authentication flow",
+      "expectedIds": ["mem-login-flow", "mem-oauth-provider", "mem-jwt-session"],
+      "category": "authentication",
+      "difficulty": "easy",
+      "notes": "Direct keyword match on login and authentication"
+    },
+    {
+      "id": "BP-003",
+      "query": "token refresh strategy",
+      "expectedIds": ["mem-token-refresh", "mem-jwt-session", "mem-cookie-config"],
+      "category": "authentication",
+      "difficulty": "medium",
+      "notes": "Refresh token concept — may require synonym matching"
+    },
+    {
+      "id": "BP-004",
+      "query": "secure cookie settings for web app",
+      "expectedIds": ["mem-cookie-config", "mem-csrf-protection", "mem-session-timeout"],
+      "category": "authentication",
+      "difficulty": "medium",
+      "notes": "Cookie security overlaps session and CSRF concerns"
+    },
+    {
+      "id": "BP-005",
+      "query": "OAuth provider integration",
+      "expectedIds": ["mem-oauth-provider", "mem-login-flow"],
+      "category": "authentication",
+      "difficulty": "easy",
+      "notes": "Direct match on OAuth keyword"
+    },
+    {
+      "id": "BP-006",
+      "query": "prevent unauthorized access to endpoints",
+      "expectedIds": ["mem-rbac-model", "mem-login-flow", "mem-jwt-session"],
+      "category": "authentication",
+      "difficulty": "hard",
+      "notes": "Abstract security concept mapping to auth patterns"
+    },
+    {
+      "id": "BP-007",
+      "query": "database schema migration approach",
+      "expectedIds": ["mem-migration-strategy", "mem-schema-versioning", "mem-rollback-plan"],
+      "category": "database",
+      "difficulty": "easy",
+      "notes": "Direct keywords: schema, migration"
+    },
+    {
+      "id": "BP-008",
+      "query": "how to add indexes for query performance",
+      "expectedIds": ["mem-index-design", "mem-query-optimization", "mem-schema-versioning"],
+      "category": "database",
+      "difficulty": "easy",
+      "notes": "Index and performance keywords"
+    },
+    {
+      "id": "BP-009",
+      "query": "rolling back a bad migration",
+      "expectedIds": ["mem-rollback-plan", "mem-migration-strategy"],
+      "category": "database",
+      "difficulty": "medium",
+      "notes": "Rollback is a synonym for undo/revert migration"
+    },
+    {
+      "id": "BP-010",
+      "query": "N+1 query problem solution",
+      "expectedIds": ["mem-query-optimization", "mem-index-design"],
+      "category": "database",
+      "difficulty": "hard",
+      "notes": "N+1 is a specific ORM anti-pattern requiring semantic match"
+    },
+    {
+      "id": "BP-011",
+      "query": "choosing between SQL and NoSQL",
+      "expectedIds": ["mem-db-selection", "mem-schema-versioning"],
+      "category": "database",
+      "difficulty": "medium",
+      "notes": "Database selection decision requiring concept matching"
+    },
+    {
+      "id": "BP-012",
+      "query": "designing foreign key constraints",
+      "expectedIds": ["mem-schema-versioning", "mem-migration-strategy", "mem-index-design"],
+      "category": "database",
+      "difficulty": "medium",
+      "notes": "Constraint design maps to schema and migration topics"
+    },
+    {
+      "id": "BP-013",
+      "query": "REST API pagination design",
+      "expectedIds": ["mem-pagination-pattern", "mem-rest-conventions", "mem-api-versioning"],
+      "category": "api",
+      "difficulty": "easy",
+      "notes": "Direct keyword match: REST, pagination"
+    },
+    {
+      "id": "BP-014",
+      "query": "how to version a public API",
+      "expectedIds": ["mem-api-versioning", "mem-rest-conventions"],
+      "category": "api",
+      "difficulty": "easy",
+      "notes": "API versioning is explicitly named in the query"
+    },
+    {
+      "id": "BP-015",
+      "query": "handling errors in API responses",
+      "expectedIds": ["mem-error-response-format", "mem-rest-conventions", "mem-input-validation"],
+      "category": "api",
+      "difficulty": "easy",
+      "notes": "Error handling in API context"
+    },
+    {
+      "id": "BP-016",
+      "query": "idempotency in HTTP requests",
+      "expectedIds": ["mem-rest-conventions", "mem-api-versioning"],
+      "category": "api",
+      "difficulty": "hard",
+      "notes": "Idempotency is a technical HTTP concept requiring semantic understanding"
+    },
+    {
+      "id": "BP-017",
+      "query": "rate limiting API endpoints",
+      "expectedIds": ["mem-rate-limiting", "mem-rest-conventions"],
+      "category": "api",
+      "difficulty": "medium",
+      "notes": "Rate limiting maps to API and security concerns"
+    },
+    {
+      "id": "BP-018",
+      "query": "API response envelope structure",
+      "expectedIds": ["mem-error-response-format", "mem-rest-conventions", "mem-pagination-pattern"],
+      "category": "api",
+      "difficulty": "medium",
+      "notes": "Envelope/wrapper is a synonym for response structure"
+    },
+    {
+      "id": "BP-019",
+      "query": "protecting against SQL injection",
+      "expectedIds": ["mem-sql-injection-prevention", "mem-input-validation"],
+      "category": "security",
+      "difficulty": "easy",
+      "notes": "Direct match on SQL injection"
+    },
+    {
+      "id": "BP-020",
+      "query": "CORS configuration best practices",
+      "expectedIds": ["mem-cors-policy", "mem-rate-limiting"],
+      "category": "security",
+      "difficulty": "easy",
+      "notes": "CORS is explicitly mentioned"
+    },
+    {
+      "id": "BP-021",
+      "query": "sanitizing user input",
+      "expectedIds": ["mem-input-validation", "mem-sql-injection-prevention"],
+      "category": "security",
+      "difficulty": "medium",
+      "notes": "Sanitize is a synonym for validate/escape"
+    },
+    {
+      "id": "BP-022",
+      "query": "preventing cross-site request forgery",
+      "expectedIds": ["mem-csrf-protection", "mem-cookie-config"],
+      "category": "security",
+      "difficulty": "medium",
+      "notes": "CSRF spelled out maps to csrf-protection memory"
+    },
+    {
+      "id": "BP-023",
+      "query": "secrets management in production",
+      "expectedIds": ["mem-secrets-management", "mem-env-config"],
+      "category": "security",
+      "difficulty": "easy",
+      "notes": "Direct match on secrets and management"
+    },
+    {
+      "id": "BP-024",
+      "query": "defense in depth approach",
+      "expectedIds": ["mem-csrf-protection", "mem-rate-limiting", "mem-input-validation"],
+      "category": "security",
+      "difficulty": "hard",
+      "notes": "Defense in depth is an abstract security principle"
+    },
+    {
+      "id": "BP-025",
+      "query": "writing unit tests for service layer",
+      "expectedIds": ["mem-unit-test-patterns", "mem-test-coverage", "mem-mock-strategy"],
+      "category": "testing",
+      "difficulty": "easy",
+      "notes": "Direct match: unit tests, service layer"
+    },
+    {
+      "id": "BP-026",
+      "query": "mocking external dependencies in tests",
+      "expectedIds": ["mem-mock-strategy", "mem-unit-test-patterns"],
+      "category": "testing",
+      "difficulty": "easy",
+      "notes": "Direct match: mocking, dependencies"
+    },
+    {
+      "id": "BP-027",
+      "query": "achieving good test coverage",
+      "expectedIds": ["mem-test-coverage", "mem-unit-test-patterns"],
+      "category": "testing",
+      "difficulty": "medium",
+      "notes": "Coverage as a concept maps to test-coverage memory"
+    },
+    {
+      "id": "BP-028",
+      "query": "integration testing strategy",
+      "expectedIds": ["mem-integration-testing", "mem-test-coverage"],
+      "category": "testing",
+      "difficulty": "medium",
+      "notes": "Integration testing — different from unit tests"
+    },
+    {
+      "id": "BP-029",
+      "query": "testing edge cases and boundary conditions",
+      "expectedIds": ["mem-unit-test-patterns", "mem-test-coverage", "mem-integration-testing"],
+      "category": "testing",
+      "difficulty": "medium",
+      "notes": "Edge cases map to test pattern recommendations"
+    },
+    {
+      "id": "BP-030",
+      "query": "preventing test suite slowdowns",
+      "expectedIds": ["mem-mock-strategy", "mem-integration-testing"],
+      "category": "testing",
+      "difficulty": "hard",
+      "notes": "Test performance is an indirect concept about mocking and test design"
+    },
+    {
+      "id": "BP-031",
+      "query": "dependency injection pattern",
+      "expectedIds": ["mem-dependency-injection", "mem-module-structure"],
+      "category": "architecture",
+      "difficulty": "hard",
+      "notes": "DI is a design pattern that may require semantic understanding of inversion of control"
+    },
+    {
+      "id": "BP-032",
+      "query": "modular code structure for large apps",
+      "expectedIds": ["mem-module-structure", "mem-dependency-injection", "mem-service-layer"],
+      "category": "architecture",
+      "difficulty": "hard",
+      "notes": "Large app structure requires matching multiple architecture concerns"
+    },
+    {
+      "id": "BP-033",
+      "query": "separating business logic from infrastructure",
+      "expectedIds": ["mem-service-layer", "mem-module-structure", "mem-dependency-injection"],
+      "category": "architecture",
+      "difficulty": "medium",
+      "notes": "Clean architecture concept mapping to service layer"
+    },
+    {
+      "id": "BP-034",
+      "query": "event-driven architecture patterns",
+      "expectedIds": ["mem-event-driven", "mem-module-structure"],
+      "category": "architecture",
+      "difficulty": "medium",
+      "notes": "Event-driven maps to specific architecture memory"
+    },
+    {
+      "id": "BP-035",
+      "query": "avoiding tight coupling between components",
+      "expectedIds": ["mem-dependency-injection", "mem-service-layer", "mem-module-structure"],
+      "category": "architecture",
+      "difficulty": "hard",
+      "notes": "Coupling is an abstract concept; maps to DI and service layer patterns"
+    },
+    {
+      "id": "BP-036",
+      "query": "containerizing the application with Docker",
+      "expectedIds": ["mem-docker-setup", "mem-env-config", "mem-ci-pipeline"],
+      "category": "devops",
+      "difficulty": "hard",
+      "notes": "Container setup requires understanding of multi-stage builds and runtime injection"
+    },
+    {
+      "id": "BP-037",
+      "query": "CI/CD pipeline configuration",
+      "expectedIds": ["mem-ci-pipeline", "mem-docker-setup"],
+      "category": "devops",
+      "difficulty": "hard",
+      "notes": "Pipeline configuration spans multiple tools and concepts requiring semantic breadth"
+    },
+    {
+      "id": "BP-038",
+      "query": "zero downtime deployment strategy",
+      "expectedIds": ["mem-deployment-strategy", "mem-ci-pipeline", "mem-docker-setup"],
+      "category": "devops",
+      "difficulty": "medium",
+      "notes": "Zero-downtime maps to deployment strategy patterns"
+    },
+    {
+      "id": "BP-039",
+      "query": "environment configuration management",
+      "expectedIds": ["mem-env-config", "mem-secrets-management"],
+      "category": "devops",
+      "difficulty": "medium",
+      "notes": "Env config is broadly about configuration management"
+    },
+    {
+      "id": "BP-040",
+      "query": "monitoring application health in production",
+      "expectedIds": ["mem-health-monitoring", "mem-deployment-strategy"],
+      "category": "devops",
+      "difficulty": "hard",
+      "notes": "Health monitoring requires understanding observability, alerting, and metrics ecosystem"
+    },
+    {
+      "id": "BP-041",
+      "query": "blue-green deployment approach",
+      "expectedIds": ["mem-deployment-strategy", "mem-ci-pipeline"],
+      "category": "devops",
+      "difficulty": "hard",
+      "notes": "Blue-green is a specific deployment pattern name"
+    },
+    {
+      "id": "BP-042",
+      "query": "structured logging best practices",
+      "expectedIds": ["mem-structured-logging", "mem-error-recovery"],
+      "category": "logging",
+      "difficulty": "easy",
+      "notes": "Direct match: structured logging"
+    },
+    {
+      "id": "BP-043",
+      "query": "centralizing error handling in Node.js",
+      "expectedIds": ["mem-error-recovery", "mem-structured-logging", "mem-error-response-format"],
+      "category": "logging",
+      "difficulty": "medium",
+      "notes": "Centralized error handling maps to error recovery patterns"
+    },
+    {
+      "id": "BP-044",
+      "query": "retry logic on transient failures",
+      "expectedIds": ["mem-retry-patterns", "mem-error-recovery"],
+      "category": "logging",
+      "difficulty": "medium",
+      "notes": "Retry on transient failure is a resilience pattern"
+    },
+    {
+      "id": "BP-045",
+      "query": "log levels and when to use them",
+      "expectedIds": ["mem-structured-logging", "mem-log-levels"],
+      "category": "logging",
+      "difficulty": "easy",
+      "notes": "Log levels explicitly referenced"
+    },
+    {
+      "id": "BP-046",
+      "query": "correlation IDs for distributed tracing",
+      "expectedIds": ["mem-structured-logging", "mem-log-levels"],
+      "category": "logging",
+      "difficulty": "hard",
+      "notes": "Correlation IDs are a distributed systems pattern"
+    },
+    {
+      "id": "BP-047",
+      "query": "circuit breaker pattern",
+      "expectedIds": ["mem-retry-patterns", "mem-error-recovery"],
+      "category": "logging",
+      "difficulty": "hard",
+      "notes": "Circuit breaker is a resilience design pattern"
+    },
+    {
+      "id": "BP-048",
+      "query": "role-based access control implementation",
+      "expectedIds": ["mem-rbac-model", "mem-login-flow", "mem-oauth-provider"],
+      "category": "authentication",
+      "difficulty": "medium",
+      "notes": "RBAC maps directly to role-based access control memory"
+    },
+    {
+      "id": "BP-049",
+      "query": "database connection pooling configuration",
+      "expectedIds": ["mem-db-connection-pool", "mem-query-optimization"],
+      "category": "database",
+      "difficulty": "medium",
+      "notes": "Connection pooling is a specific database resource pattern"
+    },
+    {
+      "id": "BP-050",
+      "query": "handling cascading failures in microservices",
+      "expectedIds": ["mem-retry-patterns", "mem-error-recovery", "mem-event-driven"],
+      "category": "architecture",
+      "difficulty": "hard",
+      "notes": "Cascading failures map to resilience patterns in distributed systems"
+    }
+  ],
+  "corpus": [
+    {
+      "id": "mem-jwt-session",
+      "text": "JWT sessions are stateless tokens containing user claims. Access tokens expire after 15 minutes, refresh tokens after 7 days. Store access tokens in memory only, refresh tokens in HttpOnly cookies with SameSite=Strict. Validate signature, expiry, issuer and audience on every protected endpoint.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["jwt", "session", "authentication", "token"],
+        "timestamp": 1700000001000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-cookie-config",
+      "text": "Secure cookie configuration requires HttpOnly flag to prevent JS access, Secure flag for HTTPS-only transmission, SameSite=Strict to block CSRF, and explicit expiry. Session cookies must never be accessible from JavaScript in production environments.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["cookie", "security", "session", "https"],
+        "timestamp": 1700000002000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-session-timeout",
+      "text": "Session timeout policy: idle sessions expire after 30 minutes, absolute session lifetime capped at 8 hours. Server-side session invalidation should accompany token revocation. Sliding window expiry resets timeout on each authenticated request.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["session", "timeout", "expiry", "authentication"],
+        "timestamp": 1700000003000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-login-flow",
+      "text": "Login flow: POST /auth/login with email+password, validate credentials against bcrypt hash, issue JWT access token and refresh token in HttpOnly cookie. Return 401 on invalid credentials. Implement lockout after 5 failed attempts with exponential backoff.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["login", "authentication", "flow", "credentials"],
+        "timestamp": 1700000004000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-oauth-provider",
+      "text": "OAuth 2.0 integration with providers (Google, GitHub). Authorization code flow with PKCE. Exchange authorization code for access token at /auth/callback. Store provider user ID and link to internal user account. Handle token refresh and provider revocation webhooks.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["oauth", "authentication", "google", "github", "social-login"],
+        "timestamp": 1700000005000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-token-refresh",
+      "text": "Token refresh strategy: client sends expired access token with valid refresh token in cookie. Server validates refresh token, checks rotation table for reuse detection, issues new access token and new refresh token (rotation). Old refresh token is immediately revoked.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["token", "refresh", "rotation", "authentication"],
+        "timestamp": 1700000006000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-rbac-model",
+      "text": "Role-based access control model with roles: admin, developer, viewer. Permissions are attached to roles, not users. Enforce authorization at the service layer before any data access. Roles are loaded from JWT claims, verified against database on sensitive operations.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["rbac", "authorization", "roles", "permissions"],
+        "timestamp": 1700000007000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-csrf-protection",
+      "text": "CSRF protection using synchronizer token pattern. CSRF token generated per session, stored server-side, included in meta tag. All state-changing requests (POST/PUT/DELETE/PATCH) require X-CSRF-Token header. Double-submit cookie pattern as alternative for stateless APIs.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["csrf", "security", "token", "web"],
+        "timestamp": 1700000008000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-migration-strategy",
+      "text": "Database migration strategy uses sequential numbered migration files. Each migration has up() and down() functions for forward and rollback execution. Run migrations automatically on deployment before starting the application. Never modify existing migration files after merging to main.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["migration", "database", "schema", "versioning"],
+        "timestamp": 1700000009000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-schema-versioning",
+      "text": "Schema versioning tracks database structure changes across environments. Use a migrations table to record applied migrations with timestamps. Schema must be backward-compatible during deployment windows. Additive changes (add column with default) are preferred over destructive changes.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["schema", "versioning", "database", "migration"],
+        "timestamp": 1700000010000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-rollback-plan",
+      "text": "Migration rollback plan: every migration must have a tested down() function. Rollback in reverse order from applied migrations. Test rollback in staging before production. If data loss would occur in rollback, create a compensating migration instead of a destructive rollback.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["rollback", "migration", "database", "recovery"],
+        "timestamp": 1700000011000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-index-design",
+      "text": "Database index design: create indexes on all foreign keys and frequently-queried columns. Composite indexes ordered by selectivity (most selective column first). Avoid over-indexing write-heavy tables. Use EXPLAIN ANALYZE to verify index usage before adding to production.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["index", "database", "performance", "query"],
+        "timestamp": 1700000012000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-query-optimization",
+      "text": "Query optimization: use eager loading (joins) to prevent N+1 query issues. Paginate all list endpoints with cursor-based pagination for large datasets. Cache expensive read-only queries in Redis with appropriate TTL. Monitor slow query log for queries exceeding 100ms.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["query", "optimization", "performance", "n+1", "caching"],
+        "timestamp": 1700000013000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-db-selection",
+      "text": "Database selection decision: use PostgreSQL for relational data with complex queries and ACID requirements. Use Redis for caching, sessions, and pub/sub. Consider document stores (MongoDB) only for schema-less content with high write throughput. Avoid mixing databases unnecessarily.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["database", "postgresql", "redis", "selection", "nosql"],
+        "timestamp": 1700000014000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-db-connection-pool",
+      "text": "Database connection pooling configuration: pool size = (2 * CPU cores) + effective_spindle_count. Set connection timeout to 5 seconds. Idle connection timeout of 10 minutes. Validate connections on acquisition using a health check query. Monitor pool exhaustion via metrics.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["connection-pool", "database", "performance", "configuration"],
+        "timestamp": 1700000015000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-pagination-pattern",
+      "text": "API pagination uses cursor-based pagination over offset for large datasets. Cursor is an opaque base64-encoded value containing the last seen ID and sort key. Response includes nextCursor, prevCursor, and hasMore fields. Default page size is 20, maximum is 100. Document pagination in API contracts.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["pagination", "api", "cursor", "rest"],
+        "timestamp": 1700000016000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-rest-conventions",
+      "text": "REST API conventions: use nouns for resource URLs, HTTP verbs for actions. GET is idempotent and cacheable. POST creates resources. PUT replaces, PATCH partially updates. DELETE removes. Use HTTP status codes correctly: 200 OK, 201 Created, 204 No Content, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 422 Unprocessable Entity.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["rest", "api", "conventions", "http", "idempotent"],
+        "timestamp": 1700000017000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-api-versioning",
+      "text": "API versioning strategy: use URL versioning (/v1/, /v2/) for public APIs. Support at least two major versions simultaneously with 12-month deprecation notice. Maintain changelog per version. Never remove fields without version bump. Use Accept-Version header for internal service-to-service versioning.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["api", "versioning", "deprecation", "rest"],
+        "timestamp": 1700000018000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-error-response-format",
+      "text": "Standardized API error response format: { error: { code: string, message: string, details?: object } }. Include a machine-readable error code for client handling. Provide human-readable message. Add request ID for tracing. Never expose stack traces in production responses.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["error", "api", "response", "format"],
+        "timestamp": 1700000019000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-rate-limiting",
+      "text": "Rate limiting implementation: token bucket algorithm per authenticated user and per IP. Limits: 100 requests/minute for authenticated, 20 requests/minute for unauthenticated. Return 429 Too Many Requests with Retry-After header. Use Redis for distributed rate limit state across instances.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["rate-limiting", "security", "api", "throttling"],
+        "timestamp": 1700000020000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-sql-injection-prevention",
+      "text": "SQL injection prevention: always use parameterized queries or prepared statements. Never concatenate user input into SQL strings. Use ORM query builders with parameter binding. Validate and sanitize all user-supplied data before use in queries. Run regular dependency audits for ORM vulnerabilities.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["sql-injection", "security", "database", "validation"],
+        "timestamp": 1700000021000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-cors-policy",
+      "text": "CORS policy configuration: whitelist specific origins rather than using wildcard. Allowed origins stored in environment configuration. Vary header must include Origin to enable proper caching. Preflight cache duration set to 600 seconds. Credentials=true only for authenticated origins. Block all other origins with 403.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["cors", "security", "api", "headers"],
+        "timestamp": 1700000022000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-input-validation",
+      "text": "Input validation and sanitization: validate at the API boundary before any business logic. Use schema validation (Zod/Joi) for request bodies. Sanitize HTML to prevent XSS. Validate file uploads for type, size, and content. Return 400 with field-level error details on validation failure.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["validation", "sanitization", "security", "input", "xss"],
+        "timestamp": 1700000023000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-secrets-management",
+      "text": "Secrets management: store all secrets in environment variables or a secrets vault (HashiCorp Vault, AWS Secrets Manager). Never commit secrets to version control. Rotate secrets quarterly or immediately after exposure. Use different secrets per environment (dev, staging, prod). Audit secret access logs.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["secrets", "security", "environment", "vault"],
+        "timestamp": 1700000024000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-env-config",
+      "text": "Environment configuration management: use .env files for local development, environment variables for CI/CD and production. Provide .env.example with all required keys and documentation. Validate required environment variables at application startup. Separate config classes per environment (development, staging, production).",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["environment", "config", "dotenv", "configuration"],
+        "timestamp": 1700000025000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-unit-test-patterns",
+      "text": "Unit test patterns: each test file mirrors the source file structure. Test one behavior per test case. Use descriptive names: 'should [action] when [condition]'. Mock all external dependencies at module boundaries. Use factory functions to build test fixtures. Arrange-Act-Assert structure for clarity.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["unit-test", "testing", "patterns", "mocking"],
+        "timestamp": 1700000026000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-mock-strategy",
+      "text": "Mocking strategy: mock at the interface boundary, not the implementation. Use vi.fn() for function mocks, vi.mock() for module mocks. Reset mocks between tests with beforeEach to prevent state leakage. Prefer dependency injection to enable easy mocking without module-level mocks.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["mocking", "testing", "vitest", "dependency-injection"],
+        "timestamp": 1700000027000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-test-coverage",
+      "text": "Test coverage targets: service/business logic 80% minimum, API endpoints 100% hit coverage, auth flows covering all roles and token expiry scenarios. Coverage is measured with v8. Coverage below threshold fails the CI build. Exclude generated code and vendor files from coverage reports.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["coverage", "testing", "ci", "quality"],
+        "timestamp": 1700000028000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-integration-testing",
+      "text": "Integration testing strategy: test the full request-response cycle through the router using a real in-memory database. Seed required data before each test. Reset database state in afterEach. Integration tests live in __tests__/integration/ and are excluded from the default unit test run.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["integration-test", "testing", "database", "api"],
+        "timestamp": 1700000029000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-dependency-injection",
+      "text": "Dependency injection pattern: classes receive dependencies through constructor parameters rather than importing directly. Use interface types for dependencies to enable easy testing and swapping. Register dependencies in a container at application startup. Singleton scope for stateless services, transient for stateful ones.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["dependency-injection", "architecture", "di-container", "testing"],
+        "timestamp": 1700000030000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-module-structure",
+      "text": "Module structure for large applications: feature-based folder organization with models, services, controllers, and tests co-located. Shared utilities in a common module. Public API exported through index.ts barrel files. Circular dependencies are prohibited and enforced by lint rules.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["module", "structure", "architecture", "organization"],
+        "timestamp": 1700000031000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-service-layer",
+      "text": "Service layer pattern separates business logic from HTTP concerns. Controllers handle request parsing and response formatting. Services contain all business rules and orchestration. Services do not import from controllers. Data access goes through repository interfaces, not direct ORM calls in services.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["service-layer", "architecture", "business-logic", "separation"],
+        "timestamp": 1700000032000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-event-driven",
+      "text": "Event-driven architecture using an in-process event bus for decoupling. Domains emit domain events after successful operations. Subscribers handle side effects asynchronously. Event payloads are immutable value objects. Outbox pattern used for reliable event delivery across service boundaries.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["event-driven", "architecture", "decoupling", "async"],
+        "timestamp": 1700000033000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-docker-setup",
+      "text": "Docker setup uses multi-stage builds to minimize production image size. Base image is node:20-alpine. Build stage installs all dependencies and compiles TypeScript. Production stage copies dist/ and node_modules/ production only. Environment variables injected at runtime, not baked into image.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["docker", "containerization", "deployment", "build"],
+        "timestamp": 1700000034000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-ci-pipeline",
+      "text": "CI/CD pipeline stages: lint → unit-tests → integration-tests → build → security-scan → deploy-staging → smoke-tests → deploy-production. All stages must pass before deployment. Pipeline runs on every pull request. Deployment to production is gated by manual approval after staging validation.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["ci-cd", "pipeline", "deployment", "automation"],
+        "timestamp": 1700000035000,
+        "type": "decision"
+      }
+    },
+    {
+      "id": "mem-deployment-strategy",
+      "text": "Zero-downtime deployment using blue-green strategy. Blue environment serves live traffic while green receives the new deployment. After successful health checks on green, load balancer switches traffic. Blue remains hot for 30 minutes for instant rollback. Database migrations run before traffic switch with backward-compatible changes.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["deployment", "blue-green", "zero-downtime", "strategy"],
+        "timestamp": 1700000036000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-health-monitoring",
+      "text": "Health monitoring endpoints: /health for load balancer checks (returns 200/503), /status for detailed component status (database, cache, external APIs), /metrics for Prometheus scraping. Alert on: error rate >1%, p99 latency >2s, memory >80%, disk >90%. PagerDuty integration for critical alerts.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["monitoring", "health", "metrics", "alerting"],
+        "timestamp": 1700000037000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-structured-logging",
+      "text": "Structured logging with JSON output for production. Include: timestamp, level, message, requestId, userId, duration, and any contextual fields. Use log levels: ERROR for actionable issues, WARN for degraded states, INFO for business events, DEBUG for development only. Sensitive data (passwords, tokens) must never appear in logs.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["logging", "structured", "json", "observability"],
+        "timestamp": 1700000038000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-error-recovery",
+      "text": "Error recovery patterns: distinguish recoverable from unrecoverable errors. Log all errors with context before handling. Recoverable errors trigger retry with backoff. Unrecoverable errors are bubbled to global error handler which logs and returns standardized error response. Circuit breaker prevents cascade on repeated failures.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["error-handling", "recovery", "resilience", "circuit-breaker"],
+        "timestamp": 1700000039000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-retry-patterns",
+      "text": "Retry pattern implementation: exponential backoff with jitter for transient failures. Max 3 retries for database operations, 5 for external HTTP calls. Retry only on idempotent operations or when safely retriable (network timeout, 5xx). Do not retry on 4xx client errors. Log each retry attempt with attempt number and delay.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["retry", "resilience", "backoff", "transient"],
+        "timestamp": 1700000040000,
+        "type": "pattern"
+      }
+    },
+    {
+      "id": "mem-log-levels",
+      "text": "Log level guidelines: ERROR — system is in an inconsistent state requiring immediate action. WARN — system is degraded but operational; action needed soon. INFO — significant business events (user login, order placed). DEBUG — detailed developer information, disabled in production. TRACE — extremely verbose, only for local debugging.",
+      "metadata": {
+        "source": "benchmark-corpus",
+        "scope": "project",
+        "tags": ["log-levels", "logging", "error", "debug", "info"],
+        "timestamp": 1700000041000,
+        "type": "fact"
+      }
+    }
+  ]
+}

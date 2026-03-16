@@ -5,6 +5,9 @@
 import { TOOL_SETS } from './agent-registry.js';
 import { runAgentLoop } from './ai-runner.js';
 import { getLogger } from '../utils/logger.js';
+import { AgentMessageBus } from './agent-message-bus.js';
+import { AgentLogger } from './agent-logger.js';
+import { randomUUID } from 'node:crypto';
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -16,6 +19,12 @@ export class Agent {
     name;
     displayName;
     toolCategory;
+    /**
+     * The message bus this agent is connected to.
+     * Defaults to the process-level singleton (AgentMessageBus.global()).
+     * Pass a custom instance in tests for isolation.
+     */
+    bus;
     state;
     context = null;
     listeners = new Map();
@@ -24,10 +33,11 @@ export class Agent {
     totalTokensOut = 0;
     totalCost = 0;
     childResults = new Map();
-    constructor(name, displayName, toolCategory) {
+    constructor(name, displayName, toolCategory, bus) {
         this.name = name;
         this.displayName = displayName;
         this.toolCategory = toolCategory;
+        this.bus = bus ?? AgentMessageBus.global();
         this.state = this.createInitialState();
     }
     // ── Public API ──────────────────────────────────────────────────────
@@ -39,6 +49,11 @@ export class Agent {
         this.totalCost = 0;
         this.childResults = new Map();
         this.state = this.createInitialState();
+        // Resolve taskId and correlationId for structured logging — use context values
+        // when provided (set by AgentPool), otherwise generate stable IDs for this execution.
+        const taskId = context.taskId ?? randomUUID();
+        const correlationId = context.correlationId ?? randomUUID();
+        const agentLogger = new AgentLogger(this.name, taskId, correlationId, context.workDir);
         // Budget check
         if (context.budgetUsd <= 0) {
             this.state.status = 'budget_exceeded';
@@ -53,13 +68,28 @@ export class Agent {
         this.emit('started', { task: task.slice(0, 200) });
         const log = getLogger();
         log.info('runner', 'agent_execute', { agent: this.name, task: task.slice(0, 100) });
+        agentLogger.start();
         try {
             // Check abort signal
             if (context.abortSignal.aborted) {
                 this.state.status = 'aborted';
+                agentLogger.abort('Aborted before execution');
                 return this.buildResult('aborted', 'Aborted before execution');
             }
             const result = await this.run(task, context);
+            // Log based on outcome
+            if (result.status === 'aborted') {
+                agentLogger.abort('Agent run returned aborted status');
+            }
+            else if (result.status === 'budget_exceeded') {
+                agentLogger.fail(new Error('Budget exceeded'));
+            }
+            else if (result.status === 'failed') {
+                agentLogger.fail(new Error(result.output));
+            }
+            else {
+                agentLogger.complete({ status: result.status, durationMs: result.durationMs });
+            }
             return result;
         }
         catch (err) {
@@ -68,6 +98,7 @@ export class Agent {
             this.state.blockers.push(message);
             log.error('runner', 'agent_failed', { agent: this.name, error: message });
             this.emit('failed', { error: message });
+            agentLogger.fail(err instanceof Error ? err : new Error(message));
             return this.buildResult('failed', message);
         }
     }
@@ -108,6 +139,32 @@ export class Agent {
             }
         }
     }
+    // ── Message Bus Convenience API ──────────────────────────────────────
+    /**
+     * Publish a message to the agent message bus.
+     * Automatically sets `sender` to this agent's name and fills `id` and `timestamp`.
+     *
+     * @param type - The MessageType for topic routing.
+     * @param payload - Arbitrary structured payload for the message.
+     * @param recipient - Target agent ID. Defaults to '*' (broadcast).
+     * @param correlationId - Optional correlation ID. Generated if omitted.
+     */
+    publishMessage(type, payload, recipient = '*', correlationId) {
+        const message = AgentMessageBus.buildMessage(this.name, recipient, type, payload, correlationId);
+        this.bus.publish(message);
+        return message;
+    }
+    /**
+     * Subscribe to messages on the bus.
+     * The subscription is scoped to `type` and uses the shared bus instance.
+     *
+     * @param type - The MessageType to listen for, or '*' for all types.
+     * @param handler - Invoked with each matching message envelope.
+     * @returns An unsubscribe function to remove the listener.
+     */
+    subscribeMessage(type, handler) {
+        return this.bus.subscribe(type, handler);
+    }
     // ── Delegation ──────────────────────────────────────────────────────
     async delegate(childAgent, task, budgetFraction = 0.3) {
         if (!this.context) {
@@ -144,6 +201,10 @@ export class Agent {
             budgetUsd: allocatedBudget,
             delegationDepth: this.context.delegationDepth + 1,
             abortSignal: { aborted: this.context.abortSignal.aborted },
+            // Propagate correlation ID so all agents in this delegation chain share it
+            correlationId: this.context.correlationId,
+            // Child gets a new taskId since it is a distinct execution unit
+            taskId: randomUUID(),
         };
         const result = await childAgent.execute(task, childContext);
         // Track child results

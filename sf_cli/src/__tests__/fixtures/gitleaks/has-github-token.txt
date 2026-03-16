@@ -1,0 +1,5 @@
+# Fixture: fake GitHub personal access token for Gitleaks unit tests
+# This file intentionally contains a clearly fake credential for test purposes only.
+# The token below is NOT a real GitHub token — it is a test fixture.
+GITHUB_TOKEN=ghp_FakeGitHubTokenForTestingPurposesOnly1234
+GITHUB_APP_TOKEN=github_pat_FakePatTokenForTestingOnly_abcdefghijklmnopqrstuvwxyz

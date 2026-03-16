@@ -9,7 +9,7 @@ SkillFoundry is a CLI framework that orchestrates AI agents through a governed p
 
 ## System Overview
 
-The framework consists of five core subsystems:
+The framework consists of eight core subsystems:
 
 | Subsystem | Purpose | Key Files |
 |-----------|---------|-----------|
@@ -18,6 +18,9 @@ The framework consists of five core subsystems:
 | **Quality Gates** | T0-T6 verification tiers + micro-gates | `src/core/gates.ts`, `src/core/micro-gates.ts` |
 | **Memory System** | JSONL knowledge bank with layered recall | `src/core/memory.ts`, `src/core/layered-recall.ts` |
 | **Session Recorder** | Structured issue tracking and run reports | `src/core/session-recorder.ts` |
+| **Runtime Intelligence** | Message bus, agent pool, embedding service, vector store, weight learner | `src/core/message-bus.ts`, `src/core/agent-pool.ts`, `src/core/embedding-service.ts`, `src/core/vector-store.ts`, `src/core/weight-learner.ts` |
+| **Security Scanners** | Gitleaks secret detection, Checkov IaC scanning, semantic search | `src/core/gitleaks-scanner.ts`, `src/core/checkov-scanner.ts`, `src/core/semantic-search.ts` |
+| **Reporting** | Dependency scanning, report generation, PRD scoring | `src/core/dependency-scanner.ts`, `src/core/report-generator.ts`, `src/core/prd-scorer.ts` |
 
 Supporting modules handle configuration (`config.ts`), credential management (`credentials.ts`), output compression (`output-compressor.ts`), intent classification (`intent.ts`), and provider abstraction for multiple LLM backends (`provider.ts`).
 

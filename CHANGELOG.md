@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.55] - 2026-03-16
+
+### Added — Phase 2: Make It Excellent
+
+**Runtime Intelligence (Epic 5):**
+- **Message Bus** (`message-bus.ts`): Pub/sub event system with typed channels, wildcard subscriptions, and backpressure control
+- **Agent Pool** (`agent-pool.ts`): Managed pool of reusable agent instances with lifecycle management, concurrency limits, and health monitoring
+- **Embedding Service** (`embedding-service.ts`): Text-to-vector embedding with provider abstraction (Anthropic, OpenAI, local), batching, and caching
+- **Vector Store** (`vector-store.ts`): In-memory vector similarity search over project source files with configurable chunking and path confinement
+- **Weight Learner** (`weight-learner.ts`): Adaptive quality gate weight adjustment based on historical pass/fail patterns and project-specific calibration
+- **Dependency Scanner** (`dependency-scanner.ts`): npm audit integration with CVE severity mapping, fix recommendations, and JSONL output
+- **Report Generator** (`report-generator.ts`): Structured pipeline run reports in JSON and Markdown with gate breakdowns, cost summaries, and trend data
+
+**Security Scanners (Epic 6):**
+- **Gitleaks Scanner** (`gitleaks-scanner.ts`): Secret detection via Gitleaks binary with SHA-256 hashed findings (raw secrets never stored), redacted output, and configurable rulesets
+- **Checkov Scanner** (`checkov-scanner.ts`): Infrastructure-as-code scanning with framework selection, skip-check support, and whitelist-validated CLI arguments
+- **Semantic Search** (`semantic-search.ts`): Natural language code search combining vector similarity with keyword fallback
+
+**CLI Commands (3 new, total: 23):**
+- **`sf runtime`**: Show runtime intelligence status — message bus stats, agent pool health, embedding cache, vector store index
+- **`sf prd review <path>`**: Score a PRD on 4 dimensions (completeness, specificity, consistency, scope) with color-coded output, progress bars, and `--json` mode
+- **`sf lessons`**: Query and manage knowledge bank entries from the terminal
+
+### Fixed
+
+- **Secret exposure in Gitleaks findings**: Raw secret values were stored in `GitleaksFinding.secret` field — replaced with SHA-256 hash (`secretHash`) for deduplication only. Raw secrets are never persisted in any data structure.
+- **Command injection via `execSync`**: Gitleaks and Checkov binary detection used `execSync('which ...')` which allows shell injection — replaced with `execFileSync` array-arg invocation across all scanners.
+- **Path traversal in PRD review**: `sf prd review ../../etc/passwd` could read files outside the project — added `resolve()` + `startsWith(workDir)` confinement check.
+- **Path traversal in Vector Store**: Source directories could escape the work directory via `../` — constructor now validates all `sourceDirs` are confined within `workDir`.
+- **Unsafe CLI argument injection in Checkov**: Framework and skip-check values were passed unsanitized to the CLI — added whitelist regex validation (`/^[a-zA-Z0-9_.-]+$/`).
+
+### Security
+
+- 5 security findings from Phase 4 audit (1 CRITICAL, 4 HIGH), all fixed before release
+- SHA-256 hashing for secret deduplication — zero raw secret storage
+- `execFileSync` with array args for all external tool invocation (shell injection prevention)
+- Path confinement enforced in vector-store and prd-review commands
+- Whitelist validation for all user-supplied CLI arguments passed to external tools
+
+### Tests
+
+- 697 new tests across 17 test files: message-bus (48), agent-pool (52), embedding-service (44), vector-store (56), weight-learner (38), dependency-scanner (42), report-generator (46), gitleaks-scanner (63), checkov-scanner (58), semantic-search (34), prd-review (28), prd-scorer (36), runtime command (22), lessons command (18), consent (12), baseline-collector (8), telemetry (92)
+- Total: 1,579 tests across 69 files, all passing
+
+---
+
 ## [2.0.52] - 2026-03-16
 
 ### Added — Phase 1: Make It Reachable

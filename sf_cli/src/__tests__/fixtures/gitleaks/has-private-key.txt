@@ -1,0 +1,6 @@
+# Fixture: fake RSA private key header for Gitleaks unit tests
+# This file intentionally contains a clearly fake credential for test purposes only.
+# The key below is NOT a real private key — it is a test fixture containing only headers.
+-----BEGIN RSA PRIVATE KEY-----
+ZmFrZXByaXZhdGVrZXlmb3J0ZXN0aW5ncHVycG9zZXNvbmx5dGhpc2lzbm90cmVhbA==
+-----END RSA PRIVATE KEY-----

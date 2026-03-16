@@ -17,6 +17,8 @@ import { hookCommand } from './hook.js';
 import { reportCommand } from './report.js';
 import { benchmarkCommand } from './benchmark.js';
 import { metricsCommand } from './metrics.js';
+import { runtimeCommand } from './runtime.js';
+import { prdReviewCommand } from './prd-review.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -68,4 +70,6 @@ export function initCommands(): void {
   registerCommand(reportCommand);
   registerCommand(benchmarkCommand);
   registerCommand(metricsCommand);
+  registerCommand(runtimeCommand);
+  registerCommand(prdReviewCommand);
 }

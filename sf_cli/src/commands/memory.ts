@@ -1,10 +1,11 @@
 import type { SlashCommand, SessionContext } from '../types.js';
 import { recall, captureLesson, captureDecision, captureError, getMemoryStats } from '../core/memory.js';
+import { executeMemorySearch } from './memory-search.js';
 
 export const memoryCommand: SlashCommand = {
   name: 'memory',
   description: 'Recall, capture, or view memory bank stats',
-  usage: '/memory [recall <query>|capture <type> <content>|stats]',
+  usage: '/memory [recall <query>|capture <type> <content>|search <query>|stats]',
   execute: async (args: string, session: SessionContext): Promise<string> => {
     const parts = args.trim().split(/\s+/);
     const sub = parts[0] || 'stats';
@@ -98,7 +99,12 @@ export const memoryCommand: SlashCommand = {
       return `Captured ${type}: ${entry.id}\n${cleanContent}`;
     }
 
-    return 'Usage: /memory [stats|recall <query>|capture <type> <content>]';
+    if (sub === 'search') {
+      const searchArgs = parts.slice(1).join(' ');
+      return executeMemorySearch(searchArgs, session);
+    }
+
+    return 'Usage: /memory [stats|recall <query>|capture <type> <content>|search <query>]';
   },
 };
 

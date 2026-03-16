@@ -1,0 +1,13 @@
+# Misconfigured Dockerfile — used in Checkov tests
+# Violates: CKV_DOCKER_7 (latest tag), CKV_DOCKER_3 (no USER instruction),
+#           CKV_DOCKER_2 (no HEALTHCHECK)
+FROM ubuntu:latest
+
+RUN apt-get update && apt-get install -y curl
+
+COPY . /app
+
+WORKDIR /app
+
+# Running as root (no USER instruction)
+CMD ["./app"]

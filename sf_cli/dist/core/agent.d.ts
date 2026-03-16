@@ -1,6 +1,7 @@
-import type { SfConfig, SfPolicy, RunnerResult } from '../types.js';
+import type { SfConfig, SfPolicy, RunnerResult, MessageType, AgentMessage } from '../types.js';
 import type { ToolDefinition } from './tools.js';
 import { type ToolCategory } from './agent-registry.js';
+import { AgentMessageBus, type SubscriberFn, type UnsubscribeFn } from './agent-message-bus.js';
 export type AgentStatus = 'idle' | 'running' | 'delegating' | 'completed' | 'failed' | 'aborted' | 'budget_exceeded';
 export interface AgentProgress {
     current: number;
@@ -47,6 +48,16 @@ export interface AgentContext {
         aborted: boolean;
     };
     delegationDepth: number;
+    /**
+     * Optional task identifier. Populated by AgentPool when a task is dispatched.
+     * Used by AgentLogger to correlate structured log entries to a specific pool task.
+     */
+    taskId?: string;
+    /**
+     * Optional correlation ID. Propagated from parent to child agents via delegate()
+     * so all log entries in a delegation chain share the same correlation ID.
+     */
+    correlationId?: string;
 }
 export type AgentEventType = 'started' | 'progress' | 'decision' | 'delegated' | 'tool_called' | 'tool_completed' | 'completed' | 'failed' | 'aborted';
 export interface AgentEvent {
@@ -60,6 +71,12 @@ export declare abstract class Agent {
     readonly name: string;
     readonly displayName: string;
     readonly toolCategory: ToolCategory;
+    /**
+     * The message bus this agent is connected to.
+     * Defaults to the process-level singleton (AgentMessageBus.global()).
+     * Pass a custom instance in tests for isolation.
+     */
+    readonly bus: AgentMessageBus;
     protected state: AgentState;
     protected context: AgentContext | null;
     private listeners;
@@ -68,13 +85,32 @@ export declare abstract class Agent {
     private totalTokensOut;
     private totalCost;
     private childResults;
-    constructor(name: string, displayName: string, toolCategory: ToolCategory);
+    constructor(name: string, displayName: string, toolCategory: ToolCategory, bus?: AgentMessageBus);
     execute(task: string, context: AgentContext): Promise<AgentResult>;
     getState(): AgentState;
     abort(): void;
     on(event: AgentEventType, listener: AgentEventListener): void;
     off(event: AgentEventType, listener: AgentEventListener): void;
     protected emit(type: AgentEventType, data?: Record<string, unknown>): void;
+    /**
+     * Publish a message to the agent message bus.
+     * Automatically sets `sender` to this agent's name and fills `id` and `timestamp`.
+     *
+     * @param type - The MessageType for topic routing.
+     * @param payload - Arbitrary structured payload for the message.
+     * @param recipient - Target agent ID. Defaults to '*' (broadcast).
+     * @param correlationId - Optional correlation ID. Generated if omitted.
+     */
+    protected publishMessage(type: MessageType, payload: Record<string, unknown>, recipient?: string, correlationId?: string): AgentMessage;
+    /**
+     * Subscribe to messages on the bus.
+     * The subscription is scoped to `type` and uses the shared bus instance.
+     *
+     * @param type - The MessageType to listen for, or '*' for all types.
+     * @param handler - Invoked with each matching message envelope.
+     * @returns An unsubscribe function to remove the listener.
+     */
+    protected subscribeMessage(type: MessageType | '*', handler: SubscriberFn): UnsubscribeFn;
     protected delegate(childAgent: Agent, task: string, budgetFraction?: number): Promise<AgentResult>;
     /**
      * Subclasses implement this to define their autonomous behavior.

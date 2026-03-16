@@ -1,0 +1,10 @@
+# Fixture: clean file with no secrets for Gitleaks unit tests
+# This file intentionally contains no credentials or secrets.
+
+PROJECT_NAME=my-project
+LOG_LEVEL=info
+MAX_RETRIES=3
+ENVIRONMENT=development
+
+# All configuration values should come from environment variables in production.
+# See .env.example for the full list of required environment variables.

@@ -159,7 +159,8 @@ export const forgeCommand = {
     usage: '/forge [prd-file] [--dry-run]',
     execute: async (args, session) => {
         const dryRun = args.includes('--dry-run');
-        const prdFilter = args.replace('--dry-run', '').trim() || undefined;
+        const skipPrdReview = args.includes('--skip-prd-review');
+        const prdFilter = args.replace('--dry-run', '').replace('--skip-prd-review', '').trim() || undefined;
         // Dry-run: read-only scan (no AI, no execution)
         if (dryRun) {
             return runDryScan(session);
@@ -241,6 +242,7 @@ export const forgeCommand = {
             workDir: session.workDir,
             prdFilter,
             callbacks,
+            skipPrdReview,
         });
         session.setState({
             current_state: result.storiesFailed === 0 && result.gateVerdict !== 'FAIL' ? 'COMPLETED' : 'FAILED',

@@ -1,0 +1,6 @@
+# Fixture: fake AWS access key for Gitleaks unit tests
+# This file intentionally contains a clearly fake credential for test purposes only.
+# The key below is NOT a real AWS access key — it is a test fixture.
+# Fake AWS Access Key ID (AKIA prefix + 16 uppercase alphanumeric chars)
+AWS_ACCESS_KEY_ID=AKIAFAKEKEY1234ABCD
+AWS_SECRET_ACCESS_KEY=FakeSecretKey/FakeSecretKey/FakeSecretKey123
