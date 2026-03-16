@@ -1,8 +1,20 @@
 // Gate Timeline — TreeDataProvider showing T0-T6 gate results with status icons.
-// Shows results from the last manual gate run, or from audit.jsonl history.
+// Shows results from: manual gate run > audit.jsonl history > gate tier reference.
 
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 import { SfBridge, GateResult, GateRunSummary, AuditEntry } from '../bridge';
+
+const GATE_REFERENCE = [
+  { tier: 'T0', name: 'Correctness Contracts', desc: 'Fuzzy-matches acceptance criteria against test content' },
+  { tier: 'T1', name: 'Banned Patterns', desc: 'TODO, FIXME, HACK, @ts-ignore, hardcoded secrets' },
+  { tier: 'T2', name: 'Type Check', desc: 'tsc --noEmit (TypeScript) or equivalent' },
+  { tier: 'T3', name: 'Tests', desc: 'Runs test suite, checks for test file existence' },
+  { tier: 'T4', name: 'Security', desc: 'Semgrep SAST + regex fallback, dependency audit' },
+  { tier: 'T5', name: 'Build', desc: 'Full build verification (tsc, esbuild, etc.)' },
+  { tier: 'T6', name: 'Scope', desc: 'Story scope validation — diff stays within boundaries' },
+];
 
 export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelineItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<GateTimelineItem | undefined>();
@@ -27,7 +39,6 @@ export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelin
 
   async getChildren(element?: GateTimelineItem): Promise<GateTimelineItem[]> {
     if (element) {
-      // Show detail for expanded gate
       if (element.gateResult?.detail) {
         return element.gateResult.detail
           .split('\n')
@@ -38,75 +49,74 @@ export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelin
       return [];
     }
 
-    // If we have a manual gate run, show that
+    // Priority 1: Manual gate run results
     if (this.lastRun) {
       return this.buildFromGateRun(this.lastRun);
     }
 
-    // Otherwise, try to show recent audit log entries
+    // Priority 2: Audit log entries
     const auditEntries = await this.bridge.getRecentAuditEntries(20);
     if (auditEntries.length > 0) {
       return this.buildFromAudit(auditEntries);
     }
 
-    return [new GateTimelineItem('No gate results yet. Run "SkillFoundry: Run All Gates" or /forge', 'info')];
+    // Priority 3: Gate reference (always shows something useful)
+    return this.buildGateReference();
   }
 
   private buildFromGateRun(run: GateRunSummary): GateTimelineItem[] {
     const items = run.gates.map((gate) => {
-      const item = new GateTimelineItem(
-        `${gate.tier} ${gate.name}`,
-        gate.status,
-        gate,
-      );
+      const item = new GateTimelineItem(`${gate.tier} ${gate.name}`, gate.status, gate);
       item.description = `${gate.status.toUpperCase()} (${gate.durationMs}ms)`;
       return item;
     });
 
-    // Add verdict summary
     const verdict = new GateTimelineItem(
       `Verdict: ${run.verdict}`,
       run.failed > 0 ? 'fail' : run.warned > 0 ? 'warn' : 'pass',
     );
     verdict.description = `${run.passed}P ${run.failed}F ${run.warned}W ${run.skipped}S`;
     items.push(verdict);
-
     return items;
   }
 
   private buildFromAudit(entries: AuditEntry[]): GateTimelineItem[] {
     const items: GateTimelineItem[] = [];
+    items.push(new GateTimelineItem('Recent Gate Activity (audit log)', 'info'));
 
-    // Header
-    items.push(new GateTimelineItem('Recent Gate Activity (from audit log)', 'info'));
-
-    // Group by most recent per gate tier
     const byGate = new Map<string, AuditEntry>();
     for (const entry of entries) {
-      byGate.set(entry.gate, entry); // last one wins (most recent)
+      byGate.set(entry.gate, entry);
     }
 
     for (const [gate, entry] of [...byGate.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
       const item = new GateTimelineItem(
         `${gate}: ${entry.verdict.toUpperCase()}`,
-        entry.verdict === 'pass' ? 'pass' :
-        entry.verdict === 'fail' ? 'fail' :
-        entry.verdict === 'warn' ? 'warn' : 'skip',
+        entry.verdict === 'pass' ? 'pass' : entry.verdict === 'fail' ? 'fail' : entry.verdict === 'warn' ? 'warn' : 'skip',
       );
       item.description = `${entry.duration_ms}ms — ${new Date(entry.timestamp).toLocaleTimeString()}`;
       item.tooltip = entry.reason || `${gate} ${entry.verdict}`;
       items.push(item);
     }
 
-    // Summary
     const passed = entries.filter((e) => e.verdict === 'pass').length;
     const failed = entries.filter((e) => e.verdict === 'fail').length;
-    const summary = new GateTimelineItem(
-      `${entries.length} entries: ${passed}P ${failed}F`,
-      failed > 0 ? 'warn' : 'pass',
-    );
-    items.push(summary);
+    items.push(new GateTimelineItem(`${entries.length} entries: ${passed}P ${failed}F`, failed > 0 ? 'warn' : 'pass'));
+    return items;
+  }
 
+  private buildGateReference(): GateTimelineItem[] {
+    const items: GateTimelineItem[] = [];
+    items.push(new GateTimelineItem('Anvil Quality Gates (7 tiers)', 'info'));
+
+    for (const gate of GATE_REFERENCE) {
+      const item = new GateTimelineItem(`${gate.tier} — ${gate.name}`, 'info');
+      item.description = gate.desc;
+      item.tooltip = `${gate.tier}: ${gate.name}\n${gate.desc}`;
+      items.push(item);
+    }
+
+    items.push(new GateTimelineItem('Run "SkillFoundry: Run All Gates" or /forge to see results', 'info'));
     return items;
   }
 }
