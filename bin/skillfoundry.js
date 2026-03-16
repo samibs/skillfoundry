@@ -28,10 +28,17 @@ Init options:
   --platform=<list>    Comma-separated platforms: claude,cursor,copilot,codex,gemini (default: claude)
   --yes, -y            Non-interactive mode (accept defaults)
 
+CLI commands (after install, use 'sf'):
+  sf metrics baseline              Capture a quality baseline snapshot of the current project
+  sf report --html                 Generate a self-contained HTML quality report
+
 Examples:
   npx skillfoundry init
   npx skillfoundry init --platform=claude,cursor,copilot
   npx skillfoundry init --yes
+
+Documentation:
+  https://skillfoundry.dev/docs     Full docs (Docusaurus)
 `;
 
 function main() {

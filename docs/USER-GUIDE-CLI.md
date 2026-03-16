@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.41** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, structured logging, native debugger, and local-first development.
+> **v2.0.52** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, structured logging, native debugger, local-first development, telemetry baseline, HTML reports, and consent system.
 
 ---
 
@@ -229,6 +229,10 @@ Type `/` followed by a command name. All commands are available from the input p
   │  /apply      Execute a plan with gates   │
   │  /gates      Run quality gates (T1-T6)   │
   │  /forge      Full pipeline execution     │
+  │  /metrics    Quality metrics dashboard   │
+  │  /report     Generate quality report     │
+  │  /benchmark  Compare vs industry baselines│
+  │  /consent    Manage telemetry consent    │
   │  /exit       Quit the CLI                │
   ╰──────────────────────────────────────────╯
 ```
@@ -1037,4 +1041,4 @@ sf_cli/src/
 
 ---
 
-*SkillFoundry CLI v2.0.23 — March 2026*
+*SkillFoundry CLI v2.0.52 — March 2026*

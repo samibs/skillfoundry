@@ -1,0 +1,104 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq bc
+
+      - name: Validate shell scripts (syntax check)
+        run: |
+          errors=0
+          while IFS= read -r script; do
+            if ! bash -n "$script" 2>/dev/null; then
+              echo "::error file=$script::Syntax error in $script"
+              errors=$((errors + 1))
+            fi
+          done < <(find scripts/ -name "*.sh" -type f)
+          if [ "$errors" -gt 0 ]; then
+            echo "::error::$errors script(s) have syntax errors"
+            exit 1
+          fi
+          echo "All shell scripts pass syntax validation"
+
+      - name: Run test suite
+        run: bash tests/run-tests.sh
+
+      - name: Verify platform sync
+        run: |
+          if [ -f scripts/sync-platforms.sh ]; then
+            bash scripts/sync-platforms.sh check
+          else
+            echo "::warning::sync-platforms.sh not found, skipping sync check"
+          fi
+
+  publish:
+    name: Publish to npm
+    needs: test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - name: Validate tag matches package.json version
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          # Validate semver format to prevent tag confusion
+          if [[ ! "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
+            echo "::error::Tag version ($TAG_VERSION) is not valid semver"
+            exit 1
+          fi
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match package.json version ($PKG_VERSION)"
+            exit 1
+          fi
+          echo "Tag version ($TAG_VERSION) matches package.json version ($PKG_VERSION)"
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: sf_cli
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  release:
+    name: Create GitHub Release
+    needs: publish
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

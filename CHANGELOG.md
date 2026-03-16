@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.52] - 2026-03-16
+
+### Added — Phase 1: Make It Reachable
+
+**Distribution (Epic 1):**
+- **GitHub Actions release workflow** (`.github/workflows/release.yml`): Automated npm publish with provenance + GitHub Releases on semver tag push. Includes tag-version validation with semver regex.
+- **Homebrew formula** (`homebrew/skillfoundry.rb`): `brew install samibs/tap/skillfoundry` for macOS
+- **curl|bash installer** (`scripts/install-global.sh`): One-liner install with Node.js version check, root detection, EACCES handling, explicit npm registry URL
+- **npm downloads badge** added to README
+
+**Documentation Site (Epic 2):**
+- **Docusaurus 3 site** (`site-docs/`): Full docs site with dark mode, offline search, GitHub Pages deploy
+- **Getting Started guide**: 5-step walkthrough (install → init → PRD → forge → metrics) with time estimates
+- **Architecture deep-dive**: Pipeline flow, agent state machine, T0-T6 gate tiers, memory system — 3 Mermaid diagrams
+- **Configuration reference**: All config.toml options, VS Code extension settings, env vars, CLI flags
+- **3 Recipes**: Next.js integration, TypeScript monorepo, Azure DevOps pipeline
+- **Search documentation**: Local search + Algolia migration path
+
+**Telemetry MVP (Epic 3):**
+- **`sf metrics baseline`**: Captures code quality snapshot (LOC, test count, lint errors, type errors, language detection)
+- **`sf report --html`**: Self-contained HTML dashboard with Chart.js trends, gate breakdown, baseline comparison, dark theme
+- **Telemetry consent** (`consent.ts`): Opt-in mechanism with TOML persistence, non-TTY defaults to opted_out (GDPR), in-memory caching
+- **Privacy policy** (`docs/PRIVACY.md`): Complete data handling documentation
+
+**VS Code Extension (Epic 4):**
+- **Version 1.0.0**: Marketplace-ready with icon, gallery banner, badges
+- **"Open Last Report" command**: Opens `.skillfoundry/report.html` in browser from command palette
+- **Publish workflow** (`.github/workflows/publish-vscode.yml`): Manual + tag-triggered Marketplace publish
+
+### Fixed
+
+- **npm package missing platform directories**: Added `.agents/`, `.claude/`, `.copilot/`, `.cursor/`, `.gemini/` to `files` field — fixes `skillfoundry init` failing on npm-installed package when platform files not found
+- **Command injection in baseline collector**: Replaced `execSync` with `execFileSync` for eslint/tsc invocation (prevents shell injection via binary paths)
+- **Tag version injection**: Added semver regex validation in release workflow
+- **Consent runtime validation**: Added explicit type guard before TOML write
+- **VS Code publish permissions**: Added explicit `permissions: contents: read` block
+
+### Security
+
+- 6 security findings from Phase 4 audit, all fixed before release
+- `execFileSync` used for all external tool invocation in baseline-collector.ts
+- HTML report escapes all dynamic values (XSS prevention verified by 16 tests)
+
+### Tests
+
+- 46 new tests: baseline-collector (12), report-html (16), consent (18)
+- Total: 882 tests across 52 files, all passing
+
+---
+
 ## [2.0.51] - 2026-03-15
 
 ### Fixed — Installer Non-Interactive Mode & npm Link
