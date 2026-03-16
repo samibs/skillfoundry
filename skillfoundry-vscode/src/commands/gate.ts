@@ -61,7 +61,7 @@ export function registerGateCommands(
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: `SkillFoundry: Running ${selectedTier}...`, cancellable: false },
         async () => {
-          const result = bridge.runGate(selectedTier);
+          const result = await bridge.runGate(selectedTier);
           if (!result) {
             vscode.window.showErrorMessage('SkillFoundry: Gate execution failed.');
             return;
@@ -103,7 +103,7 @@ export function registerGateCommands(
         { location: vscode.ProgressLocation.Notification, title: `SkillFoundry: ${selectedTier} on ${relativePath}`, cancellable: false },
         async () => {
           for (const t of tiers) {
-            const result = bridge.runGate(t, relativePath);
+            const result = await bridge.runGate(t, relativePath);
             if (result) {
               diagnostics.updateForFile(fileUri, result);
               outputChannel.appendLine(`  ${result.tier}: ${result.status.toUpperCase()}`);

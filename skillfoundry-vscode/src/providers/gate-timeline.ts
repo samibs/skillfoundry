@@ -1,7 +1,8 @@
 // Gate Timeline — TreeDataProvider showing T0-T6 gate results with status icons.
+// Shows results from the last manual gate run, or from audit.jsonl history.
 
 import * as vscode from 'vscode';
-import { SfBridge, GateResult, GateRunSummary } from '../bridge';
+import { SfBridge, GateResult, GateRunSummary, AuditEntry } from '../bridge';
 
 export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelineItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<GateTimelineItem | undefined>();
@@ -24,7 +25,7 @@ export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelin
     return element;
   }
 
-  getChildren(element?: GateTimelineItem): GateTimelineItem[] {
+  async getChildren(element?: GateTimelineItem): Promise<GateTimelineItem[]> {
     if (element) {
       // Show detail for expanded gate
       if (element.gateResult?.detail) {
@@ -37,11 +38,22 @@ export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelin
       return [];
     }
 
-    if (!this.lastRun) {
-      return [new GateTimelineItem('No gate results yet. Run "SkillFoundry: Run All Gates"', 'info')];
+    // If we have a manual gate run, show that
+    if (this.lastRun) {
+      return this.buildFromGateRun(this.lastRun);
     }
 
-    const items = this.lastRun.gates.map((gate) => {
+    // Otherwise, try to show recent audit log entries
+    const auditEntries = await this.bridge.getRecentAuditEntries(20);
+    if (auditEntries.length > 0) {
+      return this.buildFromAudit(auditEntries);
+    }
+
+    return [new GateTimelineItem('No gate results yet. Run "SkillFoundry: Run All Gates" or /forge', 'info')];
+  }
+
+  private buildFromGateRun(run: GateRunSummary): GateTimelineItem[] {
+    const items = run.gates.map((gate) => {
       const item = new GateTimelineItem(
         `${gate.tier} ${gate.name}`,
         gate.status,
@@ -53,11 +65,47 @@ export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelin
 
     // Add verdict summary
     const verdict = new GateTimelineItem(
-      `Verdict: ${this.lastRun.verdict}`,
-      this.lastRun.failed > 0 ? 'fail' : this.lastRun.warned > 0 ? 'warn' : 'pass',
+      `Verdict: ${run.verdict}`,
+      run.failed > 0 ? 'fail' : run.warned > 0 ? 'warn' : 'pass',
     );
-    verdict.description = `${this.lastRun.passed}P ${this.lastRun.failed}F ${this.lastRun.warned}W ${this.lastRun.skipped}S`;
+    verdict.description = `${run.passed}P ${run.failed}F ${run.warned}W ${run.skipped}S`;
     items.push(verdict);
+
+    return items;
+  }
+
+  private buildFromAudit(entries: AuditEntry[]): GateTimelineItem[] {
+    const items: GateTimelineItem[] = [];
+
+    // Header
+    items.push(new GateTimelineItem('Recent Gate Activity (from audit log)', 'info'));
+
+    // Group by most recent per gate tier
+    const byGate = new Map<string, AuditEntry>();
+    for (const entry of entries) {
+      byGate.set(entry.gate, entry); // last one wins (most recent)
+    }
+
+    for (const [gate, entry] of [...byGate.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      const item = new GateTimelineItem(
+        `${gate}: ${entry.verdict.toUpperCase()}`,
+        entry.verdict === 'pass' ? 'pass' :
+        entry.verdict === 'fail' ? 'fail' :
+        entry.verdict === 'warn' ? 'warn' : 'skip',
+      );
+      item.description = `${entry.duration_ms}ms — ${new Date(entry.timestamp).toLocaleTimeString()}`;
+      item.tooltip = entry.reason || `${gate} ${entry.verdict}`;
+      items.push(item);
+    }
+
+    // Summary
+    const passed = entries.filter((e) => e.verdict === 'pass').length;
+    const failed = entries.filter((e) => e.verdict === 'fail').length;
+    const summary = new GateTimelineItem(
+      `${entries.length} entries: ${passed}P ${failed}F`,
+      failed > 0 ? 'warn' : 'pass',
+    );
+    items.push(summary);
 
     return items;
   }

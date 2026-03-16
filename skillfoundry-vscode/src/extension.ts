@@ -62,6 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   outputChannel.appendLine(`[${new Date().toISOString()}] SkillFoundry extension activated`);
   outputChannel.appendLine(`  Workspace: ${workDir}`);
+  outputChannel.appendLine(`  sf_cli path: ${bridge.getSfCliPath()}`);
   outputChannel.appendLine(`  sf_cli available: ${bridge.isAvailable()}`);
 
   // ── Providers ──────────────────────────────────────────────

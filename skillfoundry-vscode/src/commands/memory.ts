@@ -81,7 +81,7 @@ export function registerMemoryCommands(
   // View Metrics (opens output with formatted metrics)
   context.subscriptions.push(
     vscode.commands.registerCommand('skillfoundry.metrics', async () => {
-      const metrics = bridge.getMetrics();
+      const metrics = await bridge.getMetrics();
       if (!metrics || metrics.total_runs === 0) {
         vscode.window.showInformationMessage('No telemetry data yet. Run /forge to start collecting metrics.');
         return;
@@ -104,13 +104,13 @@ export function registerMemoryCommands(
   // View Report
   context.subscriptions.push(
     vscode.commands.registerCommand('skillfoundry.report', async () => {
-      const report = bridge.generateReport();
+      const report = await bridge.generateReport();
       if (!report || report.summary.total_runs === 0) {
         vscode.window.showInformationMessage('No telemetry data for report generation.');
         return;
       }
 
-      const markdown = bridge.formatReportMarkdown(report);
+      const markdown = await bridge.formatReportMarkdown(report);
 
       // Show in a webview panel
       const panel = vscode.window.createWebviewPanel(
@@ -149,7 +149,7 @@ export function registerMemoryCommands(
       await vscode.window.withProgress(
         { location: vscode.ProgressLocation.Notification, title: 'SkillFoundry: Scanning dependencies...', cancellable: false },
         async () => {
-          const report = bridge.scanDependencies();
+          const report = await bridge.scanDependencies();
           if (!report) {
             vscode.window.showErrorMessage('Dependency scan failed. Is sf_cli installed?');
             return;
@@ -194,13 +194,6 @@ export function registerMemoryCommands(
       const terminal = vscode.window.createTerminal({ name: 'SkillFoundry Hooks', cwd: bridge.getWorkDir() });
       terminal.show();
       terminal.sendText(cmd);
-    }),
-  );
-
-  // Refresh Dashboard
-  context.subscriptions.push(
-    vscode.commands.registerCommand('skillfoundry.refresh', () => {
-      vscode.commands.executeCommand('sf.dashboard.focus');
     }),
   );
 }
