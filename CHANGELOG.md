@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.59] - 2026-03-16
+
+### Added — CLI Support for Jurisdiction & Quality Routing
+
+**Config Command:**
+- `data_jurisdiction` and `quality_fallback` added to editable config keys
+- Users can now set jurisdiction mode via `/config data_jurisdiction eu` or `/config data_jurisdiction strict`
+- Quality fallback toggled via `/config quality_fallback true`
+
+**Status Command:**
+- Shows active jurisdiction mode when not `"none"` (e.g., `Jurisdiction: eu`)
+- Shows quality fallback state when enabled
+
+**Documentation:**
+- Updated README "What's New" section for v2.0.59
+- Site version bumped to 2.0.59
+
+---
+
 ## [2.0.58] - 2026-03-16
 
 ### Added — Jurisdiction-Aware Model Routing
