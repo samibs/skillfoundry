@@ -136,6 +136,7 @@ export declare class VectorStore {
      * @param workDir - Project root directory. All paths are resolved relative to this.
      * @param options - Optional store configuration overrides.
      */
+    private readonly workDir;
     constructor(embeddingService: EmbeddingService, workDir: string, options?: Partial<VectorStoreOptions>);
     /**
      * Initialise the vector store.

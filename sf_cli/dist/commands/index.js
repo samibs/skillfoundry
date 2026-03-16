@@ -18,6 +18,9 @@ import { benchmarkCommand } from './benchmark.js';
 import { metricsCommand } from './metrics.js';
 import { runtimeCommand } from './runtime.js';
 import { prdReviewCommand } from './prd-review.js';
+import { publishCommand } from './publish.js';
+import { upgradeCommand } from './upgrade.js';
+import { auditCommand } from './audit.js';
 const registry = new Map();
 export function registerCommand(cmd) {
     registry.set(cmd.name, cmd);
@@ -64,5 +67,8 @@ export function initCommands() {
     registerCommand(metricsCommand);
     registerCommand(runtimeCommand);
     registerCommand(prdReviewCommand);
+    registerCommand(publishCommand);
+    registerCommand(upgradeCommand);
+    registerCommand(auditCommand);
 }
 //# sourceMappingURL=index.js.map

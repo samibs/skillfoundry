@@ -1,15 +1,16 @@
 // Bridge layer — thin adapter between VS Code extension and sf_cli core modules.
 // All quality logic lives in sf_cli. This layer wraps it for VS Code consumption.
 //
-// Two modes:
-// 1. Module mode: sf_cli/dist/ is available locally — use dynamic import()
-// 2. File mode: only data files exist (.skillfoundry/*.jsonl) — parse directly
+// Execution mode:
+// - sf-runner.mjs (ESM wrapper) is called via child_process.execFile for operations
+//   that need sf_cli core modules (gates, dep scanning, reports, metrics).
+// - JSONL data files are read directly for passive data (telemetry, audit, perf).
 //
-// File mode is the default when SkillFoundry is installed via npm/forge
-// (sf_cli/dist/ is not shipped in the npm package).
+// The runner script handles the ESM/CJS boundary — the extension stays CJS (esbuild).
 
 import * as path from 'path';
 import * as fs from 'fs';
+import { execFile } from 'child_process';
 
 // Types re-exported for the extension to use without importing sf_cli directly
 export interface GateResult {
@@ -27,6 +28,7 @@ export interface GateRunSummary {
   failed: number;
   warned: number;
   skipped: number;
+  totalMs?: number;
 }
 
 export interface TelemetryEvent {
@@ -181,37 +183,83 @@ function percentile(sorted: number[], p: number): number {
 }
 
 /**
- * SfBridge — Single interface between VS Code extension and sf_cli data.
- * Reads JSONL data files directly from .skillfoundry/ — no module imports needed.
- * All methods return result objects (never throw). Extension handles display.
+ * SfBridge — Single interface between VS Code extension and sf_cli.
+ *
+ * Active operations (gates, dep scan, reports) use sf-runner.mjs subprocess.
+ * Passive data (telemetry, audit, perf, memory) reads JSONL directly.
  */
 export class SfBridge {
   private sfDir: string;
-  private sfCliPath: string | null;
+  private runnerPath: string | null;
 
   constructor(private workDir: string) {
     this.sfDir = path.join(workDir, '.skillfoundry');
-    this.sfCliPath = this.findSfCli();
+    this.runnerPath = this.findRunner();
   }
 
-  private findSfCli(): string | null {
+  /** Find sf-runner.mjs — the ESM wrapper for sf_cli core modules */
+  private findRunner(): string | null {
     const candidates = [
-      path.resolve(__dirname, '..', '..', 'sf_cli', 'dist'),
-      path.resolve(this.workDir, 'sf_cli', 'dist'),
-      path.resolve(__dirname, '..', '..', 'sf_cli', 'src'),
-      path.resolve(this.workDir, 'sf_cli', 'src'),
+      // Development: extension is inside skillfoundry/skillfoundry-vscode/
+      path.resolve(__dirname, '..', '..', 'sf_cli', 'bin', 'sf-runner.mjs'),
+      // Installed: sf_cli is sibling to workspace
+      path.resolve(this.workDir, 'sf_cli', 'bin', 'sf-runner.mjs'),
+      // npm global install: node_modules/skillfoundry/sf_cli/bin/
+      path.resolve(__dirname, '..', '..', '..', 'skillfoundry', 'sf_cli', 'bin', 'sf-runner.mjs'),
     ];
     for (const candidate of candidates) {
-      if (fs.existsSync(path.join(candidate, 'core', 'telemetry.js'))) {
+      if (fs.existsSync(candidate)) {
         return candidate;
       }
     }
     return null;
   }
 
-  /** Check if sf_cli modules are available (not required — file mode works without) */
+  /** Run sf-runner.mjs with given args, parse JSON output */
+  private runRunner(args: string[], timeoutMs: number = 120_000): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      if (!this.runnerPath) {
+        reject(new Error('sf-runner.mjs not found — sf_cli not installed'));
+        return;
+      }
+
+      // Validate runner path exists before exec
+      if (!fs.existsSync(this.runnerPath)) {
+        reject(new Error(`sf-runner.mjs not found at ${this.runnerPath}`));
+        return;
+      }
+
+      const fullArgs = [this.runnerPath, '--workdir', this.workDir, ...args];
+
+      execFile('node', fullArgs, {
+        timeout: timeoutMs,
+        maxBuffer: 10 * 1024 * 1024,
+        encoding: 'utf-8',
+      }, (error, stdout, stderr) => {
+        if (error) {
+          const msg = stderr?.trim() || error.message || 'Runner failed';
+          reject(new Error(msg));
+          return;
+        }
+
+        const output = stdout.trim();
+        if (!output) {
+          reject(new Error('Runner returned empty output'));
+          return;
+        }
+
+        try {
+          resolve(JSON.parse(output));
+        } catch {
+          reject(new Error(`Runner returned invalid JSON: ${output.slice(0, 200)}`));
+        }
+      });
+    });
+  }
+
+  /** Check if the runner (sf_cli) is available for active operations */
   isAvailable(): boolean {
-    return this.sfCliPath !== null;
+    return this.runnerPath !== null;
   }
 
   /** Check if data directory exists */
@@ -219,9 +267,9 @@ export class SfBridge {
     return fs.existsSync(this.sfDir);
   }
 
-  /** Get the resolved sf_cli path (for diagnostics) */
+  /** Get the resolved runner path (for diagnostics) */
   getSfCliPath(): string {
-    return this.sfCliPath || '(file mode — no sf_cli modules)';
+    return this.runnerPath || '(no sf-runner.mjs found — file mode only)';
   }
 
   /** Get the workspace directory */
@@ -232,10 +280,40 @@ export class SfBridge {
   // ── Telemetry (file-based) ────────────────────────────────────
 
   async getMetrics(window: number = 10): Promise<TelemetryAggregation | null> {
+    // Try runner first (uses sf_cli's aggregateMetrics with baselines)
+    if (this.runnerPath) {
+      try {
+        const result = await this.runRunner(['--metrics', '--window', String(window)]) as {
+          aggregation: Record<string, unknown>;
+        };
+        if (result?.aggregation) {
+          const agg = result.aggregation as Record<string, unknown>;
+          return {
+            total_runs: (agg.total_runs as number) || 0,
+            successful_runs: (agg.successful_runs as number) || 0,
+            partial_runs: (agg.partial_runs as number) || 0,
+            failed_runs: (agg.failed_runs as number) || 0,
+            gate_pass_rate: (agg.avg_gate_pass_rate as number) || (agg.gate_pass_rate as number) || 0,
+            avg_security_findings: (agg.total_security_findings as { critical: number; high: number; medium: number; low: number }) ||
+              { critical: 0, high: 0, medium: 0, low: 0 },
+            avg_tests_created: (agg.total_tests_created as number) || 0,
+            avg_rework_cycles: (agg.total_rework_cycles as number) || 0,
+            avg_duration_ms: (agg.avg_duration_ms as number) || 0,
+            avg_cost_usd: (agg.avg_cost_usd as number) || 0,
+            total_cost_usd: 0,
+            trend: (agg.trend as 'improving' | 'declining' | 'stable' | 'insufficient_data') || 'insufficient_data',
+            window: (agg.window as number) || window,
+          };
+        }
+      } catch {
+        // Fall through to file-based
+      }
+    }
+
+    // Fallback: file-based telemetry parsing
     const events = readJsonlFile<TelemetryEvent>(path.join(this.sfDir, 'telemetry.jsonl'));
     if (events.length === 0) return null;
 
-    // Filter to forge_run events for metrics
     const runs = events
       .filter((e) => e.event_type === 'forge_run' || e.event_type === 'pipeline_run')
       .slice(-window);
@@ -249,12 +327,10 @@ export class SfBridge {
     const durations = runs.map((r) => r.duration_ms).filter((d) => d > 0);
     const avgDuration = durations.length > 0 ? durations.reduce((a, b) => a + b, 0) / durations.length : 0;
 
-    // Gate events for pass rate
     const gateEvents = events.filter((e) => e.event_type === 'gate_run').slice(-window * 7);
     const gatePassed = gateEvents.filter((e) => e.status === 'pass').length;
     const gatePassRate = gateEvents.length > 0 ? gatePassed / gateEvents.length : 0;
 
-    // Security findings from events
     const secFindings = { critical: 0, high: 0, medium: 0, low: 0 };
     for (const r of runs) {
       const d = r.details || {};
@@ -265,15 +341,12 @@ export class SfBridge {
     }
     const n = runs.length || 1;
 
-    // Cost
     const costs = runs.map((r) => (r.details?.cost_usd as number) || 0);
     const totalCost = costs.reduce((a, b) => a + b, 0);
 
-    // Tests created
     const tests = runs.map((r) => (r.details?.tests_created as number) || 0);
     const avgTests = tests.reduce((a, b) => a + b, 0) / n;
 
-    // Trend: compare first half vs second half pass rates
     let trend: 'improving' | 'declining' | 'stable' | 'insufficient_data' = 'insufficient_data';
     if (runs.length >= 4) {
       const half = Math.floor(runs.length / 2);
@@ -315,33 +388,68 @@ export class SfBridge {
     return {};
   }
 
-  // ── Gates ─────────────────────────────────────────────────────
+  // ── Gates (via sf-runner.mjs) ────────────────────────────────────
 
-  async runGate(_tier: string, _target?: string): Promise<GateResult | null> {
-    // Gate execution requires sf_cli modules — fall back to CLI
-    return null;
+  async runGate(tier: string, target?: string): Promise<GateResult | null> {
+    try {
+      const args = ['--gate', tier];
+      if (target) args.push('--target', target);
+      const result = await this.runRunner(args, 60_000) as GateResult;
+      return result;
+    } catch (err) {
+      console.error(`[SfBridge] runGate(${tier}) failed:`, (err as Error).message);
+      return null;
+    }
   }
 
-  async runAllGates(_target?: string): Promise<GateRunSummary | null> {
-    // Gate execution requires sf_cli modules — fall back to CLI
-    return null;
+  async runAllGates(target?: string): Promise<GateRunSummary | null> {
+    try {
+      const args = ['--gate-all'];
+      if (target) args.push('--target', target);
+      const result = await this.runRunner(args, 180_000) as GateRunSummary;
+      return result;
+    } catch (err) {
+      console.error(`[SfBridge] runAllGates failed:`, (err as Error).message);
+      return null;
+    }
   }
 
-  // ── Dependencies ──────────────────────────────────────────────
+  // ── Dependencies (via sf-runner.mjs) ──────────────────────────────
 
   async scanDependencies(): Promise<CombinedDepReport | null> {
-    // Dependency scanning requires sf_cli modules — fall back to CLI
-    return null;
+    try {
+      const result = await this.runRunner(['--scan-deps'], 120_000) as CombinedDepReport;
+      return result;
+    } catch (err) {
+      console.error(`[SfBridge] scanDependencies failed:`, (err as Error).message);
+      return null;
+    }
   }
 
-  // ── Reports ───────────────────────────────────────────────────
+  // ── Reports (via sf-runner.mjs) ────────────────────────────────────
 
-  async generateReport(_window: number = 10): Promise<QualityReport | null> {
-    return null;
+  async generateReport(window: number = 10): Promise<QualityReport | null> {
+    try {
+      const result = await this.runRunner(['--report', '--window', String(window)]) as {
+        report: QualityReport;
+      };
+      return result?.report || null;
+    } catch (err) {
+      console.error(`[SfBridge] generateReport failed:`, (err as Error).message);
+      return null;
+    }
   }
 
-  async formatReportMarkdown(_report: QualityReport): Promise<string> {
-    return '# Report generation requires sf_cli modules';
+  async formatReportMarkdown(report: QualityReport): Promise<string> {
+    // If we got here, report was generated by the runner — try to get markdown
+    try {
+      const result = await this.runRunner(['--report', '--window', String(report.window || 10)]) as {
+        markdown: string;
+      };
+      return result?.markdown || '# No report data available';
+    } catch {
+      return '# Report formatting requires sf_cli';
+    }
   }
 
   // ── Audit Log (file-based) ──────────────────────────────────
@@ -404,7 +512,7 @@ export class SfBridge {
     const violations: Array<{ gate: string; p95_ms: number }> = [];
 
     for (const stat of stats) {
-      if (stat.gate === 'T3') continue; // excluded
+      if (stat.gate === 'T3') continue;
       if (stat.count < 5) continue;
       if (stat.p95_ms > threshold) {
         violations.push({ gate: stat.gate, p95_ms: stat.p95_ms });
@@ -417,7 +525,6 @@ export class SfBridge {
   // ── Quality Benchmark ──────────────────────────────────────────
 
   async runBenchmark(): Promise<{ total: number; correct: number; accuracy_pct: number; duration_ms: number } | null> {
-    // Benchmark requires sf_cli modules
     return null;
   }
 

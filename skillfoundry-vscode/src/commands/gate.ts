@@ -26,7 +26,7 @@ export function registerGateCommands(
         async () => {
           const summary = await bridge.runAllGates();
           if (!summary) {
-            vscode.window.showErrorMessage('SkillFoundry: Gate execution failed. Is sf_cli installed?');
+            vscode.window.showErrorMessage('SkillFoundry: Gate execution failed. Ensure sf_cli is built (cd sf_cli && npm run build).');
             return;
           }
 
@@ -63,7 +63,7 @@ export function registerGateCommands(
         async () => {
           const result = await bridge.runGate(selectedTier);
           if (!result) {
-            vscode.window.showErrorMessage('SkillFoundry: Gate execution failed.');
+            vscode.window.showErrorMessage('SkillFoundry: Gate execution failed. Check Output > SkillFoundry for details.');
             return;
           }
 

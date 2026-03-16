@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0] - 2026-03-16
+
+### Live Gate Execution
+
+- **Real Gate Execution** — "Run All Gates" and "Run Gate" now execute real T0-T6 quality gates via `sf-runner.mjs` subprocess. Results appear in the Gate Timeline with pass/fail/warn/skip status and timing.
+- **Real Dependency Scanning** — "Scan Dependencies" runs actual npm/pip/dotnet vulnerability analysis instead of returning empty results.
+- **Real Report Generation** — "View Quality Report" generates live quality reports from telemetry data with industry baselines.
+- **Real Metrics** — "Show Metrics" aggregates actual telemetry events with trend analysis and security finding summaries.
+- **sf-runner.mjs Bridge** — ESM wrapper script that bridges the VS Code extension (CJS) to sf_cli core modules (ESM). Supports gates, dependency scanning, reports, and metrics.
+- **Improved Error Messages** — Gate and scan failures now show actionable messages about sf-runner availability.
+
 ## [1.0.0] - 2026-03-16
 
 ### Initial Marketplace Release

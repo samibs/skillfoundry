@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.57] - 2026-03-16
+
+### Added — VS Code Extension: Live Gate Execution
+
+**sf-runner.mjs — ESM/CJS Bridge:**
+- **Runner Script** (`sf_cli/bin/sf-runner.mjs`): ESM wrapper that loads sf_cli core modules and executes operations via JSON stdout. Solves the ESM/CJS incompatibility between sf_cli (ESM) and VS Code extensions (CJS/esbuild).
+- Supports `--gate-all`, `--gate T1`, `--scan-deps`, `--report`, `--metrics` with `--workdir` and `--target` options
+- Sets `SF_FRAMEWORK_ROOT` automatically so `anvil.sh` discovery works from any location
+
+**VS Code Extension — Real Operations:**
+- **Bridge Rewrite** (`bridge.ts`): Active operations (gates, dep scan, reports) now call `sf-runner.mjs` via `child_process.execFile`. Passive data (telemetry, audit, perf) still read JSONL directly.
+- **Run All Gates** — executes real T0-T6 quality gates and displays results in Gate Timeline
+- **Run Single Gate** — executes individual gate tiers with real output
+- **Scan Dependencies** — runs actual npm/pip/dotnet vulnerability analysis
+- **View Quality Report** — generates live quality report from telemetry data
+- **Show Metrics** — aggregates real telemetry with industry baselines
+
+**npm Package:**
+- Added `sf_cli/bin/` and `sf_cli/dist/` to npm `files` array so the extension works after global install
+
+### Changed
+- Updated gate command error messages to reference sf-runner availability
+- Extension bridge now uses subprocess execution instead of returning null for active operations
+
+---
+
 ## [2.0.56] - 2026-03-16
 
 ### Added — Phase 3: Make It the Standard

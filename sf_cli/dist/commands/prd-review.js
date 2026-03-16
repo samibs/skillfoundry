@@ -198,8 +198,17 @@ export const prdReviewCommand = {
                 '',
             ].join('\n');
         }
-        // Resolve path relative to workDir
+        // Resolve path relative to workDir with confinement check
         const resolvedPath = resolve(session.workDir, filePath);
+        const normWorkDir = resolve(session.workDir);
+        if (!resolvedPath.startsWith(normWorkDir)) {
+            log.error('prd-review', 'path_traversal_rejected', { path: filePath, resolved: resolvedPath });
+            return [
+                '',
+                `  ${RED}Error: Path escapes project directory — rejected${RESET}`,
+                '',
+            ].join('\n');
+        }
         if (!existsSync(resolvedPath)) {
             log.error('prd-review', 'file_not_found', { path: resolvedPath });
             return [

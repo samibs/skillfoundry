@@ -665,23 +665,13 @@ function runT6(workDir, storyFile) {
     };
 }
 export async function runAllGates(options) {
-    const { workDir, target = '.', storyFile, onGateStart, onGateComplete } = options;
+    const { workDir, target = '.', storyFile, onGateStart, onGateComplete, parallel = false } = options;
     const resolvedTarget = resolve(workDir, target);
     const gates = [];
-    const tiers = [
-        { run: () => runT0(workDir), tier: 'T0', name: 'Correctness Contract' },
-        { run: () => runT1(workDir, resolvedTarget), tier: 'T1', name: 'Banned Patterns & Syntax' },
-        { run: () => runT2(workDir), tier: 'T2', name: 'Type Check' },
-        { run: () => runT3(workDir), tier: 'T3', name: 'Tests' },
-        { run: () => runT4(workDir, resolvedTarget), tier: 'T4', name: 'Security Scan' },
-        { run: () => runT5(workDir), tier: 'T5', name: 'Build' },
-        { run: () => runT6(workDir, storyFile), tier: 'T6', name: 'Scope Validation' },
-    ];
     const log = getLogger();
-    for (const { run, tier, name } of tiers) {
+    const runWithCallbacks = (tier, name, fn) => {
         onGateStart?.(tier, name);
-        const result = run();
-        gates.push(result);
+        const result = fn();
         if (result.status === 'fail') {
             log.error('gate', 'gate_failed', { tier: result.tier, detail: result.detail.slice(0, 200) });
         }
@@ -689,6 +679,44 @@ export async function runAllGates(options) {
             log.info('gate', 'gate_result', { tier: result.tier, status: result.status, detail: result.detail.slice(0, 200) });
         }
         onGateComplete?.(result);
+        return result;
+    };
+    if (parallel) {
+        // Parallel execution: T0+T1+T2 → T3 → T4+T5 → T6
+        // Phase 1: T0, T1, T2 run concurrently (fast, independent)
+        const [t0, t1, t2] = await Promise.all([
+            Promise.resolve(runWithCallbacks('T0', 'Correctness Contract', () => runT0(workDir))),
+            Promise.resolve(runWithCallbacks('T1', 'Banned Patterns & Syntax', () => runT1(workDir, resolvedTarget))),
+            Promise.resolve(runWithCallbacks('T2', 'Type Check', () => runT2(workDir))),
+        ]);
+        gates.push(t0, t1, t2);
+        // Phase 2: T3 (tests) — depends on T1+T2 passing for meaningful results
+        const t3 = runWithCallbacks('T3', 'Tests', () => runT3(workDir));
+        gates.push(t3);
+        // Phase 3: T4+T5 run concurrently (independent I/O operations)
+        const [t4, t5] = await Promise.all([
+            Promise.resolve(runWithCallbacks('T4', 'Security Scan', () => runT4(workDir, resolvedTarget))),
+            Promise.resolve(runWithCallbacks('T5', 'Build', () => runT5(workDir))),
+        ]);
+        gates.push(t4, t5);
+        // Phase 4: T6 (scope) — runs last
+        const t6 = runWithCallbacks('T6', 'Scope Validation', () => runT6(workDir, storyFile));
+        gates.push(t6);
+    }
+    else {
+        // Sequential execution (default — backwards compatible)
+        const tiers = [
+            { run: () => runT0(workDir), tier: 'T0', name: 'Correctness Contract' },
+            { run: () => runT1(workDir, resolvedTarget), tier: 'T1', name: 'Banned Patterns & Syntax' },
+            { run: () => runT2(workDir), tier: 'T2', name: 'Type Check' },
+            { run: () => runT3(workDir), tier: 'T3', name: 'Tests' },
+            { run: () => runT4(workDir, resolvedTarget), tier: 'T4', name: 'Security Scan' },
+            { run: () => runT5(workDir), tier: 'T5', name: 'Build' },
+            { run: () => runT6(workDir, storyFile), tier: 'T6', name: 'Scope Validation' },
+        ];
+        for (const { run, tier, name } of tiers) {
+            gates.push(runWithCallbacks(tier, name, run));
+        }
     }
     const passed = gates.filter((g) => g.status === 'pass').length;
     const failed = gates.filter((g) => g.status === 'fail').length;
