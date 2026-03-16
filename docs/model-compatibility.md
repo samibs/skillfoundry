@@ -181,3 +181,10 @@ Warnings appear once per session and can be suppressed:
 # .skillfoundry/config.toml
 suppress_tier_warnings = false    # set to true to suppress
 ```
+
+---
+
+## Further Reading
+
+- **[Attention Residuals — Architecture Research Note](knowledge/ai-architecture/attention-residuals.md)** — Why the execution tier is getting smarter per FLOP (AttnRes, mHC, depth-attention architectures)
+- **[Local Model Selection — Execution Tier Guide](knowledge/ai-architecture/local-model-selection.md)** — Architecture signals, routing logic, hardware guidance, and `model-routing.yaml` config for local-first deployment
