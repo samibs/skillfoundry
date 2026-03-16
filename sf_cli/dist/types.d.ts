@@ -109,6 +109,9 @@ export interface SfConfig {
     context_window: number;
     log_level: string;
     team_config?: string;
+    data_jurisdiction: 'none' | 'eu' | 'strict';
+    quality_fallback: boolean;
+    routing_rules: Record<string, 'local' | 'cloud' | 'auto'>;
 }
 /** Gate threshold overrides per tier */
 export interface GateThresholds {

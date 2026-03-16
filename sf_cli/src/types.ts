@@ -130,6 +130,10 @@ export interface SfConfig {
   log_level: string; // debug | info | warn | error
   // Team config file reference (v2.0.55)
   team_config?: string;
+  // Jurisdiction-aware routing (v2.0.57)
+  data_jurisdiction: 'none' | 'eu' | 'strict'; // none=no restrictions, eu=prefer local, strict=never cloud
+  quality_fallback: boolean; // re-route to cloud if local output fails quality check
+  routing_rules: Record<string, 'local' | 'cloud' | 'auto'>; // per-task-type overrides
 }
 
 // ── Team Configuration (Epic 9: Team & Cloud Mode) ────────────────────────────
