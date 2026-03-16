@@ -9,11 +9,16 @@ import type {
   ToolCall,
   ToolResult,
   RunnerResult,
+  MessageType,
+  AgentMessage,
 } from '../types.js';
 import type { ToolDefinition } from './tools.js';
 import { TOOL_SETS, type ToolCategory } from './agent-registry.js';
 import { runAgentLoop } from './ai-runner.js';
 import { getLogger } from '../utils/logger.js';
+import { AgentMessageBus, type SubscriberFn, type UnsubscribeFn } from './agent-message-bus.js';
+import { AgentLogger } from './agent-logger.js';
+import { randomUUID } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Agent State Machine
@@ -75,6 +80,16 @@ export interface AgentContext {
   budgetUsd: number;
   abortSignal: { aborted: boolean };
   delegationDepth: number;
+  /**
+   * Optional task identifier. Populated by AgentPool when a task is dispatched.
+   * Used by AgentLogger to correlate structured log entries to a specific pool task.
+   */
+  taskId?: string;
+  /**
+   * Optional correlation ID. Propagated from parent to child agents via delegate()
+   * so all log entries in a delegation chain share the same correlation ID.
+   */
+  correlationId?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -116,6 +131,13 @@ export abstract class Agent {
   readonly displayName: string;
   readonly toolCategory: ToolCategory;
 
+  /**
+   * The message bus this agent is connected to.
+   * Defaults to the process-level singleton (AgentMessageBus.global()).
+   * Pass a custom instance in tests for isolation.
+   */
+  readonly bus: AgentMessageBus;
+
   protected state: AgentState;
   protected context: AgentContext | null = null;
   private listeners: Map<AgentEventType, AgentEventListener[]> = new Map();
@@ -125,10 +147,11 @@ export abstract class Agent {
   private totalCost = 0;
   private childResults: Map<string, AgentResult> = new Map();
 
-  constructor(name: string, displayName: string, toolCategory: ToolCategory) {
+  constructor(name: string, displayName: string, toolCategory: ToolCategory, bus?: AgentMessageBus) {
     this.name = name;
     this.displayName = displayName;
     this.toolCategory = toolCategory;
+    this.bus = bus ?? AgentMessageBus.global();
     this.state = this.createInitialState();
   }
 
@@ -142,6 +165,12 @@ export abstract class Agent {
     this.totalCost = 0;
     this.childResults = new Map();
     this.state = this.createInitialState();
+
+    // Resolve taskId and correlationId for structured logging — use context values
+    // when provided (set by AgentPool), otherwise generate stable IDs for this execution.
+    const taskId = context.taskId ?? randomUUID();
+    const correlationId = context.correlationId ?? randomUUID();
+    const agentLogger = new AgentLogger(this.name, taskId, correlationId, context.workDir);
 
     // Budget check
     if (context.budgetUsd <= 0) {
@@ -161,14 +190,29 @@ export abstract class Agent {
     const log = getLogger();
     log.info('runner', 'agent_execute', { agent: this.name, task: task.slice(0, 100) });
 
+    agentLogger.start();
+
     try {
       // Check abort signal
       if (context.abortSignal.aborted) {
         this.state.status = 'aborted';
+        agentLogger.abort('Aborted before execution');
         return this.buildResult('aborted', 'Aborted before execution');
       }
 
       const result = await this.run(task, context);
+
+      // Log based on outcome
+      if (result.status === 'aborted') {
+        agentLogger.abort('Agent run returned aborted status');
+      } else if (result.status === 'budget_exceeded') {
+        agentLogger.fail(new Error('Budget exceeded'));
+      } else if (result.status === 'failed') {
+        agentLogger.fail(new Error(result.output));
+      } else {
+        agentLogger.complete({ status: result.status, durationMs: result.durationMs });
+      }
+
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -176,6 +220,7 @@ export abstract class Agent {
       this.state.blockers.push(message);
       log.error('runner', 'agent_failed', { agent: this.name, error: message });
       this.emit('failed', { error: message });
+      agentLogger.fail(err instanceof Error ? err : new Error(message));
       return this.buildResult('failed', message);
     }
   }
@@ -220,6 +265,40 @@ export abstract class Agent {
         // Listener errors don't break agent execution
       }
     }
+  }
+
+  // ── Message Bus Convenience API ──────────────────────────────────────
+
+  /**
+   * Publish a message to the agent message bus.
+   * Automatically sets `sender` to this agent's name and fills `id` and `timestamp`.
+   *
+   * @param type - The MessageType for topic routing.
+   * @param payload - Arbitrary structured payload for the message.
+   * @param recipient - Target agent ID. Defaults to '*' (broadcast).
+   * @param correlationId - Optional correlation ID. Generated if omitted.
+   */
+  protected publishMessage(
+    type: MessageType,
+    payload: Record<string, unknown>,
+    recipient = '*',
+    correlationId?: string,
+  ): AgentMessage {
+    const message = AgentMessageBus.buildMessage(this.name, recipient, type, payload, correlationId);
+    this.bus.publish(message);
+    return message;
+  }
+
+  /**
+   * Subscribe to messages on the bus.
+   * The subscription is scoped to `type` and uses the shared bus instance.
+   *
+   * @param type - The MessageType to listen for, or '*' for all types.
+   * @param handler - Invoked with each matching message envelope.
+   * @returns An unsubscribe function to remove the listener.
+   */
+  protected subscribeMessage(type: MessageType | '*', handler: SubscriberFn): UnsubscribeFn {
+    return this.bus.subscribe(type, handler);
   }
 
   // ── Delegation ──────────────────────────────────────────────────────
@@ -272,6 +351,10 @@ export abstract class Agent {
       budgetUsd: allocatedBudget,
       delegationDepth: this.context.delegationDepth + 1,
       abortSignal: { aborted: this.context.abortSignal.aborted },
+      // Propagate correlation ID so all agents in this delegation chain share it
+      correlationId: this.context.correlationId,
+      // Child gets a new taskId since it is a distinct execution unit
+      taskId: randomUUID(),
     };
 
     const result = await childAgent.execute(task, childContext);

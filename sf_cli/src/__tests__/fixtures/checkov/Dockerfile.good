@@ -1,0 +1,19 @@
+# Well-configured Dockerfile — used in Checkov tests
+# Follows best practices: pinned digest, non-root user, HEALTHCHECK
+FROM ubuntu:22.04@sha256:c9820a44b950956a790c354700c1166a7ec648bc0d215fa438d3a339812f1d01
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl=7.81.0 \
+  && rm -rf /var/lib/apt/lists/*
+
+COPY --chown=appuser:appuser . /app
+
+WORKDIR /app
+
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+USER appuser
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || exit 1
+
+CMD ["./app"]

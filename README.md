@@ -4,13 +4,13 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.52-blue)
+![Version](https://img.shields.io/badge/version-2.0.55-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that installs 56 agents and 64 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes. Now with a native VS Code extension for inline gate results, telemetry dashboards, and one-click forge runs.
+SkillFoundry is an AI engineering framework that installs 56 agents and 64 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes. Now with runtime intelligence (message bus, agent pool, vector search), security scanners (Gitleaks, Checkov), and a native VS Code extension.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -24,12 +24,13 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.52
+### What's New in v2.0.55
 
-- **Docusaurus documentation site** — Full searchable docs at [skillfoundry.work](https://skillfoundry.work) with getting started, architecture, configuration, and recipe guides.
-- **Telemetry baseline** — Capture a quality snapshot with `sf metrics baseline` and track improvements over time.
-- **HTML quality reports** — Generate shareable HTML reports with `sf report --html` for stakeholders and audits.
-- **Consent system** — Telemetry data collection is opt-in with explicit user consent management.
+- **Runtime Intelligence** — Message bus, agent pool, embedding service, vector store, and weight learner for adaptive pipeline behavior.
+- **Security Scanners** — Gitleaks secret detection and Checkov IaC scanning with SHA-256 hashed findings (raw secrets never stored).
+- **Semantic Search** — Natural language code search combining vector similarity with keyword fallback.
+- **PRD Review** — Score PRDs on completeness, specificity, consistency, and scope with `sf prd review <path>`.
+- **1,579 tests** — 697 new tests across 17 files. All passing.
 
 ### Quick Install
 
@@ -144,7 +145,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 |---|---|---|
 | **What it is** | Markdown instruction files your AI reads | Terminal app with its own AI connection |
 | **Runs inside** | Claude Code, Copilot, Cursor, Codex, Gemini | Your terminal (any OS) |
-| **Full pipeline** | `/forge`, `/go`, `/goma` (all 64 skills) | `/forge`, `/plan`, `/gates` (20 commands) |
+| **Full pipeline** | `/forge`, `/go`, `/goma` (all 64 skills) | `/forge`, `/plan`, `/gates` (23 commands) |
 | **Autonomous mode** | `/goma` — full autonomous with safety gates | Not available |
 | **Provider switching** | Uses your IDE's provider | Built-in: 6 providers, switch at runtime |
 | **Budget controls** | Not available | Per-run and monthly cost caps |
@@ -180,7 +181,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 2. The Standalone CLI (`sf`)
 
-A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 20 native commands (not all 64 skills).
+A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 23 native commands (not all 64 skills).
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -556,7 +557,7 @@ scripts/evolve.sh run                      Full evolution cycle
 
 ## Command Reference
 
-### sf CLI Commands (20 native)
+### sf CLI Commands (23 native)
 
 These work inside the `sf` terminal app:
 
@@ -582,6 +583,9 @@ These work inside the `sf` terminal app:
 | `/report [--format md\|json]` | Generate exportable quality report |
 | `/benchmark` | Compare quality against industry baselines |
 | `/hook install\|uninstall\|status` | Manage git hook integration for quality gates |
+| `/runtime` | Runtime intelligence status (message bus, agent pool, vector store) |
+| `/prd review <path>` | Score a PRD on 4 dimensions with actionable feedback |
+| `/lessons` | Query and manage knowledge bank entries |
 
 ### IDE Skills (63 — Claude Code, Copilot, Cursor, Codex, Gemini)
 
@@ -637,7 +641,7 @@ Install multiple platforms at once:
 ```
 skillfoundry/
 ├── sf_cli/                  Interactive CLI (Node.js + React/Ink)
-│   ├── src/core/            Provider adapters, tools, permissions, gates, micro-gates, budget, compaction, output compression, debugger (CDP)
+│   ├── src/core/            Provider adapters, tools, permissions, gates, micro-gates, budget, compaction, output compression, debugger (CDP), message bus, agent pool, embedding service, vector store, weight learner, dependency scanner, report generator, gitleaks scanner, checkov scanner, semantic search, PRD scorer
 │   ├── src/components/      Terminal UI: Header, Input, Message, GateTimeline, ...
 │   ├── src/commands/        Slash command handlers (/team, /agent, /plan, ...)
 │   └── src/hooks/           Session state and streaming hooks

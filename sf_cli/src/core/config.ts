@@ -1,8 +1,28 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import TOML from '@iarna/toml';
-import type { SfConfig, SfPolicy } from '../types.js';
+import type { SfConfig, SfPolicy, EmbeddingServiceOptions } from '../types.js';
 import { AVAILABLE_PROVIDERS, detectAvailableProviders } from './provider.js';
+
+/**
+ * Build default EmbeddingServiceOptions from environment variables.
+ * Reads OLLAMA_HOST and SF_OPENAI_API_KEY from the process environment.
+ * @returns Fully populated EmbeddingServiceOptions with sensible defaults.
+ */
+export function getDefaultEmbeddingOptions(): EmbeddingServiceOptions {
+  const ollamaHost = process.env.OLLAMA_HOST ?? 'localhost:11434';
+  const ollamaUrl = ollamaHost.startsWith('http') ? ollamaHost : `http://${ollamaHost}`;
+  return {
+    preferredProvider: 'ollama',
+    ollamaUrl,
+    ollamaModel: 'nomic-embed-text',
+    openaiApiKey: process.env.SF_OPENAI_API_KEY,
+    openaiModel: 'text-embedding-3-small',
+    maxChunkLength: 8192,
+    cacheTtlMs: 3_600_000, // 1 hour
+    maxCacheSize: 500,
+  };
+}
 
 const WORK_DIR = '.skillfoundry';
 const CONFIG_FILE = join(WORK_DIR, 'config.toml');

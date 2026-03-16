@@ -1,3 +1,64 @@
+/**
+ * The result of embedding a single text.
+ */
+export interface EmbeddingResult {
+    /** Dense vector representation of the text. */
+    vector: number[];
+    /** Name of the provider that produced this embedding ('ollama' | 'openai'). */
+    provider: string;
+    /** Dimensionality of the vector (768 for Ollama, 1536 for OpenAI). */
+    dimensions: number;
+    /** True when the result was served from the in-memory LRU cache. */
+    cached: boolean;
+}
+/**
+ * Configuration options for EmbeddingService.
+ */
+export interface EmbeddingServiceOptions {
+    /** Preferred provider to try first. Default: 'ollama'. */
+    preferredProvider: 'ollama' | 'openai';
+    /** Base URL for the Ollama API. Default: 'http://localhost:11434'. */
+    ollamaUrl: string;
+    /** Ollama embedding model name. Default: 'nomic-embed-text'. */
+    ollamaModel: string;
+    /** OpenAI API key. Reads SF_OPENAI_API_KEY from env when not provided. */
+    openaiApiKey?: string;
+    /** OpenAI embedding model name. Default: 'text-embedding-3-small'. */
+    openaiModel: string;
+    /** Maximum text length in characters before truncation. Default: 8192. */
+    maxChunkLength: number;
+    /** LRU cache TTL in milliseconds. Default: 3600000 (1 hour). */
+    cacheTtlMs: number;
+    /** Maximum number of entries in the LRU cache. Default: 500. */
+    maxCacheSize: number;
+}
+/**
+ * Provider abstraction for embedding backends.
+ */
+export interface EmbeddingProvider {
+    /** Provider identifier ('ollama' | 'openai'). */
+    name: string;
+    /** Vector dimensionality produced by this provider. */
+    dimensions: number;
+    /**
+     * Embed a single text string.
+     * @param text - The text to embed.
+     * @returns Dense vector as an array of floats.
+     */
+    embed(text: string): Promise<number[]>;
+    /**
+     * Embed multiple texts in batches.
+     * @param texts - Array of texts to embed.
+     * @param batchSize - Number of texts per batch request.
+     * @returns Array of dense vectors in the same order as the input.
+     */
+    embedBatch(texts: string[], batchSize?: number): Promise<number[][]>;
+    /**
+     * Check whether the provider is reachable and ready.
+     * @returns True when the provider can accept embedding requests.
+     */
+    isAvailable(): Promise<boolean>;
+}
 export type SessionState = 'IDLE' | 'GENERATING_STORIES' | 'VALIDATED' | 'EXECUTING_STORY' | 'COMPLETED' | 'FAILED';
 export type MessageRole = 'user' | 'assistant' | 'system' | 'tool';
 export interface Message {
@@ -211,6 +272,34 @@ export interface MicroGateResult {
     durationMs: number;
     skippedDueToError?: boolean;
 }
+/**
+ * Discriminated union of all message types supported by the AgentMessageBus.
+ * task: messages carry work delegation and cancellation signals.
+ * result: messages carry outcomes from agent execution.
+ * status: messages carry heartbeat and status-poll signals.
+ * memory: messages carry knowledge store/query operations.
+ */
+export type MessageType = 'task:delegate' | 'task:cancel' | 'result:complete' | 'result:error' | 'status:heartbeat' | 'status:request' | 'memory:store' | 'memory:query';
+/**
+ * Typed message envelope used by every publish/subscribe interaction on the bus.
+ * @template T - Shape of the payload. Defaults to Record<string, unknown>.
+ */
+export interface AgentMessage<T = Record<string, unknown>> {
+    /** UUID v4 — unique identifier for this message instance. */
+    id: string;
+    /** ID of the agent (or system component) that sent the message. */
+    sender: string;
+    /** ID of the target agent, or '*' for a broadcast to all subscribers of that type. */
+    recipient: string;
+    /** The message classification used for topic-based routing. */
+    type: MessageType;
+    /** Arbitrary structured data specific to this message type. */
+    payload: T;
+    /** Shared identifier that links a request message to its response(s). */
+    correlationId: string;
+    /** Unix milliseconds — Date.now() at the moment of publish. */
+    timestamp: number;
+}
 export type FinisherCheckStatus = 'ok' | 'drift' | 'missing' | 'error';
 export interface FinisherCheckResult {
     check: string;
@@ -252,6 +341,8 @@ export interface PipelineOptions {
     workDir: string;
     prdFilter?: string;
     callbacks?: PipelineCallbacks;
+    /** When true, skips PRD semantic quality scoring (--skip-prd-review flag). */
+    skipPrdReview?: boolean;
 }
 export interface StoryExecution {
     storyFile: string;
@@ -290,4 +381,137 @@ export interface PipelineResult {
         anomalies: number;
         reportPath: string;
     };
+}
+/**
+ * A single IaC misconfiguration finding from Checkov.
+ */
+export interface CheckovFinding {
+    /** Checkov check ID, e.g. "CKV_DOCKER_2". */
+    checkId: string;
+    /** Human-readable check name. */
+    checkName: string;
+    /** Normalised severity derived from Checkov check metadata. */
+    severity: 'critical' | 'high' | 'medium' | 'low';
+    /** Relative file path within the scanned target. */
+    file: string;
+    /** Line number of the misconfiguration. */
+    line: number;
+    /** IaC framework: 'dockerfile' | 'terraform' | 'cloudformation' | 'kubernetes' | 'arm' | string */
+    framework: string;
+    /** URL to the Checkov remediation documentation. */
+    guideline: string;
+    /** Check outcome. */
+    status: 'failed' | 'passed' | 'skipped';
+}
+/**
+ * Aggregated result of a Checkov scan run.
+ */
+export interface CheckovScanResult {
+    scanner: 'checkov';
+    available: boolean;
+    success: boolean;
+    findings: CheckovFinding[];
+    findingCount: number;
+    passedCount: number;
+    scannedFiles: number;
+    frameworks: string[];
+    duration: number;
+    skipped: boolean;
+    skipReason?: string;
+}
+/**
+ * A single license compliance finding.
+ */
+export interface LicenseFinding {
+    /** Package name. */
+    package: string;
+    /** Package version string. */
+    version: string;
+    /** SPDX license identifier, or "UNKNOWN" when not determinable. */
+    license: string;
+    /** Manifest file where the dependency was declared. */
+    source: string;
+    /** high = copyleft in commercial project; medium = unknown license. */
+    severity: 'high' | 'medium';
+    /** Human-readable reason for the finding. */
+    reason: string;
+}
+/**
+ * Aggregated result of a license compliance check.
+ */
+export interface LicenseCheckResult {
+    scanner: 'license';
+    findings: LicenseFinding[];
+    findingCount: number;
+    checkedPackages: number;
+    manifests: string[];
+    projectType: string;
+    duration: number;
+}
+/**
+ * A single secret finding from Gitleaks output.
+ * The `secret` field is kept for deduplication/fingerprint work only —
+ * it must never be written to logs or reports.
+ */
+export interface GitleaksFinding {
+    /** Human-readable rule description, e.g. "AWS Access Key". */
+    description: string;
+    /** Relative file path within the scanned target. */
+    file: string;
+    startLine: number;
+    endLine: number;
+    startColumn: number;
+    endColumn: number;
+    /**
+     * Redacted representation of the matched secret.
+     * Format: first 4 chars + asterisks + last 4 chars.
+     * Never contains the actual secret.
+     */
+    match: string;
+    /**
+     * Full secret value — for deduplication only.
+     * NEVER written to logs, reports, or any persisted storage.
+     */
+    secret: string;
+    /** Rule ID, e.g. "aws-access-key-id". */
+    rule: string;
+    /** Shannon entropy of the matched string. */
+    entropy: number;
+    /** Unique finding fingerprint for .gitleaksignore suppression. */
+    fingerprint: string;
+    /** True when the fingerprint is listed in .gitleaksignore. */
+    suppressed: boolean;
+}
+/**
+ * Per-dimension evaluation result from the LLM PRD scorer.
+ */
+export interface PrdDimensionScore {
+    /** Integer score from 1 (worst) to 10 (best). */
+    score: number;
+    /** 2-3 sentence justification explaining why this score was assigned. */
+    justification: string;
+}
+/**
+ * Full scoring result returned by scorePrd().
+ * pass is true when ALL four dimension scores are >= 6.
+ */
+export interface PrdScore {
+    /** Absolute path to the PRD file that was scored. */
+    prdPath: string;
+    /** Completeness: all required sections present and meaningfully filled. */
+    completeness: PrdDimensionScore;
+    /** Specificity: concrete, measurable, unambiguous language throughout. */
+    specificity: PrdDimensionScore;
+    /** Consistency: no contradictions between sections. */
+    consistency: PrdDimensionScore;
+    /** Scope: clear boundaries with explicit exclusions. */
+    scope: PrdDimensionScore;
+    /** Actionable improvement suggestions (2-5 items for low-scoring dimensions). */
+    suggestions: string[];
+    /** True when all four dimension scores are >= 6. */
+    pass: boolean;
+    /** ISO timestamp of when this score was produced. */
+    scoredAt: string;
+    /** Whether the result was served from the in-memory cache. */
+    cached: boolean;
 }

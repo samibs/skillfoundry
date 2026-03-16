@@ -183,7 +183,8 @@ export const forgeCommand: SlashCommand = {
   usage: '/forge [prd-file] [--dry-run]',
   execute: async (args: string, session: SessionContext): Promise<string> => {
     const dryRun = args.includes('--dry-run');
-    const prdFilter = args.replace('--dry-run', '').trim() || undefined;
+    const skipPrdReview = args.includes('--skip-prd-review');
+    const prdFilter = args.replace('--dry-run', '').replace('--skip-prd-review', '').trim() || undefined;
 
     // Dry-run: read-only scan (no AI, no execution)
     if (dryRun) {
@@ -269,6 +270,7 @@ export const forgeCommand: SlashCommand = {
       workDir: session.workDir,
       prdFilter,
       callbacks,
+      skipPrdReview,
     });
 
     session.setState({
