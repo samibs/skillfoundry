@@ -43,6 +43,9 @@ const DEFAULT_CONFIG: SfConfig = {
   local_model: 'llama3.1',
   context_window: 0, // 0 = auto-detect from model
   log_level: 'info',
+  data_jurisdiction: 'none',
+  quality_fallback: false,
+  routing_rules: {},
 };
 
 const DEFAULT_POLICY: SfPolicy = {
@@ -70,7 +73,19 @@ export function loadConfig(workDir: string): SfConfig {
   } else {
     const raw = readFileSync(path, 'utf-8');
     const parsed = TOML.parse(raw);
-    config = { ...DEFAULT_CONFIG, ...parsed } as unknown as SfConfig;
+    // Extract nested routing.rules before flat merge
+    const routingRules: Record<string, string> = {};
+    const routing = parsed.routing as Record<string, unknown> | undefined;
+    if (routing && typeof routing === 'object' && routing.rules && typeof routing.rules === 'object') {
+      for (const [k, v] of Object.entries(routing.rules as Record<string, unknown>)) {
+        if (v === 'local' || v === 'cloud' || v === 'auto') {
+          routingRules[k] = v;
+        }
+      }
+    }
+    // Remove nested routing to avoid overwriting flat fields
+    delete parsed.routing;
+    config = { ...DEFAULT_CONFIG, ...parsed, routing_rules: routingRules } as unknown as SfConfig;
   }
 
   // Auto-select provider: if configured provider has no credentials, pick the first available one

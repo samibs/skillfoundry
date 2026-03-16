@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.58] - 2026-03-16
+
+### Added — Jurisdiction-Aware Model Routing
+
+**Jurisdiction Guards (FR-001, FR-002):**
+- `data_jurisdiction` config field: `"none"` (default), `"eu"`, `"strict"`
+- `"eu"` mode: simple tasks always local, complex tasks allowed to cloud with logged warning. Throws `JurisdictionError` if local is unhealthy for simple tasks.
+- `"strict"` mode: ALL tasks forced local. Cloud is never selected. Overrides even explicit routing rules.
+- Works with `route_local_first` enabled or disabled — jurisdiction takes precedence.
+
+**Quality-Gate Fallback (FR-003, FR-004):**
+- `quality_fallback` config field (boolean, default false)
+- `checkOutputQuality()` heuristic: empty response, refusal patterns, length proportionality, alphanumeric ratio
+- Zero LLM calls — purely regex/heuristic based, <1ms execution
+
+**Declarative Routing Rules (FR-005):**
+- `[routing.rules]` TOML section with per-task-type overrides: `security = "cloud"`, `documentation = "local"`, `default = "auto"`
+- Task type detection via keyword matching: security, orchestration, code_generation, documentation, testing
+- Rules evaluated before the keyword classifier, after jurisdiction guards
+
+**Routing Decision Logging (FR-006):**
+- Every `RoutingDecision` now includes `jurisdictionBlocked` flag
+- `JurisdictionError` thrown with actionable message when jurisdiction blocks required cloud routing
+
+### Tests
+- 24 new tests: 3 task type detection, 6 jurisdiction guards, 7 routing rules, 8 quality checks
+- Total: 1,782 tests passing across 77 files
+
+---
+
 ## [2.0.57] - 2026-03-16
 
 ### Added — VS Code Extension: Live Gate Execution

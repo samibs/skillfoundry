@@ -3,6 +3,7 @@ export interface ClassificationResult {
     complexity: TaskComplexity;
     confidence: 'high' | 'medium' | 'low';
     matchedKeywords: string[];
+    taskType?: string;
 }
 /**
  * Classify a user prompt as simple or complex based on keyword matching.
@@ -20,6 +21,7 @@ export interface RoutingDecision {
     reason: string;
     complexity: TaskComplexity;
     savedLocally: boolean;
+    jurisdictionBlocked?: boolean;
 }
 export interface RoutingConfig {
     /** Whether local-first routing is enabled */
@@ -34,16 +36,37 @@ export interface RoutingConfig {
     localModel: string;
     /** Whether the local provider is currently healthy */
     localHealthy: boolean;
+    /** Jurisdiction mode: none, eu, strict */
+    dataJurisdiction?: 'none' | 'eu' | 'strict';
+    /** Per-task-type routing overrides */
+    routingRules?: Record<string, 'local' | 'cloud' | 'auto'>;
+}
+export declare class JurisdictionError extends Error {
+    readonly jurisdiction: string;
+    readonly taskType: string | undefined;
+    readonly complexity: TaskComplexity;
+    constructor(jurisdiction: string, taskType: string | undefined, complexity: TaskComplexity);
 }
 /**
- * Select which provider/model to use based on task complexity and routing config.
+ * Select which provider/model to use based on task complexity, jurisdiction, and routing rules.
  *
- * When route_local_first is enabled:
- * - Simple tasks → local provider (if healthy)
- * - Complex tasks → cloud provider
- * - If local is unhealthy → cloud for everything
- *
- * When route_local_first is disabled:
- * - Always use the configured provider (no routing)
+ * Decision priority:
+ * 1. Routing rules (explicit per-task-type overrides)
+ * 2. Jurisdiction guards (block cloud if restricted)
+ * 3. Complexity-based routing (simple→local, complex→cloud)
  */
 export declare function selectProvider(prompt: string, config: RoutingConfig): RoutingDecision;
+export interface QualityCheckResult {
+    passed: boolean;
+    reason: string;
+}
+/**
+ * Lightweight quality check for local model output.
+ * No LLM calls — purely heuristic-based.
+ *
+ * Checks:
+ * 1. Non-empty response
+ * 2. No refusal patterns (model declined the task)
+ * 3. Response length proportional to prompt complexity
+ */
+export declare function checkOutputQuality(prompt: string, response: string): QualityCheckResult;

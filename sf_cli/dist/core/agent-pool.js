@@ -418,6 +418,9 @@ export class AgentPool {
                 local_model: '',
                 context_window: 0,
                 log_level: 'info',
+                data_jurisdiction: 'none',
+                quality_fallback: false,
+                routing_rules: {},
             },
             policy: {
                 allow_shell: false,
