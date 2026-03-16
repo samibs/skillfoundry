@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.58-blue)
+![Version](https://img.shields.io/badge/version-2.0.59-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,12 +24,13 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.58
+### What's New in v2.0.59
 
+- **Jurisdiction & Quality Fallback in CLI** — `data_jurisdiction` and `quality_fallback` are now editable via `/config`. `/status` shows active jurisdiction mode and quality fallback state.
 - **Jurisdiction-Aware Model Routing** — `data_jurisdiction` config: `"eu"` prefers local and blocks cloud for simple tasks, `"strict"` never routes to cloud. GDPR/AI Act compliance built into the routing layer.
 - **Quality-Gate Fallback** — `quality_fallback = true` runs a heuristic check on local model output (empty response, refusal patterns, length proportionality). Failures re-route to cloud.
 - **Declarative Routing Rules** — `[routing.rules]` in config.toml: per-task-type overrides like `security = "cloud"`, `documentation = "local"`. Evaluated before the keyword classifier.
-- **1,782 tests** — 24 new tests for jurisdiction guards, routing rules, quality checks. All passing.
+- **1,782 tests** — All passing across 77 files.
 
 ### Quick Install
 

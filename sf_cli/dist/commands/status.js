@@ -21,6 +21,12 @@ export const statusCommand = {
         if (config.route_local_first) {
             lines.push(`  Routing:    local-first (${config.local_provider}:${config.local_model})`);
         }
+        if (config.data_jurisdiction !== 'none') {
+            lines.push(`  Jurisdiction: ${config.data_jurisdiction}`);
+        }
+        if (config.quality_fallback) {
+            lines.push(`  Quality FB: enabled`);
+        }
         if (state.last_plan_id) {
             lines.push(`  Last Plan:  ${state.last_plan_id}`);
         }
