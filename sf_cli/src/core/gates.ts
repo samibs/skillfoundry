@@ -686,6 +686,226 @@ function runT4(workDir: string, target: string): GateResult {
   };
 }
 
+// T7: Deployment Pre-Flight — validates runtime environment before deployment
+// Checks: DB migration state, env consistency, endpoint smoke tests, API contracts
+function runT7(workDir: string): GateResult {
+  const start = Date.now();
+  const issues: string[] = [];
+  const warnings: string[] = [];
+
+  // ── Sub-check 1: Detect backend type ─────────────────────────────────────
+  const hasPythonBackend = existsSync(join(workDir, 'requirements.txt')) || existsSync(join(workDir, 'pyproject.toml'));
+  const hasAlembic = existsSync(join(workDir, 'alembic')) || existsSync(join(workDir, 'alembic.ini'));
+  const hasPrisma = existsSync(join(workDir, 'prisma'));
+  const hasDotnetMigrations = existsSync(join(workDir, 'Migrations'));
+  const hasRailsMigrations = existsSync(join(workDir, 'db', 'migrate'));
+  const hasBackend = hasPythonBackend || hasPrisma || hasDotnetMigrations || hasRailsMigrations;
+
+  // Also check in subdirectories (e.g., backend/)
+  const backendDir = existsSync(join(workDir, 'backend')) ? join(workDir, 'backend') : null;
+  const hasBackendSub = backendDir && (
+    existsSync(join(backendDir, 'requirements.txt')) ||
+    existsSync(join(backendDir, 'alembic.ini')) ||
+    existsSync(join(backendDir, 'prisma'))
+  );
+  const effectiveBackendDir = hasBackendSub ? backendDir! : workDir;
+  const effectiveHasAlembic = hasAlembic || (backendDir && existsSync(join(backendDir, 'alembic.ini')));
+
+  if (!hasBackend && !hasBackendSub) {
+    return {
+      tier: 'T7',
+      name: 'Deploy Pre-Flight',
+      status: 'skip',
+      detail: 'No deployable backend detected (no Python/Prisma/EF/Rails)',
+      durationMs: Date.now() - start,
+    };
+  }
+
+  // ── Sub-check 2: DB Migration State ──────────────────────────────────────
+  if (effectiveHasAlembic) {
+    // Check for unapplied Alembic migrations
+    const pythonCmd = IS_WINDOWS ? 'python' : 'python3';
+    const alembicCmd = existsSync(join(effectiveBackendDir, 'venv', 'bin', 'alembic'))
+      ? `PYTHONPATH=. venv/bin/alembic`
+      : 'alembic';
+
+    const { ok: currentOk, output: currentOut } = runCommand(
+      `${alembicCmd} current 2>&1`, effectiveBackendDir, 10_000,
+    );
+    const { ok: headsOk, output: headsOut } = runCommand(
+      `${alembicCmd} heads 2>&1`, effectiveBackendDir, 10_000,
+    );
+
+    if (currentOk && headsOk) {
+      // Extract revision hashes — current should match heads
+      const currentRevMatch = currentOut.match(/([a-f0-9]{12})/);
+      const headsRevMatch = headsOut.match(/([a-f0-9]{12})/);
+      const currentRev = currentRevMatch?.[1] || '';
+      const headsRev = headsRevMatch?.[1] || '';
+
+      if (currentRev && headsRev && currentRev !== headsRev) {
+        issues.push(`Pending migrations: DB at ${currentRev}, head is ${headsRev}. Run: alembic upgrade head`);
+      } else if (!currentRev && headsRev) {
+        issues.push(`No migrations applied but ${headsRev} exists. Run: alembic upgrade head`);
+      }
+    } else if (!currentOk && currentOut.includes('No such command')) {
+      // alembic not installed — skip
+    } else if (!currentOk) {
+      warnings.push(`Alembic check failed: ${currentOut.slice(0, 100)}`);
+    }
+  } else if (hasPrisma || (backendDir && existsSync(join(backendDir, 'prisma')))) {
+    const prismaDir = hasPrisma ? workDir : backendDir!;
+    const { ok, output } = runCommand('npx prisma migrate status 2>&1', prismaDir, 15_000);
+    if (!ok && output.includes('pending')) {
+      issues.push(`Pending Prisma migrations. Run: npx prisma migrate deploy`);
+    }
+  }
+
+  // ── Sub-check 3: Environment Variable Consistency ────────────────────────
+  // Check backend .env
+  const backendEnvPath = join(effectiveBackendDir, '.env');
+  const frontendDir = existsSync(join(workDir, 'frontend')) ? join(workDir, 'frontend') : null;
+  const frontendEnvPath = frontendDir
+    ? join(frontendDir, '.env')
+    : join(workDir, '.env');
+
+  if (existsSync(backendEnvPath)) {
+    try {
+      const envContent = readFileSync(backendEnvPath, 'utf-8');
+
+      // Check CORS_ORIGINS
+      const corsMatch = envContent.match(/CORS_ORIGINS\s*=\s*(.+)/);
+      if (corsMatch) {
+        const corsValue = corsMatch[1].trim();
+        // Check if www variant is missing when apex is present
+        const domains = corsValue.match(/https?:\/\/[^"',\]\s]+/g) || [];
+        for (const domain of domains) {
+          const url = new URL(domain);
+          if (!url.hostname.startsWith('www.')) {
+            const wwwVariant = `${url.protocol}//www.${url.hostname}`;
+            if (!domains.some((d) => d.includes(`www.${url.hostname}`)) && !url.hostname.includes('localhost')) {
+              warnings.push(`CORS: ${domain} listed but ${wwwVariant} missing — may cause cross-origin errors if served from www`);
+            }
+          }
+        }
+      }
+
+      // Check DATABASE_URL is set
+      if (!envContent.includes('DATABASE_URL')) {
+        issues.push('DATABASE_URL not found in backend .env');
+      }
+    } catch {
+      // .env read failed — non-blocking
+    }
+  }
+
+  // Check frontend API URL
+  if (frontendDir) {
+    const frontendEnv = existsSync(join(frontendDir, '.env.production'))
+      ? join(frontendDir, '.env.production')
+      : existsSync(join(frontendDir, '.env'))
+        ? join(frontendDir, '.env')
+        : null;
+
+    if (frontendEnv) {
+      try {
+        const envContent = readFileSync(frontendEnv, 'utf-8');
+        const apiUrlMatch = envContent.match(/VITE_API_URL\s*=\s*(.+)/);
+        if (apiUrlMatch) {
+          const apiUrl = apiUrlMatch[1].trim();
+          // Warn if hardcoded to a specific domain (should be relative)
+          if (apiUrl.startsWith('http') && !apiUrl.includes('localhost') && !apiUrl.includes('127.0.0.1')) {
+            warnings.push(`Frontend API URL is hardcoded to ${apiUrl} — use relative URL (/api/v1) to avoid CORS issues`);
+          }
+        }
+      } catch {
+        // non-blocking
+      }
+    }
+  }
+
+  // ── Sub-check 4: Endpoint Smoke Test ─────────────────────────────────────
+  // Detect common backend ports and try a health check
+  const commonPorts = [8000, 8005, 8080, 3000, 5000];
+  let serverRunning = false;
+  let serverPort = 0;
+
+  for (const port of commonPorts) {
+    const { ok } = runCommand(
+      `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://127.0.0.1:${port}/health 2>/dev/null || curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://127.0.0.1:${port}/ 2>/dev/null`,
+      workDir, 5_000,
+    );
+    if (ok) {
+      serverRunning = true;
+      serverPort = port;
+      break;
+    }
+  }
+
+  if (serverRunning) {
+    // Try a few API patterns to check for 500 errors
+    const apiPrefixes = ['/api/v1', '/api', ''];
+    for (const prefix of apiPrefixes) {
+      const { ok, output } = runCommand(
+        `curl -s -o /dev/null -w "%{http_code}" --connect-timeout 3 http://127.0.0.1:${serverPort}${prefix}/health 2>/dev/null`,
+        workDir, 5_000,
+      );
+      if (ok) {
+        const statusCode = parseInt(output.trim(), 10);
+        if (statusCode >= 500) {
+          issues.push(`Server on :${serverPort} returns ${statusCode} on ${prefix}/health — check logs`);
+        }
+        break;
+      }
+    }
+  }
+
+  // ── Sub-check 5: API Contract Validation ─────────────────────────────────
+  // Scan frontend for page_size/limit values that exceed typical backend limits
+  if (frontendDir) {
+    const { ok, output } = runCommand(
+      `grep -rn "page_size=\\|pageSize.*[0-9]\\|limit.*[0-9]" "${frontendDir}/src" --include="*.ts" --include="*.tsx" --include="*.js" 2>/dev/null || true`,
+      workDir, 10_000,
+    );
+    if (ok && output.trim()) {
+      const lines = output.trim().split('\n');
+      for (const line of lines) {
+        const numMatch = line.match(/(?:page_size|pageSize|limit)\s*[=:]\s*(\d+)/);
+        if (numMatch) {
+          const val = parseInt(numMatch[1], 10);
+          if (val > 100) {
+            warnings.push(`${line.split(':')[0].replace(frontendDir, 'frontend')}: requests ${numMatch[0]} — most APIs limit to 100`);
+          }
+        }
+      }
+    }
+  }
+
+  // ── Determine verdict ────────────────────────────────────────────────────
+  const allIssues = [
+    ...issues.map((i) => `FAIL: ${i}`),
+    ...warnings.map((w) => `WARN: ${w}`),
+  ];
+
+  if (issues.length === 0 && warnings.length === 0) {
+    return {
+      tier: 'T7',
+      name: 'Deploy Pre-Flight',
+      status: 'pass',
+      detail: `Deployment pre-flight clean${serverRunning ? ` (server on :${serverPort} healthy)` : ' (no running server detected)'}`,
+      durationMs: Date.now() - start,
+    };
+  }
+
+  return {
+    tier: 'T7',
+    name: 'Deploy Pre-Flight',
+    status: issues.length > 0 ? 'fail' : 'warn',
+    detail: allIssues.join('\n').slice(0, 800),
+    durationMs: Date.now() - start,
+  };
+}
+
 // T5: Build verification
 function runT5(workDir: string): GateResult {
   const start = Date.now();
@@ -816,9 +1036,13 @@ export async function runAllGates(options: GateOptions): Promise<GateRunSummary>
     ]);
     gates.push(t4, t5);
 
-    // Phase 4: T6 (scope) — runs last
+    // Phase 4: T6 (scope) — runs last, then T7 (deploy pre-flight)
     const t6 = runWithCallbacks('T6', 'Scope Validation', () => runT6(workDir, storyFile));
     gates.push(t6);
+
+    // Phase 5: T7 (deploy pre-flight) — sequential, needs network
+    const t7 = runWithCallbacks('T7', 'Deploy Pre-Flight', () => runT7(workDir));
+    gates.push(t7);
   } else {
     // Sequential execution (default — backwards compatible)
     const tiers = [
@@ -829,6 +1053,7 @@ export async function runAllGates(options: GateOptions): Promise<GateRunSummary>
       { run: () => runT4(workDir, resolvedTarget), tier: 'T4', name: 'Security Scan' },
       { run: () => runT5(workDir), tier: 'T5', name: 'Build' },
       { run: () => runT6(workDir, storyFile), tier: 'T6', name: 'Scope Validation' },
+      { run: () => runT7(workDir), tier: 'T7', name: 'Deploy Pre-Flight' },
     ];
 
     for (const { run, tier, name } of tiers) {
@@ -864,6 +1089,7 @@ export function runSingleGate(
     case 'T5': return runT5(workDir);
     case 'T0': return runT0(workDir);
     case 'T6': return runT6(workDir, storyFile);
+    case 'T7': return runT7(workDir);
     default:
       return {
         tier,
