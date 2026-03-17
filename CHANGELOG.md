@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.62] - 2026-03-17
+
+### Added — Environment Pre-Flight Protocol
+
+**Problem**: LLM agents fail at "obvious" operational tasks not because they lack syntax knowledge, but because they lack disciplined environmental reasoning. Real-world sessions showed agents doing guided trial-and-error (wrong interpreter, permission denied on `tsc`, missing `@types/node`) instead of systematic diagnosis — wasting tokens on retry loops that never converge.
+
+**`scripts/env-preflight.sh` — Environment Audit Script:**
+- JSON-output environment scanner that runs before any code execution in a new project/session
+- Detects: OS, Python (system + venv), Node.js, TypeScript (tsc executable, tsconfig, @types/node), Git state, database tools (Alembic, Prisma), Docker, PM2, disk space
+- Generates actionable warnings: missing `node_modules`, non-executable `tsc`, missing `@types/node`, missing system python with venv present
+- Supports workdir argument for cross-project scanning
+
+**`agents/_env-preflight-protocol.md` — Agent Protocol:**
+- **Phase 1: Environment Audit** — Run `env-preflight.sh` or manual equivalents
+- **Phase 2: Pin Environment Facts** — Lock interpreter paths, package state, binary locations for the session
+- **Phase 3: Diagnostic Discipline** — The "2-Failure Rule": after 2 consecutive failures of the same operation, STOP executing and switch to diagnostic mode
+- **Phase 4: Parallel Execution Rules** — Never parallelize commands that modify the same environment
+- Error→Diagnosis Map: maps common error signals to correct diagnostic actions (not retry variations)
+- Hypothesis Ranking: environment mismatch → config error → code bug → platform issue
+- Anti-pattern table: documents the most common LLM agent failure modes with correct alternatives
+- Forge pipeline integration: env-preflight runs in Phase 1 (IGNITE) before any story execution
+
+---
+
 ## [2.0.61] - 2026-03-17
 
 ### Changed — Documentation & Help Sync for 8-Gate Pipeline

@@ -1,0 +1,142 @@
+# Environment Pre-Flight Protocol
+
+> **Mandatory before any code execution in a new project or session.**
+
+This protocol prevents the most common LLM agent failure modes: wrong interpreter, missing permissions, uninstalled dependencies, PATH issues, and blind retry loops.
+
+---
+
+## When to Run
+
+- **Always** at the start of `/forge`, `/go`, `/goma`, `/gosm`
+- **Always** when switching to a new project directory
+- **Always** after a context compaction (memory of environment facts may be lost)
+- **Never skip** — even if the project looks familiar
+
+## Phase 1: Environment Audit
+
+Run `scripts/env-preflight.sh <workdir>` and parse the JSON output.
+
+If the script is not available, run these commands manually:
+
+```bash
+# System
+uname -s && uname -r
+whoami
+pwd
+
+# Python
+which python python3 2>/dev/null
+python3 --version 2>/dev/null
+
+# Venv detection
+ls -la venv/bin/python* .venv/bin/python* backend/venv/bin/python* 2>/dev/null
+
+# Node.js
+which node npm 2>/dev/null
+node --version 2>/dev/null
+
+# TypeScript
+ls -la node_modules/.bin/tsc 2>/dev/null
+npx tsc --version 2>/dev/null
+
+# Type definitions
+ls node_modules/@types/node 2>/dev/null
+
+# Package state
+ls package.json package-lock.json requirements.txt 2>/dev/null
+ls node_modules/.package-lock.json 2>/dev/null
+
+# Git
+git branch --show-current
+git diff --stat
+```
+
+## Phase 2: Pin Environment Facts
+
+After Phase 1, lock these facts for the entire session:
+
+| Fact | Example | Pin Rule |
+|------|---------|----------|
+| Python binary | `/home/user/project/backend/venv/bin/python3` | Use this exact path. Never use bare `python`. |
+| Node binary | `/usr/bin/node` | Use `node` or `npx` consistently. |
+| tsc executable | `node_modules/.bin/tsc` is `+x` | If not executable, run via `npx tsc`. |
+| @types/node | Installed / Missing | If missing, install before any tsc invocation. |
+| Package state | `node_modules` exists | If missing, run `npm install` before any command. |
+| Alembic path | `venv/bin/alembic` | Use exact path, not bare `alembic`. |
+
+**Once pinned, NEVER retry with a different variant.** If `venv/bin/python3` works, do not later try `python` or `python3` without the venv path.
+
+## Phase 3: Diagnostic Discipline
+
+### The 2-Failure Rule
+
+After **two consecutive failures** of the same operation with different command variants:
+
+1. **STOP executing commands**
+2. **Switch to diagnostic mode:**
+   - Read the error message as information, not as a prompt to retry
+   - Run targeted inspection commands (see table below)
+   - Form a hypothesis before the next execution attempt
+
+### Error → Diagnosis Map
+
+| Error Signal | Do NOT | DO |
+|---|---|---|
+| `command not found` | Try variations of the command | Run `which <cmd>`, inspect PATH, check venv/bin/ |
+| `Permission denied` | Retry with sudo or different path | Run `ls -la <file>`, check executable bit |
+| `Cannot find module` | Retry with different import | Run `ls node_modules/<pkg>`, check package.json |
+| `Cannot find namespace 'NodeJS'` | Change tsconfig randomly | Check `ls node_modules/@types/node`, install if missing |
+| `ENOENT` / `No such file` | Guess the correct path | Run `find` or `ls` to locate the file |
+| `Connection refused` | Retry the same URL | Check if server is running: `lsof -i :<port>` or `ss -tlnp` |
+| `500 Internal Server Error` | Retry the request | Read server logs: `pm2 logs` or `journalctl` |
+| `CORS error` | Add random headers | Check `.env` CORS_ORIGINS and compare with browser URL |
+| `Exit code 1` (npm test) | Re-run the same test | Read the test output for the specific failure |
+| `TypeError` at runtime | Guess a fix | Read the stack trace, identify the exact line and variable |
+
+### Hypothesis Ranking
+
+When an error occurs, rank causes by likelihood:
+
+1. **Environment mismatch** (wrong binary, missing dependency) — most common
+2. **Configuration error** (.env, tsconfig, package.json) — second most common
+3. **Code bug** — only after environment and config are verified
+4. **Platform issue** (OS, permissions, filesystem) — rare but possible
+
+**Never jump to cause #3 before ruling out #1 and #2.**
+
+## Phase 4: Parallel Execution Rules
+
+- **NEVER** run parallel bash commands that modify the same environment (npm install + npm test)
+- **NEVER** run parallel bash commands against a database during schema changes
+- **SAFE to parallelize**: read-only commands (grep, cat, ls), independent file edits, independent API calls
+- When in doubt, serialize
+
+## Anti-Patterns (NEVER DO)
+
+| Anti-Pattern | Why It Fails | Correct Approach |
+|---|---|---|
+| `python main.py` without checking | `python` may not exist or may be Python 2 | Run `which python3` first, pin the result |
+| `tsc --noEmit` without checking @types | Will fail with namespace errors | Check `node_modules/@types/node` first |
+| Retry same command 3+ times | Wastes tokens, same result every time | After 2 failures, switch to diagnosis |
+| `npm test` before `npm install` | Missing dependencies = test failure | Check `node_modules/` exists first |
+| Parallel `pm2 restart` + `curl` | Server not ready during restart | Wait for server, then test |
+| `alembic upgrade head` without checking state | May have no effect if already current | Run `alembic current` + `alembic heads` first |
+
+## Integration with Forge Pipeline
+
+The `/forge` skill's Phase 1 (IGNITE) must include env-preflight:
+
+```
+Phase 1: IGNITE
+  Step 1: Run env-preflight.sh → parse JSON
+  Step 2: Pin environment facts
+  Step 3: Check for warnings → resolve before proceeding
+  Step 4: Validate PRDs (existing behavior)
+```
+
+If env-preflight detects warnings (missing dependencies, non-executable binaries, missing type definitions), resolve them BEFORE any story execution begins.
+
+---
+
+*Environment ignorance is the #1 cause of LLM agent failure on operational tasks. Inspect first, execute second.*
