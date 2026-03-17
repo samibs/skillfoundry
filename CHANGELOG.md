@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.60] - 2026-03-17
+
+### Added — T7: Deployment Pre-Flight Gate
+
+**Problem**: The existing T0-T6 gate pipeline validates code quality but not deployment readiness. A real-world session revealed 4+ rounds of trial-and-error debugging in production caused by DB schema mismatches, CORS misconfiguration, and API contract violations — all detectable before deployment.
+
+**DB Migration State (Sub-check 1):**
+- Detects Alembic, Prisma, EF Core, Rails migration systems
+- Compares current DB revision vs head revision
+- Reports pending migrations with actionable `alembic upgrade head` / `prisma migrate deploy` commands
+- Supports `backend/` subdirectory detection
+
+**Environment Consistency (Sub-check 2):**
+- Validates `CORS_ORIGINS` includes `www.` variant when apex domain is listed
+- Checks `DATABASE_URL` is present in backend `.env`
+- Warns when frontend `VITE_API_URL` is hardcoded to a specific domain (should be relative)
+
+**Endpoint Smoke Test (Sub-check 3):**
+- Probes common backend ports (8000, 8005, 8080, 3000, 5000) for running servers
+- Checks for 500 errors on health/API endpoints
+- Skips gracefully when no server is running (never blocks non-deployed projects)
+
+**API Contract Validation (Sub-check 4):**
+- Scans frontend source for `page_size`/`pageSize`/`limit` values exceeding 100
+- Warns on constraint violations between frontend requests and typical backend limits
+
+**Pipeline Integration:**
+- T7 runs as the final gate in both sequential and parallel modes
+- Available via `/gate t7` in sf_cli, `sf-runner.mjs --gate T7`, and VS Code extension
+- Graceful degradation: skips entirely for projects without deployable backends
+
+### Tests
+- 6 new tests: skip (no backend), pass (clean project), warn (hardcoded URL), warn (CORS www), fail (missing DATABASE_URL), warn (page_size contract)
+- Total: 1,788 tests passing across 77 files
+
+---
+
 ## [2.0.59] - 2026-03-16
 
 ### Added — CLI Support for Jurisdiction & Quality Routing

@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 export const gateCommand = {
     name: 'gate',
     description: 'Run a single quality gate or all gates',
-    usage: '/gate <t0|t1|t2|t3|t4|t5|t6|all> [target]',
+    usage: '/gate <t0|t1|t2|t3|t4|t5|t6|t7|all> [target]',
     execute: async (args, session) => {
         const parts = args.trim().split(/\s+/);
         const tier = parts[0]?.toLowerCase() || 'all';
@@ -38,9 +38,9 @@ export const gateCommand = {
             return lines.join('\n');
         }
         // Single gate
-        const validTiers = ['t0', 't1', 't2', 't3', 't4', 't5', 't6'];
+        const validTiers = ['t0', 't1', 't2', 't3', 't4', 't5', 't6', 't7'];
         if (!validTiers.includes(tier)) {
-            return `Unknown gate tier: ${tier}\nUsage: /gate <t0|t1|t2|t3|t4|t5|t6|all> [target]`;
+            return `Unknown gate tier: ${tier}\nUsage: /gate <t0|t1|t2|t3|t4|t5|t6|t7|all> [target]`;
         }
         const result = runSingleGate(tier.toUpperCase(), session.workDir, target);
         const durationMs = Date.now() - start;

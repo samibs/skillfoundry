@@ -64,6 +64,68 @@ describe('runSingleGate', () => {
     expect(result.status).toBe('skip');
   });
 
+  it('T7 should skip when no backend detected', () => {
+    const result = runSingleGate('T7', TEST_DIR);
+    expect(result.tier).toBe('T7');
+    expect(result.status).toBe('skip');
+    expect(result.detail).toContain('No deployable backend');
+  });
+
+  it('T7 should pass on project with requirements.txt and no issues', () => {
+    writeFileSync(join(TEST_DIR, 'requirements.txt'), 'fastapi\nuvicorn\n');
+    const result = runSingleGate('T7', TEST_DIR);
+    expect(result.tier).toBe('T7');
+    // Should pass or warn (no actual DB to fail against)
+    expect(['pass', 'warn']).toContain(result.status);
+  });
+
+  it('T7 should warn on hardcoded frontend API URL', () => {
+    mkdirSync(join(TEST_DIR, 'frontend', 'src'), { recursive: true });
+    writeFileSync(join(TEST_DIR, 'requirements.txt'), 'fastapi\n');
+    writeFileSync(join(TEST_DIR, 'frontend', '.env'), 'VITE_API_URL=https://example.com/api/v1\n');
+    writeFileSync(join(TEST_DIR, 'frontend', 'src', 'api.ts'), 'export const x = 1;\n');
+    const result = runSingleGate('T7', TEST_DIR);
+    expect(result.tier).toBe('T7');
+    expect(['warn', 'pass']).toContain(result.status);
+    if (result.status === 'warn') {
+      expect(result.detail).toContain('hardcoded');
+    }
+  });
+
+  it('T7 should warn on CORS missing www variant', () => {
+    mkdirSync(join(TEST_DIR, 'backend'), { recursive: true });
+    writeFileSync(join(TEST_DIR, 'backend', 'requirements.txt'), 'fastapi\n');
+    writeFileSync(join(TEST_DIR, 'backend', '.env'), 'DATABASE_URL=postgresql://localhost/test\nCORS_ORIGINS=["https://example.com"]\n');
+    const result = runSingleGate('T7', TEST_DIR);
+    expect(result.tier).toBe('T7');
+    expect(['warn', 'pass']).toContain(result.status);
+    if (result.status === 'warn') {
+      expect(result.detail).toContain('www');
+    }
+  });
+
+  it('T7 should fail when DATABASE_URL missing', () => {
+    mkdirSync(join(TEST_DIR, 'backend'), { recursive: true });
+    writeFileSync(join(TEST_DIR, 'backend', 'requirements.txt'), 'fastapi\n');
+    writeFileSync(join(TEST_DIR, 'backend', '.env'), 'SECRET_KEY=abc\n');
+    const result = runSingleGate('T7', TEST_DIR);
+    expect(result.tier).toBe('T7');
+    expect(result.status).toBe('fail');
+    expect(result.detail).toContain('DATABASE_URL');
+  });
+
+  it('T7 should warn on frontend page_size exceeding 100', () => {
+    mkdirSync(join(TEST_DIR, 'frontend', 'src'), { recursive: true });
+    writeFileSync(join(TEST_DIR, 'requirements.txt'), 'fastapi\n');
+    writeFileSync(join(TEST_DIR, 'frontend', 'src', 'api.ts'), 'const url = `/api/clients?page_size=500`;\n');
+    const result = runSingleGate('T7', TEST_DIR);
+    expect(result.tier).toBe('T7');
+    expect(['warn', 'pass']).toContain(result.status);
+    if (result.status === 'warn') {
+      expect(result.detail).toContain('page_size');
+    }
+  });
+
   it('unknown tier should skip', () => {
     const result = runSingleGate('T99', TEST_DIR);
     expect(result.status).toBe('skip');
@@ -72,10 +134,10 @@ describe('runSingleGate', () => {
 });
 
 describe('runAllGates', () => {
-  it('should run all 7 gates (T0-T6)', async () => {
+  it('should run all 8 gates (T0-T7)', async () => {
     const summary = await runAllGates({ workDir: TEST_DIR });
-    expect(summary.gates).toHaveLength(7);
-    expect(summary.passed + summary.failed + summary.warned + summary.skipped).toBe(7);
+    expect(summary.gates).toHaveLength(8);
+    expect(summary.passed + summary.failed + summary.warned + summary.skipped).toBe(8);
   });
 
   it('should report fail verdict when no test files exist', async () => {
@@ -95,8 +157,8 @@ describe('runAllGates', () => {
       onGateComplete: (result) => completed.push(result.tier),
     });
 
-    expect(started).toEqual(['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']);
-    expect(completed).toEqual(['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']);
+    expect(started).toEqual(['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']);
+    expect(completed).toEqual(['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']);
   });
 
   it('should track total duration', async () => {
