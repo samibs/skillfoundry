@@ -192,7 +192,7 @@ This is equivalent to the `/forge` slash command in IDE integrations. The pipeli
             MG2 (Standards)      PASS
             MG1.5 (Test Docs)    PASS
 
- TEMPER    Running quality gates T0-T6...
+ TEMPER    Running quality gates T0-T7...
             T0 Correctness Contract  PASS
             T1 Banned Patterns       PASS
             T2 Type Check            PASS
@@ -200,6 +200,7 @@ This is equivalent to the `/forge` slash command in IDE integrations. The pipeli
             T4 Security (Semgrep)    PASS
             T5 Build Verification    PASS
             T6 Scope Validation      PASS
+            T7 Deploy Pre-Flight     PASS
 
  INSPECT   Security deep-scan... PASS
 
@@ -209,7 +210,7 @@ This is equivalent to the `/forge` slash command in IDE integrations. The pipeli
  FINISH    Harvesting knowledge...
             3 lessons captured to memory_bank/
 
- Pipeline completed in 2m 14s | Cost: $0.42 | Gates: 7/7 PASS
+ Pipeline completed in 2m 14s | Cost: $0.42 | Gates: 8/8 PASS
 ```
 
 What happened at each phase:
@@ -220,7 +221,7 @@ What happened at each phase:
 | **PLAN** | Decomposes PRDs into self-contained stories |
 | **FORGE** | Executes each story using AI agents with real tool access |
 | **POLISH** | Runs micro-gates (lightweight AI reviews) on each story's output |
-| **TEMPER** | Runs the 7-tier quality gate suite (T0-T6) |
+| **TEMPER** | Runs the 8-tier quality gate suite (T0-T7) |
 | **INSPECT** | Optional security deep-scan (Semgrep OWASP rules) |
 | **DEBRIEF** | Generates structured run reports (JSON + Markdown) |
 | **FINISH** | Harvests lessons learned into the knowledge bank |

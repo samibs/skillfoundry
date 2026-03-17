@@ -5,7 +5,7 @@ import { SfBridge } from '../bridge';
 import { GateTimelineProvider } from '../providers/gate-timeline';
 import { DiagnosticsManager } from '../providers/diagnostics';
 
-const GATE_TIERS = ['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6'];
+const GATE_TIERS = ['T0', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
 
 export function registerGateCommands(
   context: vscode.ExtensionContext,

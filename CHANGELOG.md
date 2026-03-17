@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.61] - 2026-03-17
+
+### Changed — Documentation & Help Sync for 8-Gate Pipeline
+
+- Updated all references from "T0-T6" / "7 tiers" to "T0-T7" / "8 tiers" across:
+  - README.md (badge, What's New, command reference, ASCII mockup)
+  - VS Code extension: gate-timeline.ts (T7 in reference list + "8 tiers" label), gate.ts (T7 in tier picker)
+  - VS Code extension changelog (v1.2.0) and package.json version bump
+  - site-docs: architecture.md (gate table, pipeline phase, micro-gates intro)
+  - site-docs: getting-started.md (pipeline output, phase table, gate count)
+  - site/index.html version references
+- `/gate` command help text now shows `t7` as a valid tier
+
+---
+
 ## [2.0.60] - 2026-03-17
 
 ### Added — T7: Deployment Pre-Flight Gate

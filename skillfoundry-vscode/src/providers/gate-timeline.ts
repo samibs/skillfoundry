@@ -1,4 +1,4 @@
-// Gate Timeline — TreeDataProvider showing T0-T6 gate results with status icons.
+// Gate Timeline — TreeDataProvider showing T0-T7 gate results with status icons.
 // Shows results from: manual gate run > audit.jsonl history > gate tier reference.
 
 import * as vscode from 'vscode';
@@ -14,6 +14,7 @@ const GATE_REFERENCE = [
   { tier: 'T4', name: 'Security', desc: 'Semgrep SAST + regex fallback, dependency audit' },
   { tier: 'T5', name: 'Build', desc: 'Full build verification (tsc, esbuild, etc.)' },
   { tier: 'T6', name: 'Scope', desc: 'Story scope validation — diff stays within boundaries' },
+  { tier: 'T7', name: 'Deploy Pre-Flight', desc: 'DB migrations, CORS, env vars, API contracts, endpoint smoke test' },
 ];
 
 export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelineItem> {
@@ -107,7 +108,7 @@ export class GateTimelineProvider implements vscode.TreeDataProvider<GateTimelin
 
   private buildGateReference(): GateTimelineItem[] {
     const items: GateTimelineItem[] = [];
-    items.push(new GateTimelineItem('Anvil Quality Gates (7 tiers)', 'info'));
+    items.push(new GateTimelineItem('Anvil Quality Gates (8 tiers)', 'info'));
 
     for (const gate of GATE_REFERENCE) {
       const item = new GateTimelineItem(`${gate.tier} — ${gate.name}`, 'info');
