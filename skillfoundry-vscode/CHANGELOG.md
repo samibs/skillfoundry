@@ -1,10 +1,17 @@
 # Changelog
 
+## [1.2.0] - 2026-03-17
+
+### T7 Deploy Pre-Flight Gate
+
+- **T7 in Gate Timeline** — Gate reference now shows 8 tiers (T0-T7) including the new Deploy Pre-Flight gate
+- **Run T7 from VS Code** — "Run Gate" picker includes T7 for DB migration, CORS, env, and API contract checks
+
 ## [1.1.0] - 2026-03-16
 
 ### Live Gate Execution
 
-- **Real Gate Execution** — "Run All Gates" and "Run Gate" now execute real T0-T6 quality gates via `sf-runner.mjs` subprocess. Results appear in the Gate Timeline with pass/fail/warn/skip status and timing.
+- **Real Gate Execution** — "Run All Gates" and "Run Gate" now execute real T0-T7 quality gates via `sf-runner.mjs` subprocess. Results appear in the Gate Timeline with pass/fail/warn/skip status and timing.
 - **Real Dependency Scanning** — "Scan Dependencies" runs actual npm/pip/dotnet vulnerability analysis instead of returning empty results.
 - **Real Report Generation** — "View Quality Report" generates live quality reports from telemetry data with industry baselines.
 - **Real Metrics** — "Show Metrics" aggregates actual telemetry events with trend analysis and security finding summaries.

@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.60-blue)
+![Version](https://img.shields.io/badge/version-2.0.61-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -19,17 +19,17 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 ### Why SkillFoundry?
 
 - **Works where you already code** — Claude Code, Cursor, GitHub Copilot, OpenAI Codex, Google Gemini. No new IDE to learn.
-- **Quality gates your AI can't bypass** — The Anvil runs 7 tiers of checks (correctness contracts, banned patterns, type checking, tests, security, build, scope) between every agent handoff. Code that fails doesn't ship.
+- **Quality gates your AI can't bypass** — The Anvil runs 8 tiers of checks (correctness contracts, banned patterns, type checking, tests, security, build, scope, deploy pre-flight) between every agent handoff. Code that fails doesn't ship.
 - **Persistent memory across sessions** — Decisions, errors, and patterns are stored in `memory_bank/` and recalled automatically. Your AI doesn't repeat the same mistakes.
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.60
+### What's New in v2.0.61
 
-- **T7: Deployment Pre-Flight Gate** — New gate that catches deployment-environment issues before they hit production. Validates DB migration state (Alembic/Prisma), CORS origin consistency (catches missing `www.` variants), frontend API URL hardcoding, `DATABASE_URL` presence, and page_size/limit contract violations between frontend and backend.
-- **Endpoint Smoke Test** — T7 detects running backend servers and checks for 500 errors on health endpoints.
-- **8-Gate Pipeline** — Gate suite expanded from T0-T6 to T0-T7. Available via `/gate t7`, `/gate all`, and the VS Code extension.
-- **1,788 tests** — 6 new T7 tests covering all sub-checks. All passing across 77 files.
+- **T7: Deployment Pre-Flight Gate** — New gate catching deployment-environment issues before production: DB migration state (Alembic/Prisma/EF/Rails), CORS origin consistency (missing `www.` variants), frontend API URL hardcoding, `DATABASE_URL` presence, page_size/limit contract violations, and endpoint smoke tests.
+- **8-Gate Pipeline** — Gate suite expanded from T0-T6 to T0-T7 across all surfaces: sf_cli, VS Code extension (v1.2.0), site-docs, and all agent definitions.
+- **VS Code Extension v1.2.0** — Gate Timeline now shows 8 tiers with T7 Deploy Pre-Flight. "Run Gate" picker includes T7.
+- **1,788 tests** — All passing across 77 files.
 
 ### Quick Install
 
@@ -119,7 +119,7 @@ C:\DevTools\skillfoundry\install.ps1
        ├── Validate PRD         Are requirements complete?
        ├── Generate stories     Break into implementable units
        ├── Implement            Architect → Coder → Tester pipeline
-       ├── Quality gates        The Anvil (T0-T6) + Micro-Gates (MG0-MG3)
+       ├── Quality gates        The Anvil (T0-T7) + Micro-Gates (MG0-MG3)
        ├── Circuit breaker      Halt on repeated systemic errors
        ├── Security audit       OWASP scan + dependency CVEs + credential check
        ├── Harvest knowledge    Save lessons to memory_bank/
@@ -512,7 +512,7 @@ SkillFoundry ships a native VS Code extension that brings quality gates, telemet
 │          │  2 │ // TODO: add rate  ⚠    │  CVEs: 2 high │
 │          │    │ ▸ Run T1 (Patterns)     │               │
 │          │    │ ▸ Run T4 (Security)     │ ◆ Gate Status │
-│          │                              │  T0-T6 results│
+│          │                              │  T0-T7 results│
 │          │                              │               │
 │          │                              │ ◆ Forge       │
 │          │                              │  Phase: TEMPER│
@@ -569,8 +569,8 @@ These work inside the `sf` terminal app:
 | `/agent <name>` | Activate a single agent (coder, review, tester, etc.) |
 | `/plan <task>` | Generate an implementation plan |
 | `/apply [plan-id]` | Execute a plan with quality gates |
-| `/gates [target]` | Run The Anvil quality gates (T1-T6) |
-| `/gate <t0-t6\|all>` | Run a single quality gate or all gates |
+| `/gates [target]` | Run The Anvil quality gates (T1-T7) |
+| `/gate <t0-t7\|all>` | Run a single quality gate or all gates |
 | `/forge` | Pipeline: validate PRDs → implement → gate → report |
 | `/forge --dry-run` | Read-only scan without execution |
 | `/provider [set <name>]` | Switch AI provider |

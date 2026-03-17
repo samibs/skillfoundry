@@ -59,7 +59,7 @@ flowchart LR
 | **PLAN** | Decomposes each PRD into self-contained stories with dependency ordering. Stories are written to `docs/stories/` | Pipeline aborts if decomposition fails |
 | **FORGE** | Executes stories sequentially. Each story gets an AI agent with tool access (file read/write, bash, glob, grep). Micro-gates run after each story | Circuit breaker halts after 2 consecutive same-error failures |
 | **POLISH** | Runs micro-gates: MG0 (acceptance criteria validation), MG1 (security review), MG1.5 (test documentation), MG2 (standards review), MG3 (cross-story advisory) | Findings reported; FAIL findings trigger fixer agent |
-| **TEMPER** | Runs the full T0-T6 quality gate suite against the working directory | Gate failures trigger up to 2 automated fix attempts |
+| **TEMPER** | Runs the full T0-T7 quality gate suite against the working directory | Gate failures trigger up to 2 automated fix attempts |
 | **INSPECT** | Deep security scan using Semgrep with OWASP rulesets (when available), falls back to regex pattern matching | Findings reported in run summary |
 | **DEBRIEF** | Generates JSON and Markdown run reports in `.skillfoundry/runs/<run-id>/` | Always runs |
 | **FINISH** | Harvests lessons learned (decisions, errors, patterns) into `memory_bank/knowledge/` as JSONL entries | Always runs |
@@ -134,9 +134,9 @@ Agent prompts include protocols for:
 - Gate verification procedures
 - Deliberation and dissent resolution
 
-## Quality Gates (T0-T6)
+## Quality Gates (T0-T7)
 
-The gate system runs 7 tiers of automated verification. Each tier is independent and produces a PASS, WARN, or FAIL verdict with structured findings.
+The gate system runs 8 tiers of automated verification. Each tier is independent and produces a PASS, WARN, or FAIL verdict with structured findings.
 
 | Tier | Name | What It Checks | Tools Used |
 |------|------|---------------|------------|
@@ -147,6 +147,7 @@ The gate system runs 7 tiers of automated verification. Each tier is independent
 | **T4** | Security (Semgrep OWASP) | Semgrep-first with OWASP rulesets (`p/owasp-top-ten`), falls back to regex pattern scanning for hardcoded secrets, SQL injection, XSS vectors | Semgrep CLI or regex fallback |
 | **T5** | Build Verification | Runs the project's build command to verify compilation succeeds | `npm run build`, `cargo build`, `dotnet build` |
 | **T6** | Scope Validation | Verifies that code changes stay within the scope defined by the PRD. Detects unauthorized modifications to unrelated files | `anvil.sh scope` or git diff analysis |
+| **T7** | Deploy Pre-Flight | Validates deployment readiness: DB migration state (Alembic/Prisma/EF/Rails), CORS origin consistency, env variable presence, frontend API URL hardcoding, page_size contract violations, endpoint smoke tests | `alembic`, `prisma`, `curl`, env file parsing |
 
 ### Gate Execution Flow
 
@@ -159,7 +160,7 @@ Gates run during the TEMPER phase. If any gate fails:
 
 ### Micro-Gates
 
-In addition to T0-T6, the pipeline runs lightweight AI-powered micro-gates after each story during the POLISH phase:
+In addition to T0-T7, the pipeline runs lightweight AI-powered micro-gates after each story during the POLISH phase:
 
 | Gate | Name | Timing | Purpose |
 |------|------|--------|---------|
