@@ -15,7 +15,7 @@ The framework consists of eight core subsystems:
 |-----------|---------|-----------|
 | **Pipeline Engine** | Orchestrates the 8-phase Forge pipeline | `src/core/pipeline.ts` |
 | **Agent System** | Base class, 4 archetypes, delegation, budget control | `src/core/agent.ts` |
-| **Quality Gates** | T0-T6 verification tiers + micro-gates | `src/core/gates.ts`, `src/core/micro-gates.ts` |
+| **Quality Gates** | T0-T7 verification tiers + micro-gates | `src/core/gates.ts`, `src/core/micro-gates.ts` |
 | **Memory System** | JSONL knowledge bank with layered recall | `src/core/memory.ts`, `src/core/layered-recall.ts` |
 | **Session Recorder** | Structured issue tracking and run reports | `src/core/session-recorder.ts` |
 | **Runtime Intelligence** | Message bus, agent pool, embedding service, vector store, weight learner | `src/core/message-bus.ts`, `src/core/agent-pool.ts`, `src/core/embedding-service.ts`, `src/core/vector-store.ts`, `src/core/weight-learner.ts` |
@@ -133,6 +133,7 @@ Agent prompts include protocols for:
 - Commit message conventions
 - Gate verification procedures
 - Deliberation and dissent resolution
+- Environment pre-flight auditing (interpreter detection, dependency verification, diagnostic discipline)
 
 ## Quality Gates (T0-T7)
 

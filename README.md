@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.61-blue)
+![Version](https://img.shields.io/badge/version-2.0.62-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,11 +24,11 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.61
+### What's New in v2.0.62
 
-- **T7: Deployment Pre-Flight Gate** — New gate catching deployment-environment issues before production: DB migration state (Alembic/Prisma/EF/Rails), CORS origin consistency (missing `www.` variants), frontend API URL hardcoding, `DATABASE_URL` presence, page_size/limit contract violations, and endpoint smoke tests.
-- **8-Gate Pipeline** — Gate suite expanded from T0-T6 to T0-T7 across all surfaces: sf_cli, VS Code extension (v1.2.0), site-docs, and all agent definitions.
-- **VS Code Extension v1.2.0** — Gate Timeline now shows 8 tiers with T7 Deploy Pre-Flight. "Run Gate" picker includes T7.
+- **Environment Pre-Flight Protocol** — New `scripts/env-preflight.sh` audits the runtime environment (Python, Node, TypeScript, Git, Docker, DB tools) and outputs structured JSON before any code execution. Prevents the #1 LLM agent failure mode: wrong interpreter, missing dependencies, retry loops.
+- **Agent Diagnostic Discipline** — New `agents/_env-preflight-protocol.md` protocol with the "2-Failure Rule" (after 2 consecutive failures, stop executing and diagnose), environment fact pinning, hypothesis ranking, and error-to-diagnosis mapping.
+- **8-Gate Pipeline (T0-T7)** — Full gate suite including T7 Deployment Pre-Flight across sf_cli, VS Code extension, and site-docs.
 - **1,788 tests** — All passing across 77 files.
 
 ### Quick Install
