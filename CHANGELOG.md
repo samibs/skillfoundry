@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.63] - 2026-03-17
+
+### Added — Automatic Session Harvesting
+
+**Problem**: Knowledge harvesting (`/gohm`, `session-close.sh`) required manual invocation. Across 60+ registered projects, session knowledge was only captured when the developer remembered to harvest — which means most sessions went unharvested.
+
+**`scripts/auto-harvest-cron.sh` — Cron-based Cross-Project Sweep:**
+- Scans all projects in `.project-registry` for new knowledge since last harvest
+- Change detection: only harvests projects with modified `memory_bank/` or `.claude/scratchpad.md` files (skip unchanged)
+- Runs `harvest.sh` per-project, then `promote-knowledge.sh` for pattern promotion, then `knowledge-sync.sh` for global repo sync
+- Sanitizes central knowledge after each sweep (strips secrets, normalizes paths)
+- Lock file prevents concurrent runs; stale locks auto-cleaned
+- Persistent state tracking (`.claude/auto-harvest-state.json`): total runs, lifetime entries harvested, last duration
+- Log rotation (2000-line cap) to `logs/auto-harvest.log`
+- Modes: `--dry-run` (preview), `--harvest` (skip promote/sync), `--status` (stats), `--verbose`
+
+**Claude Code Hooks — Automatic Session Lifecycle:**
+- `SessionStart` hook: auto-runs `session-init.sh` (pulls global knowledge, starts sync daemon) when opening any SkillFoundry project
+- `SessionEnd` hook: auto-runs `session-close.sh` (records session end, final sync, promotion check) then triggers cross-project harvest sweep in background
+- Hook scripts only activate for projects with a `memory_bank/` directory (non-SkillFoundry projects unaffected)
+- Hooks installed in `~/.claude/settings.json` with 30s/60s timeouts
+
+**`scripts/setup-auto-harvest.sh` — One-Command Installer:**
+- Installs cron job (default: every 30 minutes, configurable via `--interval=N`)
+- Installs Claude Code hooks into `~/.claude/settings.json` (preserves existing settings)
+- `--cron-only` / `--hooks-only` for selective install
+- `--uninstall` cleanly removes cron entry and hook config
+- `--status` shows full installation state, last harvest stats, registered project count
+
+---
+
 ## [2.0.62] - 2026-03-17
 
 ### Added — Environment Pre-Flight Protocol

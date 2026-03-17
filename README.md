@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.62-blue)
+![Version](https://img.shields.io/badge/version-2.0.63-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,11 +24,11 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.62
+### What's New in v2.0.63
 
-- **Environment Pre-Flight Protocol** — New `scripts/env-preflight.sh` audits the runtime environment (Python, Node, TypeScript, Git, Docker, DB tools) and outputs structured JSON before any code execution. Prevents the #1 LLM agent failure mode: wrong interpreter, missing dependencies, retry loops.
-- **Agent Diagnostic Discipline** — New `agents/_env-preflight-protocol.md` protocol with the "2-Failure Rule" (after 2 consecutive failures, stop executing and diagnose), environment fact pinning, hypothesis ranking, and error-to-diagnosis mapping.
-- **8-Gate Pipeline (T0-T7)** — Full gate suite including T7 Deployment Pre-Flight across sf_cli, VS Code extension, and site-docs.
+- **Automatic Session Harvesting** — Knowledge is now harvested automatically across all 60+ registered projects. Cron job sweeps every 30 minutes with change detection (only harvests modified projects). Claude Code hooks auto-run `session-init.sh` on start and `session-close.sh` + cross-project harvest on end.
+- **One-Command Setup** — `scripts/setup-auto-harvest.sh` installs cron + Claude Code hooks in one step. `--uninstall` to remove, `--status` to check.
+- **Environment Pre-Flight Protocol** — `scripts/env-preflight.sh` audits the runtime environment and outputs structured JSON. Agent protocol with the "2-Failure Rule" and hypothesis ranking.
 - **1,788 tests** — All passing across 77 files.
 
 ### Quick Install
