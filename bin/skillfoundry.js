@@ -32,9 +32,15 @@ CLI commands (after install, use 'sf'):
   sf metrics baseline              Capture a quality baseline snapshot of the current project
   sf report --html                 Generate a self-contained HTML quality report
   sf dashboard                     Multi-project dashboard — overview, sync, drill-down
-  sf dashboard serve               Start web dashboard (http://127.0.0.1:9400)
+  sf dashboard serve               Start web dashboard (auto-sync, KPI, playbooks, serve)
   sf dashboard trend               KPI trend report with forecasting
   sf dashboard remediate           Auto-remediation engine with playbooks
+
+Standalone dashboard launcher:
+  ./scripts/dashboard-serve.sh               One-command: sync + snapshot + seed + serve
+  ./scripts/dashboard-serve.sh --port=8080   Custom port
+  ./scripts/dashboard-serve.sh --sync-only   Sync without starting server
+  ./scripts/dashboard-serve.sh --open        Auto-open browser
 
 Examples:
   npx skillfoundry init

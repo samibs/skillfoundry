@@ -1,3 +1,6 @@
+import { existsSync, readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 export const statusCommand = {
     name: 'status',
     description: 'Show session and workspace status',
@@ -33,7 +36,79 @@ export const statusCommand = {
         if (state.last_run_id) {
             lines.push(`  Last Run:   ${state.last_run_id}`);
         }
+        // Auto-harvest status
+        const sfRoot = findFrameworkRoot(session.workDir);
+        if (sfRoot) {
+            const harvestState = join(sfRoot, '.claude', 'auto-harvest-state.json');
+            if (existsSync(harvestState)) {
+                try {
+                    const hs = JSON.parse(readFileSync(harvestState, 'utf-8'));
+                    lines.push('');
+                    lines.push('**Harvest**');
+                    lines.push(`  Last:       ${hs.last_run ?? 'never'}`);
+                    lines.push(`  Lifetime:   ${hs.total_runs ?? 0} runs, ${hs.total_entries_harvested ?? 0} entries`);
+                    if (hs.projects_scanned) {
+                        lines.push(`  Projects:   ${hs.projects_harvested_last ?? 0}/${hs.projects_scanned} harvested`);
+                    }
+                }
+                catch {
+                    // ignore malformed state
+                }
+            }
+            // Session monitor status
+            const monitorLog = join(sfRoot, 'logs', 'session-monitor.jsonl');
+            if (existsSync(monitorLog)) {
+                try {
+                    const logContent = readFileSync(monitorLog, 'utf-8').trim();
+                    const logLines = logContent ? logContent.split('\n') : [];
+                    if (logLines.length > 0) {
+                        const patterns = {};
+                        for (const line of logLines) {
+                            try {
+                                const entry = JSON.parse(line);
+                                const p = entry.pattern ?? 'unknown';
+                                patterns[p] = (patterns[p] ?? 0) + 1;
+                            }
+                            catch { /* skip malformed */ }
+                        }
+                        lines.push('');
+                        lines.push('**Session Monitor**');
+                        lines.push(`  Detections: ${logLines.length} total`);
+                        const top = Object.entries(patterns).sort((a, b) => b[1] - a[1]).slice(0, 3);
+                        if (top.length > 0) {
+                            lines.push(`  Top:        ${top.map(([p, c]) => `${p}(${c})`).join(', ')}`);
+                        }
+                    }
+                }
+                catch {
+                    // ignore
+                }
+            }
+        }
         return lines.join('\n');
     },
 };
+function findFrameworkRoot(workDir) {
+    // Check if we're inside the framework itself
+    const cliDir = dirname(dirname(fileURLToPath(import.meta.url)));
+    const frameworkDir = dirname(dirname(cliDir));
+    if (existsSync(join(frameworkDir, '.project-registry'))) {
+        return frameworkDir;
+    }
+    // Check if the project has a .skillfoundry config pointing to framework source
+    const configPath = join(workDir, '.skillfoundry', 'config.toml');
+    if (existsSync(configPath)) {
+        try {
+            const content = readFileSync(configPath, 'utf-8');
+            const match = content.match(/source\s*=\s*"([^"]+)"/);
+            if (match && existsSync(join(match[1], '.project-registry'))) {
+                return match[1];
+            }
+        }
+        catch {
+            // ignore
+        }
+    }
+    return null;
+}
 //# sourceMappingURL=status.js.map

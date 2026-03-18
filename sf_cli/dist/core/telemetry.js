@@ -88,11 +88,10 @@ export function recordEvent(workDir, event_type, session_id, status, duration_ms
     }
 }
 /**
- * Read all telemetry events from the current (non-archived) file.
+ * Read telemetry events from a single JSONL file.
  * Skips malformed lines gracefully.
  */
-export function readEvents(workDir) {
-    const filePath = getTelemetryPath(workDir);
+function readEventsFromFile(filePath) {
     if (!existsSync(filePath))
         return { events: [], skipped: 0 };
     const content = readFileSync(filePath, 'utf-8').trim();
@@ -118,6 +117,13 @@ export function readEvents(workDir) {
         }
     }
     return { events, skipped };
+}
+/**
+ * Read all telemetry events from the current (non-archived) file.
+ * Skips malformed lines gracefully.
+ */
+export function readEvents(workDir) {
+    return readEventsFromFile(getTelemetryPath(workDir));
 }
 /**
  * Read events filtered by type.
@@ -276,6 +282,25 @@ export function formatMetrics(agg) {
         `  Trend: ${agg.trend.toUpperCase()} ${trendArrow}`,
     ];
     return lines.join('\n');
+}
+/**
+ * Read all telemetry events from current file AND rotated archives.
+ * Returns events sorted oldest-first across all files.
+ */
+export function readAllEvents(workDir) {
+    const allEvents = [];
+    // Read rotated archives first (oldest data)
+    for (let i = MAX_ARCHIVES; i >= 1; i--) {
+        const archivePath = join(workDir, SF_DIR, `telemetry.${i}.jsonl`);
+        const { events } = readEventsFromFile(archivePath);
+        allEvents.push(...events);
+    }
+    // Read current file
+    const { events } = readEventsFromFile(getTelemetryPath(workDir));
+    allEvents.push(...events);
+    // Sort oldest-first
+    allEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    return allEvents;
 }
 /**
  * Format metrics with industry baseline comparison.

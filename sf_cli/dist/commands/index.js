@@ -21,6 +21,7 @@ import { prdReviewCommand } from './prd-review.js';
 import { publishCommand } from './publish.js';
 import { upgradeCommand } from './upgrade.js';
 import { auditCommand } from './audit.js';
+import { dashboardCommand } from './dashboard.js';
 const registry = new Map();
 export function registerCommand(cmd) {
     registry.set(cmd.name, cmd);
@@ -70,5 +71,6 @@ export function initCommands() {
     registerCommand(publishCommand);
     registerCommand(upgradeCommand);
     registerCommand(auditCommand);
+    registerCommand(dashboardCommand);
 }
 //# sourceMappingURL=index.js.map

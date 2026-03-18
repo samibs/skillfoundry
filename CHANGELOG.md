@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.69] - 2026-03-18
+
+### Added — One-Command Dashboard Launcher
+
+- **`scripts/dashboard-serve.sh`** — Standalone bash launcher that auto-syncs all projects, captures KPI snapshots, seeds remediation playbooks, scans for remediations, then starts the web dashboard. Flags: `--port`, `--sync-only`, `--skip-sync`, `--open`.
+- **`sf dashboard serve` auto-prepare** — The CLI `serve` subcommand now runs sync, snapshot capture, playbook seeding, and remediation scanning automatically before launching the web server. No manual prep steps needed.
+- Updated in-app help (`bin/skillfoundry.js`) with standalone launcher commands.
+
+---
+
 ## [2.0.68] - 2026-03-18
 
 ### Added — Centralized Multi-Project Dashboard (6-Phase)
