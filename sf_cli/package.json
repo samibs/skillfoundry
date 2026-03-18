@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/cli",
-  "version": "2.0.67",
+  "version": "2.0.68",
   "description": "SkillFoundry interactive CLI — AI-assisted development with governance",
   "type": "module",
   "bin": {
@@ -31,9 +31,11 @@
     "marked-terminal": "^7.3.0",
     "openai": "^6.22.0",
     "react": "^18.3.1",
+    "better-sqlite3": "^11.7.0",
     "strip-ansi": "^7.1.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
     "@types/diff": "^7.0.2",
     "@types/node": "^22.13.4",
     "@types/react": "^18.3.18",

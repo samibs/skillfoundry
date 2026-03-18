@@ -7,6 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.68] - 2026-03-18
+
+### Added — Centralized Multi-Project Dashboard (6-Phase)
+
+A complete centralized dashboard aggregating telemetry, sessions, failures, KPIs, trends, and remediations across all 60+ registered projects. Built in 6 phases:
+
+**Phase 1 — Foundation:**
+- Persistent UUIDv4 project identifiers (`project-id.ts`)
+- Central SQLite database (`data/dashboard.db`) with 10 tables: projects, telemetry_events, perf_entries, knowledge_entries, failure_patterns, kpi_snapshots, session_reports, session_issues, remediations, playbooks
+- Incremental sync engine — reads per-project telemetry, perf, knowledge, and session data
+- Auto-harvest cron integration — dashboard sync runs after every harvest sweep
+
+**Phase 2 — CLI Commands (15 subcommands):**
+- `sf dashboard` — project overview table
+- `sf dashboard sync` — force-sync all projects into central DB
+- `sf dashboard status <project>` — detailed single-project drill-down
+- `sf dashboard failures` — cross-project failure report (--severity, --project filters)
+- `sf dashboard top` — project rankings by events, failures, cost, or performance
+- `sf dashboard kpi` — computed KPI metrics (success rate, gate pass rate, security findings)
+- `sf dashboard health` — health assessment with letter grades (A-F)
+- `sf dashboard import` — session report and forge log import
+- `sf dashboard patterns` — failure pattern analysis (cross-project, recurring, escalating, category clusters)
+- `sf dashboard trend` — KPI trend report with change detection
+- `sf dashboard snapshot` — capture daily KPI snapshots
+- `sf dashboard forecast <project>` — metric forecasting (linear regression)
+- `sf dashboard remediate` — remediation report, scan, list, apply, playbooks
+- `sf dashboard serve` — start web dashboard (http://127.0.0.1:9400)
+- All subcommands support `--json` for machine-readable output
+
+**Phase 3 — Session Import & Failure Detection:**
+- Session report import from `.skillfoundry/runs/*-issues.json`
+- Forge log parsing for failure pattern extraction
+- Inbox pipeline: `data/inbox/` → import → move to `imported/`
+- 4 detection rules: cross-project correlation, high-frequency (5+), category clusters (3+), escalating failures (>1/day)
+- Failure pattern report with severity sorting and actionable recommendations
+
+**Phase 4 — Web Dashboard:**
+- Single-page dark-mode HTML dashboard (Chart.js 4.4.7, zero build step)
+- 8 KPI cards: Projects, Forge Runs, Success Rate, Gate Pass Rate, Security Findings, Open Failures, Avg Duration, Knowledge
+- 4 chart types: Health Distribution (doughnut), Top Projects (bar), Failure Severity (doughnut), Top by Failures (bar)
+- 6 tabbed sections: Projects, Failures, Patterns, Health, Trends, Remediations
+- HTTP server using Node.js built-in `http.createServer` (zero new dependencies)
+- 13 API endpoints + CORS support, binds to 127.0.0.1 only
+- Sync button, auto-refresh every 60 seconds
+
+**Phase 5 — KPI Trend Engine:**
+- Daily per-project KPI snapshot capture
+- Trend detection: improving / declining / stable (comparing recent vs prior windows)
+- Alert system: detects critical drops in success rate, gate pass rate, cost spikes, new security findings
+- Simple moving-average forecasting with linear regression
+- Trend charts in web dashboard (success rate bar, trend direction doughnut, cost trend)
+- 4 new API endpoints: trends, snapshot capture, latest snapshots, forecast
+
+**Phase 6 — Auto-Remediation Engine:**
+- 10 built-in playbooks: TypeScript Build, Dependency Resolution, Test Timeout, Test Coverage, Security Vulnerability, Lint Gate, Type Check Gate, Circuit Breaker Recovery, Story Failure, Outdated Dependencies
+- Pattern-to-playbook matching via signature and category heuristics
+- Auto-apply for safe playbooks (dependency fixes, lint fixes, security audit)
+- Remediation lifecycle: pending → in_progress → completed / failed
+- Playbook effectiveness tracking (success/failure rates)
+- Web UI with action buttons (Start, Complete, Fail) and playbook effectiveness table
+- Cron integration: remediation scan runs after KPI snapshots in auto-harvest
+
+**New files (11):**
+- `sf_cli/src/core/project-id.ts` — project ID management
+- `sf_cli/src/core/dashboard-db.ts` — SQLite database wrapper (10 tables, 30+ query functions)
+- `sf_cli/src/core/dashboard-sync.ts` — sync orchestrator
+- `sf_cli/src/core/session-import.ts` — session import pipeline
+- `sf_cli/src/core/failure-detector.ts` — 4-rule failure pattern detection
+- `sf_cli/src/core/dashboard-server.ts` — HTTP server with 19 API routes
+- `sf_cli/src/core/kpi-engine.ts` — KPI snapshot capture, trends, forecasting
+- `sf_cli/src/core/remediation-engine.ts` — auto-remediation with 10 playbooks
+- `sf_cli/src/web/dashboard.html` — single-page dark-mode web dashboard
+- `sf_cli/src/commands/dashboard.ts` — 15 CLI subcommands
+
+**Tests: 206 new tests across 8 test files, 1,991 total (86 files), zero regressions.**
+
+---
+
 ## [2.0.67] - 2026-03-18
 
 ### Changed — Documentation & Help Sync for Session Monitor (v2.0.66)

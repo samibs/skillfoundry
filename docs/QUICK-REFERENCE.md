@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.67 - Quick Reference Card
+# SkillFoundry v2.0.68 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -60,6 +60,24 @@ math-check     memory
 | `/exit` | Quit the CLI |
 | `/health` | Framework diagnostics + session monitor |
 | `companion.sh --tmux` | Open context-aware command panel |
+
+---
+
+## Dashboard Commands (Centralized Multi-Project)
+
+| Command | Purpose |
+|---------|---------|
+| `sf dashboard` | Multi-project overview table |
+| `sf dashboard sync` | Force-sync all projects into central DB |
+| `sf dashboard serve` | Start web dashboard (http://127.0.0.1:9400) |
+| `sf dashboard trend` | KPI trend report with forecasting |
+| `sf dashboard snapshot` | Capture KPI snapshots |
+| `sf dashboard forecast` | Forecast metrics per project |
+| `sf dashboard remediate scan` | Scan for auto-remediation opportunities |
+| `sf dashboard remediate list` | List pending remediations |
+| `sf dashboard remediate apply <id>` | Apply a remediation action |
+| `sf dashboard remediate playbooks` | List available playbooks |
+| `sf dashboard remediate report` | Remediation effectiveness report |
 
 ---
 
@@ -640,4 +658,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.67 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.68 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*

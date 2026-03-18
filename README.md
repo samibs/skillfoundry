@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.67-blue)
+![Version](https://img.shields.io/badge/version-2.0.68-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,11 +24,13 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.67
+### What's New in v2.0.68
 
-- **Real-Time Session Monitor** — PostToolUse hook detects erratic agent behavior: `source .env` blocking, 2-Failure Rule enforcement, service restart loops, self-inflicted regression detection. Injects diagnostic nudges back into agent context via exit code 2.
-- **5 Pattern Detectors** — Source .env blocker, consecutive failure detection, pm2/docker/systemctl restart loops, git-diff cross-reference for self-inflicted regressions, restart-without-logs detection.
-- **Structured Logging** — All detected patterns logged to `logs/session-monitor.jsonl` for auto-harvest collection.
+- **Centralized Multi-Project Dashboard** — Aggregate telemetry, sessions, failures, KPIs, and trends across 60+ projects in a single SQLite database. 15 CLI subcommands, 19 API endpoints, dark-mode web UI with Chart.js visualizations.
+- **KPI Trend Engine** — Daily snapshots, trend detection (improving/declining/stable), change alerts, and linear regression forecasting.
+- **Auto-Remediation Engine** — 10 built-in playbooks match failure patterns to actionable fixes. Auto-apply safe remediations (dependency fixes, lint, security audit). Playbook effectiveness tracking.
+- **Web Dashboard** — `sf dashboard serve` launches a zero-dependency web dashboard at http://127.0.0.1:9400 with KPI cards, charts, tabbed data tables, trend visualizations, and remediation controls.
+- **206 new tests** across 8 test files (1,991 total, zero regressions).
 
 ### Quick Install
 

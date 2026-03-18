@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v2.0.67
+# Documentation Index - SkillFoundry Framework v2.0.68
 
 Complete guide to all documentation in the framework.
 
@@ -111,6 +111,14 @@ Deep-dive technical documentation:
 - **[logs/remediations.md](logs/remediations.md)** - Auto-fix audit trail
 - **[logs/escalations.md](logs/escalations.md)** - User decision log
 - **[logs/session-monitor.jsonl](logs/session-monitor.jsonl)** - Real-time agent behavior detection log
+
+### Centralized Dashboard (NEW v2.0.68)
+- **[docs/HOW-TO.md § 22](docs/HOW-TO.md)** - Full dashboard command reference
+- **[docs/USER-GUIDE-CLI.md § 16](docs/USER-GUIDE-CLI.md)** - Dashboard visual guide
+- **`sf dashboard`** - Multi-project overview, sync, web UI, KPI trends, auto-remediation
+- **`sf dashboard serve`** - Web dashboard at http://127.0.0.1:9400
+- **`sf dashboard trend`** - KPI trend reports with forecasting
+- **`sf dashboard remediate`** - Auto-remediation engine with playbooks
 
 ### Examples & Tutorials
 - **[docs/EXAMPLES/example-web-app.md](docs/EXAMPLES/example-web-app.md)** - Complete web app walkthrough

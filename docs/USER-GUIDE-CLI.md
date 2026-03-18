@@ -1,6 +1,6 @@
 # SkillFoundry CLI — Visual User Guide
 
-> **v2.0.67** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, structured logging, native debugger, local-first development, telemetry baseline, HTML reports, session monitoring, and consent system.
+> **v2.0.68** — Interactive terminal AI assistant with streaming, tools, quality gates, multi-provider support, structured logging, native debugger, local-first development, telemetry baseline, HTML reports, session monitoring, centralized dashboard, and consent system.
 
 ---
 
@@ -942,6 +942,55 @@ allow_paths = ["."]                   # Allowed working directories
 | `Up/Down` | Navigate message history |
 | `a/d/A/T` | Permission prompt responses |
 | `a/r/e` | Approval checkpoint responses |
+
+---
+
+## 16. Centralized Dashboard
+
+The `sf dashboard` command provides a centralized multi-project view with telemetry aggregation, KPI trends, and auto-remediation.
+
+### Project Overview
+
+```
+  $ sf dashboard
+
+  ╭──────────────────────────────────────────────────────────────╮
+  │  SkillFoundry Dashboard — 16 Projects                       │
+  ├────────────────────┬────────┬───────────┬───────────────────┤
+  │  Project           │ Health │ Events    │ Last Synced       │
+  ├────────────────────┼────────┼───────────┼───────────────────┤
+  │  my-app            │ ●      │ 142       │ 2 mins ago        │
+  │  api-gateway       │ ●      │ 87        │ 5 mins ago        │
+  ╰────────────────────┴────────┴───────────┴───────────────────╯
+```
+
+### Sync & Web Dashboard
+
+```bash
+sf dashboard sync               # Force-sync all projects
+sf dashboard serve               # Web UI at http://127.0.0.1:9400
+sf dashboard serve --port=8080   # Custom port
+```
+
+### KPI Trend Engine
+
+```bash
+sf dashboard trend                 # Trend report (default 30-day window)
+sf dashboard trend --days=90       # 90-day window
+sf dashboard snapshot              # Capture KPI snapshots now
+sf dashboard forecast              # Forecast metrics per project
+sf dashboard forecast --metric=success_rate --days=14
+```
+
+### Auto-Remediation
+
+```bash
+sf dashboard remediate scan        # Scan for remediation opportunities
+sf dashboard remediate list        # List pending remediations
+sf dashboard remediate apply <id>  # Apply a specific remediation
+sf dashboard remediate playbooks   # List available playbooks
+sf dashboard remediate report      # Effectiveness report
+```
 
 ---
 

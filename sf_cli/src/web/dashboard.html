@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkillFoundry Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-card: #161b22;
+    --bg-hover: #1c2128;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --orange: #db6d28;
+    --purple: #bc8cff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header h1 span { color: var(--accent); }
+  .header-actions { display: flex; gap: 12px; align-items: center; }
+  .header .meta { color: var(--text-muted); font-size: 13px; }
+
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .btn:hover { opacity: 0.9; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+  .btn-outline:hover { border-color: var(--accent); }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+  /* KPI Cards */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .kpi-card .label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; }
+  .kpi-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* Charts */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+
+  .chart-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); }
+  .chart-card canvas { max-height: 260px; }
+
+  /* Tables */
+  .table-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+
+  .table-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--text-muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; color: var(--text-muted); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: var(--bg-hover); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .badge-green { background: rgba(63, 185, 80, 0.15); color: var(--green); }
+  .badge-yellow { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+  .badge-red { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+  .badge-blue { background: rgba(88, 166, 255, 0.15); color: var(--accent); }
+  .badge-purple { background: rgba(188, 140, 255, 0.15); color: var(--purple); }
+
+  .grade-A { color: var(--green); }
+  .grade-B { color: var(--accent); }
+  .grade-C { color: var(--yellow); }
+  .grade-D { color: var(--orange); }
+  .grade-F { color: var(--red); }
+
+  /* Patterns panel */
+  .pattern-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 8px;
+  }
+
+  .pattern-item .p-title { font-weight: 600; font-size: 13px; }
+  .pattern-item .p-detail { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .pattern-item .p-action { font-size: 12px; color: var(--accent); margin-top: 4px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+  .tab {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty { text-align: center; color: var(--text-muted); padding: 40px; }
+
+  /* Section headings */
+  .section-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .section-row h2 { font-size: 16px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1><span>SkillFoundry</span> Dashboard</h1>
+  <div class="header-actions">
+    <span class="meta" id="lastSync">Loading...</span>
+    <button class="btn" id="syncBtn" onclick="doSync()">Sync Now</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- KPI Cards -->
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- Charts -->
+  <div class="chart-grid">
+    <div class="chart-card">
+      <h3>Health Distribution</h3>
+      <canvas id="healthChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Top Projects by Events</h3>
+      <canvas id="topChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Failure Severity Breakdown</h3>
+      <canvas id="failureChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Top Projects by Failures</h3>
+      <canvas id="failureBarChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Trend charts -->
+  <div class="section-row" style="margin-top:24px">
+    <h2>KPI Trends</h2>
+    <button class="btn btn-small" onclick="doSnapshot()" id="snapshotBtn" style="font-size:12px;padding:4px 12px">Capture Snapshot</button>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-card" style="grid-column: span 2">
+      <h3>Success Rate Over Time</h3>
+      <canvas id="trendSuccessChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Trend Direction</h3>
+      <canvas id="trendDirectionChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Cost Trend</h3>
+      <canvas id="trendCostChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Tabs: Projects / Failures / Patterns / Sessions -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('projects')">Projects</button>
+    <button class="tab" onclick="switchTab('failures')">Failures</button>
+    <button class="tab" onclick="switchTab('patterns')">Patterns</button>
+    <button class="tab" onclick="switchTab('health')">Health</button>
+    <button class="tab" onclick="switchTab('trends')">Trends</button>
+    <button class="tab" onclick="switchTab('remediations')">Remediations</button>
+  </div>
+
+  <div class="tab-content active" id="tab-projects">
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Project</th><th>Health</th><th>Events</th><th>Failures</th><th>Last Sync</th></tr></thead>
+        <tbody id="projectsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-failures">
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Project</th><th>Signature</th><th>Occurrences</th><th>Severity</th><th>Status</th><th>Last Seen</th></tr></thead>
+        <tbody id="failuresBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-patterns">
+    <div class="section-row">
+      <h2>Detected Patterns</h2>
+      <span class="meta" id="patternCount"></span>
+    </div>
+    <div id="patternsContainer"></div>
+  </div>
+
+  <div class="tab-content" id="tab-health">
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Project</th><th>Grade</th><th>Score</th><th>Issues</th></tr></thead>
+        <tbody id="healthBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-trends">
+    <div class="section-row">
+      <h2>KPI Trend Report</h2>
+      <span class="meta" id="trendSummary"></span>
+    </div>
+    <div id="trendAlerts"></div>
+    <div class="table-card" style="margin-top:12px">
+      <table>
+        <thead><tr><th>Project</th><th>Trend</th><th>Success Rate</th><th>Change</th><th>Gate Pass</th><th>Cost</th><th>Snapshots</th></tr></thead>
+        <tbody id="trendsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-remediations">
+    <div class="section-row">
+      <h2>Auto-Remediation</h2>
+      <div style="display:flex;gap:8px">
+        <span class="meta" id="remStats"></span>
+        <button class="btn btn-small" onclick="doRemScan()" id="remScanBtn" style="font-size:12px;padding:4px 12px">Scan</button>
+      </div>
+    </div>
+    <div id="remStatsCards" class="kpi-grid" style="margin-bottom:16px"></div>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Status</th><th>Priority</th><th>Project</th><th>Title</th><th>Signature</th><th>Actions</th></tr></thead>
+        <tbody id="remediationsBody"></tbody>
+      </table>
+    </div>
+    <div class="section-row" style="margin-top:16px">
+      <h2>Playbook Effectiveness</h2>
+    </div>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>Playbook</th><th>Category</th><th>Auto</th><th>Success</th><th>Failure</th><th>Rate</th></tr></thead>
+        <tbody id="playbooksBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let charts = {};
+
+async function api(path) {
+  const res = await fetch(API + path);
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+function fmtTime(ts) {
+  if (!ts) return 'never';
+  return ts.replace('T', ' ').slice(0, 19);
+}
+
+function healthBadge(status) {
+  const cls = status === 'healthy' ? 'badge-green' : status === 'unknown' ? 'badge-blue' : 'badge-yellow';
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+
+function severityBadge(sev) {
+  const map = { critical: 'badge-red', error: 'badge-red', high: 'badge-yellow', warning: 'badge-yellow', medium: 'badge-blue', low: 'badge-purple' };
+  return `<span class="badge ${map[sev] || 'badge-blue'}">${sev}</span>`;
+}
+
+function statusBadge(s) {
+  const map = { open: 'badge-red', resolved: 'badge-green', investigating: 'badge-yellow' };
+  return `<span class="badge ${map[s] || 'badge-blue'}">${s}</span>`;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`#tab-${name}`).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── KPIs ──────────────────────────────────────────────
+
+async function loadKpis() {
+  const [kpi, projects] = await Promise.all([api('/api/kpi'), api('/api/projects')]);
+  const grid = document.getElementById('kpiGrid');
+
+  const pct = (n) => (n * 100).toFixed(1) + '%';
+  const durMin = Math.floor(kpi.avg_duration_ms / 60000);
+  const durSec = Math.round((kpi.avg_duration_ms % 60000) / 1000);
+
+  grid.innerHTML = `
+    <div class="kpi-card"><div class="label">Projects</div><div class="value">${projects.length}</div><div class="sub">registered</div></div>
+    <div class="kpi-card"><div class="label">Forge Runs</div><div class="value">${kpi.total_forge_runs}</div><div class="sub">${kpi.successful_runs} pass, ${kpi.failed_runs} fail</div></div>
+    <div class="kpi-card"><div class="label">Success Rate</div><div class="value" style="color:${kpi.success_rate >= 0.8 ? 'var(--green)' : kpi.success_rate >= 0.5 ? 'var(--yellow)' : 'var(--red)'}">${pct(kpi.success_rate)}</div></div>
+    <div class="kpi-card"><div class="label">Gate Pass Rate</div><div class="value" style="color:${kpi.gate_pass_rate >= 0.8 ? 'var(--green)' : 'var(--yellow)'}">${pct(kpi.gate_pass_rate)}</div><div class="sub">${kpi.total_gate_passes} pass / ${kpi.total_gate_failures} fail</div></div>
+    <div class="kpi-card"><div class="label">Security Findings</div><div class="value" style="color:${kpi.security_critical > 0 ? 'var(--red)' : 'var(--green)'}">${kpi.security_critical + kpi.security_high}</div><div class="sub">${kpi.security_critical} critical, ${kpi.security_high} high</div></div>
+    <div class="kpi-card"><div class="label">Open Failures</div><div class="value" style="color:${kpi.open_failures > 0 ? 'var(--yellow)' : 'var(--green)'}">${kpi.open_failures}</div></div>
+    <div class="kpi-card"><div class="label">Avg Duration</div><div class="value">${durMin}m ${durSec}s</div></div>
+    <div class="kpi-card"><div class="label">Knowledge</div><div class="value">${kpi.total_knowledge}</div><div class="sub">entries</div></div>
+  `;
+}
+
+// ── Projects table ──────────────────────────────────────
+
+async function loadProjects() {
+  const projects = await api('/api/projects');
+  const body = document.getElementById('projectsBody');
+  body.innerHTML = projects.map(p => `
+    <tr>
+      <td><strong>${p.name}</strong></td>
+      <td>${healthBadge(p.health_status)}</td>
+      <td>${p.event_count}</td>
+      <td>${p.failure_count > 0 ? `<span style="color:var(--red)">${p.failure_count}</span>` : '0'}</td>
+      <td style="color:var(--text-muted)">${fmtTime(p.last_synced_at)}</td>
+    </tr>
+  `).join('');
+
+  if (projects.length > 0) {
+    document.getElementById('lastSync').textContent = `${projects.length} projects | Last sync: ${fmtTime(projects[0].last_synced_at)}`;
+  }
+}
+
+// ── Failures table ──────────────────────────────────────
+
+async function loadFailures() {
+  const failures = await api('/api/failures?limit=100');
+  const body = document.getElementById('failuresBody');
+  body.innerHTML = failures.map(f => `
+    <tr>
+      <td>${f.project_name}</td>
+      <td><code>${f.signature}</code></td>
+      <td><strong>${f.occurrences}</strong></td>
+      <td>${severityBadge(f.severity)}</td>
+      <td>${statusBadge(f.remediation_status)}</td>
+      <td style="color:var(--text-muted)">${fmtTime(f.last_seen)}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="6" class="empty">No failure patterns</td></tr>';
+}
+
+// ── Health table ──────────────────────────────────────
+
+async function loadHealth() {
+  const health = await api('/api/health');
+  const body = document.getElementById('healthBody');
+  body.innerHTML = health.map(h => `
+    <tr>
+      <td><strong>${h.name}</strong></td>
+      <td><span class="grade-${h.grade}" style="font-size:18px;font-weight:700">${h.grade}</span></td>
+      <td>${h.score}/100</td>
+      <td style="color:var(--text-muted);font-size:12px">${h.issues.length > 0 ? h.issues.join(', ') : 'none'}</td>
+    </tr>
+  `).join('') || '<tr><td colspan="4" class="empty">No health data</td></tr>';
+}
+
+// ── Patterns ──────────────────────────────────────────
+
+async function loadPatterns() {
+  const report = await api('/api/patterns');
+  document.getElementById('patternCount').textContent = `${report.total_patterns} patterns (${report.critical_count} critical)`;
+
+  const container = document.getElementById('patternsContainer');
+  if (report.patterns.length === 0) {
+    container.innerHTML = '<div class="empty">No actionable patterns detected. Run a sync to analyze data.</div>';
+    return;
+  }
+
+  container.innerHTML = report.patterns.map(p => {
+    const icon = p.severity === 'critical' ? '!!' : p.severity === 'high' ? '!' : '-';
+    return `
+      <div class="pattern-item">
+        <div class="p-title">${severityBadge(p.severity)} ${p.title}</div>
+        <div class="p-detail">${p.detail}</div>
+        ${p.affected_projects.length > 0 ? `<div class="p-detail">Projects: ${p.affected_projects.join(', ')}</div>` : ''}
+        <div class="p-action">Action: ${p.recommendation}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Charts ──────────────────────────────────────────────
+
+const chartDefaults = {
+  color: '#8b949e',
+  borderColor: '#30363d',
+};
+
+Chart.defaults.color = chartDefaults.color;
+Chart.defaults.borderColor = chartDefaults.borderColor;
+
+async function loadCharts() {
+  const [health, topEvents, failures, topFailures] = await Promise.all([
+    api('/api/health'),
+    api('/api/top?by=events&limit=8'),
+    api('/api/failures?limit=100'),
+    api('/api/top?by=failures&limit=8'),
+  ]);
+
+  // Health distribution pie
+  const grades = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+  health.forEach(h => grades[h.grade]++);
+  const gradeColors = { A: '#3fb950', B: '#58a6ff', C: '#d29922', D: '#db6d28', F: '#f85149' };
+
+  if (charts.health) charts.health.destroy();
+  charts.health = new Chart(document.getElementById('healthChart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(grades).filter(g => grades[g] > 0),
+      datasets: [{
+        data: Object.values(grades).filter(v => v > 0),
+        backgroundColor: Object.keys(grades).filter(g => grades[g] > 0).map(g => gradeColors[g]),
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'right', labels: { padding: 12 } },
+      },
+    },
+  });
+
+  // Top projects bar chart
+  if (charts.top) charts.top.destroy();
+  charts.top = new Chart(document.getElementById('topChart'), {
+    type: 'bar',
+    data: {
+      labels: topEvents.map(r => r.name),
+      datasets: [{
+        label: 'Events',
+        data: topEvents.map(r => r.value),
+        backgroundColor: '#58a6ff',
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: '#21262d' } }, y: { grid: { display: false } } },
+    },
+  });
+
+  // Failure severity breakdown
+  const sevCounts = { critical: 0, error: 0, warning: 0, other: 0 };
+  failures.forEach(f => {
+    const sev = (f.severity || '').toLowerCase();
+    if (sev in sevCounts) sevCounts[sev] += f.occurrences;
+    else sevCounts.other += f.occurrences;
+  });
+  const sevColors = { critical: '#f85149', error: '#db6d28', warning: '#d29922', other: '#8b949e' };
+
+  if (charts.failure) charts.failure.destroy();
+  charts.failure = new Chart(document.getElementById('failureChart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(sevCounts).filter(k => sevCounts[k] > 0),
+      datasets: [{
+        data: Object.values(sevCounts).filter(v => v > 0),
+        backgroundColor: Object.keys(sevCounts).filter(k => sevCounts[k] > 0).map(k => sevColors[k]),
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'right', labels: { padding: 12 } } },
+    },
+  });
+
+  // Top projects by failures
+  if (charts.failureBar) charts.failureBar.destroy();
+  charts.failureBar = new Chart(document.getElementById('failureBarChart'), {
+    type: 'bar',
+    data: {
+      labels: topFailures.map(r => r.name),
+      datasets: [{
+        label: 'Failures',
+        data: topFailures.map(r => r.value),
+        backgroundColor: '#f85149',
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: { x: { grid: { color: '#21262d' } }, y: { grid: { display: false } } },
+    },
+  });
+}
+
+// ── Trends ──────────────────────────────────────────────
+
+const trendColors = ['#58a6ff', '#3fb950', '#d29922', '#bc8cff', '#f85149', '#db6d28', '#8b949e', '#f0883e'];
+const directionEmoji = { improving: '\u2191', declining: '\u2193', stable: '\u2192', insufficient_data: '?' };
+const directionColor = { improving: 'var(--green)', declining: 'var(--red)', stable: 'var(--text-muted)', insufficient_data: 'var(--text-muted)' };
+
+async function loadTrends() {
+  try {
+    const report = await api('/api/trends?days=7');
+    if (!report || !report.projects) return;
+
+    const gs = report.global_summary;
+    document.getElementById('trendSummary').textContent =
+      `${gs.projects_improving} improving | ${gs.projects_stable} stable | ${gs.projects_declining} declining`;
+
+    // Alerts
+    const alertsDiv = document.getElementById('trendAlerts');
+    if (report.alerts && report.alerts.length > 0) {
+      alertsDiv.innerHTML = report.alerts.map(a => {
+        const cls = a.severity === 'critical' ? 'badge-red' : a.severity === 'warning' ? 'badge-yellow' : 'badge-blue';
+        return `<div class="pattern-item"><span class="badge ${cls}">${a.severity}</span> <strong>${a.project_name}</strong>: ${a.message}</div>`;
+      }).join('');
+    } else {
+      alertsDiv.innerHTML = '';
+    }
+
+    // Trends table
+    const body = document.getElementById('trendsBody');
+    body.innerHTML = report.projects.map(p => {
+      const sr = p.metrics.find(m => m.metric === 'success_rate');
+      const gp = p.metrics.find(m => m.metric === 'gate_pass_rate');
+      const cost = p.metrics.find(m => m.metric === 'avg_cost_usd');
+      const pctVal = (n) => n !== undefined ? (n * 100).toFixed(1) + '%' : '-';
+      const changePct = (m) => {
+        if (!m || m.direction === 'insufficient_data') return '-';
+        const sign = m.change >= 0 ? '+' : '';
+        return `<span style="color:${directionColor[m.direction]}">${sign}${(m.change_pct * 100).toFixed(1)}%</span>`;
+      };
+      const icon = directionEmoji[p.overall_direction] || '?';
+      const color = directionColor[p.overall_direction] || 'var(--text-muted)';
+      return `<tr>
+        <td><strong>${p.project_name}</strong></td>
+        <td><span style="color:${color};font-weight:700">${icon} ${p.overall_direction}</span></td>
+        <td>${sr ? pctVal(sr.current) : '-'}</td>
+        <td>${changePct(sr)}</td>
+        <td>${gp ? pctVal(gp.current) : '-'}</td>
+        <td>${cost ? '$' + cost.current.toFixed(4) : '-'}</td>
+        <td>${p.snapshot_count}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="7" class="empty">No trend data. Run /dashboard snapshot to capture KPI snapshots.</td></tr>';
+
+    // Trend charts
+    await loadTrendCharts(report);
+  } catch (err) {
+    console.warn('Trends not available:', err.message);
+  }
+}
+
+async function loadTrendCharts(report) {
+  if (!report.projects || report.projects.length === 0) return;
+
+  // Success rate line chart — show per-project latest snapshots over time
+  try {
+    const latestSnapshots = await api('/api/trends/latest');
+    if (latestSnapshots && latestSnapshots.length > 0) {
+      // Group by project for success rate
+      const projectNames = latestSnapshots.map(s => s.project_name);
+      const successRates = latestSnapshots.map(s => (s.success_rate * 100).toFixed(1));
+
+      if (charts.trendSuccess) charts.trendSuccess.destroy();
+      charts.trendSuccess = new Chart(document.getElementById('trendSuccessChart'), {
+        type: 'bar',
+        data: {
+          labels: projectNames,
+          datasets: [{
+            label: 'Success Rate %',
+            data: successRates,
+            backgroundColor: latestSnapshots.map((s, i) => {
+              const rate = s.success_rate;
+              return rate >= 0.8 ? '#3fb950' : rate >= 0.5 ? '#d29922' : '#f85149';
+            }),
+            borderRadius: 4,
+          }],
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { min: 0, max: 100, grid: { color: '#21262d' }, title: { display: true, text: '%' } },
+            x: { grid: { display: false } },
+          },
+        },
+      });
+    }
+  } catch (e) { console.warn('Trend chart error:', e); }
+
+  // Trend direction doughnut
+  const dirs = { improving: 0, stable: 0, declining: 0, insufficient_data: 0 };
+  report.projects.forEach(p => dirs[p.overall_direction]++);
+  const dirColors = { improving: '#3fb950', stable: '#58a6ff', declining: '#f85149', insufficient_data: '#8b949e' };
+  const activeDirs = Object.keys(dirs).filter(k => dirs[k] > 0);
+
+  if (charts.trendDirection) charts.trendDirection.destroy();
+  charts.trendDirection = new Chart(document.getElementById('trendDirectionChart'), {
+    type: 'doughnut',
+    data: {
+      labels: activeDirs,
+      datasets: [{ data: activeDirs.map(k => dirs[k]), backgroundColor: activeDirs.map(k => dirColors[k]), borderWidth: 0 }],
+    },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { padding: 12 } } } },
+  });
+
+  // Cost trend bar
+  try {
+    const latestSnapshots = await api('/api/trends/latest');
+    if (latestSnapshots && latestSnapshots.length > 0) {
+      const withCost = latestSnapshots.filter(s => s.avg_cost_usd > 0);
+      if (charts.trendCost) charts.trendCost.destroy();
+      charts.trendCost = new Chart(document.getElementById('trendCostChart'), {
+        type: 'bar',
+        data: {
+          labels: withCost.map(s => s.project_name),
+          datasets: [{
+            label: 'Avg Cost (USD)',
+            data: withCost.map(s => s.avg_cost_usd),
+            backgroundColor: '#d29922',
+            borderRadius: 4,
+          }],
+        },
+        options: {
+          responsive: true,
+          indexAxis: 'y',
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { color: '#21262d' } }, y: { grid: { display: false } } },
+        },
+      });
+    }
+  } catch (e) { console.warn('Cost chart error:', e); }
+}
+
+async function doSnapshot() {
+  const btn = document.getElementById('snapshotBtn');
+  btn.disabled = true;
+  btn.textContent = 'Capturing...';
+  try {
+    const result = await fetch(API + '/api/trends/snapshot', { method: 'POST' }).then(r => r.json());
+    btn.textContent = `Captured ${result.projects_captured} projects`;
+    await loadTrends();
+    setTimeout(() => { btn.textContent = 'Capture Snapshot'; btn.disabled = false; }, 2000);
+  } catch (err) {
+    btn.textContent = 'Error';
+    setTimeout(() => { btn.textContent = 'Capture Snapshot'; btn.disabled = false; }, 2000);
+  }
+}
+
+// ── Remediations ──────────────────────────────────────
+
+async function loadRemediations() {
+  try {
+    const [report, remediations] = await Promise.all([
+      api('/api/remediations/report'),
+      api('/api/remediations?limit=100'),
+    ]);
+
+    if (!report) return;
+
+    // Stats cards
+    const s = report.stats;
+    const cardsDiv = document.getElementById('remStatsCards');
+    cardsDiv.innerHTML = `
+      <div class="kpi-card"><div class="label">Total</div><div class="value">${s.total}</div></div>
+      <div class="kpi-card"><div class="label">Pending</div><div class="value" style="color:var(--yellow)">${s.pending}</div></div>
+      <div class="kpi-card"><div class="label">In Progress</div><div class="value" style="color:var(--accent)">${s.in_progress}</div></div>
+      <div class="kpi-card"><div class="label">Completed</div><div class="value" style="color:var(--green)">${s.completed}</div></div>
+      <div class="kpi-card"><div class="label">Failed</div><div class="value" style="color:var(--red)">${s.failed}</div></div>
+      <div class="kpi-card"><div class="label">Auto-Applied</div><div class="value">${s.auto_applied}</div></div>
+      <div class="kpi-card"><div class="label">Avg Resolution</div><div class="value">${s.avg_resolution_hours > 0 ? s.avg_resolution_hours.toFixed(1) + 'h' : '-'}</div></div>
+    `;
+
+    document.getElementById('remStats').textContent = `${s.pending} pending | ${s.completed} completed`;
+
+    // Remediations table
+    const body = document.getElementById('remediationsBody');
+    body.innerHTML = remediations.map(r => {
+      const statusMap = { pending: 'badge-yellow', in_progress: 'badge-blue', completed: 'badge-green', failed: 'badge-red', skipped: 'badge-purple' };
+      const prioMap = { critical: 'badge-red', high: 'badge-yellow', medium: 'badge-blue', low: 'badge-purple' };
+      const actions = r.status === 'pending'
+        ? `<button class="btn btn-small" style="font-size:11px;padding:2px 8px" onclick="applyRem('${r.id}','start')">Start</button>
+           <button class="btn btn-small" style="font-size:11px;padding:2px 8px;background:var(--green)" onclick="applyRem('${r.id}','complete')">Complete</button>`
+        : r.status === 'in_progress'
+          ? `<button class="btn btn-small" style="font-size:11px;padding:2px 8px;background:var(--green)" onclick="applyRem('${r.id}','complete')">Complete</button>
+             <button class="btn btn-small" style="font-size:11px;padding:2px 8px;background:var(--red)" onclick="applyRem('${r.id}','fail')">Fail</button>`
+          : r.status;
+      return `<tr>
+        <td><span class="badge ${statusMap[r.status] || 'badge-blue'}">${r.status}</span></td>
+        <td><span class="badge ${prioMap[r.priority] || 'badge-blue'}">${r.priority}</span></td>
+        <td>${r.project_name}</td>
+        <td>${r.title}</td>
+        <td><code style="font-size:11px">${r.failure_signature}</code></td>
+        <td>${actions}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" class="empty">No remediations. Click Scan to detect actionable failures.</td></tr>';
+
+    // Playbook effectiveness
+    const pbBody = document.getElementById('playbooksBody');
+    const playbooks = report.playbook_effectiveness || [];
+    pbBody.innerHTML = playbooks.map(pb => {
+      const rate = (pb.success_rate * 100).toFixed(0) + '%';
+      const rateColor = pb.success_rate >= 0.8 ? 'var(--green)' : pb.success_rate >= 0.5 ? 'var(--yellow)' : 'var(--red)';
+      return `<tr>
+        <td><strong>${pb.name}</strong></td>
+        <td>${pb.category}</td>
+        <td>-</td>
+        <td>${pb.success_count}</td>
+        <td>${pb.failure_count}</td>
+        <td style="color:${rateColor};font-weight:700">${rate}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="6" class="empty">No playbook data yet</td></tr>';
+  } catch (err) {
+    console.warn('Remediations not available:', err.message);
+  }
+}
+
+async function doRemScan() {
+  const btn = document.getElementById('remScanBtn');
+  btn.disabled = true;
+  btn.textContent = 'Scanning...';
+  try {
+    const result = await fetch(API + '/api/remediations/scan', { method: 'POST' }).then(r => r.json());
+    btn.textContent = `${result.actions_created} found`;
+    await loadRemediations();
+    setTimeout(() => { btn.textContent = 'Scan'; btn.disabled = false; }, 2000);
+  } catch (err) {
+    btn.textContent = 'Error';
+    setTimeout(() => { btn.textContent = 'Scan'; btn.disabled = false; }, 2000);
+  }
+}
+
+async function applyRem(id, action) {
+  try {
+    await fetch(API + `/api/remediations/${id}/apply?action=${action}`, { method: 'POST' });
+    await loadRemediations();
+  } catch (err) {
+    alert('Action failed: ' + err.message);
+  }
+}
+
+// ── Sync ──────────────────────────────────────────────
+
+async function doSync() {
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Syncing...';
+  try {
+    await fetch(API + '/api/sync', { method: 'POST' });
+    await loadAll();
+  } catch (err) {
+    alert('Sync failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sync Now';
+  }
+}
+
+// ── Init ──────────────────────────────────────────────
+
+async function loadAll() {
+  try {
+    await Promise.all([loadKpis(), loadProjects(), loadFailures(), loadHealth(), loadPatterns(), loadCharts(), loadTrends(), loadRemediations()]);
+  } catch (err) {
+    console.error('Dashboard load error:', err);
+    document.getElementById('kpiGrid').innerHTML = `<div class="empty">Failed to load data. Is the server running? Error: ${err.message}</div>`;
+  }
+}
+
+loadAll();
+// Auto-refresh every 60 seconds
+setInterval(loadAll, 60000);
+</script>
+</body>
+</html>

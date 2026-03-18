@@ -22,6 +22,7 @@ import { prdReviewCommand } from './prd-review.js';
 import { publishCommand } from './publish.js';
 import { upgradeCommand } from './upgrade.js';
 import { auditCommand } from './audit.js';
+import { dashboardCommand } from './dashboard.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -78,4 +79,5 @@ export function initCommands(): void {
   registerCommand(publishCommand);
   registerCommand(upgradeCommand);
   registerCommand(auditCommand);
+  registerCommand(dashboardCommand);
 }

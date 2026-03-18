@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 2.0.67** | Last Updated: 2026-03-18
+> **Version 2.0.68** | Last Updated: 2026-03-18
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -29,6 +29,7 @@ This guide covers everything you need to know to use the SkillFoundry framework 
 19. [Best Practices](#19-best-practices)
 20. [Command Reference](#20-command-reference)
 21. [Session Monitor](#21-session-monitor) *(v2.0.66)*
+22. [Centralized Dashboard](#22-centralized-dashboard) *(v2.0.68)*
 
 ---
 
@@ -1903,5 +1904,98 @@ The session monitor runs as a PostToolUse hook after every Bash tool invocation.
 
 ---
 
+## 22. Centralized Dashboard
+
+*(Added in v2.0.68)*
+
+The centralized dashboard aggregates telemetry, sessions, failures, KPIs, trends, and remediations across all registered projects into a single SQLite database.
+
+### Quick Start
+
+```bash
+# Sync all projects into the dashboard database
+sf dashboard sync
+
+# View project overview
+sf dashboard
+
+# Start web dashboard
+sf dashboard serve                    # Opens at http://127.0.0.1:9400
+
+# KPI trend report
+sf dashboard trend --days 7
+
+# Scan for auto-remediations
+sf dashboard remediate scan --auto true
+```
+
+### CLI Subcommands
+
+| Command | Purpose |
+|---------|---------|
+| `sf dashboard` | Project overview table |
+| `sf dashboard sync` | Force-sync all projects into central DB |
+| `sf dashboard status <project>` | Detailed single-project drill-down |
+| `sf dashboard failures` | Cross-project failure report |
+| `sf dashboard top [--by X]` | Project rankings (events/failures/cost/perf) |
+| `sf dashboard kpi [--project X]` | Computed KPI metrics |
+| `sf dashboard health` | Health assessment with letter grades (A-F) |
+| `sf dashboard import` | Session report and forge log import |
+| `sf dashboard patterns` | Failure pattern analysis |
+| `sf dashboard trend [--days N]` | KPI trend report |
+| `sf dashboard snapshot` | Capture daily KPI snapshots |
+| `sf dashboard forecast <project>` | Metric forecasting |
+| `sf dashboard remediate` | Remediation report |
+| `sf dashboard remediate scan` | Scan for new remediations |
+| `sf dashboard serve [--port N]` | Start web dashboard (default: 9400) |
+
+All subcommands support `--json` for machine-readable output.
+
+### Web Dashboard
+
+The web dashboard (`sf dashboard serve`) provides:
+
+- **KPI Cards** — Projects, Forge Runs, Success Rate, Gate Pass Rate, Security Findings, Open Failures, Avg Duration, Knowledge
+- **Charts** — Health Distribution, Top Projects, Failure Severity, Trend Direction
+- **Tabbed Data** — Projects, Failures, Patterns, Health, Trends, Remediations
+- **Sync Button** — One-click sync + auto-refresh every 60 seconds
+- **Remediation Controls** — Start/Complete/Fail buttons per remediation
+
+### KPI Trend Engine
+
+Captures daily snapshots and detects trends:
+
+- **Trend detection**: Improving / declining / stable (comparing recent vs prior windows)
+- **Alerts**: Critical drops in success rate, gate pass rate, cost spikes, new security findings
+- **Forecasting**: Linear regression projects next 7 days
+
+### Auto-Remediation Engine
+
+10 built-in playbooks match failure patterns to actionable fixes:
+
+| Playbook | Category | Auto-Apply |
+|----------|----------|------------|
+| TypeScript Build Failure | BUILD_FAILURE | No |
+| Dependency Resolution | BUILD_FAILURE | Yes |
+| Test Timeout Resolution | TEST_GAP | No |
+| Test Coverage Gap | TEST_GAP | No |
+| Security Vulnerability Fix | SECURITY | Yes |
+| Lint Gate Failure | GATE_FAILURE | Yes |
+| Type Check Gate Failure | GATE_FAILURE | No |
+| Circuit Breaker Recovery | CIRCUIT_BREAKER | No |
+| Repeated Story Failure | PIPELINE | No |
+| Outdated Dependencies | DEPENDENCY | Yes |
+
+Remediation lifecycle: `pending` → `in_progress` → `completed` / `failed`. Playbook effectiveness is tracked (success/failure rates).
+
+### Cron Integration
+
+The auto-harvest cron (`scripts/auto-harvest-cron.sh`) automatically:
+1. Syncs all projects to the dashboard database
+2. Captures KPI snapshots
+3. Runs remediation scans with auto-apply
+
+---
+
 *Created by SBS with Claude Code*
-*Framework Version: 2.0.67*
+*Framework Version: 2.0.68*
