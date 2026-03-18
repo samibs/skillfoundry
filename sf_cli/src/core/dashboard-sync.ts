@@ -143,8 +143,8 @@ function readProjectKnowledge(projectPath: string): KnowledgeEntryRecord[] {
             project_id: '', // filled by caller
             type: (entry.type as string) || 'unknown',
             content: (entry.content as string) || (entry.lesson as string) || JSON.stringify(entry),
-            created_at: (entry.created_at as string) || (entry.timestamp as string) || null,
-            tags: Array.isArray(entry.tags) ? (entry.tags as string[]).join(',') : (entry.tags as string) || null,
+            created_at: (entry.created_at as string) || (entry.timestamp as string) || undefined,
+            tags: Array.isArray(entry.tags) ? (entry.tags as string[]).join(',') : (entry.tags as string) || undefined,
             weight: typeof entry.weight === 'number' ? entry.weight : 0.5,
           });
         } catch {
@@ -188,11 +188,11 @@ function readSessionMonitorFailures(projectPath: string): FailurePatternRecord[]
           project_id: '', // filled by caller
           signature,
           occurrences: (entry.occurrences as number) || 1,
-          first_seen: (entry.first_seen as string) || (entry.timestamp as string) || null,
-          last_seen: (entry.last_seen as string) || (entry.timestamp as string) || null,
+          first_seen: (entry.first_seen as string) || (entry.timestamp as string) || undefined,
+          last_seen: (entry.last_seen as string) || (entry.timestamp as string) || undefined,
           source: 'session-monitor',
           severity: severity.toLowerCase(),
-          detail: (entry.detail as string) || (entry.message as string) || null,
+          detail: (entry.detail as string) || (entry.message as string) || undefined,
         });
       } catch {
         // Skip malformed

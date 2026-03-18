@@ -5,7 +5,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync, rea
 import { join } from 'node:path';
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger' | 'repair' | 'react' | 'persist' | 'memory' | 'decision' | 'harvest' | 'recall' | 'primer' | 'telemetry' | 'weight-learner' | 'dep-scanner' | 'consent' | 'baseline' | 'embedding' | 'message-bus' | 'gitleaks' | 'agent-pool' | 'checkov' | 'license' | 'prd-scorer' | 'vector-store' | 'security-report' | 'agent-logger' | 'memory-search' | 'prd-review' | 'memory-benchmark' | 'team-config' | 'audit' | 'gate-cache' | 'policy' | 'publish' | 'upgrade' | 'benchmark' | 'perf';
+export type LogCategory = 'pipeline' | 'runner' | 'gate' | 'microgate' | 'provider' | 'tool' | 'budget' | 'debugger' | 'repair' | 'react' | 'persist' | 'memory' | 'decision' | 'harvest' | 'recall' | 'primer' | 'telemetry' | 'weight-learner' | 'dep-scanner' | 'consent' | 'baseline' | 'embedding' | 'message-bus' | 'gitleaks' | 'agent-pool' | 'checkov' | 'license' | 'prd-scorer' | 'vector-store' | 'security-report' | 'agent-logger' | 'memory-search' | 'prd-review' | 'memory-benchmark' | 'team-config' | 'audit' | 'gate-cache' | 'policy' | 'publish' | 'upgrade' | 'benchmark' | 'perf' | 'dashboard-sync' | 'failure-detector' | 'kpi-engine' | 'project-id' | 'remediation-engine' | 'session-import' | 'dashboard-server' | 'dashboard-db';
 
 const LEVEL_PRIORITY: Record<LogLevel, number> = {
   DEBUG: 0,
