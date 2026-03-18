@@ -34,6 +34,7 @@ import {
   scanForRemediations,
   applyRemediation,
   generateRemediationReport,
+  seedPlaybooks,
   formatScanResult as formatRemScanResult,
   formatRemediationReport,
   formatRemediationList,
@@ -674,6 +675,25 @@ export const dashboardCommand: SlashCommand = {
           return '  Invalid port number. Use: /dashboard serve --port <1-65535>';
         }
 
+        // Auto-prepare: sync, snapshot, seed playbooks, scan remediations
+        const prepLines: string[] = [];
+        try {
+          const syncResult = syncAllProjects(dbPath, frameworkDir);
+          prepLines.push(`  Synced ${syncResult.projects_synced} projects (${syncResult.events_added} events, ${syncResult.knowledge_added} knowledge)`);
+        } catch { prepLines.push('  Sync: skipped (error)'); }
+
+        try {
+          const db = initDatabase(dbPath);
+          try {
+            const snapResult = captureSnapshots(db);
+            prepLines.push(`  KPI snapshots: ${snapResult.projects_captured} captured, ${snapResult.projects_skipped} skipped`);
+            seedPlaybooks(db);
+            prepLines.push(`  Playbooks: seeded`);
+            const scanResult = scanForRemediations(db);
+            prepLines.push(`  Remediations: ${scanResult.actions_created} created, ${scanResult.auto_applied} auto-applied`);
+          } finally { db.close(); }
+        } catch { prepLines.push('  Prepare: skipped (error)'); }
+
         const server = startServer({
           port,
           dbPath,
@@ -683,6 +703,10 @@ export const dashboardCommand: SlashCommand = {
         return [
           'Dashboard Server',
           LINE.repeat(60),
+          '',
+          '  Preparation:',
+          ...prepLines,
+          '',
           `  Web dashboard running at: http://127.0.0.1:${server.port}`,
           '',
           '  Press Ctrl+C to stop the server.',
