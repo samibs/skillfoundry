@@ -143,6 +143,7 @@ scripts/setup-auto-harvest.sh --uninstall
 | **Cron job** | Every 30 min | Sweeps all registered projects, harvests new knowledge, promotes patterns, syncs to global repo |
 | **SessionStart hook** | On every session | Pulls global knowledge into the project, starts sync daemon |
 | **SessionEnd hook** | On session close | Runs `session-close.sh`, triggers background cross-project harvest |
+| **Session monitor** | After every Bash command | Detects erratic agent behavior (retry loops, restart storms, `source .env`) and injects diagnostic nudges |
 
 ### Customization
 

@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.65-blue)
+![Version](https://img.shields.io/badge/version-2.0.66-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,13 +24,11 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.65
+### What's New in v2.0.66
 
-- **Full Docs Sync** — Architecture, getting-started, configuration, site, and CLI all updated for v2.0.62-v2.0.64 features (env-preflight, auto-harvest, .env safety).
-- **`/status` shows harvest state** — Last harvest run, lifetime entries, projects scanned.
-- **`.env` File Safety Protocol** — Agents NEVER `source .env`. `env-preflight.sh` detects unsafe files and emits CRITICAL warnings.
-- **Automatic Session Harvesting** — Cron sweeps 60+ projects every 30 min. Claude Code hooks auto-harvest on session start/end.
-- **1,788 tests** — All passing across 77 files.
+- **Real-Time Session Monitor** — PostToolUse hook detects erratic agent behavior: `source .env` blocking, 2-Failure Rule enforcement, service restart loops, self-inflicted regression detection. Injects diagnostic nudges back into agent context via exit code 2.
+- **5 Pattern Detectors** — Source .env blocker, consecutive failure detection, pm2/docker/systemctl restart loops, git-diff cross-reference for self-inflicted regressions, restart-without-logs detection.
+- **Structured Logging** — All detected patterns logged to `logs/session-monitor.jsonl` for auto-harvest collection.
 
 ### Quick Install
 
@@ -659,6 +657,7 @@ skillfoundry/
 │   ├── env-preflight.sh     Environment audit → JSON (interpreters, deps, .env safety)
 │   ├── auto-harvest-cron.sh Cron sweep: harvest all registered projects on schedule
 │   ├── setup-auto-harvest.sh One-command installer for cron + Claude Code hooks
+│   ├── session-monitor.sh   Real-time agent behavior monitor (PostToolUse hook)
 │   ├── memory.sh            Remember, recall, correct knowledge
 │   ├── harvest.sh           Extract lessons from projects
 │   ├── knowledge-sync.sh    Sync daemon for cross-project learning

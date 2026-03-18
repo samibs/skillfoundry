@@ -255,7 +255,21 @@ Knowledge harvesting runs automatically through three mechanisms:
 
 The cron job uses **change detection** — it compares file modification timestamps against the last harvest epoch, so unchanged projects are skipped. A lock file prevents concurrent runs.
 
-Setup: `scripts/setup-auto-harvest.sh` installs both the cron entry and Claude Code hooks in one command. `--uninstall` cleanly removes them. `--status` shows installation state and harvest statistics.
+Setup: `scripts/setup-auto-harvest.sh` installs the cron entry, Claude Code hooks, and session monitor in one command. `--uninstall` cleanly removes them. `--status` shows installation state and harvest statistics.
+
+### Real-Time Session Monitor
+
+The session monitor (`scripts/session-monitor.sh`) runs as a PostToolUse hook on every Bash command the agent executes. It detects erratic behavior patterns in real-time and injects diagnostic nudges back into the agent's context:
+
+| Detector | What It Catches | Response |
+|----------|----------------|----------|
+| **Source .env** | `source .env` / `. .env` commands | Immediate block (exit 2) with safe alternative |
+| **2-Failure Rule** | 2+ consecutive failures with similar error signature | Diagnostic nudge: read the error, inspect environment, try different approach |
+| **Restart loops** | Same service restarted 2+ times | Forces agent to read error logs before next restart |
+| **Self-inflicted regression** | Error output references files the agent modified this session | Logs pattern; consecutive failure detector handles the nudge |
+| **Restart without logs** | `pm2 restart` without preceding `pm2 logs` | Nudge to read logs first |
+
+State is persisted per-project in `.claude/session-monitor-state.json`. All detected patterns are logged to `logs/session-monitor.jsonl` for collection by auto-harvest. Alerts are throttled to max 1 per 30 seconds.
 
 ### Knowledge Promotion
 
