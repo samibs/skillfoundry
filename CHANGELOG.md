@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.66] - 2026-03-18
+
+### Added — Real-Time Session Monitor
+
+**Problem**: LLM agents exhibit erratic behavior patterns that waste tokens and break deployments — retry loops on identical errors, restarting services without reading logs, `source .env` on bash-unsafe files, and dismissing self-inflicted regressions as "pre-existing." Real-world cases: CircularWatch agent retried `source .env` 6 times; SmartExchange agent restarted a service 3 times debugging its own regressions one-at-a-time.
+
+**Session Monitor (`scripts/session-monitor.sh`):**
+- PostToolUse hook on Bash commands — runs after every shell command the agent executes
+- **5 pattern detectors**:
+  - **Source .env blocker**: Immediately blocks `source .env` / `. .env` with safe alternative (exit 2)
+  - **2-Failure Rule**: After 2 consecutive similar errors, injects diagnostic nudge; at 3+, injects hard stop
+  - **Service restart loops**: Tracks pm2/docker/systemctl restarts per service; nudges at 2, blocks at 3+
+  - **Self-inflicted regression**: Cross-references `git diff --name-only` with error output to flag agent-modified files
+  - **Restart without logs**: Detects `pm2 restart` without preceding `pm2 logs` read
+- State persisted per-project in `.claude/session-monitor-state.json`
+- Structured logging to `logs/session-monitor.jsonl` (harvestable by auto-harvest)
+- Alert throttling: max 1 feedback injection per 30 seconds
+- Session rotation: archives old state when session_id changes
+
+**Hook Integration:**
+- Added `PostToolUse` hook entry in `~/.claude/settings.json` (matcher: `Bash`)
+- Updated `scripts/setup-auto-harvest.sh` to install/uninstall/status the session monitor hook
+- Exit code 2 injects stderr content back into agent context as diagnostic feedback
+
+---
+
 ## [2.0.65] - 2026-03-18
 
 ### Changed — Documentation & Help Sync for v2.0.62-v2.0.64 Features

@@ -88,6 +88,7 @@ if [ "$SHOW_STATUS" = true ]; then
     if [ -f "$SETTINGS_FILE" ]; then
         has_start=$(jq -r '.hooks.SessionStart // empty' "$SETTINGS_FILE" 2>/dev/null)
         has_end=$(jq -r '.hooks.SessionEnd // empty' "$SETTINGS_FILE" 2>/dev/null)
+        has_monitor=$(jq -r '.hooks.PostToolUse // empty' "$SETTINGS_FILE" 2>/dev/null)
         if [ -n "$has_start" ] && [ -n "$has_end" ]; then
             echo -e "${GREEN}  Hooks:  INSTALLED (SessionStart + SessionEnd)${NC}"
         elif [ -n "$has_end" ]; then
@@ -96,6 +97,11 @@ if [ "$SHOW_STATUS" = true ]; then
             echo -e "${YELLOW}  Hooks:  PARTIAL (SessionStart only)${NC}"
         else
             echo -e "${YELLOW}  Hooks:  NOT INSTALLED${NC}"
+        fi
+        if [ -n "$has_monitor" ]; then
+            echo -e "${GREEN}  Monitor: INSTALLED (PostToolUse → session-monitor.sh)${NC}"
+        else
+            echo -e "${YELLOW}  Monitor: NOT INSTALLED${NC}"
         fi
     else
         echo -e "${YELLOW}  Hooks:  NOT INSTALLED (no settings.json)${NC}"
@@ -167,6 +173,11 @@ if [ "$UNINSTALL" = true ]; then
             tmp=$(mktemp)
             jq 'del(.hooks.SessionEnd)' "$SETTINGS_FILE" > "$tmp" && mv "$tmp" "$SETTINGS_FILE"
             echo -e "${GREEN}  SessionEnd hook removed from settings.json${NC}"
+        fi
+        if jq -e '.hooks.PostToolUse' "$SETTINGS_FILE" &>/dev/null; then
+            tmp=$(mktemp)
+            jq 'del(.hooks.PostToolUse)' "$SETTINGS_FILE" > "$tmp" && mv "$tmp" "$SETTINGS_FILE"
+            echo -e "${GREEN}  PostToolUse hook (session monitor) removed from settings.json${NC}"
         fi
         # Clean up empty hooks object
         if jq -e '.hooks == {}' "$SETTINGS_FILE" &>/dev/null; then
@@ -276,12 +287,25 @@ if [ "$CRON_ONLY" = false ]; then
                     }
                 ]
             }
+        ] |
+        .hooks.PostToolUse = [
+            {
+                "matcher": "Bash",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "bash '"$FRAMEWORK_DIR"'/scripts/session-monitor.sh",
+                        "timeout": 10
+                    }
+                ]
+            }
         ]
     ' "$SETTINGS_FILE" > "$tmp" && mv "$tmp" "$SETTINGS_FILE"
 
     echo -e "${GREEN}  Claude Code hooks installed in settings.json${NC}"
-    echo -e "    SessionStart → $HOOKS_DIR/session-start.sh"
-    echo -e "    SessionEnd   → $HOOKS_DIR/session-end.sh"
+    echo -e "    SessionStart  → $HOOKS_DIR/session-start.sh"
+    echo -e "    SessionEnd    → $HOOKS_DIR/session-end.sh"
+    echo -e "    PostToolUse   → $FRAMEWORK_DIR/scripts/session-monitor.sh (Bash)"
 fi
 
 # ── Ensure log directory exists ─────────────────────────────────────────────
@@ -300,8 +324,9 @@ if [ "$HOOKS_ONLY" = false ]; then
     echo -e "  ${BOLD}Cron:${NC}    Every ${CRON_INTERVAL}min → harvest all registered projects"
 fi
 if [ "$CRON_ONLY" = false ]; then
-    echo -e "  ${BOLD}Hooks:${NC}   SessionStart → pull global knowledge"
-    echo -e "           SessionEnd   → harvest + sync + promote"
+    echo -e "  ${BOLD}Hooks:${NC}   SessionStart  → pull global knowledge"
+    echo -e "           SessionEnd    → harvest + sync + promote"
+    echo -e "           PostToolUse   → session monitor (Bash commands)"
 fi
 
 reg_count=$(grep -c '^/' "$FRAMEWORK_DIR/.project-registry" 2>/dev/null || echo 0)
