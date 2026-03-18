@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.69 - Quick Reference Card
+# SkillFoundry v2.0.70 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -667,4 +667,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.69 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.70 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*

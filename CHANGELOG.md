@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.70] - 2026-03-18
+
+### Fixed — Dashboard Launcher Portability
+
+- **ESM compatibility** — `dashboard-serve.sh` now uses `--input-type=module` with `await import()` instead of `require()`. Fixes `ERR_MODULE_NOT_FOUND` on fresh clones where sf_cli is ESM (`"type": "module"`).
+- **Auto-install dependencies** — Script detects missing `better-sqlite3` and runs `npm ci`/`npm install` automatically before starting.
+- **Auto-build** — If compiled `dist/` files are missing, runs `npx tsc` to build before launching.
+- **Real error reporting** — Shows actual Node.js error output instead of generic "non-JSON, continuing..." messages.
+
+---
+
 ## [2.0.69] - 2026-03-18
 
 ### Added — One-Command Dashboard Launcher
