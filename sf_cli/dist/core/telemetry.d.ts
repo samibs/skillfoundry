@@ -195,6 +195,11 @@ export declare function aggregateMetrics(workDir: string, window?: number): Tele
  */
 export declare function formatMetrics(agg: TelemetryAggregation): string;
 /**
+ * Read all telemetry events from current file AND rotated archives.
+ * Returns events sorted oldest-first across all files.
+ */
+export declare function readAllEvents(workDir: string): TelemetryEvent[];
+/**
  * Format metrics with industry baseline comparison.
  */
 export declare function formatMetricsWithBaselines(agg: TelemetryAggregation): string;

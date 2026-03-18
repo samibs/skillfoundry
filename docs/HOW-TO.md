@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 2.0.68** | Last Updated: 2026-03-18
+> **Version 2.0.69** | Last Updated: 2026-03-18
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -29,7 +29,7 @@ This guide covers everything you need to know to use the SkillFoundry framework 
 19. [Best Practices](#19-best-practices)
 20. [Command Reference](#20-command-reference)
 21. [Session Monitor](#21-session-monitor) *(v2.0.66)*
-22. [Centralized Dashboard](#22-centralized-dashboard) *(v2.0.68)*
+22. [Centralized Dashboard](#22-centralized-dashboard) *(v2.0.69)*
 
 ---
 
@@ -1906,7 +1906,7 @@ The session monitor runs as a PostToolUse hook after every Bash tool invocation.
 
 ## 22. Centralized Dashboard
 
-*(Added in v2.0.68)*
+*(Added in v2.0.69)*
 
 The centralized dashboard aggregates telemetry, sessions, failures, KPIs, trends, and remediations across all registered projects into a single SQLite database.
 
@@ -1950,6 +1950,25 @@ sf dashboard remediate scan --auto true
 | `sf dashboard serve [--port N]` | Start web dashboard (default: 9400) |
 
 All subcommands support `--json` for machine-readable output.
+
+### Standalone Dashboard Launcher
+
+For the fastest way to launch the dashboard without the `sf` CLI:
+
+```bash
+./scripts/dashboard-serve.sh                # Full auto: sync → snapshot → seed → scan → serve
+./scripts/dashboard-serve.sh --port=8080    # Custom port
+./scripts/dashboard-serve.sh --sync-only    # Sync + prepare without starting server
+./scripts/dashboard-serve.sh --skip-sync    # Start server only (skip sync)
+./scripts/dashboard-serve.sh --open         # Auto-open browser after starting
+```
+
+Both `./scripts/dashboard-serve.sh` and `/dashboard serve` auto-run these steps:
+1. Sync all registered projects into `data/dashboard.db`
+2. Capture daily KPI snapshots
+3. Seed 10 built-in remediation playbooks
+4. Scan for auto-remediation opportunities
+5. Start web dashboard
 
 ### Web Dashboard
 
@@ -1998,4 +2017,4 @@ The auto-harvest cron (`scripts/auto-harvest-cron.sh`) automatically:
 ---
 
 *Created by SBS with Claude Code*
-*Framework Version: 2.0.68*
+*Framework Version: 2.0.69*
