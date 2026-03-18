@@ -35,6 +35,7 @@ OPEN_BROWSER=false
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 FRAMEWORK_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DB_PATH="$FRAMEWORK_ROOT/data/dashboard.db"
+DIST="$FRAMEWORK_ROOT/sf_cli/dist"
 
 # ── Argument parsing ───────────────────────────────────────
 show_help() {
@@ -89,6 +90,42 @@ fi
 # Ensure data directory exists
 mkdir -p "$FRAMEWORK_ROOT/data"
 
+# ── Auto-install dependencies if missing ────────────────────
+if [ ! -d "$FRAMEWORK_ROOT/sf_cli/node_modules/better-sqlite3" ]; then
+    echo -e "${YELLOW}[DEPS]${NC} better-sqlite3 not found — installing dependencies..."
+    if [ -f "$FRAMEWORK_ROOT/sf_cli/package-lock.json" ]; then
+        (cd "$FRAMEWORK_ROOT/sf_cli" && npm ci 2>&1 | tail -3) || \
+        (cd "$FRAMEWORK_ROOT/sf_cli" && npm install 2>&1 | tail -3)
+    else
+        (cd "$FRAMEWORK_ROOT/sf_cli" && npm install 2>&1 | tail -3)
+    fi
+    if [ ! -d "$FRAMEWORK_ROOT/sf_cli/node_modules/better-sqlite3" ]; then
+        echo -e "${RED}[FAIL]${NC} Failed to install better-sqlite3."
+        echo "       Run manually: cd $FRAMEWORK_ROOT/sf_cli && npm install"
+        exit 1
+    fi
+    echo -e "       ${GREEN}Done${NC} — dependencies installed."
+fi
+
+# ── Check compiled dist exists ──────────────────────────────
+if [ ! -f "$DIST/core/dashboard-db.js" ]; then
+    echo -e "${YELLOW}[BUILD]${NC} Compiled files not found — building..."
+    if command -v npx &>/dev/null; then
+        (cd "$FRAMEWORK_ROOT/sf_cli" && npx tsc 2>&1 | tail -5) || true
+    fi
+    if [ ! -f "$DIST/core/dashboard-db.js" ]; then
+        echo -e "${RED}[FAIL]${NC} Build failed. Run manually: cd $FRAMEWORK_ROOT/sf_cli && npx tsc"
+        exit 1
+    fi
+    echo -e "       ${GREEN}Done${NC} — build complete."
+fi
+
+# ── Helper: run ESM node code ───────────────────────────────
+# sf_cli is "type": "module", so we must use dynamic import()
+run_node() {
+    node --input-type=module -e "$1" 2>&1
+}
+
 # ── Banner ──────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -99,56 +136,61 @@ echo ""
 # ── Step 1: Sync ────────────────────────────────────────────
 if [ "$SKIP_SYNC" = false ]; then
     echo -e "${CYAN}[1/4]${NC} Syncing all projects..."
-    SYNC_OUTPUT=$(node -e "
-        const s = require('$FRAMEWORK_ROOT/sf_cli/dist/core/dashboard-sync.js');
-        const r = s.syncAllProjects('$DB_PATH', '$FRAMEWORK_ROOT');
+    SYNC_OUTPUT=$(run_node "
+        const { syncAllProjects } = await import('$DIST/core/dashboard-sync.js');
+        const r = syncAllProjects('$DB_PATH', '$FRAMEWORK_ROOT');
         console.log(JSON.stringify(r));
-    " 2>&1) || true
+    ") || true
 
-    if echo "$SYNC_OUTPUT" | node -e "process.stdin.on('data',d=>{try{const r=JSON.parse(d);process.exit(0)}catch{process.exit(1)}})" 2>/dev/null; then
+    if echo "$SYNC_OUTPUT" | node -e "process.stdin.on('data',d=>{try{JSON.parse(d);process.exit(0)}catch{process.exit(1)}})" 2>/dev/null; then
         PROJECTS=$(echo "$SYNC_OUTPUT" | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log(r.projects_synced)})")
         EVENTS=$(echo "$SYNC_OUTPUT" | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log(r.events_added)})")
         KNOWLEDGE=$(echo "$SYNC_OUTPUT" | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log(r.knowledge_added)})")
         echo -e "      ${GREEN}Done${NC} — $PROJECTS projects, $EVENTS events, $KNOWLEDGE knowledge entries"
     else
-        echo -e "      ${YELLOW}Warning${NC} — sync returned non-JSON, continuing..."
+        echo -e "      ${YELLOW}Warning${NC} — sync error:"
+        echo -e "      ${DIM}$(echo "$SYNC_OUTPUT" | head -5)${NC}"
     fi
 
     # ── Step 2: KPI Snapshots ───────────────────────────────
     echo -e "${CYAN}[2/4]${NC} Capturing KPI snapshots..."
-    SNAP_OUTPUT=$(node -e "
-        const db = require('$FRAMEWORK_ROOT/sf_cli/dist/core/dashboard-db.js').initDatabase('$DB_PATH');
-        const k = require('$FRAMEWORK_ROOT/sf_cli/dist/core/kpi-engine.js');
-        const r = k.captureSnapshots(db);
+    SNAP_OUTPUT=$(run_node "
+        const { initDatabase } = await import('$DIST/core/dashboard-db.js');
+        const { captureSnapshots } = await import('$DIST/core/kpi-engine.js');
+        const db = initDatabase('$DB_PATH');
+        const r = captureSnapshots(db);
         console.log(JSON.stringify(r));
         db.close();
-    " 2>&1) || true
+    ") || true
 
     if echo "$SNAP_OUTPUT" | node -e "process.stdin.on('data',d=>{try{JSON.parse(d);process.exit(0)}catch{process.exit(1)}})" 2>/dev/null; then
         CAPTURED=$(echo "$SNAP_OUTPUT" | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log(r.projects_captured)})")
         SKIPPED=$(echo "$SNAP_OUTPUT" | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log(r.projects_skipped)})")
         echo -e "      ${GREEN}Done${NC} — $CAPTURED captured, $SKIPPED already today"
     else
-        echo -e "      ${YELLOW}Skipped${NC} — snapshot capture issue, continuing..."
+        echo -e "      ${YELLOW}Warning${NC} — snapshot error:"
+        echo -e "      ${DIM}$(echo "$SNAP_OUTPUT" | head -5)${NC}"
     fi
 
     # ── Step 3: Seed Playbooks ──────────────────────────────
     echo -e "${CYAN}[3/4]${NC} Seeding playbooks & scanning remediations..."
-    REM_OUTPUT=$(node -e "
-        const db = require('$FRAMEWORK_ROOT/sf_cli/dist/core/dashboard-db.js').initDatabase('$DB_PATH');
-        const r = require('$FRAMEWORK_ROOT/sf_cli/dist/core/remediation-engine.js');
-        r.seedPlaybooks(db);
-        const scan = r.scanForRemediations(db);
+    REM_OUTPUT=$(run_node "
+        const { initDatabase } = await import('$DIST/core/dashboard-db.js');
+        const { seedPlaybooks, scanForRemediations } = await import('$DIST/core/remediation-engine.js');
+        const db = initDatabase('$DB_PATH');
+        seedPlaybooks(db);
+        const scan = scanForRemediations(db);
         console.log(JSON.stringify(scan));
         db.close();
-    " 2>&1) || true
+    ") || true
 
     if echo "$REM_OUTPUT" | node -e "process.stdin.on('data',d=>{try{JSON.parse(d);process.exit(0)}catch{process.exit(1)}})" 2>/dev/null; then
         CREATED=$(echo "$REM_OUTPUT" | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log(r.actions_created)})")
         AUTO=$(echo "$REM_OUTPUT" | node -e "process.stdin.on('data',d=>{const r=JSON.parse(d);console.log(r.auto_applied)})")
         echo -e "      ${GREEN}Done${NC} — $CREATED remediations created, $AUTO auto-applied"
     else
-        echo -e "      ${YELLOW}Skipped${NC} — remediation scan issue, continuing..."
+        echo -e "      ${YELLOW}Warning${NC} — remediation error:"
+        echo -e "      ${DIM}$(echo "$REM_OUTPUT" | head -5)${NC}"
     fi
 else
     echo -e "${DIM}  Sync skipped (--skip-sync)${NC}"
@@ -184,7 +226,7 @@ fi
 trap 'echo -e "\n${CYAN}[INFO]${NC} Dashboard stopped."; exit 0' INT TERM
 
 # Start server (blocks until Ctrl+C)
-exec node -e "
-    const { startServer } = require('$FRAMEWORK_ROOT/sf_cli/dist/core/dashboard-server.js');
+exec node --input-type=module -e "
+    const { startServer } = await import('$DIST/core/dashboard-server.js');
     startServer({ dbPath: '$DB_PATH', frameworkDir: '$FRAMEWORK_ROOT', port: $PORT });
 "
