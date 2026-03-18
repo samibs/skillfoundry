@@ -372,6 +372,51 @@ fi
 
 # ── Summary ─────────────────────────────────────────────────────────────────
 
+# ── Dashboard sync ─────────────────────────────────────────────────────────
+
+if [ "$DRY_RUN" = false ]; then
+    DASHBOARD_DB="$FRAMEWORK_DIR/data/dashboard.db"
+    DASHBOARD_SYNC="$FRAMEWORK_DIR/sf_cli/src/core/dashboard-sync.ts"
+    if [ -f "$DASHBOARD_SYNC" ]; then
+        log "  Syncing to dashboard database..."
+        if npx --prefix "$FRAMEWORK_DIR/sf_cli" tsx "$DASHBOARD_SYNC" 2>/dev/null; then
+            log "    Dashboard sync complete"
+        else
+            log "    WARN: Dashboard sync failed (will retry next run)"
+        fi
+
+        # Capture KPI snapshots after sync
+        KPI_ENGINE="$FRAMEWORK_DIR/sf_cli/src/core/kpi-engine.ts"
+        if [ -f "$KPI_ENGINE" ]; then
+            log "  Capturing KPI snapshots..."
+            if npx --prefix "$FRAMEWORK_DIR/sf_cli" tsx -e "
+              import { runSnapshotCapture } from '$KPI_ENGINE';
+              const r = runSnapshotCapture('$DASHBOARD_DB');
+              console.log(JSON.stringify(r));
+            " 2>/dev/null; then
+                log "    KPI snapshots captured"
+            else
+                log "    WARN: KPI snapshot capture failed (non-critical)"
+            fi
+        fi
+
+        # Run remediation scan after snapshots
+        REM_ENGINE="$FRAMEWORK_DIR/sf_cli/src/core/remediation-engine.ts"
+        if [ -f "$REM_ENGINE" ]; then
+            log "  Scanning for auto-remediations..."
+            if npx --prefix "$FRAMEWORK_DIR/sf_cli" tsx -e "
+              import { runRemediationScan } from '$REM_ENGINE';
+              const r = runRemediationScan('$DASHBOARD_DB', true);
+              console.log(JSON.stringify(r));
+            " 2>/dev/null; then
+                log "    Remediation scan complete"
+            else
+                log "    WARN: Remediation scan failed (non-critical)"
+            fi
+        fi
+    fi
+fi
+
 log "═══ Auto-Harvest Complete (${duration}s) ═══"
 log "  Projects: $projects_harvested harvested, $projects_skipped skipped (of $projects_total)"
 log "  Entries:  +$entries_this_run harvested, +$promoted_this_run promoted"

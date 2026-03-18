@@ -85,6 +85,15 @@ coverage/
 .goutputstream-*
 
 # ═══════════════════════════════════════════════════════════════
+# DASHBOARD DATA (SQLite, session imports)
+# ═══════════════════════════════════════════════════════════════
+data/*
+!data/.gitkeep
+!data/inbox/
+data/inbox/*
+!data/inbox/.gitkeep
+
+# ═══════════════════════════════════════════════════════════════
 # FRAMEWORK-SPECIFIC
 # ═══════════════════════════════════════════════════════════════
 # Project registry (local paths - sensitive)
