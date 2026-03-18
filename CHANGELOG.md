@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.64] - 2026-03-18
+
+### Added — .env File Safety Protocol
+
+**Problem**: LLM agents routinely use `source .env` to load environment variables before running database commands. `.env` files are NOT bash scripts — they contain unquoted values with `<`, `>`, `|`, `&`, `()` characters that bash interprets as operators. Real-world case: `SMTP_FROM=CircularWatch <noreply@circularwatch.lu>` caused 6 consecutive `source .env` failures with `syntax error near unexpected token 'newline'` — agent never read the error message.
+
+**Protocol Update (`agents/_env-preflight-protocol.md`):**
+- New **Phase 5: .env File Safety** — documents why `source .env` is unsafe with safe alternatives
+- Safe access patterns: `grep '^KEY=' .env | cut -d= -f2-` for single values, `sed` for complex values
+- Database connection pattern: extract `DATABASE_URL` with grep, never source the whole file
+- Pin rule: `.env format = NEVER source` added to session fact pinning
+- Error→Diagnosis Map: added `syntax error near unexpected token` and `psql fails after .env load` entries
+- Anti-patterns table: `source .env` / `. .env` added as first entry with correct alternative
+
+**Script Update (`scripts/env-preflight.sh`):**
+- New `dotenv` section in JSON output: detects `.env` and `backend/.env` files
+- Unsafe character detection: scans for unquoted `<>|&()` in .env values
+- `DATABASE_URL` extraction (safe grep, never source): reports presence and prefix
+- CRITICAL warning when .env contains bash-unsafe characters
+- WARNING when .env exists but no `DATABASE_URL` found
+
+---
+
 ## [2.0.63] - 2026-03-17
 
 ### Added — Automatic Session Harvesting

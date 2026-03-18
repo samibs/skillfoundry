@@ -121,6 +121,32 @@ collect_json() {
   local has_prisma=false
   [ -f "$WORKDIR/node_modules/.bin/prisma" ] && has_prisma=true
 
+  # .env file detection and safety check
+  local has_dotenv=false dotenv_path="" dotenv_unsafe=false
+  for env_candidate in .env backend/.env; do
+    if [ -f "$WORKDIR/$env_candidate" ]; then
+      has_dotenv=true
+      dotenv_path="$WORKDIR/$env_candidate"
+      # Check if .env contains bash-unsafe characters (unquoted <, >, |, &, (, ))
+      if grep -qP '=.*[<>|&()]' "$dotenv_path" 2>/dev/null || \
+         grep -qE '=[^"'"'"']*[<>|&()]' "$dotenv_path" 2>/dev/null; then
+        dotenv_unsafe=true
+      fi
+      break
+    fi
+  done
+
+  # Database URL detection (safe extraction, never source)
+  local has_database_url=false database_url_prefix=""
+  if [ -n "$dotenv_path" ]; then
+    local db_url
+    db_url=$(grep '^DATABASE_URL=' "$dotenv_path" 2>/dev/null | head -1 | cut -d= -f2-)
+    if [ -n "$db_url" ]; then
+      has_database_url=true
+      database_url_prefix="${db_url:0:20}..."
+    fi
+  fi
+
   # Process manager
   local has_pm2=false
   command -v pm2 &>/dev/null && has_pm2=true
@@ -166,6 +192,14 @@ collect_json() {
     "branch": "$git_branch",
     "clean": $git_clean
   },
+  "dotenv": {
+    "has_dotenv": $has_dotenv,
+    "path": "$dotenv_path",
+    "unsafe_for_source": $dotenv_unsafe,
+    "has_database_url": $has_database_url,
+    "database_url_prefix": "$database_url_prefix",
+    "recommendation": "$(if [ "$dotenv_unsafe" = true ]; then echo "NEVER source — contains bash-unsafe characters. Use: grep '^KEY=' .env | cut -d= -f2-"; elif [ "$has_dotenv" = true ]; then echo "Extract values with grep, do not source"; else echo "No .env file found"; fi)"
+  },
   "database": {
     "has_alembic": $has_alembic,
     "alembic_path": "$alembic_path",
@@ -183,6 +217,8 @@ collect_json() {
     [ "$tsc_executable" = false ] && [ -n "$tsc_path" ] && warnings="${warnings}\"tsc exists but is not executable — run: chmod +x $tsc_path\","
     [ "$has_tsconfig" = true ] && [ "$ts_types_node" = false ] && warnings="${warnings}\"tsconfig.json exists but @types/node missing — run: npm i -D @types/node\","
     [ "$has_package_json" = true ] && [ "$has_node_modules" = false ] && warnings="${warnings}\"package.json exists but node_modules missing — run: npm install\","
+    [ "$dotenv_unsafe" = true ] && warnings="${warnings}\"CRITICAL: .env contains bash-unsafe characters (<>|&) — NEVER use 'source .env'. Extract values with: grep '^KEY=' .env | cut -d= -f2-\","
+    [ "$has_dotenv" = true ] && [ "$has_database_url" = false ] && warnings="${warnings}\"WARNING: .env exists but no DATABASE_URL found — check if DB connection string uses a different key\","
     echo "${warnings%,}"
   )]
 }
