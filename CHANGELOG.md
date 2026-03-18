@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.67] - 2026-03-18
+
+### Changed — Documentation & Help Sync for Session Monitor (v2.0.66)
+
+Full documentation sync across all surfaces for session monitor feature:
+
+- **docs/HOW-TO.md**: New section 21 "Session Monitor" — 5 detectors, installation, how it works, state/log files
+- **docs/QUICK-REFERENCE.md**: Added Session Monitor section with detector table, updated version
+- **docs/AGENTS.md**: Added session monitor to Developer Experience commands and Quick Reference Card
+- **docs/DOCUMENTATION-INDEX.md**: Added session monitor and env-preflight to Audit & Logging section, new Session & Environment Safety subsection
+- **docs/USER-GUIDE-CLI.md**: Updated version and feature list to include session monitoring
+- **sf_cli status command**: Now shows session monitor detections (total count + top patterns) from `logs/session-monitor.jsonl`
+- **site/pages/**: Updated all 19 HTML pages from stale v2.0.52 to v2.0.67 (52 occurrences)
+- **site/index.html**: Version bump to v2.0.67
+- **README.md**: Updated What's New heading and version badge
+
+---
+
 ## [2.0.66] - 2026-03-18
 
 ### Added — Real-Time Session Monitor

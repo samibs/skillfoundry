@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v2.0.10
+# Documentation Index - SkillFoundry Framework v2.0.67
 
 Complete guide to all documentation in the framework.
 
@@ -110,6 +110,7 @@ Deep-dive technical documentation:
 ### Audit & Logging (NEW v1.7.0)
 - **[logs/remediations.md](logs/remediations.md)** - Auto-fix audit trail
 - **[logs/escalations.md](logs/escalations.md)** - User decision log
+- **[logs/session-monitor.jsonl](logs/session-monitor.jsonl)** - Real-time agent behavior detection log
 
 ### Examples & Tutorials
 - **[docs/EXAMPLES/example-web-app.md](docs/EXAMPLES/example-web-app.md)** - Complete web app walkthrough
@@ -303,6 +304,11 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **[agents/_gate-verification.md](agents/_gate-verification.md)** - Capability checks
 - **[agents/_parallel-dispatch.md](agents/_parallel-dispatch.md)** - Parallel execution
 - **[agents/_git-worktrees.md](agents/_git-worktrees.md)** - Git worktree isolation
+
+### Session & Environment Safety (v2.0.66)
+- **[scripts/session-monitor.sh](scripts/session-monitor.sh)** - PostToolUse hook for erratic behavior detection
+- **[scripts/env-preflight.sh](scripts/env-preflight.sh)** - Environment audit (interpreters, deps, .env safety)
+- **[agents/_env-preflight-protocol.md](agents/_env-preflight-protocol.md)** - Environment discipline protocol
 
 ### Metrics & Analytics
 - **[agents/_metrics-system.md](agents/_metrics-system.md)** - Metrics collection

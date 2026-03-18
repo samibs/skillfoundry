@@ -57,6 +57,34 @@ export const statusCommand: SlashCommand = {
           // ignore malformed state
         }
       }
+
+      // Session monitor status
+      const monitorLog = join(sfRoot, 'logs', 'session-monitor.jsonl');
+      if (existsSync(monitorLog)) {
+        try {
+          const logContent = readFileSync(monitorLog, 'utf-8').trim();
+          const logLines = logContent ? logContent.split('\n') : [];
+          if (logLines.length > 0) {
+            const patterns: Record<string, number> = {};
+            for (const line of logLines) {
+              try {
+                const entry = JSON.parse(line);
+                const p = entry.pattern ?? 'unknown';
+                patterns[p] = (patterns[p] ?? 0) + 1;
+              } catch { /* skip malformed */ }
+            }
+            lines.push('');
+            lines.push('**Session Monitor**');
+            lines.push(`  Detections: ${logLines.length} total`);
+            const top = Object.entries(patterns).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            if (top.length > 0) {
+              lines.push(`  Top:        ${top.map(([p, c]) => `${p}(${c})`).join(', ')}`);
+            }
+          }
+        } catch {
+          // ignore
+        }
+      }
     }
 
     return lines.join('\n');

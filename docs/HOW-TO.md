@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 2.0.52** | Last Updated: 2026-03-16
+> **Version 2.0.67** | Last Updated: 2026-03-18
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -28,6 +28,7 @@ This guide covers everything you need to know to use the SkillFoundry framework 
 18. [Troubleshooting](#18-troubleshooting)
 19. [Best Practices](#19-best-practices)
 20. [Command Reference](#20-command-reference)
+21. [Session Monitor](#21-session-monitor) *(v2.0.66)*
 
 ---
 
@@ -1839,6 +1840,60 @@ Compliance presets are additive - they add gate-keeper rules without weakening e
 
 ---
 
+## 21. Session Monitor
+
+*(v2.0.66)* — PostToolUse hook that detects erratic agent behavior in real-time, preventing common failure loops before they waste tokens and time.
+
+### The 5 Detectors
+
+| Detector | Triggers On | Action |
+|----------|------------|--------|
+| **Source .env Blocker** | `source .env` or `. .env` in shell commands | Blocks execution, suggests safe alternative (`export $(grep ...)`) |
+| **2-Failure Rule** | 2+ consecutive similar errors from the agent | Injects diagnostic nudge: stop, read error, form hypothesis |
+| **Restart Loop Detection** | Service restarted 2+ times in a session | Forces agent to read logs before allowing another restart |
+| **Self-Inflicted Regression** | Error occurs in a file the agent recently modified | Logs and flags the regression for immediate attention |
+| **Restart Without Logs** | `pm2 restart` issued without prior `pm2 logs` | Nudges agent to read logs first before blindly restarting |
+
+### Installation
+
+The recommended way to install the session monitor is via the auto-harvest setup script, which installs everything:
+
+```bash
+scripts/setup-auto-harvest.sh
+```
+
+To install manually, add the PostToolUse hook to your `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "command": "scripts/session-monitor.sh \"$TOOL_INPUT\" \"$TOOL_OUTPUT\""
+      }
+    ]
+  }
+}
+```
+
+### How It Works
+
+The session monitor runs as a PostToolUse hook after every Bash tool invocation. It analyzes the tool input and output against the 5 detectors. When a detector triggers:
+
+- **Exit code 2** is returned, which injects feedback to the agent via stderr
+- The agent receives a corrective message explaining what went wrong and what to do instead
+- The event is logged for later analysis
+
+### State and Logs
+
+| File | Purpose |
+|------|---------|
+| `.claude/session-monitor-state.json` | Tracks session state (failure counts, restart counts, modified files) |
+| `logs/session-monitor.jsonl` | Append-only log of all detector triggers with timestamps |
+
+---
+
 ## Need Help?
 
 1. Check this guide
@@ -1849,4 +1904,4 @@ Compliance presets are additive - they add gate-keeper rules without weakening e
 ---
 
 *Created by SBS with Claude Code*
-*Framework Version: 2.0.10*
+*Framework Version: 2.0.67*

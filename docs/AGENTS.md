@@ -307,7 +307,7 @@ Your complete AI development team, covering the full software development lifecy
 | `/explain` | Explain last agent action in plain English |
 | `/undo` | Revert last reversible agent action |
 | `/cost` | Token usage report by agent/story/phase |
-| `/health` | Framework self-diagnostic |
+| `/health` | Framework diagnostics + session monitor |
 | `/swarm` | Swarm coordination management |
 
 **When to use**: Understanding agent decisions, reverting mistakes, monitoring costs, checking framework health.
@@ -463,6 +463,7 @@ PLANNING          DEVELOPMENT        QUALITY           RELEASE           PRODUCT
 | `/tester` | Run tests |
 | `/security audit` | Security check |
 | `/layer-check` | Verify all layers |
+| `/health` | Diagnostics + session monitor |
 
 ### New in v1.6.0
 
