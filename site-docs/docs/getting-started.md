@@ -217,7 +217,7 @@ What happened at each phase:
 
 | Phase | Purpose |
 |-------|---------|
-| **IGNITE** | Discovers and validates PRDs in `genesis/` |
+| **IGNITE** | Runs environment pre-flight audit, pins interpreter paths, then discovers and validates PRDs in `genesis/` |
 | **PLAN** | Decomposes PRDs into self-contained stories |
 | **FORGE** | Executes each story using AI agents with real tool access |
 | **POLISH** | Runs micro-gates (lightweight AI reviews) on each story's output |

@@ -5,7 +5,7 @@ title: Architecture
 
 # Architecture
 
-SkillFoundry is a CLI framework that orchestrates AI agents through a governed pipeline. It ships with 88 agent prompt files, a 7-tier quality gate system, a JSONL-based memory system, and local-first telemetry. This page explains how each component works and how they connect.
+SkillFoundry is a CLI framework that orchestrates AI agents through a governed pipeline. It ships with 88 agent prompt files, an 8-tier quality gate system, a JSONL-based memory system, automatic session harvesting, and local-first telemetry. This page explains how each component works and how they connect.
 
 ## System Overview
 
@@ -55,7 +55,7 @@ flowchart LR
 
 | Phase | What Happens | Failure Behavior |
 |-------|-------------|-----------------|
-| **IGNITE** | Discovers PRDs in `genesis/`, validates quality gates (problem statement, acceptance criteria, security requirements, no TBD markers) | Pipeline aborts if PRD validation fails |
+| **IGNITE** | Runs environment pre-flight audit (`env-preflight.sh`), pins interpreter paths and dependency state, then discovers PRDs in `genesis/` and validates quality gates (problem statement, acceptance criteria, security requirements, no TBD markers) | Pipeline aborts if PRD validation fails or env-preflight detects critical warnings |
 | **PLAN** | Decomposes each PRD into self-contained stories with dependency ordering. Stories are written to `docs/stories/` | Pipeline aborts if decomposition fails |
 | **FORGE** | Executes stories sequentially. Each story gets an AI agent with tool access (file read/write, bash, glob, grep). Micro-gates run after each story | Circuit breaker halts after 2 consecutive same-error failures |
 | **POLISH** | Runs micro-gates: MG0 (acceptance criteria validation), MG1 (security review), MG1.5 (test documentation), MG2 (standards review), MG3 (cross-story advisory) | Findings reported; FAIL findings trigger fixer agent |
@@ -63,6 +63,21 @@ flowchart LR
 | **INSPECT** | Deep security scan using Semgrep with OWASP rulesets (when available), falls back to regex pattern matching | Findings reported in run summary |
 | **DEBRIEF** | Generates JSON and Markdown run reports in `.skillfoundry/runs/<run-id>/` | Always runs |
 | **FINISH** | Harvests lessons learned (decisions, errors, patterns) into `memory_bank/knowledge/` as JSONL entries | Always runs |
+
+### Environment Pre-Flight
+
+Before any code execution, the IGNITE phase runs an environment audit (`scripts/env-preflight.sh`) that outputs structured JSON with:
+
+- **System**: OS, kernel, shell
+- **Interpreters**: Python (system + venv detection), Node.js, TypeScript (tsc executable, tsconfig, @types/node)
+- **Database tools**: Alembic, Prisma detection and path pinning
+- **Package state**: package.json vs node_modules consistency
+- **.env safety**: Detects `.env` files with bash-unsafe characters (`<>|&()`) and warns agents to NEVER use `source .env` — extract values with `grep | cut` instead
+- **DATABASE_URL**: Safe extraction (grep, not source) with presence validation
+
+Detected facts are **pinned for the session** — once the pipeline knows the Python binary is `venv/bin/python3`, it uses that exact path everywhere. The **2-Failure Rule** enforces diagnostic discipline: after 2 consecutive failures of the same operation, agents stop executing and switch to inspection mode.
+
+See `agents/_env-preflight-protocol.md` for the full 5-phase protocol including the Error → Diagnosis Map and Hypothesis Ranking system.
 
 ### Circuit Breaker
 
@@ -227,6 +242,30 @@ At the end of each pipeline run (FINISH phase), the `memory-harvest.ts` module e
 - User corrections from interactive sessions
 
 Entries accumulate across sessions. Weight scores adjust over time — knowledge that proves useful in future runs gains weight, while stale entries decay.
+
+### Automatic Session Harvesting
+
+Knowledge harvesting runs automatically through three mechanisms:
+
+| Mechanism | Trigger | What It Does |
+|-----------|---------|-------------|
+| **Cron job** | Every 30 minutes | `auto-harvest-cron.sh` sweeps all registered projects (60+), harvests only those with changes since last sweep, runs promotion cycle, syncs to global repo |
+| **SessionEnd hook** | Claude Code session closes | Runs `session-close.sh` (records session end, final sync, promotion check) then triggers background cross-project harvest |
+| **SessionStart hook** | Claude Code session opens | Runs `session-init.sh` (pulls global knowledge into project, starts sync daemon) |
+
+The cron job uses **change detection** — it compares file modification timestamps against the last harvest epoch, so unchanged projects are skipped. A lock file prevents concurrent runs.
+
+Setup: `scripts/setup-auto-harvest.sh` installs both the cron entry and Claude Code hooks in one command. `--uninstall` cleanly removes them. `--status` shows installation state and harvest statistics.
+
+### Knowledge Promotion
+
+Knowledge flows from project-specific to universal through a promotion pipeline:
+
+```
+Project memory_bank/ → harvest.sh → central knowledge → promote-knowledge.sh → global lessons
+```
+
+Promotion criteria: entries appearing in 2+ projects become candidates; entries in 3+ projects or with weight > 0.8 are promoted to `global/lessons.jsonl`. All entries are sanitized (secrets stripped, paths normalized) before sync.
 
 ## Telemetry
 

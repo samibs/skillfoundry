@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.65] - 2026-03-18
+
+### Changed — Documentation & Help Sync for v2.0.62-v2.0.64 Features
+
+Full documentation sync across all surfaces for environment pre-flight, auto-harvest, and .env safety features:
+
+- **site-docs/architecture.md**: Added "Environment Pre-Flight" section (5-phase protocol, 2-Failure Rule, .env safety, fact pinning), added "Automatic Session Harvesting" section (cron, hooks, promotion pipeline), updated IGNITE phase to include env-preflight, fixed stale "7-tier" → "8-tier" reference
+- **site-docs/getting-started.md**: IGNITE phase table now mentions environment pre-flight audit
+- **site-docs/configuration.md**: New "Auto-Harvest Configuration" section (quick setup, customization options, env vars), new "Environment Pre-Flight" section with manual usage examples, added `KNOWLEDGE_SYNC_INTERVAL` env var
+- **site/index.html**: Fixed "7 Quality Tiers" → "8 Quality Tiers" stat, updated Anvil feature card to "8-tier (T0-T7)", updated Knowledge Sync feature card to "Auto-Harvest & Knowledge Sync", fixed terminal demo "T1-T6" → "T0-T7 (8/8)"
+- **README.md**: Added `env-preflight.sh`, `auto-harvest-cron.sh`, `setup-auto-harvest.sh` to scripts architecture tree
+- **CLAUDE.md**: Added pointer to `agents/_env-preflight-protocol.md` in header references
+- **sf_cli status command**: Now shows auto-harvest state (last run, lifetime runs/entries, projects harvested) when harvest state file exists
+
+---
+
 ## [2.0.64] - 2026-03-18
 
 ### Added — .env File Safety Protocol
