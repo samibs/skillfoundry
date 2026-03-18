@@ -3,6 +3,7 @@
 > For universal AI agent rules (security, testing, LLM guardrails, workflow preferences): see `~/.claude/CLAUDE.md`
 > For production operations (PM2, caching, APM, migrations, incident response): see `docs/enterprise-standards.md`
 > For AI-specific security anti-patterns: see `docs/ANTI_PATTERNS_DEPTH.md` and `docs/ANTI_PATTERNS_BREADTH.md`
+> For environment pre-flight discipline (interpreter pinning, .env safety, diagnostic mode): see `agents/_env-preflight-protocol.md`
 
 This file contains **framework-specific** rules only. General agent behavior is inherited from the global CLAUDE.md.
 

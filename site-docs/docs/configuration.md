@@ -119,6 +119,60 @@ Example `settings.json` snippet:
 }
 ```
 
+## Auto-Harvest Configuration
+
+Automatic session harvesting keeps knowledge flowing across all your SkillFoundry projects. Set it up once, forget about it.
+
+### Quick Setup
+
+```bash
+# Install cron job + Claude Code hooks (one command)
+scripts/setup-auto-harvest.sh
+
+# Check installation status
+scripts/setup-auto-harvest.sh --status
+
+# Uninstall everything
+scripts/setup-auto-harvest.sh --uninstall
+```
+
+### What Gets Installed
+
+| Component | Default | What It Does |
+|-----------|---------|-------------|
+| **Cron job** | Every 30 min | Sweeps all registered projects, harvests new knowledge, promotes patterns, syncs to global repo |
+| **SessionStart hook** | On every session | Pulls global knowledge into the project, starts sync daemon |
+| **SessionEnd hook** | On session close | Runs `session-close.sh`, triggers background cross-project harvest |
+
+### Customization
+
+| Option | How |
+|--------|-----|
+| Change cron interval | `scripts/setup-auto-harvest.sh --interval=60` (minutes) |
+| Cron only (no hooks) | `scripts/setup-auto-harvest.sh --cron-only` |
+| Hooks only (no cron) | `scripts/setup-auto-harvest.sh --hooks-only` |
+| Manual sweep | `scripts/auto-harvest-cron.sh` |
+| Dry-run preview | `scripts/auto-harvest-cron.sh --dry-run` |
+| View harvest stats | `scripts/auto-harvest-cron.sh --status` |
+| View harvest log | `tail -f logs/auto-harvest.log` |
+
+### Environment Pre-Flight
+
+The environment pre-flight audit runs automatically in the IGNITE phase of `/forge` and `/go`. You can also run it manually:
+
+```bash
+# Audit current project
+scripts/env-preflight.sh .
+
+# Audit a specific project
+scripts/env-preflight.sh /path/to/project
+
+# Parse the JSON output
+scripts/env-preflight.sh . | jq '.warnings'
+```
+
+The audit detects interpreters, dependencies, `.env` file safety (warns on bash-unsafe characters), DATABASE_URL presence, and package state. Detected facts are pinned for the session — agents use exact paths instead of guessing.
+
 ## Environment Variables
 
 Environment variables override config file values and are useful for CI/CD pipelines, Docker containers, and non-interactive environments.
@@ -128,6 +182,7 @@ Environment variables override config file values and are useful for CI/CD pipel
 | `ANTHROPIC_API_KEY` | Claude API key. Required for AI-powered features (PRD generation, autonomous mode, intelligent gate analysis). Not needed if using Claude Code CLI with its own authentication. |
 | `SF_LOG_LEVEL` | Override the `log_level` from `config.toml`. Useful for enabling `debug` output in CI without changing the committed config. Accepted values: `debug`, `info`, `warn`, `error`. |
 | `SF_PRD_IDEA` | Provide a PRD idea for non-interactive mode. When set, `/prd` uses this value instead of prompting. Useful in scripts and automation. |
+| `KNOWLEDGE_SYNC_INTERVAL` | Override the knowledge sync daemon interval in seconds. Default: `300` (5 minutes). |
 
 Example usage in a shell:
 
