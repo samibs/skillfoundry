@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.66-blue)
+![Version](https://img.shields.io/badge/version-2.0.67-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,7 +24,7 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.66
+### What's New in v2.0.67
 
 - **Real-Time Session Monitor** — PostToolUse hook detects erratic agent behavior: `source .env` blocking, 2-Failure Rule enforcement, service restart loops, self-inflicted regression detection. Injects diagnostic nudges back into agent context via exit code 2.
 - **5 Pattern Detectors** — Source .env blocker, consecutive failure detection, pm2/docker/systemctl restart loops, git-diff cross-reference for self-inflicted regressions, restart-without-logs detection.

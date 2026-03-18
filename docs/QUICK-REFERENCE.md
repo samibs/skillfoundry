@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.10 - Quick Reference Card
+# SkillFoundry v2.0.67 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -58,7 +58,7 @@ math-check     memory
 | `/cost` | Token usage report |
 | `/setup` | Configure API keys (sf setup from terminal) |
 | `/exit` | Quit the CLI |
-| `/health` | Framework self-diagnostic |
+| `/health` | Framework diagnostics + session monitor |
 | `companion.sh --tmux` | Open context-aware command panel |
 
 ---
@@ -624,4 +624,20 @@ your-project/
 
 ---
 
-*SkillFoundry Framework v2.0.10 - February 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+## Session Monitor (v2.0.66)
+
+Real-time PostToolUse hook detecting erratic agent behavior:
+
+| Detector | Triggers On | Action |
+|----------|------------|--------|
+| Source .env | `source .env` / `. .env` | Block + safe alternative |
+| 2-Failure Rule | 2+ consecutive similar errors | Diagnostic nudge |
+| Restart loops | Service restarted 2+ times | Force log read first |
+| Self-inflicted | Error in agent-modified file | Log + flag |
+| No-log restart | `pm2 restart` without `pm2 logs` | Nudge to read logs |
+
+Install: `scripts/setup-auto-harvest.sh`
+
+---
+
+*SkillFoundry Framework v2.0.67 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
