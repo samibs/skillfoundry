@@ -1,3 +1,14 @@
+---
+description: /gohm - Go Harvest Memory (Knowledge Harvester)
+globs:
+alwaysApply: false
+---
+
+# gohm — Cursor Rule
+
+> **Activation**: Say "gohm" or "use gohm rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /gohm - Go Harvest Memory (Knowledge Harvester)
 
 > Scan the current session for decisions, corrections, patterns, and errors. Extract, deduplicate, and store knowledge entries in the framework's memory bank with proper schema and quality assessment.
@@ -381,3 +392,14 @@ Before writing entries with `confidence: "low"`, gohm MUST challenge itself:
 ---
 
 *Knowledge Harvester - SkillFoundry Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use gohm rule"
+- "gohm — implement the feature"
+- "follow the gohm workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

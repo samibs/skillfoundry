@@ -1,3 +1,14 @@
+---
+description: Metrics Dashboard
+globs:
+alwaysApply: false
+---
+
+# metrics — Cursor Rule
+
+> **Activation**: Say "metrics" or "use metrics rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Metrics Dashboard
 
 View and analyze execution metrics for the Claude AS framework.
@@ -565,3 +576,14 @@ After displaying metrics, evaluate:
 > "Every number tells a story. Learn to read it."
 
 > "Good metrics lead to good decisions."
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use metrics rule"
+- "metrics — implement the feature"
+- "follow the metrics workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

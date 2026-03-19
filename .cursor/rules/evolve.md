@@ -1,3 +1,14 @@
+---
+description: /evolve - Framework Evolution from Dev-Memory
+globs:
+alwaysApply: false
+---
+
+# evolve — Cursor Rule
+
+> **Activation**: Say "evolve" or "use evolve rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /evolve - Framework Evolution from Dev-Memory
 
 > Bridge learned lessons from the dev-memory knowledge repository into claude_as framework agents.
@@ -91,3 +102,14 @@ Evolve — Evolution Complete
 ---
 
 *Evolve — The Self-Improving Framework — Claude AS*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use evolve rule"
+- "evolve — implement the feature"
+- "follow the evolve workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

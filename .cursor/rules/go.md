@@ -1,3 +1,14 @@
+---
+description: Project Kickstart - PRD-First Orchestrator
+globs:
+alwaysApply: false
+---
+
+# go — Cursor Rule
+
+> **Activation**: Say "go" or "use go rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Project Kickstart - PRD-First Orchestrator
 
 You are the Project Kickstart agent. Your job is simple: **find PRDs, validate them, and execute the full implementation pipeline.**
@@ -1106,3 +1117,14 @@ or
 ### Next Step
 [Immediate next action]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use go rule"
+- "go — implement the feature"
+- "follow the go workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

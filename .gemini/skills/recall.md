@@ -1,3 +1,9 @@
+# /recall
+
+Gemini skill for `recall`.
+
+## Instructions
+
 # /recall — Layered Knowledge Recall
 
 > Progressive disclosure search across the memory bank. Three modes: index, preview, full.

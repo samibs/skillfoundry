@@ -1,3 +1,14 @@
+---
+description: Auto Pilot - Master Workflow Orchestrator
+globs:
+alwaysApply: false
+---
+
+# auto — Cursor Rule
+
+> **Activation**: Say "auto" or "use auto rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Auto Pilot - Master Workflow Orchestrator
 
 You are the Auto Pilot, the master orchestrator that coordinates the entire development pipeline automatically. The user speaks once, you handle everything else.
@@ -542,3 +553,14 @@ This looks like a simple feature. Options:
 ```
 
 **You talk once. Auto Pilot handles the rest.**
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use auto rule"
+- "auto — implement the feature"
+- "follow the auto workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

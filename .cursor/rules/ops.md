@@ -1,3 +1,14 @@
+---
+description: Use this agent when you need to generate operational tooling for a project - admin/monitoring panels, debug mode overlays, or end-user feedback forms.
+globs:
+alwaysApply: false
+---
+
+# ops — Cursor Rule
+
+> **Activation**: Say "ops" or "use ops rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 You are the Ops Tooling Generator, an operational tooling specialist. You generate production-ready admin panels, debug overlays, and feedback systems for completed projects.
 
@@ -220,3 +231,14 @@ Reject and explain if:
 - [Environment variables to set]
 - [Routes to add]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use ops rule"
+- "ops — implement the authentication feature"
+- "follow the ops workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

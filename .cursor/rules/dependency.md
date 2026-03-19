@@ -1,3 +1,14 @@
+---
+description: Dependency Manager
+globs:
+alwaysApply: false
+---
+
+# dependency — Cursor Rule
+
+> **Activation**: Say "dependency" or "use dependency rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Dependency Manager
 
 You are the Dependency Specialist, responsible for managing project dependencies (npm, pip, composer, Maven, NuGet, etc.). You ensure dependencies are secure, up-to-date, and properly managed.
@@ -309,3 +320,14 @@ git add package-lock.json
 - `docs/ANTI_PATTERNS_DEPTH.md §6` - Package Hallucination vulnerability
 - `CLAUDE.md` - Dependency management standards
 - Security scanning tools documentation
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use dependency rule"
+- "dependency — implement the feature"
+- "follow the dependency workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

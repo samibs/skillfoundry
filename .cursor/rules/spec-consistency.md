@@ -1,3 +1,14 @@
+---
+description: Use this agent to ensure implementation matches PRD specifications, detect specification drift, and maintain requirements traceability.
+globs:
+alwaysApply: false
+---
+
+# spec-consistency — Cursor Rule
+
+> **Activation**: Say "spec-consistency" or "use spec-consistency rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Spec Consistency Agent
 
@@ -60,3 +71,14 @@ Ensure implementation matches PRD specifications and detect drift.
 - Drift detection accuracy tests
 - Traceability completeness tests
 - Scope change validation tests
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use spec-consistency rule"
+- "spec-consistency — implement the authentication feature"
+- "follow the spec-consistency workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

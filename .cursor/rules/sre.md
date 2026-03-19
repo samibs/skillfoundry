@@ -1,3 +1,14 @@
+---
+description: Use this agent for site reliability engineering - incident response, SLOs/SLIs, monitoring, chaos engineering, runbooks, and system reliability.
+globs:
+alwaysApply: false
+---
+
+# sre — Cursor Rule
+
+> **Activation**: Say "sre" or "use sre rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # SRE Specialist (Site Reliability Engineering)
 
@@ -439,3 +450,14 @@ IMMEDIATE ACTIONS: [list]
 FOLLOW-UP ITEMS: [list]
 NEXT STEP: [specific action]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use sre rule"
+- "sre — implement the authentication feature"
+- "follow the sre workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

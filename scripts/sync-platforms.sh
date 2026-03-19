@@ -262,10 +262,79 @@ task(
 COPILOT_FOOTER
 }
 
-# Generate Cursor rule file content (identical to Claude)
+# Generate Cursor rule file content (adapted for Cursor's rule model)
+# Cursor rules are passive context — they auto-load, not invoked via /command.
+# We wrap the content with a Cursor-native activation preamble.
 # Usage: generate_cursor_content <agent_file>
 generate_cursor_content() {
-    generate_claude_content "$1"
+    local agent_file="$1"
+    local cmd
+    cmd=$(extract_frontmatter_field "$agent_file" "command" 2>/dev/null || echo "")
+    local raw_desc
+    raw_desc=$(extract_frontmatter_field "$agent_file" "description" 2>/dev/null || echo "")
+    local description
+    description=$(clean_description "$raw_desc")
+
+    if [ -z "$description" ]; then
+        description="Use this rule for the ${cmd} workflow."
+    fi
+
+    # Get Claude content and adapt it
+    local claude_content
+    claude_content=$(generate_claude_content "$agent_file")
+
+    # Replace /command syntax with natural language triggers
+    local adapted
+    adapted=$(echo "$claude_content" | sed \
+        -e "s|^/\`${cmd}\`|When the user says \"${cmd}\"|g" \
+        -e "s|^/${cmd} |When the user says \"${cmd}\" with |g" \
+        -e "s|^/${cmd}$|When the user says \"${cmd}\"|g" \
+        -e 's|^/go |When the user says "go" with |g' \
+        -e 's|^/go$|When the user says "go"|g' \
+        -e 's|^/coder |When the user says "coder" with |g' \
+        -e 's|^/coder$|When the user says "coder"|g' \
+        -e 's|^/tester |When the user says "tester" with |g' \
+        -e 's|^/tester$|When the user says "tester"|g' \
+        -e 's|^/forge |When the user says "forge" with |g' \
+        -e 's|^/forge$|When the user says "forge"|g' \
+        -e 's|^/prd |When the user says "prd" with |g' \
+        -e 's|^/prd$|When the user says "prd"|g' \
+        -e 's|^/security |When the user says "security" with |g' \
+        -e 's|^/security$|When the user says "security"|g' \
+        -e 's|^/review |When the user says "review" with |g' \
+        -e 's|^/review$|When the user says "review"|g' \
+    )
+
+    # Output with Cursor preamble
+    cat <<CURSOR_HEADER
+---
+description: ${description}
+globs:
+alwaysApply: false
+---
+
+# ${cmd} — Cursor Rule
+
+> **Activation**: Say "${cmd}" or "use ${cmd} rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
+CURSOR_HEADER
+
+    echo "$adapted"
+
+    cat <<CURSOR_FOOTER
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use ${cmd} rule"
+- "${cmd} — implement the authentication feature"
+- "follow the ${cmd} workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.
+CURSOR_FOOTER
 }
 
 # Generate OpenAI Codex SKILL.md content

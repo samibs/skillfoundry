@@ -1,3 +1,14 @@
+---
+description: /profile - Session Profile Manager
+globs:
+alwaysApply: false
+---
+
+# profile — Cursor Rule
+
+> **Activation**: Say "profile" or "use profile rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /profile - Session Profile Manager
 
 > Load, list, diff, or create execution profiles that control how agents behave, how tokens are budgeted, and which execution mode is active.
@@ -380,3 +391,14 @@ Before loading a profile with `mode: "autonomous"` and `auto_commit: true`, prof
 ---
 
 *Session Profile Manager - SkillFoundry Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use profile rule"
+- "profile — implement the feature"
+- "follow the profile workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

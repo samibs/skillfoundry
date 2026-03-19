@@ -1,3 +1,14 @@
+---
+description: Auto-remediation router and retry coordinator
+globs:
+alwaysApply: false
+---
+
+# fixer — Cursor Rule
+
+> **Activation**: Say "fixer" or "use fixer rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Fixer Orchestrator
 
@@ -315,16 +326,16 @@ Track remediation effectiveness:
 
 ```bash
 # Manual remediation routing
-/fixer --violation="missing_tests" --file="auth.service.ts"
+When the user says "fixer" with --violation="missing_tests" --file="auth.service.ts"
 
 # Retry specific fix
-/fixer --retry --story="STORY-003"
+When the user says "fixer" with --retry --story="STORY-003"
 
 # View remediation stats
-/fixer --stats
+When the user says "fixer" with --stats
 
 # Review escalations
-/fixer --escalations
+When the user says "fixer" with --escalations
 ```
 
 
@@ -366,3 +377,14 @@ Do NOT skip this step. Do NOT combine reasoning for multiple actions.
 
 
 *Fixer Orchestrator: The auto-remediation intelligence that keeps implementation flowing.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use fixer rule"
+- "fixer — implement the authentication feature"
+- "follow the fixer workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: /health - Framework Health Diagnostics
+globs:
+alwaysApply: false
+---
+
+# health — Cursor Rule
+
+> **Activation**: Say "health" or "use health rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /health - Framework Health Diagnostics
 
 > Self-diagnostic agent for the SkillFoundry framework installation. Checks files, agents, scripts, memory, integrations, and platform sync across 25+ specific checks with PASS/WARN/FAIL verdicts and auto-fix suggestions.
@@ -360,3 +371,14 @@ The `--fix` subcommand modifies files (mkdir, chmod, sync) and requires confirma
 ---
 
 *Framework Health Diagnostics - SkillFoundry Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use health rule"
+- "health — implement the feature"
+- "follow the health workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

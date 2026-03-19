@@ -1,3 +1,14 @@
+---
+description: Consolidated reference combining advanced Claude Code workflows and AI-assisted learning techniques
+globs:
+alwaysApply: false
+---
+
+# learn — Cursor Rule
+
+> **Activation**: Say "learn" or "use learn rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # AI-Powered Development & Learning Guide
 
@@ -220,3 +231,14 @@ Let's start: [paste the concept or topic]"
 ### Next Step
 [Immediate action to take]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use learn rule"
+- "learn — implement the authentication feature"
+- "follow the learn workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: Use this agent for crafting platform-specific social media content.
+globs:
+alwaysApply: false
+---
+
+# social-media — Cursor Rule
+
+> **Activation**: Say "social-media" or "use social-media rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Social Media Specialist
 
@@ -533,3 +544,14 @@ AUDIENCE: [Developer|Tech Lead|General Tech]
 ENGAGEMENT HOOK: [Question|Statistic|Contrarian Take|Story]
 POSTING WINDOW: [Day, Time UTC]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use social-media rule"
+- "social-media — implement the authentication feature"
+- "follow the social-media workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

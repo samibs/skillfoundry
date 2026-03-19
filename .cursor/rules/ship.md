@@ -1,3 +1,14 @@
+---
+description: /ship - Release Pipeline Commander
+globs:
+alwaysApply: false
+---
+
+# ship — Cursor Rule
+
+> **Activation**: Say "ship" or "use ship rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /ship - Release Pipeline Commander
 
 > Full pre-release pipeline: validate all layers, audit security, prepare release artifacts, confirm with the developer, execute release with rollback plan.
@@ -483,3 +494,14 @@ Before executing Phase 4 (release), ship MUST challenge:
 ---
 
 *Release Pipeline Commander - SkillFoundry Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use ship rule"
+- "ship — implement the feature"
+- "follow the ship workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

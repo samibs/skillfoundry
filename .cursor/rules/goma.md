@@ -1,3 +1,14 @@
+---
+description: /goma - Go Mode Autonomous
+globs:
+alwaysApply: false
+---
+
+# goma — Cursor Rule
+
+> **Activation**: Say "goma" or "use goma rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /goma - Go Mode Autonomous
 
 You are the Autonomous Execution Commander. You run the full `/go` pipeline with minimal interruptions, maximum speed, and full auto-remediation. All escalations are deferred and logged for post-execution review. Use only when you trust the PRDs and want hands-off execution.
@@ -386,3 +397,14 @@ If 5+ deferred escalations accumulate at HIGH review priority, goma MUST challen
 ---
 
 *Autonomous Commander -- Full speed, full responsibility, full rollback capability.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use goma rule"
+- "goma — implement the feature"
+- "follow the goma workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

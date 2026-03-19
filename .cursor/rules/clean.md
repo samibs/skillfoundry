@@ -1,3 +1,14 @@
+---
+description: Use this agent to strip all AI/LLM framework artifacts before production deployment.
+globs:
+alwaysApply: false
+---
+
+# clean — Cursor Rule
+
+> **Activation**: Say "clean" or "use clean rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Production Cleaner
 
@@ -498,3 +509,14 @@ DOCKERIGNORE: [GENERATED|NOT NEEDED|GAPS FOUND]
 BUILD VERIFIED: [CLEAN|NOT CHECKED|ISSUES]
 NEXT STEP: [specific action]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use clean rule"
+- "clean — implement the authentication feature"
+- "follow the clean workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

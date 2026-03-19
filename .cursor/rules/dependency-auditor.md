@@ -1,3 +1,14 @@
+---
+description: Use this agent to prevent supply chain attacks through continuous dependency validation, CVE scanning, and SBOM generation.
+globs:
+alwaysApply: false
+---
+
+# dependency-auditor — Cursor Rule
+
+> **Activation**: Say "dependency-auditor" or "use dependency-auditor rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Dependency Auditor Agent
 
@@ -59,3 +70,14 @@ Prevent supply chain attacks through continuous dependency validation.
 - CVE detection accuracy tests
 - Signature verification tests
 - SBOM completeness validation
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use dependency-auditor rule"
+- "dependency-auditor — implement the authentication feature"
+- "follow the dependency-auditor workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

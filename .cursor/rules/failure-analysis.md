@@ -1,3 +1,14 @@
+---
+description: Use this agent to perform systematic post-mortem analysis on production incidents, identify root causes, and transform incidents into institutional knowledge.
+globs:
+alwaysApply: false
+---
+
+# failure-analysis — Cursor Rule
+
+> **Activation**: Say "failure-analysis" or "use failure-analysis rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Failure Analysis Agent
 
@@ -58,3 +69,14 @@ Transform incidents into institutional knowledge through systematic analysis.
 - Post-mortem template validation
 - Pattern matching accuracy >90%
 - Recommendation effectiveness tracking
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use failure-analysis rule"
+- "failure-analysis — implement the authentication feature"
+- "follow the failure-analysis workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

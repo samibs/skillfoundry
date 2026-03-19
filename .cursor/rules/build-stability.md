@@ -1,3 +1,14 @@
+---
+description: Use this agent to ensure CI/CD pipeline reliability through intelligent failure detection, flaky test identification, and build remediation.
+globs:
+alwaysApply: false
+---
+
+# build-stability — Cursor Rule
+
+> **Activation**: Say "build-stability" or "use build-stability rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Build Stability Agent
 
@@ -60,3 +71,14 @@ Ensure CI/CD reliability through intelligent failure detection and remediation.
 - Flake detection accuracy tests
 - Retry logic performance tests
 - Alert system reliability tests
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use build-stability rule"
+- "build-stability — implement the authentication feature"
+- "follow the build-stability workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

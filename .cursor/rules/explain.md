@@ -1,3 +1,14 @@
+---
+description: /explain - Execution Explainer
+globs:
+alwaysApply: false
+---
+
+# explain — Cursor Rule
+
+> **Activation**: Say "explain" or "use explain rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /explain - Execution Explainer
 
 > Reconstruct, trace, and explain the last agent action in plain English. Three levels of detail: quick, verbose, and story-level. No mystery, no ambiguity -- just cold facts about what happened and why.
@@ -551,3 +562,14 @@ This command is read-only. No mutations. No confirmation required.
 ---
 
 *Execution Explainer - SkillFoundry Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use explain rule"
+- "explain — implement the feature"
+- "follow the explain workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: /autonomous - Toggle Autonomous Developer Loop
+globs:
+alwaysApply: false
+---
+
+# autonomous — Cursor Rule
+
+> **Activation**: Say "autonomous" or "use autonomous rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /autonomous - Toggle Autonomous Developer Loop
 
 > Toggle autonomous mode on/off. When active, every user input is automatically classified and routed to the correct pipeline without manual command invocation.
@@ -121,3 +132,14 @@ Autonomous Mode: [ON/OFF]
 ---
 
 *The Autonomous Developer Loop — Type once, review once, ship.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use autonomous rule"
+- "autonomous — implement the feature"
+- "follow the autonomous workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

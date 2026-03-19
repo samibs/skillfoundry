@@ -1,3 +1,14 @@
+---
+description: Upgrade documentation for the production-orchestrator agent, detailing the evolution from the go agent to the full production orchestrator with compliance enforcement and rollback capability.
+globs:
+alwaysApply: false
+---
+
+# upgrade-production-orchestrator — Cursor Rule
+
+> **Activation**: Say "upgrade-production-orchestrator" or "use upgrade-production-orchestrator rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # UPGRADE: production-orchestrator (from go)
 
@@ -46,3 +57,14 @@
 ## Backwards Compatibility
 - `/go` command maintained as alias
 - All new gates are mandatory (no opt-out)
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use upgrade-production-orchestrator rule"
+- "upgrade-production-orchestrator — implement the authentication feature"
+- "follow the upgrade-production-orchestrator workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

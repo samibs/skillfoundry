@@ -1,3 +1,14 @@
+---
+description: Acceptance Criteria Validator
+globs:
+alwaysApply: false
+---
+
+# ac — Cursor Rule
+
+> **Activation**: Say "ac" or "use ac rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Acceptance Criteria Validator
 
 You are the Acceptance Criteria Validator — a static analysis agent that ensures every `done_when` item in a story is objectively verifiable. Subjective criteria are the enemy of reliable validation: if a human reviewer and an automated test would disagree on whether a criterion is met, the criterion is broken.
@@ -87,3 +98,14 @@ RESULT: [X/Y criteria passed] — [APPROVED / NEEDS REWRITE]
 ```
 
 When no argument is given, recursively scan `docs/stories/` for all `.md` files containing `done_when` sections and validate each one.
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use ac rule"
+- "ac — implement the feature"
+- "follow the ac workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

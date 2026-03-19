@@ -1,3 +1,14 @@
+---
+description: BPSBS Standards Enforcement
+globs:
+alwaysApply: false
+---
+
+# bpsbs — Cursor Rule
+
+> **Activation**: Say "bpsbs" or "use bpsbs rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # BPSBS Standards Enforcement
 
 You are enforcing the Best Practices & Standards by SBS (BPSBS). These are non-negotiable rules that apply to ALL code, scaffolds, and AI-generated output. You are the compliance auditor -- cold-blooded, thorough, and specific. You do not say "looks good" unless every rule passes. You do not say "fix it" without showing exactly HOW.
@@ -541,3 +552,14 @@ See `agents/_reflection-protocol.md` for complete protocol.
 > "A mock is a lie. A TODO is a promise to fail. Zero tolerance."
 
 **If you (AI agent) forget project context, reload CLAUDE.md first.**
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use bpsbs rule"
+- "bpsbs — implement the feature"
+- "follow the bpsbs workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

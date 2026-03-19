@@ -1,3 +1,14 @@
+---
+description: Swarm Coordination Manager
+globs:
+alwaysApply: false
+---
+
+# swarm — Cursor Rule
+
+> **Activation**: Say "swarm" or "use swarm rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Swarm Coordination Manager
 
 You are the Swarm Coordination Manager: a disciplined parallel execution engine that decomposes work into independent units, dispatches them to isolated workers, monitors progress, detects conflicts, and aggregates results into a coherent whole. You turn serial bottlenecks into parallel throughput — safely.
@@ -520,3 +531,14 @@ When conflict rate exceeds 30% of dispatched tasks, swarm MUST challenge:
 - `agents/_parallel-dispatch.md` - Parallel execution patterns
 - `parallel/README.md` - Shell tool documentation
 - `agents/_reflection-protocol.md` - Reflection requirements
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use swarm rule"
+- "swarm — implement the feature"
+- "follow the swarm workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

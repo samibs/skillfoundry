@@ -1,3 +1,14 @@
+---
+description: /anvil - The Anvil Quality Gate
+globs:
+alwaysApply: false
+---
+
+# anvil — Cursor Rule
+
+> **Activation**: Say "anvil" or "use anvil rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /anvil - The Anvil Quality Gate
 
 > 6-tier validation system that catches issues between every agent phase.
@@ -375,3 +386,14 @@ After Anvil completes, evaluate:
 ---
 
 *The Anvil — Strike early. Strike often. Every handoff is a checkpoint.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use anvil rule"
+- "anvil — implement the feature"
+- "follow the anvil workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

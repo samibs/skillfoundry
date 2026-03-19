@@ -1,3 +1,14 @@
+---
+description: Use this agent when you need to design, audit, migrate, rewire, or rewrite UX/UI.
+globs:
+alwaysApply: false
+---
+
+# ux-ui — Cursor Rule
+
+> **Activation**: Say "ux-ui" or "use ux-ui rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # UX/UI Specialist
 
@@ -1356,3 +1367,14 @@ NEXT STEP: [specific action]
 - `agents/_reflection-protocol.md` - Self-critique requirements
 - `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns (XSS)
 - `CLAUDE.md` - UI/Dashboard standards section
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use ux-ui rule"
+- "ux-ui — implement the authentication feature"
+- "follow the ux-ui workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.
