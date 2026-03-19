@@ -23,6 +23,7 @@ import { publishCommand } from './publish.js';
 import { upgradeCommand } from './upgrade.js';
 import { auditCommand } from './audit.js';
 import { dashboardCommand } from './dashboard.js';
+import { optimizeCommand } from './optimize.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -80,4 +81,5 @@ export function initCommands(): void {
   registerCommand(upgradeCommand);
   registerCommand(auditCommand);
   registerCommand(dashboardCommand);
+  registerCommand(optimizeCommand);
 }

@@ -148,6 +148,41 @@ CREATE INDEX IF NOT EXISTS idx_issues_severity ON session_issues(project_id, sev
 CREATE INDEX IF NOT EXISTS idx_remediation_project ON remediations(project_id, status);
 CREATE INDEX IF NOT EXISTS idx_remediation_sig ON remediations(failure_signature);
 CREATE INDEX IF NOT EXISTS idx_playbook_pattern ON playbooks(trigger_pattern);
+
+CREATE TABLE IF NOT EXISTS optimization_experiments (
+  id TEXT PRIMARY KEY,
+  skill_name TEXT NOT NULL,
+  scenario_description TEXT NOT NULL,
+  started_at TEXT NOT NULL,
+  completed_at TEXT,
+  total_iterations INTEGER DEFAULT 0,
+  best_iteration INTEGER DEFAULT 0,
+  baseline_score REAL,
+  best_score REAL,
+  improvement_pct REAL DEFAULT 0,
+  status TEXT DEFAULT 'running',
+  config TEXT
+);
+
+CREATE TABLE IF NOT EXISTS optimization_iterations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  experiment_id TEXT NOT NULL REFERENCES optimization_experiments(id),
+  iteration_number INTEGER NOT NULL,
+  mutation_strategy TEXT NOT NULL,
+  mutation_detail TEXT,
+  gate_verdict TEXT,
+  gate_pass_count INTEGER DEFAULT 0,
+  gate_fail_count INTEGER DEFAULT 0,
+  duration_ms INTEGER,
+  token_estimate INTEGER DEFAULT 0,
+  composite_score REAL,
+  kept INTEGER DEFAULT 0,
+  prompt_hash TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_optexp_skill ON optimization_experiments(skill_name);
+CREATE INDEX IF NOT EXISTS idx_optiter_experiment ON optimization_iterations(experiment_id, iteration_number);
 `;
 // Unique index needs special handling (CREATE UNIQUE INDEX IF NOT EXISTS)
 const UNIQUE_INDEX_SQL = `
