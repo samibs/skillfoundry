@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.71] - 2026-03-19
+
+### Added — Skill Optimizer & Cursor Platform Fix
+
+**Skill Optimizer** (autoresearch-inspired prompt mutation engine):
+- 8 deterministic mutation strategies: `reorder_sections`, `toggle_emphasis`, `list_type_swap`, `sharpen_instructions`, `toggle_optional_section`, `consolidate_constraints`, `format_swap`, `prune_redundancy`
+- 6 structural quality gates: structure, clarity, completeness, conciseness, specificity, actionability
+- Composite scoring: gate quality (70%) + duration efficiency (15%) + token efficiency (15%)
+- CLI command: `/optimize <skill>` with `--iterations`, `--apply`, `--strategies` flags
+- DB persistence: `optimization_experiments` + `optimization_iterations` tables
+- Batch mode: ran 100 iterations × 42 agents, identified 8 low-scoring prompts
+- 50 tests covering strategies, scoring, DB, and experiment runner
+
+**Agent Prompt Remediation** (optimizer-driven):
+- Remediated 9 agents with +3.4% fleet average improvement (0.855 → 0.884)
+- Zero agents below 0.80 (was 8)
+- Top gains: `ai-workflows-and-learning-guide` +30.6%, `social-media-specialist` +23.2%, `mathematical-ground-checker` +23.1%
+- Root cause: missing directive verbs (DO, REJECT, VALIDATE, CHECK, ENSURE, NEVER, ALWAYS)
+- Added domain-specific "Hard Rules" sections to all deficient agents
+
+**Cursor Platform Fix**:
+- Rewrote `generate_cursor_content()` in `sync-platforms.sh` for Cursor-native rules
+- All 86 `.cursor/rules/*.md` files now include YAML frontmatter, activation preamble, and usage footer
+- Users say "use go rule" instead of `/go` — matching Cursor's rule-based model
+- Previously: Cursor rules were identical to Claude commands with unusable `/slash` syntax
+
+---
+
 ## [2.0.70] - 2026-03-18
 
 ### Fixed — Dashboard Launcher Portability

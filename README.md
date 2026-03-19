@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.70-blue)
+![Version](https://img.shields.io/badge/version-2.0.71-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,14 +24,13 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.70
+### What's New in v2.0.71
 
-- **Dashboard portability fix** — `dashboard-serve.sh` now works on fresh clones: auto-installs deps, auto-builds, uses proper ESM imports.
-- **One-Command Dashboard** — `./scripts/dashboard-serve.sh` or `/dashboard serve` auto-syncs all projects, captures KPI snapshots, seeds playbooks, scans remediations, then launches the web UI.
-- **Centralized Multi-Project Dashboard** — Aggregate telemetry, sessions, failures, KPIs, and trends across 60+ projects. 15 CLI subcommands, 19 API endpoints, dark-mode web UI.
-- **KPI Trend Engine** — Daily snapshots, trend detection, change alerts, and linear regression forecasting.
-- **Auto-Remediation Engine** — 10 built-in playbooks match failure patterns to actionable fixes.
-- **206 new tests** across 9 test files (1,991 total, zero regressions).
+- **Skill Optimizer** — Autoresearch-inspired mutation engine for agent prompts. 8 strategies, 6 quality gates, composite scoring. Run `/optimize <skill>` to find improvements automatically.
+- **Agent Remediation** — Optimizer batch run across 42 agents identified and fixed 9 low-scoring prompts. Fleet average +3.4% (0.855 → 0.884), zero agents below 0.80.
+- **Cursor Platform Fix** — All 86 Cursor rules now use native activation model ("use go rule") instead of Claude-specific `/go` syntax. Full YAML frontmatter support.
+- **Centralized Dashboard** — One-command launcher, KPI trends, auto-remediation, 19 API endpoints, dark-mode web UI.
+- **256 new tests** across 10 test files (2,041 total, zero regressions).
 
 ### Quick Install
 
