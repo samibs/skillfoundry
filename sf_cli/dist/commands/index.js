@@ -22,6 +22,7 @@ import { publishCommand } from './publish.js';
 import { upgradeCommand } from './upgrade.js';
 import { auditCommand } from './audit.js';
 import { dashboardCommand } from './dashboard.js';
+import { optimizeCommand } from './optimize.js';
 const registry = new Map();
 export function registerCommand(cmd) {
     registry.set(cmd.name, cmd);
@@ -72,5 +73,6 @@ export function initCommands() {
     registerCommand(upgradeCommand);
     registerCommand(auditCommand);
     registerCommand(dashboardCommand);
+    registerCommand(optimizeCommand);
 }
 //# sourceMappingURL=index.js.map
