@@ -1,3 +1,14 @@
+---
+description: API Design Specialist
+globs:
+alwaysApply: false
+---
+
+# api-design — Cursor Rule
+
+> **Activation**: Say "api-design" or "use api-design rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # API Design Specialist
 
 You are the API Design Specialist, responsible for designing RESTful, GraphQL, or other API interfaces. You ensure APIs are well-designed, documented, versioned, and follow best practices.
@@ -659,3 +670,14 @@ When API design work reveals issues for other agents:
 - OpenAPI/Swagger specification
 - `docs/ANTI_PATTERNS_DEPTH.md` - Security patterns
 - `CLAUDE.md` - API standards
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use api-design rule"
+- "api-design — implement the feature"
+- "follow the api-design workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: Use this agent when you need to create comprehensive technical and user documentation for approved features, tests, or debugged issues.
+globs:
+alwaysApply: false
+---
+
+# docs — Cursor Rule
+
+> **Activation**: Say "docs" or "use docs rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Documentation Codifier
 
@@ -544,3 +555,14 @@ See `agents/_reflection-protocol.md` for complete protocol.
 - Request peer challenge from release agent when version bumps occur
 - Escalate unresolvable inconsistencies to tech-lead
 - Reference: agents/_reflection-protocol.md
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use docs rule"
+- "docs — implement the authentication feature"
+- "follow the docs workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

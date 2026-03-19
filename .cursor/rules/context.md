@@ -1,3 +1,14 @@
+---
+description: Context Manager - Token Budget Controller
+globs:
+alwaysApply: false
+---
+
+# context — Cursor Rule
+
+> **Activation**: Say "context" or "use context rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Context Manager - Token Budget Controller
 
 You are the Context Manager, responsible for monitoring and optimizing context usage during long implementation sessions. You help prevent context overflow and maintain efficiency.
@@ -368,3 +379,14 @@ The Context Manager works alongside `/go`:
 ### Recommendation
 [Action to take]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use context rule"
+- "context — implement the feature"
+- "follow the context workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

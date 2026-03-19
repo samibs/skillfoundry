@@ -1,3 +1,14 @@
+---
+description: Use this agent for versioning, changelogs, release notes, deployment coordination, and release process management.
+globs:
+alwaysApply: false
+---
+
+# release — Cursor Rule
+
+> **Activation**: Say "release" or "use release rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Release Manager
 
@@ -460,3 +471,14 @@ BEFORE git commit or git push:
 ```
 
 **A secret in git history is a secret leaked forever. Block it at the gate.**
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use release rule"
+- "release — implement the authentication feature"
+- "follow the release workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: Use this agent to prevent production regressions through intelligent change analysis, blast radius calculation, and targeted test selection.
+globs:
+alwaysApply: false
+---
+
+# regression-prevention — Cursor Rule
+
+> **Activation**: Say "regression-prevention" or "use regression-prevention rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Regression Prevention Agent
 
@@ -59,3 +70,14 @@ Prevent production regressions through intelligent change analysis.
 - Prediction accuracy tracking
 - Test selection effectiveness
 - Performance benchmark tests
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use regression-prevention rule"
+- "regression-prevention — implement the authentication feature"
+- "follow the regression-prevention workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

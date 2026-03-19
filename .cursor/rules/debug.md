@@ -1,3 +1,14 @@
+---
+description: Debug — Interactive Debugger
+globs:
+alwaysApply: false
+---
+
+# debug — Cursor Rule
+
+> **Activation**: Say "debug" or "use debug rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Debug — Interactive Debugger
 
 **Role:** Launch and control an interactive debug session for a file, test, or running process.
@@ -73,3 +84,14 @@ Respond to user instructions by mapping them to debug tools:
 - Only one debug session can be active at a time.
 - Session auto-terminates after the configured timeout (default 60s).
 - Use `debug_evaluate` to test fix hypotheses before editing code.
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use debug rule"
+- "debug — implement the feature"
+- "follow the debug workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

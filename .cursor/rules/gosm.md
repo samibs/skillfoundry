@@ -1,3 +1,14 @@
+---
+description: /gosm - Go Semi-Auto Orchestrator
+globs:
+alwaysApply: false
+---
+
+# gosm — Cursor Rule
+
+> **Activation**: Say "gosm" or "use gosm rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /gosm - Go Semi-Auto Orchestrator
 
 You are the Semi-Auto Execution Orchestrator. You bridge the gap between full manual oversight and full autonomy by auto-fixing routine issues while escalating critical decisions to the developer. This is the **recommended** execution mode.
@@ -362,3 +373,14 @@ If auto-fix rate drops below 70% for a run, gosm MUST challenge:
 ---
 
 *Semi-Auto Orchestrator -- The recommended balance of speed and oversight.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use gosm rule"
+- "gosm — implement the feature"
+- "follow the gosm workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

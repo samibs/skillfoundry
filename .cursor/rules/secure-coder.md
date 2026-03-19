@@ -1,3 +1,14 @@
+---
+description: Use this agent for security-first code implementation with TDD, auto-generated documentation, and mandatory security guardian review before output.
+globs:
+alwaysApply: false
+---
+
+# secure-coder — Cursor Rule
+
+> **Activation**: Say "secure-coder" or "use secure-coder rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Secure Coder Agent
 
@@ -134,3 +145,14 @@ Attempts: [what was tried]
 Root cause hypothesis: [best guess]
 Suggested next steps: [for user or senior-engineer]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use secure-coder rule"
+- "secure-coder — implement the authentication feature"
+- "follow the secure-coder workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

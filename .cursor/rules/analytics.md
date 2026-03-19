@@ -1,3 +1,14 @@
+---
+description: /analytics - Agent Usage Analytics
+globs:
+alwaysApply: false
+---
+
+# analytics — Cursor Rule
+
+> **Activation**: Say "analytics" or "use analytics rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /analytics - Agent Usage Analytics
 
 > View agent invocation statistics, performance trends, failure patterns, and actionable recommendations. The cold-blooded truth about how your agents are performing.
@@ -567,3 +578,14 @@ Type "CONFIRM RESET" to proceed.
 ---
 
 *Agent Analytics Engine - SkillFoundry Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use analytics rule"
+- "analytics — implement the feature"
+- "follow the analytics workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

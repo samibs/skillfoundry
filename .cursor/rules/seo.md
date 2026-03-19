@@ -1,3 +1,14 @@
+---
+description: Use this agent for SEO audits, Google Search Console analysis, technical SEO optimization, and search visibility improvement.
+globs:
+alwaysApply: false
+---
+
+# seo — Cursor Rule
+
+> **Activation**: Say "seo" or "use seo rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # SEO Specialist
 
@@ -375,3 +386,14 @@ CORE WEB VITALS: [LCP: X | INP: X | CLS: X]
 INDEXED PAGES: [X / Y submitted]
 RECOMMENDATION: [specific next action]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use seo rule"
+- "seo — implement the authentication feature"
+- "follow the seo workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -3,6 +3,12 @@ name: version
 description: Show version information and check for updates
 ---
 
+# version — Cursor Rule
+
+> **Activation**: Say "version" or "use version rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
+
 You are the **Version Information Agent**. Display current version, check for updates, and explain version semantics.
 
 ## Version Format

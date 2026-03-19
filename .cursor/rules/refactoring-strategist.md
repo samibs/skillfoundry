@@ -1,3 +1,14 @@
+---
+description: Use this agent to guide safe refactoring decisions, assess risks, design refactoring paths, and preserve system integrity during changes.
+globs:
+alwaysApply: false
+---
+
+# refactoring-strategist — Cursor Rule
+
+> **Activation**: Say "refactoring-strategist" or "use refactoring-strategist rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Refactoring Strategist Agent
 
@@ -62,3 +73,14 @@ Guide refactoring decisions to preserve system integrity.
 - Risk assessment accuracy tracking
 - Refactoring path validation
 - Post-refactor stability tests
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use refactoring-strategist rule"
+- "refactoring-strategist — implement the authentication feature"
+- "follow the refactoring-strategist workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: Reference index of the 53-agent enterprise architecture with tier hierarchy, governance model, and escalation protocols.
+globs:
+alwaysApply: false
+---
+
+# agent-index — Cursor Rule
+
+> **Activation**: Say "agent-index" or "use agent-index rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Agent Index v2.0
 
@@ -114,3 +125,14 @@ Execution → Validation → Architectural → Strategic → Human
 **System Status:** ✅ PRODUCTION-READY
 **Zero Tolerance:** ✅ ACHIEVED
 **Stop Condition:** ✅ MET
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use agent-index rule"
+- "agent-index — implement the authentication feature"
+- "follow the agent-index workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

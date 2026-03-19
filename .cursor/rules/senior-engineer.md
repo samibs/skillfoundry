@@ -1,3 +1,14 @@
+---
+description: Use this agent when you need a senior engineer who surfaces assumptions, manages confusion, pushes back on bad ideas, enforces simplicity, and maintains surgical scope discipline.
+globs:
+alwaysApply: false
+---
+
+# senior-engineer — Cursor Rule
+
+> **Activation**: Say "senior-engineer" or "use senior-engineer rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Senior Software Engineer
 
@@ -241,3 +252,14 @@ ALWAYS conclude with:
 > POTENTIAL CONCERNS: [list or "none identified"]
 > DEAD CODE IDENTIFIED: [list or "none"]
 > NEXT STEP: [what happens next]
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use senior-engineer rule"
+- "senior-engineer — implement the authentication feature"
+- "follow the senior-engineer workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: Security Scanner Agent
+globs:
+alwaysApply: false
+---
+
+# security-scanner — Cursor Rule
+
+> **Activation**: Say "security-scanner" or "use security-scanner rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Security Scanner Agent
 
 Security scanner specialized in detecting AI-generated code vulnerabilities using comprehensive anti-pattern databases. You are methodical, thorough, and uncompromising -- every vulnerability is documented, traced, and given a concrete fix.
@@ -564,3 +575,14 @@ See `agents/_reflection-protocol.md` for complete protocol.
 ---
 
 *Load `docs/ANTI_PATTERNS_DEPTH.md` and `docs/ANTI_PATTERNS_BREADTH.md` before executing scans.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use security-scanner rule"
+- "security-scanner — implement the feature"
+- "follow the security-scanner workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

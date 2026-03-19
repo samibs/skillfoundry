@@ -1,3 +1,14 @@
+---
+description: /replay - Replay & Session Viewer
+globs:
+alwaysApply: false
+---
+
+# replay — Cursor Rule
+
+> **Activation**: Say "replay" or "use replay rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /replay - Replay & Session Viewer
 
 > Re-run the last `/go` or `/forge` execution, or view past session timelines.
@@ -298,3 +309,14 @@ After replay completes, evaluate:
 ---
 
 *Replay Manager - The Forge - Claude AS Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use replay rule"
+- "replay — implement the feature"
+- "follow the replay workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

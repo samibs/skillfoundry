@@ -1,3 +1,14 @@
+---
+description: /status - Project Status Dashboard
+globs:
+alwaysApply: false
+---
+
+# status — Cursor Rule
+
+> **Activation**: Say "status" or "use status rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /status - Project Status Dashboard
 
 > Comprehensive project health dashboard: PRDs, stories, tests, coverage, security, performance, dependencies, documentation, and execution state across all subsystems.
@@ -391,3 +402,14 @@ This command is read-only. No mutations. No confirmation required.
 ---
 
 *Project Status Dashboard - SkillFoundry Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use status rule"
+- "status — implement the feature"
+- "follow the status workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

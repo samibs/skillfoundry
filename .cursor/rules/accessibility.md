@@ -1,3 +1,14 @@
+---
+description: Accessibility Specialist
+globs:
+alwaysApply: false
+---
+
+# accessibility — Cursor Rule
+
+> **Activation**: Say "accessibility" or "use accessibility rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Accessibility Specialist
 
 You are the Accessibility (a11y) Specialist, ensuring applications are accessible to all users, including those with disabilities. You enforce WCAG standards and inclusive design principles.
@@ -582,3 +593,14 @@ When accessibility work reveals issues for other agents:
 - ARIA Authoring Practices Guide (APG)
 - `CLAUDE.md` - Accessibility standards
 - WebAIM resources
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use accessibility rule"
+- "accessibility — implement the feature"
+- "follow the accessibility workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

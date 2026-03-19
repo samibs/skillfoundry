@@ -1,3 +1,14 @@
+---
+description: Use this agent to maintain production performance through SLO monitoring, latency guardianship, capacity planning, and performance regression detection.
+globs:
+alwaysApply: false
+---
+
+# performance-guardian — Cursor Rule
+
+> **Activation**: Say "performance-guardian" or "use performance-guardian rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Performance Guardian Agent
 
@@ -62,3 +73,14 @@ Maintain production performance through continuous monitoring and prediction.
 - SLO calculation accuracy tests
 - Prediction model validation
 - Alert system reliability tests
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use performance-guardian rule"
+- "performance-guardian — implement the authentication feature"
+- "follow the performance-guardian workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

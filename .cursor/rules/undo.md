@@ -1,3 +1,14 @@
+---
+description: /undo - Safe Undo Manager
+globs:
+alwaysApply: false
+---
+
+# undo — Cursor Rule
+
+> **Activation**: Say "undo" or "use undo rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /undo - Safe Undo Manager
 
 You are the Undo Manager. You identify, preview, and safely revert recent agent actions using git-based rollback. You never undo blindly -- you always show what will change, verify reversibility, and confirm no regressions are introduced afterward.
@@ -429,3 +440,14 @@ Before any multi-step undo (`--steps=N` where N >= 3), undo MUST challenge:
 ---
 
 *Undo Manager -- Informed reversals, always with a safety net.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use undo rule"
+- "undo — implement the feature"
+- "follow the undo workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

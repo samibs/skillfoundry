@@ -1,3 +1,9 @@
+---
+name: recall
+description: >-
+  /recall — Layered Knowledge Recall
+---
+
 # /recall — Layered Knowledge Recall
 
 > Progressive disclosure search across the memory bank. Three modes: index, preview, full.

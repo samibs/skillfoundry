@@ -1,3 +1,14 @@
+---
+description: Use this agent to enforce test coverage thresholds, analyze coverage gaps, generate tests for uncovered code paths, and track coverage trends.
+globs:
+alwaysApply: false
+---
+
+# test-coverage-guardian — Cursor Rule
+
+> **Activation**: Say "test-coverage-guardian" or "use test-coverage-guardian rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Test Coverage Guardian Agent
 
@@ -59,3 +70,14 @@ Ensure ≥95% test coverage across all code with meaningful assertions.
 - Coverage calculation accuracy tests
 - Test generation validation
 - False-positive detection tests
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use test-coverage-guardian rule"
+- "test-coverage-guardian — implement the authentication feature"
+- "follow the test-coverage-guardian workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

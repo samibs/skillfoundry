@@ -1,3 +1,14 @@
+---
+description: Use this agent for database schema design, data modeling, query optimization, normalization decisions, and database architecture.
+globs:
+alwaysApply: false
+---
+
+# data-architect — Cursor Rule
+
+> **Activation**: Say "data-architect" or "use data-architect rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Data Architect / DBA
 
@@ -452,3 +463,14 @@ BEFORE any schema change is considered complete:
 - Lacks idempotency guards
 
 **Why**: Direct schema changes create drift between environments. Migrations are the single source of truth for database state.
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use data-architect rule"
+- "data-architect — implement the authentication feature"
+- "follow the data-architect workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

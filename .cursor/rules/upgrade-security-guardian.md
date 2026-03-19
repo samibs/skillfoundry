@@ -1,3 +1,14 @@
+---
+description: Upgrade documentation for the security-guardian agent, detailing the evolution from security-specialist to continuous security validation with runtime monitoring and SBOM generation.
+globs:
+alwaysApply: false
+---
+
+# upgrade-security-guardian — Cursor Rule
+
+> **Activation**: Say "upgrade-security-guardian" or "use upgrade-security-guardian rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # UPGRADE: security-guardian (from security-specialist)
 
@@ -45,3 +56,14 @@
 ## Backwards Compatibility
 - All `security-specialist` calls now route through `security-guardian`
 - `security-scanner` functionality fully absorbed
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use upgrade-security-guardian rule"
+- "upgrade-security-guardian — implement the authentication feature"
+- "follow the upgrade-security-guardian workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

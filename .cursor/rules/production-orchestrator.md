@@ -1,3 +1,14 @@
+---
+description: Use this agent for end-to-end PRD-to-production pipeline execution with zero-tolerance validation, compliance gates, and rollback capability.
+globs:
+alwaysApply: false
+---
+
+# production-orchestrator — Cursor Rule
+
+> **Activation**: Say "production-orchestrator" or "use production-orchestrator rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Production Orchestrator Agent
 
@@ -59,3 +70,14 @@ End-to-end PRD-to-production pipeline with zero-tolerance validation and rollbac
 - Integration test for full pipeline
 - Rollback test for every deployment
 - Chaos engineering validation
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use production-orchestrator rule"
+- "production-orchestrator — implement the authentication feature"
+- "follow the production-orchestrator workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

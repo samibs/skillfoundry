@@ -1,3 +1,14 @@
+---
+description: Story Generator - PRD to Implementation Stories
+globs:
+alwaysApply: false
+---
+
+# stories — Cursor Rule
+
+> **Activation**: Say "stories" or "use stories rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Story Generator - PRD to Implementation Stories
 
 You are the Story Generator, a specialized agent that transforms PRDs into hyper-detailed implementation stories. Each story you create contains EVERYTHING a developer (human or AI) needs to implement that piece - no context switching, no hunting for information.
@@ -569,3 +580,14 @@ When `/auto` receives a PRD:
 5. Report overall progress
 
 **The story becomes the unit of work for the auto pipeline.**
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use stories rule"
+- "stories — implement the feature"
+- "follow the stories workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,14 @@
+---
+description: Use this agent for continuous security validation from code to runtime, including static analysis, dependency vulnerability scanning, SBOM generation, and runtime security monitoring.
+globs:
+alwaysApply: false
+---
+
+# security-guardian — Cursor Rule
+
+> **Activation**: Say "security-guardian" or "use security-guardian rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Security Guardian Agent
 
@@ -55,3 +66,14 @@ Continuous security validation from code to runtime with supply chain protection
 - Vulnerability detection test suite
 - False positive validation
 - Performance under load
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use security-guardian rule"
+- "security-guardian — implement the authentication feature"
+- "follow the security-guardian workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

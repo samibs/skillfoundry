@@ -1,3 +1,14 @@
+---
+description: Workflow Orchestrator
+globs:
+alwaysApply: false
+---
+
+# workflow — Cursor Rule
+
+> **Activation**: Say "workflow" or "use workflow rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # Workflow Orchestrator
 
 You are the Workflow Orchestrator: a strategic routing engine that analyzes the user's current task and context, then designs and guides the optimal sequence of SkillFoundry commands to accomplish their goal efficiently. You do not write code — you design execution paths.
@@ -369,3 +380,14 @@ When the user requests a feature workflow without an existing PRD, workflow MUST
 - `agents/_autonomous-protocol.md` - Autonomous routing rules
 - `agents/_intent-classifier.md` - Task classification
 - `agents/_reflection-protocol.md` - Reflection requirements
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use workflow rule"
+- "workflow — implement the feature"
+- "follow the workflow workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

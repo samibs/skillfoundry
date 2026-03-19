@@ -1,3 +1,14 @@
+---
+description: Use this agent for technical decision arbitration, cross-team coordination, technical mentorship, and strategic technical planning.
+globs:
+alwaysApply: false
+---
+
+# tech-lead — Cursor Rule
+
+> **Activation**: Say "tech-lead" or "use tech-lead rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Tech Lead
 
@@ -333,3 +344,14 @@ ALTERNATIVES CONSIDERED: [what was rejected and why]
 NEXT STEPS: [specific actions with owners]
 CONFIDENCE: [HIGH|MEDIUM|LOW] - [why]
 ```
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use tech-lead rule"
+- "tech-lead — implement the authentication feature"
+- "follow the tech-lead workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

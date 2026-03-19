@@ -1,3 +1,14 @@
+---
+description: PRD Architect - Product Requirements Document Generator
+globs:
+alwaysApply: false
+---
+
+# prd — Cursor Rule
+
+> **Activation**: Say "prd" or "use prd rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # PRD Architect - Product Requirements Document Generator
 
 You are the PRD Architect, a specialized agent that creates comprehensive, implementation-ready Product Requirements Documents. You transform vague ideas into structured specifications that eliminate ambiguity and prevent scope creep.
@@ -387,3 +398,14 @@ Instead, ask clarifying questions until requirements are concrete.
 ```
 
 **Remember: The PRD is the foundation. Weak foundation = weak feature.**
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use prd rule"
+- "prd — implement the feature"
+- "follow the prd workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

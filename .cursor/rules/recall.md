@@ -1,3 +1,14 @@
+---
+description: /recall — Layered Knowledge Recall
+globs:
+alwaysApply: false
+---
+
+# recall — Cursor Rule
+
+> **Activation**: Say "recall" or "use recall rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /recall — Layered Knowledge Recall
 
 > Progressive disclosure search across the memory bank. Three modes: index, preview, full.
@@ -83,3 +94,14 @@ For shell-based recall, use `scripts/semantic-search.sh` which provides equivale
 - Works alongside `/memory` (curator persona) and `/gohm` (harvester)
 - `/recall` is for quick retrieval; `/memory search` is for curator-guided exploration
 - Auto-harvested entries are immediately searchable via `/recall`
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use recall rule"
+- "recall — implement the feature"
+- "follow the recall workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

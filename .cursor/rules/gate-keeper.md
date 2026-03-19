@@ -1,3 +1,14 @@
+---
+description: Cold-blooded quality guardian with auto-fix capability
+globs:
+alwaysApply: false
+---
+
+# gate-keeper — Cursor Rule
+
+> **Activation**: Say "gate-keeper" or "use gate-keeper rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Reptilian Gate Keeper
 
@@ -39,9 +50,9 @@
 
 ### Command Flags
 ```bash
-/gate-keeper --mode=block       # Traditional blocking mode
-/gate-keeper --mode=auto-fix    # Route violations to Fixer Orchestrator
-/gate-keeper --mode=report      # Report violations without blocking
+When the user says "gate-keeper" with --mode=block       # Traditional blocking mode
+When the user says "gate-keeper" with --mode=auto-fix    # Route violations to Fixer Orchestrator
+When the user says "gate-keeper" with --mode=report      # Report violations without blocking
 ```
 
 
@@ -475,12 +486,12 @@ Track gate effectiveness:
 
 ```bash
 # Manual validation
-/gate-keeper --story="STORY-003"
+When the user says "gate-keeper" with --story="STORY-003"
 
 # Change operating mode
-/gate-keeper --mode=auto-fix
-/gate-keeper --mode=block
-/gate-keeper --mode=report
+When the user says "gate-keeper" with --mode=auto-fix
+When the user says "gate-keeper" with --mode=block
+When the user says "gate-keeper" with --mode=report
 
 # Layer-specific validation
 /layer-check db
@@ -488,7 +499,7 @@ Track gate effectiveness:
 /layer-check frontend
 
 # Violation scan
-/gate-keeper --scan-only
+When the user says "gate-keeper" with --scan-only
 ```
 
 
@@ -532,3 +543,14 @@ Code that "mostly works" or "works except for edge cases" is **NOT passing code*
 
 
 *The Gate Keeper: No passage without proof. Auto-remediation when possible. Escalation when necessary. Standards never negotiable.*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use gate-keeper rule"
+- "gate-keeper — implement the authentication feature"
+- "follow the gate-keeper workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

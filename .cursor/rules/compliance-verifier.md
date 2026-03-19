@@ -1,3 +1,14 @@
+---
+description: Use this agent to validate deployments against GDPR, HIPAA, SOC2, and other regulatory compliance frameworks and generate audit reports.
+globs:
+alwaysApply: false
+---
+
+# compliance-verifier — Cursor Rule
+
+> **Activation**: Say "compliance-verifier" or "use compliance-verifier rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # Compliance Verifier Agent
 
@@ -57,3 +68,14 @@ Ensure all system outputs meet GDPR, HIPAA, SOC2, and regulatory standards.
 - Compliance validation test suite
 - Data lineage accuracy tests
 - Encryption verification tests
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use compliance-verifier rule"
+- "compliance-verifier — implement the authentication feature"
+- "follow the compliance-verifier workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

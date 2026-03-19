@@ -1,3 +1,14 @@
+---
+description: Upgrade documentation for the secure-coder agent, detailing the evolution from ruthless-coder to security-first implementation with mandatory security review and auto-documentation.
+globs:
+alwaysApply: false
+---
+
+# upgrade-secure-coder — Cursor Rule
+
+> **Activation**: Say "upgrade-secure-coder" or "use upgrade-secure-coder rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 
 # UPGRADE: secure-coder (from ruthless-coder)
 
@@ -45,3 +56,14 @@
 ## Backwards Compatibility
 - Previous `ruthless-coder` calls still work (alias maintained)
 - New security requirements are mandatory (no opt-out)
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use upgrade-secure-coder rule"
+- "upgrade-secure-coder — implement the authentication feature"
+- "follow the upgrade-secure-coder workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

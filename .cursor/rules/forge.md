@@ -1,3 +1,14 @@
+---
+description: /forge - Summon The Forge
+globs:
+alwaysApply: false
+---
+
+# forge — Cursor Rule
+
+> **Activation**: Say "forge" or "use forge rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 # /forge - Summon The Forge
 
 > The full pipeline: validate, implement, test, audit, and harvest — all in one command.
@@ -289,3 +300,14 @@ After forge completes (or halts), evaluate:
 ---
 
 *The Forge — 46 Cold-Blooded Agents — Claude AS Framework*
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use forge rule"
+- "forge — implement the feature"
+- "follow the forge workflow"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.
