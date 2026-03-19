@@ -42,6 +42,13 @@ Standalone dashboard launcher:
   ./scripts/dashboard-serve.sh --sync-only   Sync without starting server
   ./scripts/dashboard-serve.sh --open        Auto-open browser
 
+Skill Optimizer (autoresearch-inspired):
+  sf optimize <skill>                        Run mutation-based prompt optimization
+  sf optimize <skill> --iterations 100       Custom iteration count
+  sf optimize <skill> --apply                Write best prompt back to file
+  sf optimize list                           Show available mutation strategies
+  sf optimize history                        Show past optimization experiments
+
 Examples:
   npx skillfoundry init
   npx skillfoundry init --platform=claude,cursor,copilot

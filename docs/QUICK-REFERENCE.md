@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.70 - Quick Reference Card
+# SkillFoundry v2.0.71 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -87,6 +87,29 @@ math-check     memory
 ./scripts/dashboard-serve.sh --sync-only  # Sync only, no server
 ./scripts/dashboard-serve.sh --open       # Auto-open browser
 ```
+
+---
+
+## Skill Optimizer (Autoresearch-Inspired)
+
+| Command | Purpose |
+|---------|---------|
+| `/optimize <skill>` | Run mutation loop (8 strategies, 16 iterations default) |
+| `/optimize <skill> --iterations 100` | Custom iteration count |
+| `/optimize <skill> --apply` | Write best prompt back to file |
+| `/optimize <skill> --strategies s1,s2` | Use specific strategies only |
+| `/optimize list` | Show available mutation strategies |
+| `/optimize history` | Show past optimization experiments |
+| `/optimize result <id>` | Show experiment details |
+
+### Mutation Strategies
+
+| Strategy | Win Rate | What it does |
+|----------|----------|-------------|
+| `format_swap` | 93% | Convert bullet ↔ prose |
+| `reorder_sections` | 91% | Swap section ordering |
+| `prune_redundancy` | 100% | Remove duplicate sentences |
+| `sharpen_instructions` | 100% | Replace hedging with imperatives |
 
 ---
 
@@ -667,4 +690,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.70 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.71 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
