@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.71 - Quick Reference Card
+# SkillFoundry v2.0.72 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -110,6 +110,44 @@ math-check     memory
 | `reorder_sections` | 91% | Swap section ordering |
 | `prune_redundancy` | 100% | Remove duplicate sentences |
 | `sharpen_instructions` | 100% | Replace hedging with imperatives |
+
+---
+
+## Code Booster (Fast Transforms Without LLM)
+
+| Command | Purpose |
+|---------|---------|
+| `/boost <file>` | Detect and apply all applicable transforms |
+| `/boost <file> --dry-run` | Preview changes without writing |
+| `/boost <file> --transforms var-to-const,add-types` | Specific transforms |
+| `/boost list` | Show 6 available transforms |
+
+Transforms: `var-to-const`, `add-types`, `wrap-async`, `add-export`, `require-to-import`, `add-jsdoc`
+
+---
+
+## Smart Router (Learning-Based Agent Selection)
+
+| Command | Purpose |
+|---------|---------|
+| `/route <description>` | Recommend best agent for a task |
+| `/route stats` | Agent performance table (wins, losses, avg score) |
+| `/route history` | Recent routing decisions |
+
+Routes based on historical performance. Falls back to keyword classification when no data.
+
+---
+
+## Token Optimizer (Context Compression)
+
+| Command | Purpose |
+|---------|---------|
+| `/tokens analyze <file>` | Token breakdown by section + cost estimate |
+| `/tokens compress <file>` | Compress with all 6 strategies |
+| `/tokens compress <file> --strategies s1,s2` | Specific strategies |
+| `/tokens list` | Show compression strategies |
+
+Strategies: `strip-markdown`, `collapse-repeats`, `strip-comments`, `truncate-files`, `dedup-instructions`, `compact-tables`
 
 ---
 
@@ -690,4 +728,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.71 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.72 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
