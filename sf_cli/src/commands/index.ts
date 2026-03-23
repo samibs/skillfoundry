@@ -24,6 +24,9 @@ import { upgradeCommand } from './upgrade.js';
 import { auditCommand } from './audit.js';
 import { dashboardCommand } from './dashboard.js';
 import { optimizeCommand } from './optimize.js';
+import { boostCommand } from './boost.js';
+import { routeCommand } from './route.js';
+import { tokensCommand } from './tokens.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -82,4 +85,7 @@ export function initCommands(): void {
   registerCommand(auditCommand);
   registerCommand(dashboardCommand);
   registerCommand(optimizeCommand);
+  registerCommand(boostCommand);
+  registerCommand(routeCommand);
+  registerCommand(tokensCommand);
 }

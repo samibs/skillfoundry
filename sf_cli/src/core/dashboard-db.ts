@@ -292,6 +292,36 @@ CREATE TABLE IF NOT EXISTS optimization_iterations (
 
 CREATE INDEX IF NOT EXISTS idx_optexp_skill ON optimization_experiments(skill_name);
 CREATE INDEX IF NOT EXISTS idx_optiter_experiment ON optimization_iterations(experiment_id, iteration_number);
+
+CREATE TABLE IF NOT EXISTS routing_decisions (
+  id TEXT PRIMARY KEY,
+  task_description TEXT NOT NULL,
+  task_keywords TEXT NOT NULL,
+  agent_selected TEXT NOT NULL,
+  outcome TEXT,
+  score REAL,
+  duration_ms INTEGER,
+  cost_usd REAL,
+  timestamp TEXT NOT NULL,
+  project_id TEXT
+);
+
+CREATE TABLE IF NOT EXISTS agent_performance (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  agent_name TEXT NOT NULL,
+  task_type TEXT NOT NULL,
+  success_count INTEGER DEFAULT 0,
+  failure_count INTEGER DEFAULT 0,
+  avg_score REAL DEFAULT 0,
+  avg_duration_ms REAL DEFAULT 0,
+  avg_cost_usd REAL DEFAULT 0,
+  last_updated TEXT,
+  UNIQUE(agent_name, task_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_routing_timestamp ON routing_decisions(timestamp);
+CREATE INDEX IF NOT EXISTS idx_routing_agent ON routing_decisions(agent_selected);
+CREATE INDEX IF NOT EXISTS idx_agent_perf ON agent_performance(agent_name, task_type);
 `;
 
 // Unique index needs special handling (CREATE UNIQUE INDEX IF NOT EXISTS)

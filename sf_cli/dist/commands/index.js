@@ -23,6 +23,9 @@ import { upgradeCommand } from './upgrade.js';
 import { auditCommand } from './audit.js';
 import { dashboardCommand } from './dashboard.js';
 import { optimizeCommand } from './optimize.js';
+import { boostCommand } from './boost.js';
+import { routeCommand } from './route.js';
+import { tokensCommand } from './tokens.js';
 const registry = new Map();
 export function registerCommand(cmd) {
     registry.set(cmd.name, cmd);
@@ -74,5 +77,8 @@ export function initCommands() {
     registerCommand(auditCommand);
     registerCommand(dashboardCommand);
     registerCommand(optimizeCommand);
+    registerCommand(boostCommand);
+    registerCommand(routeCommand);
+    registerCommand(tokensCommand);
 }
 //# sourceMappingURL=index.js.map
