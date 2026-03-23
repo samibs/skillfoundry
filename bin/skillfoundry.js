@@ -49,6 +49,22 @@ Skill Optimizer (autoresearch-inspired):
   sf optimize list                           Show available mutation strategies
   sf optimize history                        Show past optimization experiments
 
+Code Booster (fast transforms without LLM):
+  sf boost <file>                            Detect and apply all transforms
+  sf boost <file> --dry-run                  Preview changes
+  sf boost <file> --transforms var-to-const  Apply specific transforms
+  sf boost list                              Show available transforms
+
+Smart Router (learning-based agent selection):
+  sf route <description>                     Recommend best agent for a task
+  sf route stats                             Show agent performance table
+  sf route history                           Show routing decision history
+
+Token Optimizer (context compression):
+  sf tokens analyze <file>                   Token breakdown by section + cost
+  sf tokens compress <file>                  Compress with all strategies
+  sf tokens list                             Show compression strategies
+
 Examples:
   npx skillfoundry init
   npx skillfoundry init --platform=claude,cursor,copilot

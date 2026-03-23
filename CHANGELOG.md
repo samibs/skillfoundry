@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.72] - 2026-03-23
+
+### Added — Code Booster, Smart Router, Token Optimizer
+
+Three new features inspired by Ruflo's architecture patterns:
+
+**Code Booster** (`/boost`):
+- 6 fast mechanical transforms without LLM calls: `var-to-const`, `add-types`, `wrap-async`, `add-export`, `require-to-import`, `add-jsdoc`
+- Zero token cost, ~2,000 tokens saved per transform vs LLM approach
+- CLI: `/boost <file>` with `--dry-run`, `--transforms`, `--all` flags
+
+**Smart Router** (`/route`):
+- Learning-based task routing that tracks agent performance per task type
+- Jaccard keyword overlap for similar-task matching from history
+- Falls back to keyword-based classification when no historical data
+- DB tables: `routing_decisions`, `agent_performance`
+- CLI: `/route <description>`, `/route stats`, `/route history`
+
+**Token Optimizer** (`/tokens`):
+- 6 compression strategies: `strip-markdown`, `collapse-repeats`, `strip-comments`, `truncate-files`, `dedup-instructions`, `compact-tables`
+- Token analysis with per-section breakdown and cost estimates
+- CLI: `/tokens analyze <file>`, `/tokens compress <file>`
+
+110 new tests (37 + 37 + 36) across 3 test files, all passing.
+
+---
+
 ## [2.0.71] - 2026-03-19
 
 ### Added — Skill Optimizer & Cursor Platform Fix
