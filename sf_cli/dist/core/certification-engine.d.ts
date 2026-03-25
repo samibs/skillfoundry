@@ -67,3 +67,6 @@ export declare function getCertificationHistory(db: Database.Database, limit?: n
 }>;
 export declare function formatCertificationReport(result: CertificationResult): string;
 export declare function generateHtmlReport(result: CertificationResult): string;
+export declare function generateMarkdownReport(result: CertificationResult): string;
+export declare function generateWordReport(result: CertificationResult): string;
+export declare function generateRemediationPrd(result: CertificationResult): string;

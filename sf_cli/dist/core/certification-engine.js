@@ -560,4 +560,288 @@ export function generateHtmlReport(result) {
 </body>
 </html>`;
 }
+// ── Markdown Report ─────────────────────────────────────────────
+export function generateMarkdownReport(result) {
+    const gradeEmoji = { A: '🟢', B: '🔵', C: '🟡', D: '🟠', F: '🔴' };
+    const sevEmoji = { critical: '🔴', high: '🟠', medium: '🟡', low: '🔵', info: 'ℹ️' };
+    const lines = [];
+    lines.push(`# RegForge Certification Report`);
+    lines.push('');
+    lines.push(`> **Project**: ${result.projectName}  `);
+    lines.push(`> **Grade**: ${gradeEmoji[result.grade] || ''} **${result.grade}** (${result.overallScore.toFixed(1)}/100)  `);
+    lines.push(`> **Date**: ${result.completedAt.slice(0, 10)}  `);
+    lines.push(`> **Findings**: ${result.totalFindings} (${result.findingsBySeverity.critical || 0} critical, ${result.findingsBySeverity.high || 0} high, ${result.findingsBySeverity.medium || 0} medium, ${result.findingsBySeverity.low || 0} low)  `);
+    lines.push(`> **Duration**: ${(result.durationMs / 1000).toFixed(1)}s`);
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+    // Category Scores
+    lines.push('## Category Scores');
+    lines.push('');
+    lines.push('| Category | Status | Score | Findings |');
+    lines.push('|----------|--------|-------|----------|');
+    for (const cat of result.categories) {
+        const status = cat.pass ? '✅ PASS' : '❌ FAIL';
+        lines.push(`| **${cat.category}** | ${status} | ${cat.score}/100 | ${cat.findings.length} |`);
+    }
+    lines.push('');
+    // Detailed Findings by Category
+    lines.push('---');
+    lines.push('');
+    lines.push('## Detailed Findings');
+    lines.push('');
+    for (const cat of result.categories) {
+        if (cat.findings.length === 0)
+            continue;
+        lines.push(`### ${cat.category.charAt(0).toUpperCase() + cat.category.slice(1)} (${cat.score}/100)`);
+        lines.push('');
+        for (const f of cat.findings) {
+            lines.push(`#### ${sevEmoji[f.severity] || ''} ${f.severity.toUpperCase()}: ${f.title}`);
+            lines.push('');
+            lines.push(`**What was found**: ${f.description}`);
+            if (f.file)
+                lines.push(`**Location**: \`${f.file}${f.line ? ':' + f.line : ''}\``);
+            lines.push('');
+            lines.push(`**Why this matters**: `);
+            switch (f.severity) {
+                case 'critical':
+                    lines.push('This is a showstopper that could lead to data breaches, system compromise, or regulatory violations. Must be fixed before any release.');
+                    break;
+                case 'high':
+                    lines.push('This represents a significant risk that attackers or auditors will flag. Should be fixed in the current sprint.');
+                    break;
+                case 'medium':
+                    lines.push('This is a best-practice violation that reduces code quality and maintainability. Plan to fix within the next release cycle.');
+                    break;
+                case 'low':
+                    lines.push('This is a minor improvement opportunity. Fix when convenient.');
+                    break;
+                default:
+                    lines.push('Informational — no action required, but worth noting.');
+                    break;
+            }
+            lines.push('');
+            lines.push(`**How to fix**: ${f.recommendation}`);
+            lines.push('');
+            // Add concrete example where possible
+            if (f.category === 'security' && f.title.includes('innerHTML')) {
+                lines.push('**Example fix**:');
+                lines.push('```diff');
+                lines.push('- element.innerHTML = userContent;');
+                lines.push('+ element.textContent = userContent;');
+                lines.push('+ // Or use a sanitizer: DOMPurify.sanitize(userContent)');
+                lines.push('```');
+            }
+            else if (f.category === 'security' && f.title.includes('eval')) {
+                lines.push('**Example fix**:');
+                lines.push('```diff');
+                lines.push('- const result = eval(expression);');
+                lines.push('+ const result = new Function("return " + expression)();');
+                lines.push('+ // Or better: use a safe expression parser');
+                lines.push('```');
+            }
+            else if (f.category === 'security' && f.title.includes('SECRET')) {
+                lines.push('**Example fix**:');
+                lines.push('```diff');
+                lines.push('- const API_KEY = "sk-abc123...";');
+                lines.push('+ const API_KEY = process.env.API_KEY;');
+                lines.push('```');
+            }
+            else if (f.category === 'accessibility' && f.title.includes('alt')) {
+                lines.push('**Example fix**:');
+                lines.push('```diff');
+                lines.push('- <img src="photo.jpg">');
+                lines.push('+ <img src="photo.jpg" alt="Team photo at the 2026 hackathon">');
+                lines.push('```');
+            }
+            else if (f.category === 'accessibility' && f.title.includes('label')) {
+                lines.push('**Example fix**:');
+                lines.push('```diff');
+                lines.push('- <input type="text" name="email">');
+                lines.push('+ <label for="email">Email address</label>');
+                lines.push('+ <input type="text" id="email" name="email">');
+                lines.push('```');
+            }
+            else if (f.category === 'privacy' && f.title.includes('PII')) {
+                lines.push('**Example fix**:');
+                lines.push('```diff');
+                lines.push('- console.log("User email:", user.email);');
+                lines.push('+ console.log("User logged in:", user.id);');
+                lines.push('+ // Never log PII — use anonymized identifiers');
+                lines.push('```');
+            }
+            lines.push('');
+        }
+    }
+    // Remediation Roadmap
+    const allFindings = result.categories.flatMap((c) => c.findings).filter((f) => f.severity !== 'info');
+    const sorted = allFindings.sort((a, b) => SEVERITY_DEDUCTION[b.severity] - SEVERITY_DEDUCTION[a.severity]);
+    if (sorted.length > 0) {
+        lines.push('---');
+        lines.push('');
+        lines.push('## Remediation Roadmap');
+        lines.push('');
+        lines.push('Priority-ordered list of fixes:');
+        lines.push('');
+        sorted.forEach((f, i) => {
+            lines.push(`${i + 1}. **[${f.severity.toUpperCase()}]** ${f.title} — ${f.recommendation}`);
+        });
+        lines.push('');
+    }
+    lines.push('---');
+    lines.push('');
+    lines.push(`*Generated by SkillFoundry Certification Engine — [regforge.eu](https://regforge.eu)*`);
+    return lines.join('\n');
+}
+// ── Word-Compatible HTML Report ─────────────────────────────────
+export function generateWordReport(result) {
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const gradeColor = { A: '#22c55e', B: '#06b6d4', C: '#eab308', D: '#f97316', F: '#ef4444' };
+    const catRows = result.categories.map((c) => `
+    <tr>
+      <td style="padding:8px;border:1px solid #ddd;font-weight:bold">${esc(c.category)}</td>
+      <td style="padding:8px;border:1px solid #ddd;color:${c.pass ? '#22c55e' : '#ef4444'};font-weight:bold">${c.pass ? 'PASS' : 'FAIL'}</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center">${c.score}/100</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center">${c.findings.length}</td>
+    </tr>`).join('');
+    const findingSections = result.categories
+        .filter((c) => c.findings.length > 0)
+        .map((c) => {
+        const rows = c.findings.map((f) => `
+        <tr>
+          <td style="padding:6px;border:1px solid #ddd;color:${f.severity === 'critical' ? '#ef4444' : f.severity === 'high' ? '#f97316' : '#333'};font-weight:${f.severity === 'critical' || f.severity === 'high' ? 'bold' : 'normal'}">${esc(f.severity.toUpperCase())}</td>
+          <td style="padding:6px;border:1px solid #ddd">${esc(f.title)}</td>
+          <td style="padding:6px;border:1px solid #ddd;font-size:0.9em">${f.file ? esc(f.file) : ''}</td>
+          <td style="padding:6px;border:1px solid #ddd;font-size:0.9em">${esc(f.recommendation)}</td>
+        </tr>`).join('');
+        return `<h3 style="color:#1e293b;margin-top:20px">${esc(c.category)} (${c.score}/100)</h3>
+      <table style="width:100%;border-collapse:collapse;margin:10px 0">
+        <tr style="background:#f1f5f9"><th style="padding:6px;border:1px solid #ddd;text-align:left">Severity</th><th style="padding:6px;border:1px solid #ddd;text-align:left">Finding</th><th style="padding:6px;border:1px solid #ddd;text-align:left">File</th><th style="padding:6px;border:1px solid #ddd;text-align:left">Recommendation</th></tr>
+        ${rows}
+      </table>`;
+    }).join('\n');
+    return `<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="ProgId" content="Word.Document">
+<meta name="Generator" content="SkillFoundry RegForge">
+<style>
+  body{font-family:Calibri,Arial,sans-serif;color:#1e293b;padding:40px;max-width:900px;margin:0 auto;line-height:1.6}
+  h1{color:#0f172a;font-size:28pt;text-align:center;margin-bottom:5px}
+  h2{color:#334155;font-size:18pt;border-bottom:2px solid #e2e8f0;padding-bottom:8px;margin-top:30px}
+  h3{color:#475569;font-size:14pt}
+  .grade-box{text-align:center;margin:20px 0;padding:30px;border:3px solid ${gradeColor[result.grade] || '#94a3b8'};border-radius:12px;background:${gradeColor[result.grade] || '#94a3b8'}10}
+  .grade-letter{font-size:72pt;font-weight:900;color:${gradeColor[result.grade] || '#94a3b8'}}
+  .grade-score{font-size:18pt;color:#64748b}
+  table{width:100%;border-collapse:collapse}
+  .meta{color:#64748b;text-align:center;font-size:10pt;margin-top:40px}
+</style>
+</head>
+<body>
+  <h1>RegForge Certification Report</h1>
+  <p style="text-align:center;color:#64748b;font-size:12pt">${esc(result.projectName)} &bull; ${result.completedAt.slice(0, 10)} &bull; ${result.totalFindings} findings</p>
+
+  <div class="grade-box">
+    <div class="grade-letter">${result.grade}</div>
+    <div class="grade-score">${result.overallScore.toFixed(1)} / 100</div>
+    <p style="color:#64748b;margin-top:10px">${result.findingsBySeverity.critical || 0} critical &bull; ${result.findingsBySeverity.high || 0} high &bull; ${result.findingsBySeverity.medium || 0} medium &bull; ${result.findingsBySeverity.low || 0} low</p>
+  </div>
+
+  <h2>Category Scores</h2>
+  <table style="width:100%;border-collapse:collapse">
+    <tr style="background:#f1f5f9"><th style="padding:8px;border:1px solid #ddd;text-align:left">Category</th><th style="padding:8px;border:1px solid #ddd;text-align:left">Status</th><th style="padding:8px;border:1px solid #ddd;text-align:center">Score</th><th style="padding:8px;border:1px solid #ddd;text-align:center">Findings</th></tr>
+    ${catRows}
+  </table>
+
+  <h2>Detailed Findings</h2>
+  ${findingSections}
+
+  <p class="meta">Generated by SkillFoundry Certification Engine &bull; regforge.eu</p>
+</body>
+</html>`;
+}
+// ── Remediation PRD Generator ───────────────────────────────────
+export function generateRemediationPrd(result) {
+    const date = new Date().toISOString().slice(0, 10);
+    const allFindings = result.categories.flatMap((c) => c.findings).filter((f) => f.severity !== 'info');
+    const sorted = allFindings.sort((a, b) => SEVERITY_DEDUCTION[b.severity] - SEVERITY_DEDUCTION[a.severity]);
+    const criticalCount = sorted.filter((f) => f.severity === 'critical').length;
+    const highCount = sorted.filter((f) => f.severity === 'high').length;
+    const lines = [];
+    lines.push(`# PRD: RegForge Certification Remediation — ${result.projectName}`);
+    lines.push('');
+    lines.push(`**Date**: ${date}  `);
+    lines.push(`**Current Grade**: ${result.grade} (${result.overallScore.toFixed(1)}/100)  `);
+    lines.push(`**Target Grade**: A (90+/100)  `);
+    lines.push(`**Findings to Fix**: ${sorted.length} (${criticalCount} critical, ${highCount} high)  `);
+    lines.push(`**Generated by**: RegForge Certification Engine`);
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+    // Problem Statement
+    lines.push('## Problem Statement');
+    lines.push('');
+    const failedCats = result.categories.filter((c) => !c.pass);
+    if (failedCats.length > 0) {
+        lines.push(`The project failed ${failedCats.length} certification categories: ${failedCats.map((c) => c.category).join(', ')}. `);
+    }
+    lines.push(`A RegForge certification audit found ${sorted.length} actionable findings across ${result.categories.filter((c) => c.findings.length > 0).length} categories. `);
+    lines.push(`The project currently scores ${result.overallScore.toFixed(1)}/100 (Grade ${result.grade}). The goal is to reach Grade A (90+) by remediating all critical and high findings, and addressing medium findings where feasible.`);
+    lines.push('');
+    // User Stories
+    lines.push('## User Stories');
+    lines.push('');
+    let storyNum = 1;
+    const categoryGroups = new Map();
+    for (const f of sorted) {
+        const group = categoryGroups.get(f.category) || [];
+        group.push(f);
+        categoryGroups.set(f.category, group);
+    }
+    for (const [category, findings] of categoryGroups) {
+        const catResult = result.categories.find((c) => c.category === category);
+        const priority = findings.some((f) => f.severity === 'critical') ? 'P0' : findings.some((f) => f.severity === 'high') ? 'P1' : 'P2';
+        lines.push(`### Story ${storyNum}: Fix ${category} findings (${priority})`);
+        lines.push('');
+        lines.push(`**As a** developer,  `);
+        lines.push(`**I want to** remediate all ${category} findings,  `);
+        lines.push(`**So that** the ${category} category score improves from ${catResult?.score || 0}/100 to 90+/100.`);
+        lines.push('');
+        lines.push('**Acceptance Criteria**:');
+        lines.push('');
+        for (const f of findings) {
+            lines.push(`- [ ] **[${f.severity.toUpperCase()}]** ${f.title}: ${f.recommendation}${f.file ? ` (in \`${f.file}\`)` : ''}`);
+        }
+        lines.push('');
+        lines.push(`**Definition of Done**: Re-run \`/certify --category ${category}\` and confirm score >= 90.`);
+        lines.push('');
+        storyNum++;
+    }
+    // Out of Scope
+    lines.push('## Out of Scope');
+    lines.push('');
+    lines.push('- Info-level findings (informational, no score impact)');
+    lines.push('- New feature development');
+    lines.push('- Performance optimization beyond the audit checklist');
+    lines.push('');
+    // Risks
+    lines.push('## Risks');
+    lines.push('');
+    if (criticalCount > 0) {
+        lines.push(`- **Critical findings** (${criticalCount}): These may indicate active security vulnerabilities. Prioritize immediately.`);
+    }
+    lines.push('- Some security findings may be false positives (test fixtures, pattern strings). Verify before fixing.');
+    lines.push('- Architecture changes (file splitting) may require import updates across the codebase.');
+    lines.push('');
+    // Success Criteria
+    lines.push('## Success Criteria');
+    lines.push('');
+    lines.push(`- [ ] \`/certify\` returns Grade A (90+/100)`);
+    lines.push('- [ ] Zero critical findings');
+    lines.push('- [ ] Zero high findings');
+    lines.push('- [ ] All tests pass after remediation');
+    lines.push('');
+    return lines.join('\n');
+}
 //# sourceMappingURL=certification-engine.js.map

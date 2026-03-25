@@ -171,6 +171,35 @@ RegForge Certification Report
     ...
 ```
 
+### PHASE 5: GENERATE DELIVERABLES
+
+After the report, automatically generate these files:
+
+1. **HTML Report** → `data/certify-report.html` (dark-mode, branded, detailed)
+2. **Markdown Report** → `data/certify-report.md` (with examples, explanations, diff snippets)
+3. **Word-compatible Report** → `data/certify-report.doc.html` (print-friendly, opens in Word/LibreOffice)
+4. **Remediation PRD** → `genesis/{date}-certification-remediation.md` (ready for `/go`)
+
+For each finding in the Markdown and Word reports, include:
+- **What was found**: The specific issue
+- **Why this matters**: Business/security impact explanation
+- **How to fix**: Concrete remediation steps
+- **Example fix**: Code diff showing before/after (where applicable)
+
+After writing files, open the HTML report in the browser:
+```bash
+xdg-open data/certify-report.html 2>/dev/null || open data/certify-report.html 2>/dev/null
+```
+
+Output a summary of what was generated:
+```
+Deliverables:
+  ✓ data/certify-report.html       (open in browser)
+  ✓ data/certify-report.md         (detailed markdown)
+  ✓ data/certify-report.doc.html   (Word-compatible)
+  ✓ genesis/{date}-certification-remediation.md  (PRD for /go)
+```
+
 ### Hard Rules
 
 - ALWAYS scan the actual project files — NEVER assume or guess
@@ -180,3 +209,6 @@ RegForge Certification Report
 - CHECK that findings are real — exclude test files, node_modules, dist/, build/
 - ENSURE the grade is computed mathematically, not estimated
 - IMPLEMENT the full pipeline even if the project looks "obviously good"
+- ALWAYS generate all 4 deliverable files after the audit
+- ALWAYS create the remediation PRD in genesis/ ready for `/go`
+- ALWAYS open the HTML report in the browser after generation
