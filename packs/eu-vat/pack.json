@@ -1,0 +1,17 @@
+{
+  "name": "eu-vat",
+  "version": "1.0.0",
+  "title": "EU VAT Rules & Rates",
+  "description": "Value Added Tax rules, rates, exceptions, and calculation patterns for EU member states",
+  "jurisdiction": ["EU", "EEA"],
+  "industries": ["tax", "ecommerce", "saas", "fintech", "invoicing"],
+  "rule_count": 25,
+  "matrix_count": 2,
+  "example_count": 2,
+  "languages": ["en"],
+  "last_updated": "2026-03-25",
+  "authors": ["SkillFoundry Team"],
+  "license": "CC-BY-SA-4.0",
+  "disclaimer": "This pack is for development reference only. Always consult a qualified tax advisor for production implementations. VAT rates and rules change — verify against current legislation.",
+  "dependencies": []
+}
