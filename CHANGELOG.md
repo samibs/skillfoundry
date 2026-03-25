@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.74] - 2026-03-25
+
+### Added — Industry Knowledge Engine with 3 Domain Packs
+
+**Industry Knowledge Engine** (`/domain`):
+- `/domain explain <topic>` — query rules with source citations and disclaimers
+- `/domain search <keywords>` — weighted keyword search across all installed packs
+- `/domain validate <file> --pack <name>` — check code against domain-specific rules
+- `/domain matrix <name>` — structured data tables (VAT rates, CDD levels, lawful bases)
+- `/domain prd <description>` — generate PRDs pre-populated with regulatory requirements
+- `/domain cite <rule-id>` — full citation for any rule by ID
+- `/domain list` / `/domain info <pack>` — pack management
+- 37 tests covering pack loading, search, scoring, validation, PRD generation
+
+**EU VAT Pack** (`packs/eu-vat/`, 24 rules, 1 matrix):
+- VAT Directive 2006/112/EC: standard rates, reduced rates, exemptions
+- Place of supply (B2B/B2C), reverse charge, OSS, EUR 10K threshold
+- 12 country-specific rates (LU, DE, FR, BE, NL, IT, ES, PT, AT, IE, PL, SE)
+- 27-country standard rates matrix with all EU member states
+- Invoice requirements, VAT calculation formulas
+
+**GDPR Pack** (`packs/gdpr/`, 20 rules, 1 matrix):
+- Lawful bases (Article 6), consent conditions (Articles 7-8)
+- Data subject rights: access (DSAR), erasure, portability, profiling objection
+- Breach notification (72-hour rule), DPIA, privacy by design
+- Cookie consent (ePrivacy), storage limitation, international transfers
+- Fines (4%/EUR 20M upper tier), DPO requirements, transparency
+- Lawful bases matrix with use cases and requirements
+
+**AML/KYC Pack** (`packs/aml-kyc/`, 20 rules, 1 matrix):
+- CDD/SDD/EDD levels with triggers and required measures
+- PEP screening, beneficial ownership (25% threshold)
+- SAR filing, tipping-off prohibition, record retention (5 years)
+- EUR 15,000 occasional transaction threshold
+- Crypto VASP obligations, travel rule (TFR 2023/1113)
+- Sanctions screening, high-risk third countries
+- Risk-based approach, customer risk rating, FATF 40 Recommendations
+- CDD levels matrix
+
+All 64 rules cite specific legislation articles with EUR-Lex URLs.
+
+---
+
 ## [2.0.73] - 2026-03-25
 
 ### Added — RegForge Certification Pipeline & Remediation
