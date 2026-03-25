@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.72-blue)
+![Version](https://img.shields.io/badge/version-2.0.73-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,14 +24,14 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.72
+### What's New in v2.0.73
 
-- **Code Booster** (`/boost`) — Fast mechanical code transforms without LLM: var→const, add types, wrap async, add export, require→import, add JSDoc. Zero token cost.
-- **Smart Router** (`/route`) — Learning-based task routing. Tracks agent performance per task type, routes to best-fit agent. Falls back to keyword classification when no history.
-- **Token Optimizer** (`/tokens`) — Context compression with 6 strategies: strip-markdown, collapse-repeats, strip-comments, truncate-files, dedup-instructions, compact-tables.
-- **Skill Optimizer** (`/optimize`) — Autoresearch-inspired mutation engine. 8 strategies, 6 quality gates, fleet-wide remediation.
-- **Cursor Platform Fix** — All 86 rules use native activation model ("use go rule").
-- **366 new tests** across 13 test files (2,151 total, zero regressions).
+- **RegForge Certification** (`/certify`) — 11-category project audit (security, docs, testing, deps, license, a11y, privacy, architecture, seo, perf, ci-cd). Generates HTML + Markdown + Word reports and a remediation PRD ready for `/go`. Self-certification: **Grade A (95.5/100)**.
+- **4 New Agents** — `/pentest` (OWASP Top 10), `/a11y` (WCAG 2.1), `/license-audit` (SPDX/SBOM), `/privacy` (GDPR). Now 64 agents across 5 platforms.
+- **Code Booster** (`/boost`) — Fast mechanical code transforms without LLM. Zero token cost.
+- **Smart Router** (`/route`) — Learning-based task routing from historical agent performance.
+- **Token Optimizer** (`/tokens`) — Context compression with 6 strategies.
+- **410 new tests** across 14 test files (2,195 total, zero regressions).
 
 ### Quick Install
 

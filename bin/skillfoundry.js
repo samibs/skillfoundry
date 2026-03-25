@@ -65,6 +65,13 @@ Token Optimizer (context compression):
   sf tokens compress <file>                  Compress with all strategies
   sf tokens list                             Show compression strategies
 
+RegForge Certification (regforge.eu):
+  sf certify                                 Certify current project (11 categories, grade A-F)
+  sf certify --category security             Single category only
+  sf certify --html report.html              Generate HTML report
+  sf certify history                         List past certifications
+  sf certify categories                      List all 11 audit categories
+
 Examples:
   npx skillfoundry init
   npx skillfoundry init --platform=claude,cursor,copilot
