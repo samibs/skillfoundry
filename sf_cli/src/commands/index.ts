@@ -27,6 +27,7 @@ import { optimizeCommand } from './optimize.js';
 import { boostCommand } from './boost.js';
 import { routeCommand } from './route.js';
 import { tokensCommand } from './tokens.js';
+import { certifyCommand } from './certify.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -88,4 +89,5 @@ export function initCommands(): void {
   registerCommand(boostCommand);
   registerCommand(routeCommand);
   registerCommand(tokensCommand);
+  registerCommand(certifyCommand);
 }

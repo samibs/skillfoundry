@@ -213,6 +213,38 @@ CREATE TABLE IF NOT EXISTS agent_performance (
 CREATE INDEX IF NOT EXISTS idx_routing_timestamp ON routing_decisions(timestamp);
 CREATE INDEX IF NOT EXISTS idx_routing_agent ON routing_decisions(agent_selected);
 CREATE INDEX IF NOT EXISTS idx_agent_perf ON agent_performance(agent_name, task_type);
+
+CREATE TABLE IF NOT EXISTS certification_runs (
+  id TEXT PRIMARY KEY,
+  project_path TEXT NOT NULL,
+  project_name TEXT NOT NULL,
+  grade TEXT NOT NULL,
+  overall_score REAL NOT NULL,
+  total_findings INTEGER DEFAULT 0,
+  critical_count INTEGER DEFAULT 0,
+  high_count INTEGER DEFAULT 0,
+  medium_count INTEGER DEFAULT 0,
+  low_count INTEGER DEFAULT 0,
+  duration_ms INTEGER,
+  started_at TEXT NOT NULL,
+  completed_at TEXT NOT NULL,
+  categories_json TEXT
+);
+
+CREATE TABLE IF NOT EXISTS certification_findings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  run_id TEXT NOT NULL REFERENCES certification_runs(id),
+  category TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  file TEXT,
+  line INTEGER,
+  recommendation TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_cert_runs ON certification_runs(completed_at);
+CREATE INDEX IF NOT EXISTS idx_cert_findings ON certification_findings(run_id, severity);
 `;
 // Unique index needs special handling (CREATE UNIQUE INDEX IF NOT EXISTS)
 const UNIQUE_INDEX_SQL = `
