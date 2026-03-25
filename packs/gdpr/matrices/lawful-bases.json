@@ -1,0 +1,15 @@
+{
+  "name": "GDPR Lawful Bases for Processing",
+  "description": "The six lawful bases under GDPR Article 6(1) with use cases and requirements",
+  "headers": ["Basis", "Article", "When to Use", "Key Requirement", "Can Withdraw?"],
+  "rows": [
+    {"Basis": "Consent", "Article": "6(1)(a)", "When to Use": "Marketing, analytics, non-essential cookies", "Key Requirement": "Freely given, specific, informed, unambiguous", "Can Withdraw?": "Yes — must be as easy as giving"},
+    {"Basis": "Contract", "Article": "6(1)(b)", "When to Use": "Delivering a purchased service, account management", "Key Requirement": "Processing must be necessary for the contract", "Can Withdraw?": "No — but can terminate contract"},
+    {"Basis": "Legal obligation", "Article": "6(1)(c)", "When to Use": "Tax reporting, AML/KYC, employment law", "Key Requirement": "Must be required by EU or member state law", "Can Withdraw?": "No"},
+    {"Basis": "Vital interests", "Article": "6(1)(d)", "When to Use": "Medical emergencies, humanitarian crises", "Key Requirement": "Protecting life — use only when no other basis applies", "Can Withdraw?": "No"},
+    {"Basis": "Public task", "Article": "6(1)(e)", "When to Use": "Government services, public health, education", "Key Requirement": "Official authority or public interest task", "Can Withdraw?": "No — but right to object applies"},
+    {"Basis": "Legitimate interests", "Article": "6(1)(f)", "When to Use": "Fraud prevention, network security, direct marketing (B2B)", "Key Requirement": "Must pass three-part test: purpose, necessity, balancing", "Can Withdraw?": "Right to object applies"}
+  ],
+  "source": "GDPR Article 6(1), ICO guidance on lawful basis",
+  "last_updated": "2026-01-15"
+}

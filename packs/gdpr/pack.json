@@ -1,0 +1,17 @@
+{
+  "name": "gdpr",
+  "version": "1.0.0",
+  "title": "GDPR — EU General Data Protection Regulation",
+  "description": "Data protection rules, lawful bases, data subject rights, consent requirements, breach notification, and privacy-by-design patterns for EU/EEA applications",
+  "jurisdiction": ["EU", "EEA", "UK-GDPR"],
+  "industries": ["all", "fintech", "saas", "ecommerce", "healthcare", "hr"],
+  "rule_count": 20,
+  "matrix_count": 1,
+  "example_count": 0,
+  "languages": ["en"],
+  "last_updated": "2026-03-25",
+  "authors": ["SkillFoundry Team"],
+  "license": "CC-BY-SA-4.0",
+  "disclaimer": "This pack is for development reference only. It does not constitute legal or data protection advice. Always consult a qualified DPO or data protection lawyer for production implementations.",
+  "dependencies": []
+}
