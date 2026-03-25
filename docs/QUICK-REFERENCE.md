@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.73 - Quick Reference Card
+# SkillFoundry v2.0.74 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -166,6 +166,30 @@ Categories: `security`, `documentation`, `testing`, `dependencies`, `license`, `
 Grades: **A** (90+), **B** (75-89), **C** (60-74), **D** (40-59), **F** (<40)
 
 Auto-generates: HTML report, Markdown report, Word-compatible report, remediation PRD (in genesis/).
+
+---
+
+## Industry Knowledge Engine (Domain Packs)
+
+| Command | Purpose |
+|---------|---------|
+| `/domain list` | List installed packs (eu-vat, gdpr, aml-kyc) |
+| `/domain explain <topic>` | Query rules with legislation citations |
+| `/domain search <keywords>` | Search across all packs |
+| `/domain matrix <name>` | Structured data tables |
+| `/domain validate <file> --pack <name>` | Check code against domain rules |
+| `/domain prd <description>` | Generate domain-aware PRD |
+| `/domain cite <rule-id>` | Full citation for a specific rule |
+
+### Installed Packs
+
+| Pack | Rules | Coverage |
+|------|-------|----------|
+| `eu-vat` | 24 | Rates (12 countries), exemptions, reverse charge, OSS, invoicing |
+| `gdpr` | 20 | Lawful bases, consent, rights, breach notification, DPIA, cookies, fines |
+| `aml-kyc` | 20 | CDD/EDD, PEP screening, SAR, sanctions, crypto VASP, FATF |
+
+All rules cite specific legislation articles with EUR-Lex URLs.
 
 ---
 
@@ -746,4 +770,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.73 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.74 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*

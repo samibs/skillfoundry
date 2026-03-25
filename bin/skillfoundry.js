@@ -72,6 +72,15 @@ RegForge Certification (regforge.eu):
   sf certify history                         List past certifications
   sf certify categories                      List all 11 audit categories
 
+Industry Knowledge Engine (domain packs):
+  sf domain list                             List installed packs (eu-vat, gdpr, aml-kyc)
+  sf domain explain <topic>                  Query rules with citations
+  sf domain search <keywords>                Search across all packs
+  sf domain matrix <name>                    Structured data tables (VAT rates, etc.)
+  sf domain validate <file> --pack <name>    Check code against domain rules
+  sf domain prd <description>                Generate domain-aware PRD
+  sf domain cite <rule-id>                   Full citation for a rule
+
 Examples:
   npx skillfoundry init
   npx skillfoundry init --platform=claude,cursor,copilot

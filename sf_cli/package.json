@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/cli",
-  "version": "2.0.73",
+  "version": "2.0.74",
   "description": "SkillFoundry interactive CLI — AI-assisted development with governance",
   "type": "module",
   "bin": {
