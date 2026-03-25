@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.72 - Quick Reference Card
+# SkillFoundry v2.0.73 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -148,6 +148,24 @@ Routes based on historical performance. Falls back to keyword classification whe
 | `/tokens list` | Show compression strategies |
 
 Strategies: `strip-markdown`, `collapse-repeats`, `strip-comments`, `truncate-files`, `dedup-instructions`, `compact-tables`
+
+---
+
+## RegForge Certification (regforge.eu)
+
+| Command | Purpose |
+|---------|---------|
+| `/certify` | Certify current project (11 categories, grade A-F) |
+| `/certify --category security` | Run single category |
+| `/certify --html report.html` | Generate HTML report |
+| `/certify history` | List past certifications |
+| `/certify categories` | List all 11 audit categories |
+
+Categories: `security`, `documentation`, `testing`, `dependencies`, `license`, `accessibility`, `privacy`, `architecture`, `seo`, `performance`, `ci-cd`
+
+Grades: **A** (90+), **B** (75-89), **C** (60-74), **D** (40-59), **F** (<40)
+
+Auto-generates: HTML report, Markdown report, Word-compatible report, remediation PRD (in genesis/).
 
 ---
 
@@ -728,4 +746,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.72 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.73 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
