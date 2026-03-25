@@ -1,0 +1,17 @@
+{
+  "name": "aml-kyc",
+  "version": "1.0.0",
+  "title": "AML/KYC — Anti-Money Laundering & Know Your Customer",
+  "description": "EU Anti-Money Laundering Directives, Customer Due Diligence requirements, PEP screening, Suspicious Activity Reporting, and risk-based approach patterns",
+  "jurisdiction": ["EU", "FATF"],
+  "industries": ["fintech", "banking", "payments", "crypto", "insurance", "gambling"],
+  "rule_count": 20,
+  "matrix_count": 1,
+  "example_count": 0,
+  "languages": ["en"],
+  "last_updated": "2026-03-25",
+  "authors": ["SkillFoundry Team"],
+  "license": "CC-BY-SA-4.0",
+  "disclaimer": "This pack is for development reference only. It does not constitute legal or compliance advice. Always consult a qualified MLRO or compliance officer for production implementations.",
+  "dependencies": ["gdpr"]
+}

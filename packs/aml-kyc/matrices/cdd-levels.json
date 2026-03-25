@@ -1,0 +1,12 @@
+{
+  "name": "CDD Levels and Triggers",
+  "description": "Customer Due Diligence levels with triggers and required measures",
+  "headers": ["Level", "When Required", "Key Measures", "Approval"],
+  "rows": [
+    {"Level": "Simplified (SDD)", "When Required": "Low-risk customers, listed companies, public administrations", "Key Measures": "Reduced verification, less frequent monitoring", "Approval": "Standard"},
+    {"Level": "Standard (CDD)", "When Required": "All customers at onboarding, transactions ≥EUR 15,000", "Key Measures": "ID verification, beneficial owner ID, purpose of relationship, ongoing monitoring", "Approval": "Standard"},
+    {"Level": "Enhanced (EDD)", "When Required": "PEPs, high-risk countries, complex structures, correspondent banking", "Key Measures": "Source of funds/wealth, senior management approval, enhanced monitoring, additional documentation", "Approval": "Senior management"}
+  ],
+  "source": "Directive (EU) 2018/843 (6AMLD), Articles 11-24",
+  "last_updated": "2026-01-15"
+}
