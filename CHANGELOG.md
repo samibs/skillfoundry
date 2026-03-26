@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.77] - 2026-03-26
+
+### Added — Mandatory Production Rules
+
+**5 new mandatory rules** enforced across CLAUDE.md, global settings, agents, and `/certify`:
+
+- **Consistent page width** — All pages MUST use the same `max-width` container regardless of content
+- **Responsive + mobile-friendly** — Every page MUST work at 320px, 768px, and 1200px+. Viewport meta tag required. No horizontal scrolling.
+- **README = user-friendly** — README is for users (install, usage, screenshots). Technical details go in CHANGELOG and `docs/`.
+- **Rebuild protocol** — `git pull → rm -rf .next → npm ci → npm run build → pm2 restart → verify health → hard refresh`. Never skip cache cleanup.
+- **Deployment notifications** — Commit and deploy events must send notifications (webhook, email, or CI/CD).
+
+Updated agents: `/ux-ui` (layout rules), `/docs` (README vs CHANGELOG separation), `/sre` (rebuild protocol + notifications).
+Updated `/certify`: viewport meta check added to accessibility audit.
+
+---
+
 ## [2.0.76] - 2026-03-26
 
 ### Added — Local Secret & Artifact Generator

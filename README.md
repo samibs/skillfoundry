@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.76-blue)
+![Version](https://img.shields.io/badge/version-2.0.77-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,7 +24,7 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.76
+### What's New in v2.0.77
 
 - **Secret Generator** (`/generate`) — Local JWT tokens (HS256/RS256/ES256), API keys, passwords, UUIDs, hashes, key pairs, webhook secrets, TOTP, and `.env` templates. Auto-fills empty secrets during `/forge`. Zero dependencies, no secrets leave your machine.
 - **Industry Knowledge Engine** (`/domain`) — 3 domain packs (EU VAT, GDPR, AML/KYC) with 64 cited regulatory rules.
