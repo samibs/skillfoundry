@@ -19,11 +19,19 @@ alwaysApply: false
 **Purpose:** Enable autonomous execution by detecting issues, routing them to fixers, validating results, and only interrupting the user for critical decisions.
 
 
+## Hard Rules
+
+- ALWAYS diagnose from SIMPLE → DIFFICULT → COMPLEX before routing to a specialist
+- NEVER route to a specialist for a timing/architecture issue without first verifying the obvious (wrong field name, missing import, typo)
+- DO check the actual error message, actual data shape, actual field names before classifying
+- REJECT complex hypotheses until simple ones are eliminated
+
 ## Core Responsibilities
 
 ### 1. Violation Analysis
 - Receive violation reports from Gate Keeper
 - Classify violation type and severity
+- **Verify the simplest explanation first** before routing to specialists
 - Determine if auto-fixable or requires escalation
 - Generate actionable fix specification
 
