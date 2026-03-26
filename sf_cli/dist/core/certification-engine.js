@@ -284,6 +284,9 @@ export function auditAccessibility(projectPath) {
         if (/<html\b(?![^>]*\blang\s*=)/i.test(content)) {
             findings.push({ severity: 'medium', category: 'accessibility', title: 'Missing lang attribute', description: `<html> missing lang attribute in ${rel}`, file: rel, recommendation: 'Add lang="en" (or appropriate language) to <html>' });
         }
+        if (/<head\b/i.test(content) && !/<meta\s+name=["']viewport["']/i.test(content)) {
+            findings.push({ severity: 'high', category: 'accessibility', title: 'Missing viewport meta (not mobile-friendly)', description: `No viewport meta tag in ${rel} — page will not be responsive`, file: rel, recommendation: 'Add <meta name="viewport" content="width=device-width, initial-scale=1.0">' });
+        }
     }
     const score = Math.max(0, 100 - findings.reduce((s, f) => s + SEVERITY_DEDUCTION[f.severity], 0));
     return { category: 'accessibility', score, pass: score >= 50, weight: CATEGORY_WEIGHTS.accessibility, findings, durationMs: Date.now() - start };

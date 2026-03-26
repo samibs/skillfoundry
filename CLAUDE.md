@@ -22,6 +22,59 @@ This file contains **framework-specific** rules only. General agent behavior is 
 
 ---
 
+## Mandatory Production Rules
+
+These rules apply to **every** project built with SkillFoundry. No exceptions, no opt-out.
+
+### UI/Layout Rules
+
+- **Consistent page width**: All pages MUST use the same `max-width` container. No page should be wider or narrower than others regardless of content. Use a shared layout wrapper (e.g., `max-width: 1200px; margin: 0 auto;` or Tailwind `container mx-auto`).
+- **Responsive and mobile-friendly**: Every page MUST work on mobile (320px), tablet (768px), and desktop (1200px+). Use `<meta name="viewport" content="width=device-width, initial-scale=1.0">` in every HTML file. Test at all three breakpoints before shipping.
+- **No horizontal scrolling**: No page should ever produce horizontal scroll on any viewport size.
+
+### Documentation Rules
+
+- **README.md is user-friendly**: README is for USERS — installation, usage, screenshots, quick start. Write it as if the reader has never seen the project. No internal architecture details, no contributor workflows, no raw API schemas.
+- **CHANGELOG.md is technical**: All technical details (breaking changes, migration steps, API changes, dependency updates, internal refactoring) go in CHANGELOG, not README. CHANGELOG follows [Keep a Changelog](https://keepachangelog.com/) format.
+- **Separation is mandatory**: If README contains architecture diagrams, database schemas, or implementation details — move them to `docs/`. README stays clean and user-facing.
+
+### Deployment & Rebuild Protocol
+
+When rebuilding or redeploying any Next.js / Node.js application, ALWAYS follow this sequence:
+
+```bash
+# 1. Pull latest code
+git pull
+
+# 2. Clean build artifacts (Next.js cache causes stale bundles)
+rm -rf .next node_modules/.cache
+
+# 3. Install dependencies (in case lockfile changed)
+npm ci
+
+# 4. Rebuild
+npm run build
+
+# 5. Restart the process manager
+pm2 restart <app-name>
+# OR: systemctl restart <service>
+# OR: docker compose up -d --build
+
+# 6. Verify deployment
+curl -s http://localhost:<port>/health | head -1
+
+# 7. Hard refresh in browser (Ctrl+Shift+R) to clear old bundles
+```
+
+**NEVER** skip step 2 (clean). Stale `.next` cache is the #1 cause of "it works locally but not in production" bugs.
+
+### Notification Rules
+
+- **Commit notifications**: When committing code, notify the developer/admin. In projects with CI/CD, this is handled by GitHub/GitLab webhooks. For PM2-managed projects, use the post-commit hook or the `/generate webhook-secret` + webhook integration.
+- **Deployment notifications**: When an app is redeployed, send a notification (Slack, email, or webhook) confirming the deployment succeeded and the health check passed.
+
+---
+
 ## Genesis-First Development Workflow
 
 The key differentiator in structured AI-assisted development is the PRD (Product Requirements Document). PRDs eliminate "vibe coding" by forcing clarity before implementation.
