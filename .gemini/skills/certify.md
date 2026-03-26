@@ -1,3 +1,9 @@
+# /certify
+
+Gemini skill for `certify`.
+
+## Instructions
+
 # /certify - RegForge Certification Pipeline
 
 > Run a full 11-category audit on the current project and produce a certification grade (A-F).

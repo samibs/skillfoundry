@@ -1,7 +1,7 @@
 ---
 name: certify
 description: >-
-  RegForge Certification Pipeline — 11-category audit with grade, reports, and remediation PRD
+  /certify - RegForge Certification Pipeline
 ---
 
 # /certify - RegForge Certification Pipeline
