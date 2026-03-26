@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.74-blue)
+![Version](https://img.shields.io/badge/version-2.0.75-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,13 +24,11 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.74
+### What's New in v2.0.75
 
-- **Industry Knowledge Engine** (`/domain`) — Domain-specific intelligence packs with cited regulatory rules. Query, validate, and generate PRDs pre-populated with regulatory requirements. 64 rules across 3 packs.
-- **EU VAT Pack** — 24 rules: rates (12 countries), exemptions, reverse charge, OSS, digital services. 27-country rate matrix.
-- **GDPR Pack** — 20 rules: lawful bases, consent, data subject rights, breach notification, DPIA, cookies, fines, transfers.
-- **AML/KYC Pack** — 20 rules: CDD/SDD/EDD, PEP screening, beneficial ownership, SAR, sanctions, crypto VASP, FATF.
-- **RegForge Certification** (`/certify`) — 11-category audit, Grade A (95.5/100). HTML + Markdown + Word reports.
+- **Simple-First Debugging** — Debugger and Fixer agents now enforce data→binding→flow verification before investigating timing or race conditions. Prevents the "15 steps before checking the obvious" anti-pattern.
+- **Industry Knowledge Engine** (`/domain`) — 3 domain packs (EU VAT, GDPR, AML/KYC) with 64 cited regulatory rules. Query, validate, and generate domain-aware PRDs.
+- **RegForge Certification** (`/certify`) — 11-category audit, Grade A (95.5/100). HTML + Markdown + Word reports + auto-remediation PRD.
 - **Code Booster, Smart Router, Token Optimizer, Skill Optimizer** — prompt mutation, fast transforms, learning routing, context compression.
 - **68 agents** across 5 platforms. **447 new tests** (2,232 total).
 
