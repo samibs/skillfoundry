@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.75] - 2026-03-26
+
+### Fixed — Simple-First Debugging Discipline
+
+- **Debugger agent** (`/debugger`) — Added Simple-First Debugging Protocol: verify data → verify binding → verify flow → only then investigate timing/race conditions. Prevents the "15 steps before checking the obvious" anti-pattern.
+- **Fixer agent** (`/fixer`) — Added Hard Rules: diagnose simple→difficult→complex before routing to specialist agents.
+- **Memory recorded** — `feedback_simple_first_debugging.md` ensures this discipline persists across sessions.
+- Root cause: RUE-2026 incident where LLM investigated token refresh, React state sync, and memory lifecycle before checking if the API returns the correct field name. The fix was 3 steps away.
+- Synced to all 5 platforms (240 files).
+
+---
+
 ## [2.0.74] - 2026-03-25
 
 ### Added — Industry Knowledge Engine with 3 Domain Packs
