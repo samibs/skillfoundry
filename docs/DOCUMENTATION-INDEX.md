@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v2.0.75
+# Documentation Index - SkillFoundry Framework v2.0.76
 
 Complete guide to all documentation in the framework.
 
@@ -112,7 +112,7 @@ Deep-dive technical documentation:
 - **[logs/escalations.md](logs/escalations.md)** - User decision log
 - **[logs/session-monitor.jsonl](logs/session-monitor.jsonl)** - Real-time agent behavior detection log
 
-### Centralized Dashboard (NEW v2.0.75)
+### Centralized Dashboard (NEW v2.0.76)
 - **[docs/HOW-TO.md § 22](docs/HOW-TO.md)** - Full dashboard command reference
 - **[docs/USER-GUIDE-CLI.md § 16](docs/USER-GUIDE-CLI.md)** - Dashboard visual guide
 - **`sf dashboard`** - Multi-project overview, sync, web UI, KPI trends, auto-remediation

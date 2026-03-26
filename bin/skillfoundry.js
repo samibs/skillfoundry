@@ -81,6 +81,19 @@ Industry Knowledge Engine (domain packs):
   sf domain prd <description>                Generate domain-aware PRD
   sf domain cite <rule-id>                   Full citation for a rule
 
+Secret & Artifact Generator (local, zero dependencies):
+  sf generate jwt --sub user --role admin    Generate JWT (HS256/RS256/ES256)
+  sf generate jwt --decode <token>           Decode any JWT
+  sf generate keypair --alg RS256            Generate RSA/EC key pair
+  sf generate apikey                         Generate API key (sk_xxx)
+  sf generate uuid --count 10               Generate UUIDs
+  sf generate password --length 32           Secure password
+  sf generate secret --length 64             Random hex secret
+  sf generate hash <input> --algo scrypt     Hash with SHA256/SHA512/scrypt
+  sf generate webhook-secret                 Webhook signing secret (whsec_xxx)
+  sf generate env api                        .env template with auto-filled secrets
+  sf generate auto                           Auto-fill empty secrets in .env
+
 Examples:
   npx skillfoundry init
   npx skillfoundry init --platform=claude,cursor,copilot

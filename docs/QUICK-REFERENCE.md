@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.75 - Quick Reference Card
+# SkillFoundry v2.0.76 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -190,6 +190,28 @@ Auto-generates: HTML report, Markdown report, Word-compatible report, remediatio
 | `aml-kyc` | 20 | CDD/EDD, PEP screening, SAR, sanctions, crypto VASP, FATF |
 
 All rules cite specific legislation articles with EUR-Lex URLs.
+
+---
+
+## Secret & Artifact Generator (Local, Zero Dependencies)
+
+| Command | Purpose |
+|---------|---------|
+| `/generate jwt --sub X --role Y --exp 24h` | JWT token (HS256/RS256/ES256) |
+| `/generate jwt --decode <token>` | Decode any JWT |
+| `/generate keypair --alg RS256` | RSA or EC key pair → `.keys/` |
+| `/generate apikey` | API key with `sk_` prefix |
+| `/generate uuid --count 10` | UUID v4 (batch) |
+| `/generate password --length 32` | Secure password |
+| `/generate secret --length 64` | Random hex/base64 secret |
+| `/generate hash <input> --algo scrypt` | SHA256/SHA512/scrypt hash |
+| `/generate hmac --data X --secret Y` | HMAC signature |
+| `/generate webhook-secret` | Webhook signing secret (`whsec_`) |
+| `/generate totp` | TOTP secret for 2FA |
+| `/generate env api` | `.env` template with auto-filled secrets |
+| `/generate auto` | Auto-fill empty secrets in existing `.env` |
+
+Auto-integrates with `/forge`: empty `JWT_SECRET=`, `API_KEY=`, etc. in `.env` are filled automatically.
 
 ---
 
@@ -770,4 +792,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.75 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.76 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
