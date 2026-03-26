@@ -28,6 +28,7 @@ import { routeCommand } from './route.js';
 import { tokensCommand } from './tokens.js';
 import { certifyCommand } from './certify.js';
 import { domainCommand } from './domain.js';
+import { generateCommand } from './generate.js';
 const registry = new Map();
 export function registerCommand(cmd) {
     registry.set(cmd.name, cmd);
@@ -84,5 +85,6 @@ export function initCommands() {
     registerCommand(tokensCommand);
     registerCommand(certifyCommand);
     registerCommand(domainCommand);
+    registerCommand(generateCommand);
 }
 //# sourceMappingURL=index.js.map
