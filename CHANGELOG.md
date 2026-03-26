@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.76] - 2026-03-26
+
+### Added — Local Secret & Artifact Generator
+
+**Generator Engine** (`/generate`):
+- JWT tokens: HS256/RS256/ES256 with auto-generated key pairs, decode existing tokens
+- API keys with configurable prefix (`sk_`, `pk_`, etc.)
+- UUIDs (v4, batch generation with `--count`)
+- Secure passwords with complexity enforcement (upper, lower, digit, special)
+- Cryptographic secrets (hex, base64, base64url, configurable length)
+- SHA256/SHA512/scrypt hashes, HMAC-SHA256/SHA512 signatures
+- RSA/EC key pairs saved to `.keys/` directory
+- Webhook signing secrets (`whsec_` prefix)
+- TOTP secrets (RFC 6238 compatible for 2FA)
+- `.env` templates (api, fullstack, minimal) with auto-filled secrets
+
+**Forge Pipeline Auto-Integration**:
+- `/generate auto` scans `.env` for empty `SECRET`, `KEY`, `TOKEN`, `PASS` variables
+- Auto-fills with cryptographically secure random values (64-char hex for JWT, prefixed for API keys)
+- Creates `.env` from `.env.example` if `.env` doesn't exist
+- Generates RS256 key pair when `package.json` references JWT libraries
+- Called automatically by `/forge`, `/go`, `/goma` during project setup
+
+Zero external dependencies — all Node.js `crypto` module. No secrets leave your machine.
+45 tests covering all generators, auto-fill, file I/O, and formatting.
+
+---
+
 ## [2.0.75] - 2026-03-26
 
 ### Fixed — Simple-First Debugging Discipline

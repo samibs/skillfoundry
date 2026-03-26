@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 2.0.75** | Last Updated: 2026-03-18
+> **Version 2.0.76** | Last Updated: 2026-03-18
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -29,7 +29,7 @@ This guide covers everything you need to know to use the SkillFoundry framework 
 19. [Best Practices](#19-best-practices)
 20. [Command Reference](#20-command-reference)
 21. [Session Monitor](#21-session-monitor) *(v2.0.66)*
-22. [Centralized Dashboard](#22-centralized-dashboard) *(v2.0.75)*
+22. [Centralized Dashboard](#22-centralized-dashboard) *(v2.0.76)*
 
 ---
 
@@ -1906,7 +1906,7 @@ The session monitor runs as a PostToolUse hook after every Bash tool invocation.
 
 ## 22. Centralized Dashboard
 
-*(Added in v2.0.75)*
+*(Added in v2.0.76)*
 
 The centralized dashboard aggregates telemetry, sessions, failures, KPIs, trends, and remediations across all registered projects into a single SQLite database.
 
@@ -2017,4 +2017,4 @@ The auto-harvest cron (`scripts/auto-harvest-cron.sh`) automatically:
 ---
 
 *Created by SBS with Claude Code*
-*Framework Version: 2.0.75*
+*Framework Version: 2.0.76*
