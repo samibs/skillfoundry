@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.79] - 2026-03-27
+
+### Changed — PRD Template: Dependency Verification & Directory Structure
+
+**Problem**: `/forge` wasted 3 install cycles on a LuxComplianceSuite PRD because `next-auth@5` doesn't exist (only beta.30), peer conflicts weren't documented, and the agent improvised the entire Next.js directory structure.
+
+**§5.3 Dependencies** — Enhanced with `Verified` checkbox and `Peer Conflicts` columns. Comments now require running `npm view <pkg> versions` before freezing a PRD. No more "version doesn't exist" surprises at install time.
+
+**§5.4 Compatibility Notes** (new) — Table for documenting known peer dependency conflicts between packages before implementation begins. Prevents `--legacy-peer-deps` bailouts.
+
+**§5.5 Directory Structure** (new) — Required for file-system-routed frameworks (Next.js App Router, Nuxt, SvelteKit, Remix). The directory structure IS the routing — it's an architectural decision that must be specified in the PRD, not improvised by the agent.
+
+**§5.6 Integration Points** — Renumbered from old §5.4 (no content change).
+
+**Files updated** (13 total):
+- `genesis/TEMPLATE.md` — Primary template with full sections
+- `docs/prd/TEMPLATE.md` — Documentation copy with full sections
+- `.claude/commands/prd.md` — Claude Code PRD skill
+- `.copilot/custom-agents/prd.md` — GitHub Copilot PRD skill
+- `.cursor/rules/prd.md` — Cursor PRD skill
+- `.gemini/skills/prd.md` — Google Gemini PRD skill
+- `.agents/skills/prd/SKILL.md` — OpenAI Codex PRD skill
+- `templates/prd-api.md` — API project template
+- `templates/prd-web-app.md` — Web app project template
+- `templates/prd-cli.md` — CLI project template
+
+**Checklist gates added** (both templates):
+- All dependency versions verified (npm view / pip index)
+- Peer dependency conflicts documented in §5.4 (or confirmed "None")
+- Directory structure specified in §5.5 (required for file-system-routed frameworks)
+
+---
+
 ## [2.0.78] - 2026-03-27
 
 ### Added — Framework Hardening (Phases 1-5)

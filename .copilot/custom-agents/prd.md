@@ -129,11 +129,23 @@ Generate a PRD following this exact structure:
 ```
 
 ### 5.3 Dependencies
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| [lib/service] | [version] | [why needed] |
+<!-- Verify every version exists: npm view <pkg> versions --json | tail -5 -->
+| Dependency | Version | Verified | Peer Conflicts | Purpose |
+|------------|---------|----------|----------------|---------|
+| [lib/service] | [exact version] | [ ] | [conflicts or None] | [why needed] |
 
-### 5.4 Integration Points
+### 5.4 Compatibility Notes
+<!-- Document known peer dependency conflicts between packages -->
+| Package A | Package B | Conflict | Resolution | Verified |
+|-----------|-----------|----------|------------|----------|
+
+### 5.5 Directory Structure
+<!-- Required for file-system-routed frameworks (Next.js, Nuxt, SvelteKit) -->
+```
+[project source tree here]
+```
+
+### 5.6 Integration Points
 [External systems, APIs, services]
 
 ---

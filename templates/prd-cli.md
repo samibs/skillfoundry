@@ -160,10 +160,17 @@ CLI Entry Point --> Argument Parser --> Command Router --> Command Handler --> O
 
 ### 5.3 Dependencies
 
-| Dependency | Version | Purpose | Risk if Unavailable |
-|------------|---------|---------|---------------------|
-| Argument parser library | Latest stable | CLI arg parsing | Cannot run |
-| Config library | Latest stable | Config file support | Limited config |
+<!-- CRITICAL: Verify every version exists before freezing. Run: npm view <pkg> versions --json | tail -5 -->
+
+| Dependency | Version | Verified | Peer Conflicts | Purpose | Risk if Unavailable |
+|------------|---------|----------|----------------|---------|---------------------|
+| Argument parser library | Latest stable | [ ] | None | CLI arg parsing | Cannot run |
+| Config library | Latest stable | [ ] | None | Config file support | Limited config |
+
+### 5.4 Compatibility Notes
+
+| Package A | Package B | Conflict | Resolution | Verified |
+|-----------|-----------|----------|------------|----------|
 
 ---
 

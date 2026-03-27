@@ -170,11 +170,53 @@ graph TD
 
 ### 5.3 Dependencies
 
-| Dependency | Version | Purpose | Risk if Unavailable |
-|------------|---------|---------|---------------------|
-| [library/service] | [version] | [why needed] | [impact] |
+<!-- CRITICAL: Every version MUST be verified before freezing this PRD. -->
+<!-- Run: npm view <pkg> versions --json | tail -5  (or pip index versions <pkg>) -->
+<!-- If a package only exists as a pre-release (beta/rc/alpha), note it explicitly. -->
+<!-- Using --legacy-peer-deps or --force to install is a RED FLAG — document why. -->
 
-### 5.4 Integration Points
+| Dependency | Version | Verified | Peer Conflicts | Purpose | Risk if Unavailable |
+|------------|---------|----------|----------------|---------|---------------------|
+| [library/service] | [exact version] | [ ] | [conflicts with X, needs --legacy-peer-deps] or None | [why needed] | [impact] |
+
+### 5.4 Compatibility Notes
+
+<!-- Required when using 3+ major dependencies that must interoperate. -->
+<!-- Document known conflicts BEFORE implementation begins, not after install fails. -->
+
+| Package A | Package B | Conflict | Resolution | Verified |
+|-----------|-----------|----------|------------|----------|
+| [e.g., next@16] | [e.g., next-auth@5-beta] | [peer dep mismatch on react] | [--legacy-peer-deps / pin react@19] | [ ] |
+
+### 5.5 Directory Structure
+
+<!-- Required for file-system-routed frameworks (Next.js App Router, Nuxt, SvelteKit, Remix). -->
+<!-- The directory structure IS the routing — it's an architectural decision, not an implementation detail. -->
+<!-- This prevents the agent from improvising the layout and getting it wrong. -->
+
+```
+src/
+├── app/
+│   ├── (auth)/                    # Auth route group (no layout nesting)
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
+│   ├── (portal)/                  # Main app route group
+│   │   └── dashboard/page.tsx
+│   ├── api/
+│   │   ├── auth/[...nextauth]/route.ts
+│   │   ├── v1/[resource]/route.ts
+│   │   ├── health/route.ts
+│   │   └── ready/route.ts
+│   ├── layout.tsx                 # Root layout
+│   └── page.tsx                   # Landing page
+├── lib/                           # Shared server-side utilities
+├── components/                    # Shared UI components
+└── types/                         # TypeScript type definitions
+```
+
+<!-- Adapt the tree above to match your actual project. Delete this comment block when done. -->
+
+### 5.6 Integration Points
 
 <!-- External systems, APIs, services this feature connects to -->
 
@@ -560,6 +602,9 @@ CONTRACT FREEZE GATE:
 
 READY FOR IMPLEMENTATION:
 [ ] Technical dependencies identified
+[ ] All dependency versions verified (npm view / pip index — no unverified versions)
+[ ] Peer dependency conflicts documented in §5.4 (or confirmed "None")
+[ ] Directory structure specified in §5.5 (required for file-system-routed frameworks)
 [ ] Data model defined
 [ ] API contracts specified and FROZEN
 [ ] Phases broken down appropriately

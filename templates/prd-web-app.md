@@ -177,10 +177,36 @@ Frontend (SPA) --> API Gateway --> Backend API --> Database
 
 ### 5.3 Dependencies
 
-| Dependency | Version | Purpose | Risk if Unavailable |
-|------------|---------|---------|---------------------|
-| Database (PostgreSQL/SQLite) | Latest stable | Data persistence | App non-functional |
-| JWT library | Latest stable | Authentication | Auth non-functional |
+<!-- CRITICAL: Verify every version exists before freezing. Run: npm view <pkg> versions --json | tail -5 -->
+
+| Dependency | Version | Verified | Peer Conflicts | Purpose | Risk if Unavailable |
+|------------|---------|----------|----------------|---------|---------------------|
+| Database (PostgreSQL/SQLite) | Latest stable | [ ] | None | Data persistence | App non-functional |
+| JWT library | Latest stable | [ ] | None | Authentication | Auth non-functional |
+
+### 5.4 Compatibility Notes
+
+| Package A | Package B | Conflict | Resolution | Verified |
+|-----------|-----------|----------|------------|----------|
+
+### 5.5 Directory Structure
+
+<!-- Required for file-system-routed frameworks (Next.js App Router, Nuxt, SvelteKit, Remix). -->
+<!-- The directory structure IS the routing — adapt this tree to your project. -->
+
+```
+src/
+├── app/
+│   ├── (auth)/login/page.tsx
+│   ├── (auth)/register/page.tsx
+│   ├── (portal)/dashboard/page.tsx
+│   ├── api/health/route.ts
+│   ├── layout.tsx
+│   └── page.tsx
+├── lib/
+├── components/
+└── types/
+```
 
 ---
 
