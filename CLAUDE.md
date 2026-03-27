@@ -85,6 +85,10 @@ curl -s http://localhost:<port>/health | head -1
 - **Default all arrays to `[]`**: API response fields that are arrays MUST default to `[]`, never `undefined` or `null`. In TypeScript, use `field: Type[] = []` in interfaces and `(data.field ?? [])` before calling `.some()`, `.map()`, `.filter()`, `.reduce()`, `.find()`, `.every()`.
 - **No `.method()` on nullable arrays**: NEVER call array methods on a field that could be `undefined`. Always guard: `(items ?? []).filter(...)` or `items?.filter(...) ?? []`.
 
+### Full Deviation Catalog
+
+See `agents/_known-deviations.md` for the complete list of **80+ known LLM failure patterns** organized across 10 categories: Frontend, Backend, Database, TypeScript, Git/DevOps, API Design, Security, Testing, Documentation, and LLM-Specific. All agents reference this catalog.
+
 ---
 
 ## Genesis-First Development Workflow
