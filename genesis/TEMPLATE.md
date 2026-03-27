@@ -292,6 +292,7 @@ curl -sf http://localhost:<port>/api/health
 | [e.g., NextAuth v5 beta] | [`trustHost: true` required behind reverse proxy] | [Add to NextAuth config or set `AUTH_TRUST_HOST=true`] |
 | [e.g., NextAuth v5 beta] | [`signIn("credentials", { redirect: false })` doesn't set session cookie] | [POST directly to `/api/auth/callback/credentials` with CSRF token] |
 | [e.g., Prisma 7] | [Adapter required everywhere — including seed scripts] | [Use shared prisma client that includes adapter, not `new PrismaClient()`] |
+| [e.g., Browser fetch API] | [`fetch()` silently drops `set-cookie` from 302 redirect responses — session cookies never get set] | [Use native `<form method="POST" action="...">` for auth flows, not `fetch()` with `redirect: "follow"`] |
 
 <!-- Delete example rows and replace with your project's actual quirks. -->
 
