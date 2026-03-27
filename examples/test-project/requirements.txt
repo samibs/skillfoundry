@@ -1,0 +1,11 @@
+# Python dependencies for helper scripts
+# violation: all deps unpinned — supply chain risk
+requests
+flask
+pyyaml
+cryptography
+boto3
+paramiko
+jinja2
+pillow
+numpy

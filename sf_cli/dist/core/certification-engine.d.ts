@@ -1,7 +1,7 @@
 /**
  * RegForge Certification Engine — Static analysis pipeline for project certification.
  *
- * 11 audit categories, weighted scoring, grade computation (A-F),
+ * 15 audit categories, weighted scoring, grade computation (A-F),
  * HTML report generation, and DB persistence. No LLM calls.
  */
 import type Database from 'better-sqlite3';
@@ -51,6 +51,10 @@ export declare function auditArchitecture(projectPath: string): CategoryResult;
 export declare function auditSeo(projectPath: string): CategoryResult;
 export declare function auditPerformance(projectPath: string): CategoryResult;
 export declare function auditCiCd(projectPath: string): CategoryResult;
+export declare function auditContracts(projectPath: string): CategoryResult;
+export declare function auditAuthorization(projectPath: string): CategoryResult;
+export declare function auditErrorHandling(projectPath: string): CategoryResult;
+export declare function auditSupplyChain(projectPath: string): CategoryResult;
 export declare function getAllCategories(): string[];
 export declare function computeGrade(score: number): CertGrade;
 export declare function computeOverallScore(categories: CategoryResult[]): number;

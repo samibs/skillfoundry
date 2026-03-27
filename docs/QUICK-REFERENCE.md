@@ -1,4 +1,4 @@
-# SkillFoundry v2.0.77 - Quick Reference Card
+# SkillFoundry v2.0.78 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -155,11 +155,11 @@ Strategies: `strip-markdown`, `collapse-repeats`, `strip-comments`, `truncate-fi
 
 | Command | Purpose |
 |---------|---------|
-| `/certify` | Certify current project (11 categories, grade A-F) |
+| `/certify` | Certify current project (15 categories, grade A-F) |
 | `/certify --category security` | Run single category |
 | `/certify --html report.html` | Generate HTML report |
 | `/certify history` | List past certifications |
-| `/certify categories` | List all 11 audit categories |
+| `/certify categories` | List all 15 audit categories |
 
 Categories: `security`, `documentation`, `testing`, `dependencies`, `license`, `accessibility`, `privacy`, `architecture`, `seo`, `performance`, `ci-cd`
 
@@ -792,4 +792,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v2.0.77 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*
+*SkillFoundry Framework v2.0.78 - March 2026 - The Forge Pipeline Engine (53 Core Agents / 60 Skills)*

@@ -1,13 +1,13 @@
 # /certify - RegForge Certification Pipeline
 
-> Run a full 11-category audit on the current project and produce a certification grade (A-F).
+> Run a full 15-category audit on the current project and produce a certification grade (A-F).
 
 ---
 
 ## Usage
 
 ```
-/certify                          Full certification (all 11 categories)
+/certify                          Full certification (all 15 categories)
 /certify --category security      Single category only
 /certify --html report.html       Also generate HTML report
 ```
@@ -16,7 +16,7 @@
 
 ## Instructions
 
-You are the **RegForge Certification Engine** — a static analysis auditor that evaluates projects across 11 categories and produces a pass/fail grade. When `/certify` is invoked, execute the full audit pipeline below.
+You are the **RegForge Certification Engine** — a static analysis auditor that evaluates projects across 15 categories and produces a pass/fail grade. When `/certify` is invoked, execute the full audit pipeline below.
 
 ### PHASE 1: PROJECT SCAN
 
@@ -29,7 +29,7 @@ Identify the project type by checking for:
 
 List all files in the project root and key directories (src/, lib/, app/, tests/).
 
-### PHASE 2: RUN ALL 11 AUDIT CATEGORIES
+### PHASE 2: RUN ALL 15 AUDIT CATEGORIES
 
 For each category, scan the project and score 0-100. Deduct points per finding:
 - **Critical**: -20 points
@@ -122,6 +122,38 @@ Check for:
 - Dockerfile or docker-compose exists
 - `.env.example` for environment documentation
 
+#### Category 12: CONTRACTS (Weight: 4%)
+Check for:
+- Frontend API calls match actual backend endpoint paths
+- Request body schemas match between frontend and backend
+- Response shape interfaces match actual backend responses
+- No assumed data shapes without backend verification
+- TypeScript interfaces derived from real API responses
+
+#### Category 13: AUTHORIZATION (Weight: 4%)
+Check for:
+- Route/endpoint protection on all non-public routes
+- Role-based access control (RBAC) enforcement
+- No client-side-only authorization checks
+- Token validation on every protected endpoint
+- Proper scope/permission checks before data access
+
+#### Category 14: ERROR-HANDLING (Weight: 4%)
+Check for:
+- No empty catch blocks or silent failures
+- All errors logged with context (file, function, input)
+- User-facing error messages (no raw stack traces in production)
+- Retry logic for transient failures (network, DB connections)
+- Proper HTTP status codes for different error types
+
+#### Category 15: SUPPLY-CHAIN (Weight: 4%)
+Check for:
+- No dependencies with known critical vulnerabilities
+- Lockfile integrity (no modified lockfiles without manifest changes)
+- No unnecessary dependencies (bloat detection)
+- Pinned dependency versions (no floating ranges in production)
+- No deprecated packages in active use
+
 ### PHASE 3: COMPUTE GRADE
 
 Calculate weighted overall score:
@@ -152,7 +184,7 @@ RegForge Certification Report
     [✓/✗] security           [score]/100  [bar]  [findings] findings
     [✓/✗] documentation      [score]/100  [bar]  [findings] findings
     [✓/✗] testing            [score]/100  [bar]  [findings] findings
-    ... (all 11 categories)
+    ... (all 15 categories)
 
   Critical & High Findings:
   ────────────────────────────────────────────────────────

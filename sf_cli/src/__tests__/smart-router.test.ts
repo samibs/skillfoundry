@@ -11,6 +11,10 @@ import {
   getAgentPerformance,
   getRecentDecisions,
   routeTask,
+  startAgentDispatch,
+  completeAgentDispatch,
+  hasLearningData,
+  getLearningStatus,
   formatRoutingReport,
   formatPerformanceTable,
   formatDecisionHistory,
@@ -309,5 +313,66 @@ describe('formatDecisionHistory', () => {
   it('handles empty history', () => {
     const history = formatDecisionHistory([]);
     expect(history).toContain('No routing decisions');
+  });
+});
+
+// ── Instrumentation (Story 5.1) ─────────────────────────────────
+
+describe('startAgentDispatch + completeAgentDispatch', () => {
+  it('records a routing decision and updates performance on completion', () => {
+    const id = startAgentDispatch(db, 'implement user login', 'coder', 'proj-1');
+    expect(id).toBeTruthy();
+
+    const decisions = getRecentDecisions(db, 1);
+    expect(decisions).toHaveLength(1);
+    expect(decisions[0].agent_selected).toBe('coder');
+    expect(decisions[0].outcome).toBeNull();
+
+    completeAgentDispatch(db, id, 'success', 8.5, 5000, 0.02);
+
+    const updated = getRecentDecisions(db, 1);
+    expect(updated[0].outcome).toBe('success');
+    expect(updated[0].score).toBe(8.5);
+
+    const perf = getAgentPerformance(db, 'coder');
+    expect(perf).toHaveLength(1);
+    expect(perf[0].success_count).toBe(1);
+  });
+
+  it('tracks failures correctly', () => {
+    const id = startAgentDispatch(db, 'fix auth bug', 'debugger');
+    completeAgentDispatch(db, id, 'failure', 2.0, 10000);
+
+    const perf = getAgentPerformance(db, 'debugger');
+    expect(perf[0].failure_count).toBe(1);
+    expect(perf[0].success_count).toBe(0);
+  });
+});
+
+describe('hasLearningData', () => {
+  it('returns false with no data', () => {
+    expect(hasLearningData(db)).toBe(false);
+  });
+
+  it('returns true after 10+ completed decisions', () => {
+    for (let i = 0; i < 10; i++) {
+      const id = startAgentDispatch(db, `task ${i}`, 'coder');
+      completeAgentDispatch(db, id, 'success', 7, 1000);
+    }
+    expect(hasLearningData(db)).toBe(true);
+  });
+});
+
+describe('getLearningStatus', () => {
+  it('returns summary of router state', () => {
+    const id = startAgentDispatch(db, 'build feature', 'coder');
+    completeAgentDispatch(db, id, 'success', 9, 3000);
+    startAgentDispatch(db, 'pending task', 'tester');
+
+    const status = getLearningStatus(db);
+    expect(status.totalDecisions).toBe(2);
+    expect(status.completedDecisions).toBe(1);
+    expect(status.uniqueAgents).toBe(1);
+    expect(status.isLearning).toBe(false);
   });
 });

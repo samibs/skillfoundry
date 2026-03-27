@@ -299,3 +299,25 @@ Every agent SHOULD reference this file: `See agents/_known-deviations.md for ful
 The `/certify` command checks for patterns in categories 1-8 via static analysis.
 The `/gate-keeper` agent validates against these patterns during the forge pipeline.
 The memory system records new deviations as they're discovered.
+
+## PER-CATEGORY FILES
+
+For context-aware loading, each category is also available as a standalone file:
+
+| File | Categories |
+|------|-----------|
+| `deviations/_deviations-frontend.md` | Frontend + Contracts |
+| `deviations/_deviations-backend.md` | Backend + API Design + Authorization |
+| `deviations/_deviations-database.md` | Database |
+| `deviations/_deviations-typescript.md` | TypeScript/JavaScript |
+| `deviations/_deviations-devops.md` | Git/DevOps |
+| `deviations/_deviations-security.md` | Security |
+| `deviations/_deviations-testing.md` | Testing |
+| `deviations/_deviations-documentation.md` | Documentation |
+| `deviations/_deviations-logic.md` | Silent Logic Failures |
+| `deviations/_deviations-supply-chain.md` | Supply Chain |
+| `deviations/_deviations-performance.md` | Performance |
+| `deviations/_deviations-error-handling.md` | Error Handling |
+| `deviations/_deviations-llm.md` | LLM-Specific |
+
+Agents should load only their relevant categories. Full catalog required only for `/certify` and `/gate-keeper`.

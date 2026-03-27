@@ -5,6 +5,7 @@
  * performance to route new tasks to the best-fit agent. Falls back to
  * keyword-based classification when no history exists.
  */
+import { randomUUID } from 'node:crypto';
 // ── Constants ───────────────────────────────────────────────────
 const LINE = '\u2501';
 const STOP_WORDS = new Set([
@@ -234,6 +235,62 @@ export function routeTask(db, description, availableAgents) {
         alternatives: [],
         fallbackUsed: true,
     };
+}
+// ── Instrumentation (Story 5.1) ─────────────────────────────────
+/**
+ * Record the start of an agent dispatch. Returns a decision ID that must be
+ * passed to `completeAgentDispatch` when the story/task finishes.
+ */
+export function startAgentDispatch(db, description, agentName, projectId) {
+    ensureSmartRouterSchema(db);
+    const id = randomUUID();
+    const keywords = extractKeywords(description).join(',');
+    recordDecision(db, {
+        id,
+        task_description: description,
+        task_keywords: keywords,
+        agent_selected: agentName,
+        outcome: null,
+        score: null,
+        duration_ms: null,
+        cost_usd: null,
+        timestamp: new Date().toISOString(),
+        project_id: projectId ?? null,
+    });
+    return id;
+}
+/**
+ * Record the outcome of an agent dispatch. Updates both the routing decision
+ * and the agent performance tables. Call this when a story/task completes.
+ */
+export function completeAgentDispatch(db, decisionId, outcome, score, durationMs, costUsd) {
+    ensureSmartRouterSchema(db);
+    recordOutcome(db, decisionId, outcome, score, durationMs, costUsd);
+    // Look up the original decision to update agent performance
+    const decision = db.prepare('SELECT * FROM routing_decisions WHERE id = ?').get(decisionId);
+    if (decision) {
+        const taskType = detectTaskType(decision.task_description);
+        updateAgentPerformance(db, decision.agent_selected, taskType, outcome === 'success', score, durationMs, costUsd ?? 0);
+    }
+}
+/**
+ * Check if the router has enough data to make data-driven recommendations.
+ * Returns true when 10+ decisions have been recorded with outcomes.
+ */
+export function hasLearningData(db) {
+    ensureSmartRouterSchema(db);
+    const row = db.prepare('SELECT COUNT(*) as cnt FROM routing_decisions WHERE outcome IS NOT NULL').get();
+    return row.cnt >= 10;
+}
+/**
+ * Get a summary of router learning status for display.
+ */
+export function getLearningStatus(db) {
+    ensureSmartRouterSchema(db);
+    const total = db.prepare('SELECT COUNT(*) as cnt FROM routing_decisions').get().cnt;
+    const completed = db.prepare('SELECT COUNT(*) as cnt FROM routing_decisions WHERE outcome IS NOT NULL').get().cnt;
+    const agents = db.prepare('SELECT COUNT(DISTINCT agent_name) as cnt FROM agent_performance').get().cnt;
+    return { totalDecisions: total, completedDecisions: completed, uniqueAgents: agents, isLearning: completed >= 10 };
 }
 // ── Formatting ──────────────────────────────────────────────────
 export function formatRoutingReport(rec) {

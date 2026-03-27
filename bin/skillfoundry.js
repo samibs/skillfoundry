@@ -66,11 +66,11 @@ Token Optimizer (context compression):
   sf tokens list                             Show compression strategies
 
 RegForge Certification (regforge.eu):
-  sf certify                                 Certify current project (11 categories, grade A-F)
+  sf certify                                 Certify current project (15 categories, grade A-F)
   sf certify --category security             Single category only
   sf certify --html report.html              Generate HTML report
   sf certify history                         List past certifications
-  sf certify categories                      List all 11 audit categories
+  sf certify categories                      List all 15 audit categories
 
 Industry Knowledge Engine (domain packs):
   sf domain list                             List installed packs (eu-vat, gdpr, aml-kyc)
@@ -80,6 +80,7 @@ Industry Knowledge Engine (domain packs):
   sf domain validate <file> --pack <name>    Check code against domain rules
   sf domain prd <description>                Generate domain-aware PRD
   sf domain cite <rule-id>                   Full citation for a rule
+  sf domain staleness                        Rule verification staleness report
 
 Secret & Artifact Generator (local, zero dependencies):
   sf generate jwt --sub user --role admin    Generate JWT (HS256/RS256/ES256)

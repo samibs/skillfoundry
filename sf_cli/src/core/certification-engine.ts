@@ -1,7 +1,7 @@
 /**
  * RegForge Certification Engine — Static analysis pipeline for project certification.
  *
- * 11 audit categories, weighted scoring, grade computation (A-F),
+ * 15 audit categories, weighted scoring, grade computation (A-F),
  * HTML report generation, and DB persistence. No LLM calls.
  */
 
@@ -60,9 +60,10 @@ const SEVERITY_DEDUCTION: Record<string, number> = {
 };
 
 const CATEGORY_WEIGHTS: Record<string, number> = {
-  security: 15, testing: 15, documentation: 10, dependencies: 10,
-  license: 10, accessibility: 10, privacy: 10, architecture: 8,
-  seo: 4, performance: 4, 'ci-cd': 4,
+  security: 12, testing: 12, documentation: 8, dependencies: 8,
+  license: 8, accessibility: 8, privacy: 8, architecture: 6,
+  seo: 3, performance: 3, 'ci-cd': 3,
+  contracts: 10, authorization: 5, 'error-handling': 4, 'supply-chain': 2,
 };
 
 const SKIP_DIRS = new Set([
@@ -511,6 +512,369 @@ export function auditCiCd(projectPath: string): CategoryResult {
   return { category: 'ci-cd', score, pass: score >= 50, weight: CATEGORY_WEIGHTS['ci-cd'], findings, durationMs: Date.now() - start };
 }
 
+// ── Contract Mismatch Detector (Story 2.1) ──────────────────────
+
+export function auditContracts(projectPath: string): CategoryResult {
+  const start = Date.now();
+  const files = walkFiles(projectPath);
+  const findings: CertFinding[] = [];
+
+  const frontendFiles = files.filter((f) =>
+    ['.tsx', '.jsx', '.ts', '.js', '.vue', '.svelte'].includes(extname(f).toLowerCase()) &&
+    !/\.test\.|\.spec\.|__tests__|node_modules/i.test(f),
+  );
+  const backendFiles = files.filter((f) =>
+    ['.ts', '.js', '.py', '.cs', '.java', '.go', '.rb', '.php'].includes(extname(f).toLowerCase()) &&
+    !/\.test\.|\.spec\.|__tests__|node_modules/i.test(f) &&
+    (/route|controller|handler|endpoint|api[/\\]|server|app\./i.test(f)),
+  );
+
+  // CONTRACT-001/002: Extract frontend fetch calls and verify backend routes exist
+  const fetchPattern = /(?:fetch|axios|\.get|\.post|\.put|\.patch|\.delete)\s*\(\s*[`'"](\/[^'"`\s]+)/g;
+  const routePattern = /(?:router\.|app\.|@(?:Get|Post|Put|Patch|Delete|RequestMapping)|\.(?:get|post|put|patch|delete))\s*\(\s*[`'"](\/[^'"`\s]+)/g;
+
+  const backendRoutes = new Set<string>();
+  for (const file of backendFiles) {
+    const content = readSafe(file);
+    let match;
+    const rp = new RegExp(routePattern.source, 'g');
+    while ((match = rp.exec(content)) !== null) {
+      backendRoutes.add(match[1].replace(/:\w+/g, ':param').replace(/\{[^}]+\}/g, ':param'));
+    }
+  }
+
+  if (backendRoutes.size > 0) {
+    for (const file of frontendFiles) {
+      const content = readSafe(file);
+      const rel = relative(projectPath, file);
+      let match;
+      const fp = new RegExp(fetchPattern.source, 'g');
+      while ((match = fp.exec(content)) !== null) {
+        const endpoint = match[1].replace(/\$\{[^}]+\}/g, ':param').replace(/\/\d+/g, '/:param');
+        const normalized = endpoint.split('?')[0];
+        const matchesRoute = [...backendRoutes].some((r) => {
+          const normRoute = r.split('?')[0];
+          return normRoute === normalized || normRoute.startsWith(normalized) || normalized.startsWith(normRoute);
+        });
+        if (!matchesRoute) {
+          findings.push({
+            severity: 'high', category: 'contracts',
+            title: 'Frontend calls unverified endpoint (CONTRACT-002)',
+            description: `${rel} calls "${match[1]}" — no matching backend route found`,
+            file: rel, recommendation: 'Verify this endpoint exists in the backend router before deploying',
+          });
+        }
+      }
+    }
+  }
+
+  // CONTRACT-005: Array vs object shape mismatches (heuristic)
+  for (const file of frontendFiles) {
+    const content = readSafe(file);
+    const rel = relative(projectPath, file);
+    const lines = content.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      // Detect .map() on response field that might not be an array
+      if (/response\.\w+\.map\s*\(/.test(lines[i]) && !/\?\.\s*map|\?\?.*map|\bArray\.isArray/.test(lines[i])) {
+        if (!/\[\]/.test(lines[Math.max(0, i - 3)] + lines[Math.max(0, i - 2)] + lines[Math.max(0, i - 1)])) {
+          findings.push({
+            severity: 'medium', category: 'contracts',
+            title: 'Unguarded .map() on API response field (CONTRACT-005)',
+            description: `${rel}:${i + 1} calls .map() on response field without array guard`,
+            file: rel, line: i + 1,
+            recommendation: 'Guard with (response.field ?? []).map() or Array.isArray() check',
+          });
+        }
+      }
+    }
+  }
+
+  // CONTRACT-009: Date format inconsistency detection
+  for (const file of frontendFiles) {
+    const content = readSafe(file);
+    const rel = relative(projectPath, file);
+    if (/new Date\(\s*\w+\s*\*\s*1000\s*\)/.test(content)) {
+      findings.push({
+        severity: 'medium', category: 'contracts',
+        title: 'Unix timestamp conversion detected (CONTRACT-009)',
+        description: `${rel} converts Unix timestamp — verify backend sends matching format`,
+        file: rel, recommendation: 'Standardize on ISO 8601 date format across frontend and backend',
+      });
+    }
+  }
+
+  // CONTRACT-010: Error response format mismatch detection
+  for (const file of frontendFiles) {
+    const content = readSafe(file);
+    const rel = relative(projectPath, file);
+    const hasDetailCheck = /\.detail\b/.test(content);
+    const hasErrorMessageCheck = /\.error\.message\b|\.error\?.message\b/.test(content);
+    const hasMessageCheck = /\.message\b/.test(content);
+    if (hasDetailCheck && hasErrorMessageCheck) {
+      findings.push({
+        severity: 'low', category: 'contracts',
+        title: 'Mixed error response formats (CONTRACT-010)',
+        description: `${rel} checks both .detail and .error.message — inconsistent error handling`,
+        file: rel, recommendation: 'Standardize on one error response envelope format',
+      });
+    }
+  }
+
+  const score = Math.max(0, 100 - findings.reduce((s, f) => s + SEVERITY_DEDUCTION[f.severity], 0));
+  return { category: 'contracts', score, pass: score >= 50, weight: CATEGORY_WEIGHTS.contracts, findings, durationMs: Date.now() - start };
+}
+
+// ── Authorization Pattern Detector (Story 2.2) ─────────────────
+
+export function auditAuthorization(projectPath: string): CategoryResult {
+  const start = Date.now();
+  const files = walkFiles(projectPath);
+  const findings: CertFinding[] = [];
+
+  const routeFiles = files.filter((f) =>
+    ['.ts', '.js', '.py', '.cs', '.java', '.go'].includes(extname(f).toLowerCase()) &&
+    !/\.test\.|\.spec\.|__tests__|node_modules/i.test(f) &&
+    (/route|controller|handler|endpoint|api[/\\]/i.test(f)),
+  );
+
+  for (const file of routeFiles) {
+    const content = readSafe(file);
+    const rel = relative(projectPath, file);
+    const lines = content.split('\n');
+
+    // AUTH-001: Endpoints returning user-scoped data without user_id filtering
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      // Detect route handlers that query user data
+      if (/(?:findOne|findById|getById|\.get\(|SELECT\b.*FROM\b)/i.test(line)) {
+        // Check surrounding context (20 lines) for user_id/owner check
+        const context = lines.slice(Math.max(0, i - 5), Math.min(lines.length, i + 15)).join('\n');
+        if (/user|account|profile|invoice|order/i.test(context) &&
+            !/user_id|userId|owner_id|ownerId|req\.user|currentUser|auth.*user|where.*user/i.test(context) &&
+            !/middleware|guard|decorator|@Auth|@Authorized|isAuthenticated/i.test(context)) {
+          findings.push({
+            severity: 'high', category: 'authorization',
+            title: 'User-scoped query without ownership check (AUTH-001)',
+            description: `${rel}:${i + 1} queries user data without filtering by user_id`,
+            file: rel, line: i + 1,
+            recommendation: 'Add user_id filtering: WHERE user_id = req.user.id',
+          });
+        }
+      }
+    }
+
+    // AUTH-003: Admin routes without role checks
+    if (/admin/i.test(rel) || /\/admin/i.test(content)) {
+      if (!/role|isAdmin|admin.*check|RBAC|authorize|@Roles|@Admin|admin.*guard/i.test(content)) {
+        findings.push({
+          severity: 'high', category: 'authorization',
+          title: 'Admin route without role check (AUTH-003)',
+          description: `${rel} appears to be an admin route but has no role-based access control`,
+          file: rel,
+          recommendation: 'Add server-side role check: if (user.role !== "admin") return 403',
+        });
+      }
+    }
+
+    // AUTH-007: State-changing endpoints without CSRF protection
+    if (/\.post\(|\.put\(|\.patch\(|\.delete\(|@Post|@Put|@Patch|@Delete/i.test(content)) {
+      if (!/csrf|csrfToken|SameSite|xsrf|_csrf|csurf/i.test(content)) {
+        // Only flag if there's no cookie-based auth (SameSite handles CSRF)
+        if (/cookie|session/i.test(content)) {
+          findings.push({
+            severity: 'medium', category: 'authorization',
+            title: 'State-changing endpoint without CSRF protection (AUTH-007)',
+            description: `${rel} has POST/PUT/DELETE handlers using cookies but no CSRF protection detected`,
+            file: rel,
+            recommendation: 'Add CSRF tokens or use SameSite=Strict cookies',
+          });
+        }
+      }
+    }
+  }
+
+  const score = Math.max(0, 100 - findings.reduce((s, f) => s + SEVERITY_DEDUCTION[f.severity], 0));
+  return { category: 'authorization', score, pass: score >= 50, weight: CATEGORY_WEIGHTS.authorization, findings, durationMs: Date.now() - start };
+}
+
+// ── Error Handling Gap Detector (Story 2.3) ─────────────────────
+
+export function auditErrorHandling(projectPath: string): CategoryResult {
+  const start = Date.now();
+  const files = walkFiles(projectPath);
+  const findings: CertFinding[] = [];
+
+  const srcFiles = files.filter((f) =>
+    ['.ts', '.tsx', '.js', '.jsx', '.py', '.cs', '.java', '.go'].includes(extname(f).toLowerCase()) &&
+    !/\.test\.|\.spec\.|__tests__|node_modules/i.test(f) &&
+    !SECURITY_SCAN_EXCLUDE_FILES.has(basename(f)),
+  );
+
+  for (const file of srcFiles.slice(0, 100)) {
+    const content = readSafe(file);
+    const rel = relative(projectPath, file);
+    const lines = content.split('\n');
+
+    // ERR-001: Empty catch blocks
+    for (let i = 0; i < lines.length; i++) {
+      if (/catch\s*\([^)]*\)\s*\{\s*\}/.test(lines[i]) ||
+          (i + 1 < lines.length && /catch\s*\([^)]*\)\s*\{/.test(lines[i]) && /^\s*\}/.test(lines[i + 1]))) {
+        findings.push({
+          severity: 'high', category: 'error-handling',
+          title: 'Empty catch block (ERR-001)',
+          description: `${rel}:${i + 1} swallows errors silently`,
+          file: rel, line: i + 1,
+          recommendation: 'Log the error, re-throw, or return a meaningful error response',
+        });
+      }
+    }
+
+    // ERR-003: fetch/axios calls without try/catch
+    for (let i = 0; i < lines.length; i++) {
+      if (/(?:fetch|axios)\s*\(/.test(lines[i]) && !/\.catch\s*\(/.test(lines[i])) {
+        // Check if inside a try block (look back up to 10 lines)
+        const context = lines.slice(Math.max(0, i - 10), i).join('\n');
+        if (!/\btry\s*\{/.test(context)) {
+          findings.push({
+            severity: 'medium', category: 'error-handling',
+            title: 'Network call without error handling (ERR-003)',
+            description: `${rel}:${i + 1} makes a network call without try/catch or .catch()`,
+            file: rel, line: i + 1,
+            recommendation: 'Wrap in try/catch or add .catch() handler',
+          });
+        }
+      }
+    }
+
+    // ERR-005: HTTP 200 with error body
+    for (let i = 0; i < lines.length; i++) {
+      if (/(?:res|response)\.(?:status\(200\)|json)\s*\(\s*\{[^}]*error/i.test(lines[i])) {
+        findings.push({
+          severity: 'medium', category: 'error-handling',
+          title: 'HTTP 200 with error body (ERR-005)',
+          description: `${rel}:${i + 1} returns 200 status with an error payload`,
+          file: rel, line: i + 1,
+          recommendation: 'Use appropriate HTTP status codes: 400, 404, 422, 500',
+        });
+      }
+    }
+
+    // ERR-007: Missing global error handler (check app/server entry files)
+    if (/(?:app|server|main|index)\./i.test(basename(file))) {
+      if (/express|fastify|koa|hono/i.test(content)) {
+        if (!/app\.use\s*\(\s*(?:.*err|.*error|errorHandler|notFound)/i.test(content) &&
+            !/\.onError|\.setErrorHandler/i.test(content)) {
+          findings.push({
+            severity: 'high', category: 'error-handling',
+            title: 'Missing global error handler (ERR-007)',
+            description: `${rel} sets up a server framework but has no global error handler`,
+            file: rel,
+            recommendation: 'Add: app.use((err, req, res, next) => { ... }) for Express, or equivalent',
+          });
+        }
+      }
+    }
+  }
+
+  const score = Math.max(0, 100 - findings.reduce((s, f) => s + SEVERITY_DEDUCTION[f.severity], 0));
+  return { category: 'error-handling', score, pass: score >= 50, weight: CATEGORY_WEIGHTS['error-handling'], findings, durationMs: Date.now() - start };
+}
+
+// ── Supply Chain Safety Detector (Story 2.4) ────────────────────
+
+export function auditSupplyChain(projectPath: string): CategoryResult {
+  const start = Date.now();
+  const findings: CertFinding[] = [];
+
+  const pkgPath = join(projectPath, 'package.json');
+  const hasPkgJson = existsSync(pkgPath);
+
+  if (hasPkgJson) {
+    const pkgContent = readSafe(pkgPath);
+    let pkg: Record<string, any> = {};
+    try { pkg = JSON.parse(pkgContent); } catch { /* malformed */ }
+
+    const allDeps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+
+    // SUPPLY-005: Wildcard versions
+    for (const [name, version] of Object.entries(allDeps)) {
+      if (version === '*' || version === 'latest') {
+        findings.push({
+          severity: 'high', category: 'supply-chain',
+          title: `Wildcard version: ${name} (SUPPLY-005)`,
+          description: `${name}: "${version}" — unpinned dependency allows breaking changes`,
+          file: 'package.json',
+          recommendation: `Pin to specific version range: "${name}": "^x.y.z"`,
+        });
+      }
+    }
+
+    // SUPPLY-004: Missing lockfile
+    if (!fileExists(projectPath, 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lockb')) {
+      findings.push({
+        severity: 'high', category: 'supply-chain',
+        title: 'No lockfile committed (SUPPLY-004)',
+        description: 'No package-lock.json, yarn.lock, or pnpm-lock.yaml found',
+        file: 'package.json',
+        recommendation: 'Run npm install and commit package-lock.json for reproducible builds',
+      });
+    }
+
+    // SUPPLY-006: Dev dependencies in production dependencies
+    const devOnlyPackages = ['jest', 'vitest', 'mocha', 'chai', 'sinon', 'cypress', 'playwright',
+      '@testing-library', 'eslint', 'prettier', 'husky', 'lint-staged', 'ts-jest',
+      'nodemon', 'concurrently', 'wait-on', '@types/'];
+    const prodDeps = pkg.dependencies || {};
+    for (const [name] of Object.entries(prodDeps)) {
+      if (devOnlyPackages.some((d) => name.startsWith(d) || name === d)) {
+        findings.push({
+          severity: 'medium', category: 'supply-chain',
+          title: `Dev-only package in production deps: ${name} (SUPPLY-006)`,
+          description: `${name} is a dev tool but listed under "dependencies" instead of "devDependencies"`,
+          file: 'package.json',
+          recommendation: `Move ${name} to devDependencies`,
+        });
+      }
+    }
+
+    // Check for very large dependency count (potential bloat)
+    const depCount = Object.keys(prodDeps).length;
+    if (depCount > 50) {
+      findings.push({
+        severity: 'low', category: 'supply-chain',
+        title: 'Large dependency count',
+        description: `${depCount} production dependencies — review for unnecessary packages (SUPPLY-003)`,
+        file: 'package.json',
+        recommendation: 'Audit dependencies: are all needed? Can any be replaced with native code?',
+      });
+    }
+  }
+
+  // Check for requirements.txt (Python)
+  const reqPath = join(projectPath, 'requirements.txt');
+  if (existsSync(reqPath)) {
+    const reqContent = readSafe(reqPath);
+    const lines = reqContent.split('\n').filter(Boolean);
+
+    // Check for unpinned versions
+    for (const line of lines) {
+      if (line.startsWith('#') || line.startsWith('-')) continue;
+      if (!/[=<>~!]/.test(line)) {
+        findings.push({
+          severity: 'medium', category: 'supply-chain',
+          title: `Unpinned Python dependency: ${line.trim()}`,
+          description: `${line.trim()} has no version constraint`,
+          file: 'requirements.txt',
+          recommendation: 'Pin version: package==x.y.z or package>=x.y.z,<x+1',
+        });
+      }
+    }
+  }
+
+  const score = Math.max(0, 100 - findings.reduce((s, f) => s + SEVERITY_DEDUCTION[f.severity], 0));
+  return { category: 'supply-chain', score, pass: score >= 50, weight: CATEGORY_WEIGHTS['supply-chain'], findings, durationMs: Date.now() - start };
+}
+
 // ── Category Registry ───────────────────────────────────────────
 
 const CATEGORY_MAP: Record<string, (p: string) => CategoryResult> = {
@@ -525,6 +889,10 @@ const CATEGORY_MAP: Record<string, (p: string) => CategoryResult> = {
   seo: auditSeo,
   performance: auditPerformance,
   'ci-cd': auditCiCd,
+  contracts: auditContracts,
+  authorization: auditAuthorization,
+  'error-handling': auditErrorHandling,
+  'supply-chain': auditSupplyChain,
 };
 
 export function getAllCategories(): string[] {
