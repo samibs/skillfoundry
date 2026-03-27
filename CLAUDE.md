@@ -85,9 +85,18 @@ curl -s http://localhost:<port>/health | head -1
 - **Default all arrays to `[]`**: API response fields that are arrays MUST default to `[]`, never `undefined` or `null`. In TypeScript, use `field: Type[] = []` in interfaces and `(data.field ?? [])` before calling `.some()`, `.map()`, `.filter()`, `.reduce()`, `.find()`, `.every()`.
 - **No `.method()` on nullable arrays**: NEVER call array methods on a field that could be `undefined`. Always guard: `(items ?? []).filter(...)` or `items?.filter(...) ?? []`.
 
+### Frontend-Backend Contract Rule (CRITICAL)
+
+**BEFORE writing ANY frontend API call, READ the actual backend endpoint code.** This is the #1 vibe-coding failure: the LLM builds frontend and backend that don't agree on data shapes, endpoint paths, or request formats. Each layer works in isolation but breaks when connected.
+
+- VERIFY: endpoint path exists, HTTP method matches, request body schema matches, response shape matches
+- Write TypeScript interfaces from the REAL backend response, not an assumed shape
+- If backend returns `options: string[]`, don't write frontend expecting `options: [{id, text}]`
+- If backend route is `/modules/{id}`, don't write `fetch('/modules/{id}/quiz')`
+
 ### Full Deviation Catalog
 
-See `agents/_known-deviations.md` for the complete list of **80+ known LLM failure patterns** organized across 10 categories: Frontend, Backend, Database, TypeScript, Git/DevOps, API Design, Security, Testing, Documentation, and LLM-Specific. All agents reference this catalog.
+See `agents/_known-deviations.md` for the complete list of **171 known LLM failure patterns** organized across 16 categories including Frontend-Backend Contract Mismatches, Authorization, Silent Logic Failures, Supply Chain, and Performance. All agents reference this catalog.
 
 ---
 
