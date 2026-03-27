@@ -290,7 +290,7 @@ curl -sf http://localhost:<port>/api/health
 |--------------------|----|-----|
 | [e.g., Next.js standalone] | [`.next/static/` and `public/` not included in standalone output] | [Copy after build: `cp -r .next/static .next/standalone/...`] |
 | [e.g., NextAuth v5 beta] | [`trustHost: true` required behind reverse proxy] | [Add to NextAuth config or set `AUTH_TRUST_HOST=true`] |
-| [e.g., NextAuth v5 beta] | [`signIn("credentials", { redirect: false })` doesn't set session cookie] | [POST directly to `/api/auth/callback/credentials` with CSRF token] |
+| [e.g., NextAuth v5 beta] | [Credentials login: `signIn()` doesn't set cookie, `fetch()` drops cookie on 302, raw CSRF fetch mismatches cookie] | [Use native `<form method="POST" action="/api/auth/callback/credentials">` + `getCsrfToken()` from `next-auth/react` + `SessionProvider` wrapper. This is the ONLY working pattern.] |
 | [e.g., Prisma 7] | [Adapter required everywhere — including seed scripts] | [Use shared prisma client that includes adapter, not `new PrismaClient()`] |
 | [e.g., Browser fetch API] | [`fetch()` silently drops `set-cookie` from 302 redirect responses — session cookies never get set] | [Use native `<form method="POST" action="...">` for auth flows, not `fetch()` with `redirect: "follow"`] |
 
