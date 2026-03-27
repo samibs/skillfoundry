@@ -290,7 +290,9 @@ curl -sf http://localhost:<port>/api/health
 |--------------------|----|-----|
 | [e.g., Next.js standalone] | [`.next/static/` and `public/` not included in standalone output] | [Copy after build: `cp -r .next/static .next/standalone/...`] |
 | [e.g., NextAuth v5 beta] | [`trustHost: true` required behind reverse proxy] | [Add to NextAuth config or set `AUTH_TRUST_HOST=true`] |
-| [e.g., NextAuth v5 beta] | [Credentials login: `redirect: false` drops cookies, `fetch()` drops cookies on 302, native form POST drops email/password fields] | [`signIn("credentials", { email, password, callbackUrl })` with default redirect + `SessionProvider` wrapper. This is the ONLY working pattern (5 approaches tested).] |
+| [e.g., NextAuth v5 beta] | [Credentials login: 5 of 6 approaches fail. Default redirect, fetch(), native form POST, getCsrfToken() all broken.] | [`signIn("credentials", { redirect: false, email, password })` + manual `window.location.href` + `SessionProvider`. Playwright-verified.] |
+| [e.g., NextAuth v5 + Next.js 16] | [Middleware: `getToken()` can't decrypt JWE tokens, `auth()` wrapper crashes (Prisma/pg not edge-compatible)] | [Check cookie existence only (`__Secure-authjs.session-token`). Let server-side `auth()` validate.] |
+| [e.g., Next.js 16 standalone] | [Incremental builds leave stale server chunks → `InvariantError: client reference manifest`] | [Always `rm -rf .next` before `npm run build`. Never incremental.] |
 | [e.g., Prisma 7] | [Adapter required everywhere — including seed scripts] | [Use shared prisma client that includes adapter, not `new PrismaClient()`] |
 | [e.g., Browser fetch API] | [`fetch()` silently drops `set-cookie` from 302 redirect responses — session cookies never get set] | [Use native `<form method="POST" action="...">` for auth flows, not `fetch()` with `redirect: "follow"`] |
 
