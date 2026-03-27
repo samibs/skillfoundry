@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.83] - 2026-03-27
+
+### Added — NextAuth v5 Credentials Login Pattern in Known Deployment Quirks
+
+**Problem**: `/forge` rewrote the LuxComplianceSuite login form **4 times** before finding the one working pattern for NextAuth v5 beta + credentials provider. Each failure was silent — no error, just a redirect loop.
+
+**What doesn't work** (3 of 4 approaches fail silently):
+1. `signIn("credentials", { redirect: false })` — session cookie never set
+2. `fetch()` + `redirect: "follow"` — `set-cookie` dropped on 302 (browser security)
+3. Native `<form>` + raw `fetch("/api/auth/csrf")` — CSRF token/cookie context mismatch → `MissingCSRF`
+
+**What works** (only 1 pattern):
+4. Native `<form method="POST" action="/api/auth/callback/credentials">` + `getCsrfToken()` from `next-auth/react` + `SessionProvider` wrapper on auth layout
+
+**Quirks table updated** in `genesis/TEMPLATE.md`, `docs/prd/TEMPLATE.md`, `templates/prd-web-app.md` with the definitive pattern. This prevents future `/forge` runs from repeating the 4-rewrite cycle.
+
+---
+
 ## [2.0.82] - 2026-03-27
 
 ### Changed — PRD Template: Consolidated v2.0.79–v2.0.82

@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.82-blue)
+![Version](https://img.shields.io/badge/version-2.0.83-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,17 +24,17 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.82
+### What's New in v2.0.83
 
-6 new PRD template sections driven by a real `/forge` session — each one prevents a specific failure class:
+6 new PRD template sections + definitive auth pattern, driven by a real `/forge` session:
 
-- **§5.3 Dependencies** (enhanced) — `Verified` checkbox + `Peer Conflicts` column. No more "version doesn't exist" at install time.
-- **§5.4 Compatibility Notes** — Peer dependency conflicts documented before implementation.
-- **§5.5 Directory Structure** — Required for file-system-routed frameworks. The directory IS the routing.
-- **§5.7 Environment Variables** — Source of truth for `.env.example`. `/generate auto` reads this table.
-- **§5.8 Deployment Environment** — Port allocation (portman), process manager, reverse proxy, SSL, domain, build commands.
-- **§5.8 Known Deployment Quirks** — Framework gotchas: Next.js standalone static copy, NextAuth `trustHost`, `fetch()` dropping `set-cookie` on redirects, Prisma adapter everywhere.
-- Updated across 5 platforms, 3 project-type templates, 5 new checklist gates.
+- **§5.3 Dependencies** — `Verified` checkbox + `Peer Conflicts` column. No unverified versions.
+- **§5.4 Compatibility Notes** — Peer dependency conflicts before implementation.
+- **§5.5 Directory Structure** — Required for file-system-routed frameworks.
+- **§5.7 Environment Variables** — Source of truth for `.env.example`.
+- **§5.8 Deployment Environment** — Port, process manager, proxy, SSL, domain, build commands.
+- **§5.8 Known Deployment Quirks** — Next.js standalone static copy, NextAuth `trustHost`, `fetch()` dropping `set-cookie`, Prisma adapter, and the **definitive NextAuth v5 credentials login pattern** (only 1 of 4 approaches works: native form + `getCsrfToken()` + `SessionProvider`).
+- 5 new checklist gates. Updated across 5 platforms, 3 project-type templates.
 
 ### Quick Install
 
