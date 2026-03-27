@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.80] - 2026-03-27
+
+### Added — PRD Template: Environment Variables Specification (§5.7)
+
+**Problem**: `/forge` generated all code for LuxComplianceSuite but never created `.env.example` and never ran `/generate auto`. The project deployed with zero environment configuration — no secrets, no database URL, no SMTP credentials. The PRD had no section telling the agent what env vars were needed or how to generate them.
+
+**§5.7 Environment Variables** (new) — Table listing every env var the project needs, with columns for format, generation method (`/generate ...` for auto-generated secrets, `Manual` for user-provided credentials, `Derived` for computed values), and notes. This is the source of truth for `.env.example` generation. `/generate auto` reads this table during `/forge` to auto-fill secrets.
+
+**Files updated** (13 total):
+- `genesis/TEMPLATE.md`, `docs/prd/TEMPLATE.md` — Full section with examples
+- 5 platform PRD skills (Claude Code, Copilot, Cursor, Gemini, Codex)
+- 3 project-type templates (API, Web App, CLI) — Pre-filled with stack-appropriate examples
+- Both checklist gates updated
+
+---
+
 ## [2.0.79] - 2026-03-27
 
 ### Changed — PRD Template: Dependency Verification & Directory Structure

@@ -154,6 +154,12 @@ Generate a PRD following this exact structure:
 ### 5.6 Integration Points
 [External systems, APIs, services]
 
+### 5.7 Environment Variables
+<!-- Source of truth for .env.example. /generate auto uses this to create secrets. -->
+| Variable | Example / Format | Generation Method | Required |
+|----------|-----------------|-------------------|----------|
+| [VAR_NAME] | [format] | [/generate ... or Manual] | [Yes/No] |
+
 ---
 
 ## 6. Constraints & Assumptions
