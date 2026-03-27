@@ -154,7 +154,40 @@
 | AUTH-007 | Missing CSRF protection on state-changing endpoints | POST/PUT/DELETE endpoints need CSRF tokens or SameSite cookie policy | security |
 | AUTH-008 | Token refresh doesn't rotate refresh token | Issue new refresh token on each use. Detect and block reuse of old refresh tokens | security |
 
-## CATEGORY 11: Silent Logic Failures
+## CATEGORY 11: Frontend-Backend Contract Mismatches
+
+> THE quintessential vibe-coding failure. The LLM builds frontend and backend in the same session but they don't agree on data shapes, endpoints, or request formats. Each layer works in isolation but breaks when connected.
+
+| ID | Pattern | Prevention | Agent |
+|----|---------|------------|-------|
+| CONTRACT-001 | Frontend expects different data shape than backend returns | BEFORE writing any frontend fetch call, READ the actual backend endpoint code and verify the response shape. Write a TypeScript interface that matches the REAL response, not an assumed one | coder, architect |
+| CONTRACT-002 | Frontend calls endpoint that doesn't exist | BEFORE writing `fetch('/api/modules/{id}/quiz')`, verify that exact route exists in the backend router. `grep` for it | coder |
+| CONTRACT-003 | Frontend sends request body backend doesn't expect | Backend expects `list[int]` (answer indexes), frontend sends `{question_id, option_id}` objects. ALWAYS check the backend's request validation schema before writing the fetch call | coder |
+| CONTRACT-004 | Field name mismatches (backend `correct_index`, frontend `correctAnswer`) | Use ONE shared type definition or API contract. If backend returns `correct_index`, frontend MUST read `correct_index`, not rename it to something else | coder, architect |
+| CONTRACT-005 | Array of strings vs array of objects | Backend returns `options: ["A", "B", "C"]`, frontend expects `options: [{id: 1, text: "A"}]`. Transform at the API boundary, not deep in components | coder |
+| CONTRACT-006 | Different ID formats (backend UUID, frontend expects integer) | Check the actual ID type from the API. Don't assume `number` when the backend returns `string` UUID | coder |
+| CONTRACT-007 | Missing fields in API response that frontend requires | Frontend renders `item.description` but backend doesn't include `description` in the response. Check SELECT/serializer fields match frontend needs | coder |
+| CONTRACT-008 | Pagination contract mismatch | Backend returns `{items, total, page}`, frontend expects `{data, meta: {totalPages, currentPage}}`. Agree on ONE pagination envelope | coder, api-design |
+| CONTRACT-009 | Date format mismatch | Backend returns Unix timestamp, frontend expects ISO string (or vice versa). Standardize on ISO 8601 everywhere | coder |
+| CONTRACT-010 | Error response format mismatch | Backend returns `{detail: "Not found"}` (FastAPI), frontend checks `response.error.message`. Standardize error envelope | coder, api-design |
+| CONTRACT-011 | Authentication header format mismatch | Backend expects `Authorization: Bearer <token>`, frontend sends `X-Auth-Token: <token>`. Check the ACTUAL middleware code | coder, security |
+| CONTRACT-012 | Content-Type mismatch | Backend expects `application/json`, frontend sends `multipart/form-data` (or vice versa). Check the endpoint's content type requirements | coder |
+
+### Prevention Protocol (MANDATORY for /forge and /go)
+
+```
+BEFORE writing ANY frontend API call:
+1. READ the actual backend route handler (not docs, not types — the real code)
+2. VERIFY: endpoint path, HTTP method, request body schema, response shape
+3. WRITE a TypeScript interface that matches the REAL response
+4. VERIFY: error response format matches frontend error handling
+5. IF mismatch found: fix the BACKEND to serve what the frontend needs,
+   OR add a transform layer at the API boundary
+
+NEVER assume the API shape. ALWAYS verify.
+```
+
+## CATEGORY 12: Silent Logic Failures
 
 > 60% of AI code faults are silent logic errors — code compiles and runs but produces wrong results.
 
@@ -217,7 +250,7 @@
 | ERR-007 | Missing global error handler | Express: `app.use((err, req, res, next) => ...)`. Next.js: `error.tsx`. React: `ErrorBoundary` | coder |
 | ERR-008 | Unhandled promise rejections crash the process | Add `process.on('unhandledRejection', ...)` handler. Use `--unhandled-rejections=throw` in Node | coder, sre |
 
-## CATEGORY 15: LLM-Specific Deviations
+## CATEGORY 16: LLM-Specific Deviations
 
 > AI code creates 1.7x more issues than human code. 66% of devs say AI solutions are "almost right, but not quite."
 
