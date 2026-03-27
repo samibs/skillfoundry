@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!-- violation: missing lang attribute on <html> -->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- violation: missing viewport meta tag -->
+  <title>Test Project</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      /* violation: no responsive design, fixed width */
+      width: 1400px;
+    }
+    .container {
+      /* violation: inconsistent max-width, causes horizontal scroll on small screens */
+      max-width: 1600px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    input {
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 300px;
+    }
+    .hero-banner img {
+      width: 100%;
+    }
+    .user-card {
+      border: 1px solid #ddd;
+      padding: 16px;
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Test Project Dashboard</h1>
+    <nav>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/users">Users</a>
+      <a href="/settings">Settings</a>
+    </nav>
+  </header>
+
+  <!-- violation: img without alt attribute -->
+  <div class="hero-banner">
+    <img src="/images/banner.jpg">
+  </div>
+
+  <main class="container">
+    <section id="login-form">
+      <h2>Login</h2>
+      <form action="/api/users/login" method="POST">
+        <div class="form-group">
+          <!-- violation: input without associated label -->
+          <input type="email" name="email" placeholder="Email address">
+        </div>
+        <div class="form-group">
+          <!-- violation: input without associated label -->
+          <input type="password" name="password" placeholder="Password">
+        </div>
+        <div class="form-group">
+          <!-- violation: input without label, no accessible name -->
+          <input type="text" name="2fa-code" placeholder="2FA Code (optional)">
+        </div>
+        <!-- violation: no CSRF token in form -->
+        <button type="submit">Login</button>
+      </form>
+    </section>
+
+    <section id="search">
+      <h2>Search Users</h2>
+      <!-- violation: no label for search input -->
+      <input type="search" id="user-search" placeholder="Search...">
+      <button onclick="searchUsers()">Search</button>
+      <div id="search-results"></div>
+    </section>
+
+    <!-- violation: img without alt -->
+    <section id="team">
+      <h2>Our Team</h2>
+      <div class="user-card">
+        <img src="/images/alice.jpg">
+        <h3>Alice Admin</h3>
+        <p>Lead Developer</p>
+      </div>
+      <div class="user-card">
+        <img src="/images/bob.jpg">
+        <h3>Bob User</h3>
+        <p>Designer</p>
+      </div>
+    </section>
+
+    <!-- violation: table without scope or caption for accessibility -->
+    <section id="data-table">
+      <h2>Recent Orders</h2>
+      <table>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Amount</th>
+          <th>Status</th>
+        </tr>
+        <tr>
+          <td>1001</td>
+          <td>Alice</td>
+          <td>$150.00</td>
+          <td>Shipped</td>
+        </tr>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    // violation: inline script, no CSP compatibility
+    function searchUsers() {
+      const query = document.getElementById('user-search').value;
+      // violation: direct string interpolation in fetch URL (potential injection)
+      fetch('/api/users/search/' + query)
+        .then(r => r.json())
+        .then(data => {
+          // violation: innerHTML for rendering user-controlled data — XSS
+          document.getElementById('search-results').innerHTML =
+            data.map(u => '<div class="user-card"><h3>' + u.name + '</h3><p>' + u.email + '</p></div>').join('');
+        });
+    }
+
+    // Store token in localStorage — violation: XSS-accessible token storage
+    function handleLogin(token) {
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('role', 'admin');
+    }
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
  * Route CLI command — smart task routing based on agent performance.
  */
 import { resolve, join } from 'node:path';
-import { routeTask, ensureSmartRouterSchema, getRecentDecisions, getAgentPerformance, formatRoutingReport, formatPerformanceTable, formatDecisionHistory, } from '../core/smart-router.js';
+import { routeTask, ensureSmartRouterSchema, getRecentDecisions, getAgentPerformance, getLearningStatus, formatRoutingReport, formatPerformanceTable, formatDecisionHistory, } from '../core/smart-router.js';
 import { initDatabase } from '../core/dashboard-db.js';
 const LINE = '\u2501';
 const DEFAULT_DB_PATH = 'data/dashboard.db';
@@ -55,6 +55,26 @@ export const routeCommand = {
                     db.close();
                 }
             }
+            case 'status': {
+                const db = initDatabase(dbPath);
+                try {
+                    const status = getLearningStatus(db);
+                    const lines = [
+                        'Smart Router — Learning Status',
+                        LINE.repeat(60),
+                        '',
+                        `  Total decisions:      ${status.totalDecisions}`,
+                        `  Completed decisions:  ${status.completedDecisions}`,
+                        `  Unique agents:        ${status.uniqueAgents}`,
+                        `  Learning mode:        ${status.isLearning ? 'ACTIVE (data-driven routing)' : `INACTIVE (need ${10 - status.completedDecisions} more completed decisions)`}`,
+                        '',
+                    ];
+                    return lines.join('\n');
+                }
+                finally {
+                    db.close();
+                }
+            }
             case 'help':
             case '':
                 return [
@@ -65,8 +85,10 @@ export const routeCommand = {
                     '    /route <description>      Recommend best agent for a task',
                     '    /route history             Show recent routing decisions',
                     '    /route stats               Show agent performance table',
+                    '    /route status              Show learning status (decisions needed)',
                     '',
                     '  The router learns from past outcomes to improve future routing.',
+                    '  After 10+ completed forge runs, routing becomes data-driven.',
                     '  Falls back to keyword-based classification when no history exists.',
                     '',
                 ].join('\n');

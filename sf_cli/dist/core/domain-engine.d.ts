@@ -123,6 +123,29 @@ export declare function validateFile(frameworkDir: string, filePath: string, pac
  * Generate a domain-aware PRD from a description.
  */
 export declare function generateDomainPrd(frameworkDir: string, description: string): string;
+export type StalenessLevel = 'current' | 'stale' | 'outdated';
+export interface RuleStaleness {
+    rule: DomainRule;
+    pack: string;
+    level: StalenessLevel;
+    daysSinceVerified: number;
+}
+/**
+ * Compute staleness level for a rule based on last_verified date.
+ * current: <6 months, stale: 6-12 months, outdated: >12 months
+ */
+export declare function computeStaleness(lastVerified: string): {
+    level: StalenessLevel;
+    daysSince: number;
+};
+/**
+ * Get staleness info for all rules across all packs.
+ */
+export declare function getAllRuleStaleness(frameworkDir: string): RuleStaleness[];
+/**
+ * Format staleness summary per pack.
+ */
+export declare function formatStalenessSummary(frameworkDir: string): string;
 export declare function formatPackList(packs: PackInfo[]): string;
 export declare function formatExplainResponse(response: ExplainResponse): string;
 export declare function formatSearchResults(results: SearchResult[]): string;

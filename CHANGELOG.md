@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.78] - 2026-03-27
+
+### Added — Framework Hardening (Phases 1-5)
+
+**Context-Aware Loading (Phase 1)**:
+- `CLAUDE-LITE.md` (~380 tokens) — lightweight context for everyday work. Full `CLAUDE.md` loaded on-demand by `/forge`, `/certify`, `/go`.
+- 13 per-category deviation files in `agents/deviations/` — agents load only their relevant categories instead of the full 171-pattern catalog.
+- Master `_known-deviations.md` updated with per-category file index.
+
+**Executable Deviation Checks (Phase 2)** — 4 new certification categories (15 total, was 11):
+- **Contracts** (`auditContracts`) — Detects frontend-backend mismatches: unverified endpoints (CONTRACT-002), unguarded `.map()` on response fields (CONTRACT-005), timestamp format mismatches (CONTRACT-009), mixed error formats (CONTRACT-010). Weight: 10%.
+- **Authorization** (`auditAuthorization`) — Detects missing auth: user-scoped queries without ownership checks (AUTH-001), admin routes without role checks (AUTH-003), state-changing endpoints without CSRF (AUTH-007). Weight: 5%.
+- **Error Handling** (`auditErrorHandling`) — Detects gaps: empty catch blocks (ERR-001), network calls without try/catch (ERR-003), HTTP 200 with error bodies (ERR-005), missing global error handlers (ERR-007). Weight: 4%.
+- **Supply Chain** (`auditSupplyChain`) — Detects risks: wildcard versions (SUPPLY-005), missing lockfiles (SUPPLY-004), dev deps in production (SUPPLY-006), unpinned Python deps. Weight: 2%.
+- Category weights rebalanced to accommodate new categories (total: 100%).
+
+**Integration Test Suite (Phase 3)**:
+- `examples/test-project/` — Sample project with intentional violations across all 15 certification categories. Grades D or F when certified.
+- `certification-roundtrip.test.ts` — End-to-end test: certify (assert fail) → apply fixes → re-certify (assert pass). Proves the certification→remediation pipeline works.
+
+**Domain Pack Staleness Alerting (Phase 4)**:
+- `computeStaleness()` — Classifies rules as current (<6mo), stale (6-12mo), or outdated (>12mo) based on `last_verified` date.
+- `/domain list` now shows staleness warnings per pack (STALE/OUTDATED counts).
+- `/domain explain` shows staleness tag on each rule's verification date.
+- `formatStalenessSummary()` — Detailed staleness report per pack.
+- `scripts/verify-packs.sh` — Shell script that lists all rules by `last_verified` date, grouped by staleness, with markdown output for review.
+
+**Smart Router Instrumentation (Phase 5)**:
+- `startAgentDispatch()` — Records routing decision when forge/go dispatches to an agent. Returns decision ID.
+- `completeAgentDispatch()` — Records outcome (success/failure/partial), score, duration, cost. Updates both `routing_decisions` and `agent_performance` tables.
+- `hasLearningData()` — Returns true when 10+ decisions have outcomes (router can make data-driven recommendations).
+- `getLearningStatus()` — Summary: total decisions, completed, unique agents, is-learning flag.
+
+### Changed
+
+- Certification engine: 11 → 15 categories with rebalanced weights.
+- Test count: 2,277 → 2,307 (30 new tests across 4 suites).
+
+---
+
 ## [2.0.77] - 2026-03-26
 
 ### Added — Mandatory Production Rules

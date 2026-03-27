@@ -14,9 +14,12 @@ import {
   explainTopic,
   validateFile,
   generateDomainPrd,
+  computeStaleness,
+  getAllRuleStaleness,
   formatPackList,
   formatExplainResponse,
   formatSearchResults,
+  formatStalenessSummary,
   formatViolations,
   formatMatrixData,
 } from '../core/domain-engine.js';
@@ -359,5 +362,56 @@ describe('real eu-vat pack', () => {
     const matrix = loadMatrix(euVat.path, 'standard-rates');
     expect(matrix).not.toBeNull();
     expect(matrix!.rows.length).toBe(27);
+  });
+});
+
+// ── Staleness Detection (Story 4.1) ─────────────────────────────
+
+describe('computeStaleness', () => {
+  it('returns current for recent dates', () => {
+    const recent = new Date();
+    recent.setDate(recent.getDate() - 30);
+    const result = computeStaleness(recent.toISOString().slice(0, 10));
+    expect(result.level).toBe('current');
+    expect(result.daysSince).toBeLessThan(180);
+  });
+
+  it('returns stale for 6-12 month old dates', () => {
+    const stale = new Date();
+    stale.setMonth(stale.getMonth() - 8);
+    const result = computeStaleness(stale.toISOString().slice(0, 10));
+    expect(result.level).toBe('stale');
+  });
+
+  it('returns outdated for >12 month old dates', () => {
+    const outdated = new Date();
+    outdated.setFullYear(outdated.getFullYear() - 2);
+    const result = computeStaleness(outdated.toISOString().slice(0, 10));
+    expect(result.level).toBe('outdated');
+    expect(result.daysSince).toBeGreaterThan(365);
+  });
+});
+
+describe('getAllRuleStaleness', () => {
+  it('returns staleness info for all pack rules', () => {
+    makePackDir('test-pack', [
+      { id: 'T-001', domain: 'test', category: 'general', title: 'Recent rule', rule: 'r', details: 'd', jurisdiction: 'US', exceptions: [], formula: null, effective_date: '2026-01-01', source: 's', source_url: '', confidence: 'legislation', tags: [], last_verified: new Date().toISOString().slice(0, 10) },
+      { id: 'T-002', domain: 'test', category: 'general', title: 'Old rule', rule: 'r', details: 'd', jurisdiction: 'US', exceptions: [], formula: null, effective_date: '2024-01-01', source: 's', source_url: '', confidence: 'legislation', tags: [], last_verified: '2024-01-01' },
+    ]);
+    const results = getAllRuleStaleness(tmpDir);
+    expect(results).toHaveLength(2);
+    expect(results.find((r) => r.rule.id === 'T-001')!.level).toBe('current');
+    expect(results.find((r) => r.rule.id === 'T-002')!.level).toBe('outdated');
+  });
+});
+
+describe('formatStalenessSummary', () => {
+  it('includes staleness counts per pack', () => {
+    makePackDir('test-pack', [
+      { id: 'T-001', domain: 'test', category: 'general', title: 'Rule', rule: 'r', details: 'd', jurisdiction: 'US', exceptions: [], formula: null, effective_date: '2026-01-01', source: 's', source_url: '', confidence: 'legislation', tags: [], last_verified: '2024-01-01' },
+    ]);
+    const output = formatStalenessSummary(tmpDir);
+    expect(output).toContain('test-pack');
+    expect(output).toContain('Outdated');
   });
 });

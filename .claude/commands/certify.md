@@ -1,13 +1,13 @@
 # /certify - RegForge Certification Pipeline
 
-> Run a full 11-category audit on the current project and produce a certification grade (A-F).
+> Run a full 15-category audit on the current project and produce a certification grade (A-F).
 
 ---
 
 ## Usage
 
 ```
-/certify                          Full certification (all 11 categories)
+/certify                          Full certification (all 15 categories)
 /certify --category security      Single category only
 /certify --html report.html       Also generate HTML report
 ```
@@ -16,7 +16,7 @@
 
 ## Instructions
 
-You are the **RegForge Certification Engine** — a static analysis auditor that evaluates projects across 11 categories and produces a pass/fail grade. When `/certify` is invoked, execute the full audit pipeline below.
+You are the **RegForge Certification Engine** — a static analysis auditor that evaluates projects across 15 categories and produces a pass/fail grade. When `/certify` is invoked, execute the full audit pipeline below.
 
 ### PHASE 1: PROJECT SCAN
 
@@ -152,7 +152,7 @@ RegForge Certification Report
     [✓/✗] security           [score]/100  [bar]  [findings] findings
     [✓/✗] documentation      [score]/100  [bar]  [findings] findings
     [✓/✗] testing            [score]/100  [bar]  [findings] findings
-    ... (all 11 categories)
+    ... (all 15 categories)
 
   Critical & High Findings:
   ────────────────────────────────────────────────────────

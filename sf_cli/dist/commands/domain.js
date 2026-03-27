@@ -3,7 +3,7 @@
  */
 import { resolve, join } from 'node:path';
 import { existsSync, writeFileSync, mkdirSync } from 'node:fs';
-import { listInstalledPacks, searchRules, explainTopic, getRuleById, loadMatrix, validateFile, generateDomainPrd, formatPackList, formatExplainResponse, formatSearchResults, formatViolations, formatMatrixData, } from '../core/domain-engine.js';
+import { listInstalledPacks, searchRules, explainTopic, getRuleById, loadMatrix, validateFile, generateDomainPrd, formatPackList, formatExplainResponse, formatSearchResults, formatStalenessSummary, formatViolations, formatMatrixData, } from '../core/domain-engine.js';
 const LINE = '\u2501';
 function getFrameworkDir(workDir) {
     const { existsSync: ex } = require('node:fs');
@@ -21,7 +21,7 @@ function getFrameworkDir(workDir) {
 export const domainCommand = {
     name: 'domain',
     description: 'Industry Knowledge Engine — query, validate, and generate from domain packs',
-    usage: '/domain explain <topic> | /domain validate <file> --pack <name> | /domain list | /domain search <query>',
+    usage: '/domain explain <topic> | /domain validate <file> --pack <name> | /domain list | /domain search <query> | /domain staleness',
     async execute(args, session) {
         const workDir = session?.workDir || process.cwd();
         const frameworkDir = getFrameworkDir(workDir);
@@ -154,6 +154,9 @@ export const domainCommand = {
                 writeFileSync(prdPath, prd, 'utf-8');
                 return `  Domain-aware PRD generated: ${prdPath}\n  Run /go to implement.\n`;
             }
+            case 'staleness':
+            case 'stale':
+                return formatStalenessSummary(frameworkDir);
             case 'help':
             case '':
                 return [
@@ -161,16 +164,18 @@ export const domainCommand = {
                     LINE.repeat(60),
                     '',
                     '  Usage:',
-                    '    /domain list                             List installed packs',
+                    '    /domain list                             List installed packs (with staleness)',
                     '    /domain info <pack>                      Pack details',
                     '    /domain explain <topic>                  Query domain knowledge',
                     '    /domain search <keywords>                Search across all packs',
                     '    /domain cite <rule-id>                   Full citation for a rule',
                     '    /domain matrix <name> [--pack name]      Get structured data table',
                     '    /domain validate <file> --pack <name>    Validate code against pack rules',
+                    '    /domain staleness                        Show rule verification staleness report',
                     '    /domain prd <description>                Generate domain-aware PRD',
                     '',
                     '  Packs are stored in packs/<name>/ with rules.jsonl, reference.md, matrices/',
+                    '  Rules >6mo show STALE warning, >12mo show OUTDATED warning.',
                     '',
                 ].join('\n');
             default:

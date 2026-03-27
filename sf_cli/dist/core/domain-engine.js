@@ -347,6 +347,70 @@ export function generateDomainPrd(frameworkDir, description) {
     lines.push('');
     return lines.join('\n');
 }
+/**
+ * Compute staleness level for a rule based on last_verified date.
+ * current: <6 months, stale: 6-12 months, outdated: >12 months
+ */
+export function computeStaleness(lastVerified) {
+    const now = new Date();
+    const verified = new Date(lastVerified);
+    const diffMs = now.getTime() - verified.getTime();
+    const daysSince = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (daysSince > 365)
+        return { level: 'outdated', daysSince };
+    if (daysSince > 180)
+        return { level: 'stale', daysSince };
+    return { level: 'current', daysSince };
+}
+/**
+ * Get staleness info for all rules across all packs.
+ */
+export function getAllRuleStaleness(frameworkDir) {
+    const packs = listInstalledPacks(frameworkDir);
+    const results = [];
+    for (const pack of packs) {
+        const rules = loadPackRules(pack.path);
+        for (const rule of rules) {
+            const { level, daysSince } = computeStaleness(rule.last_verified);
+            results.push({ rule, pack: pack.metadata.name, level, daysSinceVerified: daysSince });
+        }
+    }
+    return results;
+}
+/**
+ * Format staleness summary per pack.
+ */
+export function formatStalenessSummary(frameworkDir) {
+    const allStaleness = getAllRuleStaleness(frameworkDir);
+    if (allStaleness.length === 0)
+        return '  No rules to check.\n';
+    const byPack = new Map();
+    for (const rs of allStaleness) {
+        const list = byPack.get(rs.pack) || [];
+        list.push(rs);
+        byPack.set(rs.pack, list);
+    }
+    const lines = [
+        'Rule Staleness Summary',
+        LINE.repeat(60),
+        '',
+    ];
+    for (const [pack, rules] of byPack) {
+        const current = rules.filter((r) => r.level === 'current').length;
+        const stale = rules.filter((r) => r.level === 'stale').length;
+        const outdated = rules.filter((r) => r.level === 'outdated').length;
+        lines.push(`  ${pack} (${rules.length} rules)`);
+        lines.push(`    Current (<6mo): ${current}  |  Stale (6-12mo): ${stale}  |  Outdated (>12mo): ${outdated}`);
+        if (stale > 0 || outdated > 0) {
+            for (const r of rules.filter((r) => r.level !== 'current')) {
+                const icon = r.level === 'outdated' ? '\x1b[31mOUTDATED\x1b[0m' : '\x1b[33mSTALE\x1b[0m';
+                lines.push(`    [${icon}] ${r.rule.id}: ${r.rule.title} (verified: ${r.rule.last_verified}, ${r.daysSinceVerified} days ago)`);
+            }
+        }
+        lines.push('');
+    }
+    return lines.join('\n');
+}
 // ── Formatting ──────────────────────────────────────────────────
 export function formatPackList(packs) {
     if (packs.length === 0)
@@ -360,6 +424,17 @@ export function formatPackList(packs) {
         lines.push(`  ${p.metadata.name.padEnd(20)} v${p.metadata.version}  ${p.ruleCount} rules  ${p.matrixCount} matrices  ${p.exampleCount} examples`);
         lines.push(`    ${p.metadata.description}`);
         lines.push(`    Jurisdiction: ${p.metadata.jurisdiction.join(', ')}`);
+        // Staleness summary per pack
+        const packsDir = join(p.path);
+        const rules = loadPackRules(packsDir);
+        const staleCount = rules.filter((r) => computeStaleness(r.last_verified).level === 'stale').length;
+        const outdatedCount = rules.filter((r) => computeStaleness(r.last_verified).level === 'outdated').length;
+        if (outdatedCount > 0) {
+            lines.push(`    \x1b[31m${outdatedCount} OUTDATED rules (>12mo since verification)\x1b[0m`);
+        }
+        else if (staleCount > 0) {
+            lines.push(`    \x1b[33m${staleCount} stale rules (>6mo since verification)\x1b[0m`);
+        }
         lines.push('');
     }
     return lines.join('\n');
@@ -387,7 +462,13 @@ export function formatExplainResponse(response) {
         if (rule.formula)
             lines.push(`  Formula: ${rule.formula}`);
         lines.push(`  Source: ${rule.source}`);
-        lines.push(`  Confidence: ${rule.confidence} | Verified: ${rule.last_verified}`);
+        const staleness = computeStaleness(rule.last_verified);
+        const stalenessTag = staleness.level === 'outdated'
+            ? ' \x1b[31mOUTDATED\x1b[0m'
+            : staleness.level === 'stale'
+                ? ' \x1b[33mSTALE\x1b[0m'
+                : '';
+        lines.push(`  Confidence: ${rule.confidence} | Verified: ${rule.last_verified}${stalenessTag}`);
         lines.push('');
     }
     lines.push(`  ${DISCLAIMER}`);

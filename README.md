@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.77-blue)
+![Version](https://img.shields.io/badge/version-2.0.78-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,14 +24,14 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.77
+### What's New in v2.0.78
 
-- **Secret Generator** (`/generate`) — Local JWT tokens (HS256/RS256/ES256), API keys, passwords, UUIDs, hashes, key pairs, webhook secrets, TOTP, and `.env` templates. Auto-fills empty secrets during `/forge`. Zero dependencies, no secrets leave your machine.
-- **Industry Knowledge Engine** (`/domain`) — 3 domain packs (EU VAT, GDPR, AML/KYC) with 64 cited regulatory rules.
-- **RegForge Certification** (`/certify`) — 11-category audit, Grade A. HTML + MD + Word reports.
-- **Simple-First Debugging** — Agents enforce data→binding→flow before investigating timing.
-- **Code Booster, Smart Router, Token Optimizer, Skill Optimizer** — prompt mutation, fast transforms, learning routing, context compression.
-- **68 agents** across 5 platforms. **492 new tests** (2,277 total).
+- **Framework Hardening** — Context-aware loading (`CLAUDE-LITE.md`), per-category deviation files, 15 certification categories (was 11), smart router instrumentation, domain pack staleness detection.
+- **4 New Certification Detectors** — Contract mismatches (frontend vs backend), authorization gaps (BOLA/IDOR), error handling gaps (empty catch, missing handlers), supply chain safety (wildcards, lockfiles, dev deps).
+- **Smart Router Learning** — `startAgentDispatch()` / `completeAgentDispatch()` auto-record routing decisions. After 10+ forge runs, the router makes data-driven agent recommendations.
+- **Domain Pack Staleness** — Rules >6mo show STALE warning, >12mo show OUTDATED. `scripts/verify-packs.sh` generates markdown verification reports.
+- **Integration Testing** — `examples/test-project/` with intentional violations. Round-trip test proves certify→remediate→re-certify pipeline.
+- **68 agents** across 5 platforms. **30 new tests** (2,307 total).
 
 ### Quick Install
 

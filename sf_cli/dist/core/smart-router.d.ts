@@ -61,6 +61,30 @@ export declare function getRecentDecisions(db: Database.Database, limit?: number
  * Route a task to the best agent based on historical performance.
  */
 export declare function routeTask(db: Database.Database, description: string, availableAgents: string[]): RoutingRecommendation;
+/**
+ * Record the start of an agent dispatch. Returns a decision ID that must be
+ * passed to `completeAgentDispatch` when the story/task finishes.
+ */
+export declare function startAgentDispatch(db: Database.Database, description: string, agentName: string, projectId?: string): string;
+/**
+ * Record the outcome of an agent dispatch. Updates both the routing decision
+ * and the agent performance tables. Call this when a story/task completes.
+ */
+export declare function completeAgentDispatch(db: Database.Database, decisionId: string, outcome: 'success' | 'failure' | 'partial', score: number, durationMs: number, costUsd?: number): void;
+/**
+ * Check if the router has enough data to make data-driven recommendations.
+ * Returns true when 10+ decisions have been recorded with outcomes.
+ */
+export declare function hasLearningData(db: Database.Database): boolean;
+/**
+ * Get a summary of router learning status for display.
+ */
+export declare function getLearningStatus(db: Database.Database): {
+    totalDecisions: number;
+    completedDecisions: number;
+    uniqueAgents: number;
+    isLearning: boolean;
+};
 export declare function formatRoutingReport(rec: RoutingRecommendation): string;
 export declare function formatPerformanceTable(records: AgentPerformanceRecord[]): string;
 export declare function formatDecisionHistory(records: RoutingDecisionRecord[]): string;

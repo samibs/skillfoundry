@@ -22,7 +22,7 @@ function getDbPath(workDir) {
 }
 export const certifyCommand = {
     name: 'certify',
-    description: 'Run RegForge certification pipeline on a project',
+    description: 'Run RegForge certification pipeline — 15 categories including contracts, authorization, error-handling, and supply-chain',
     usage: '/certify [project-path] [--category name] [--html output.html] | /certify history | /certify report <id>',
     async execute(args, session) {
         const workDir = session?.workDir || process.cwd();
@@ -114,10 +114,11 @@ export const certifyCommand = {
                     '    /certify --html report.html         Generate HTML report',
                     '    /certify history                    List past certifications',
                     '    /certify report <id>                View past report',
-                    '    /certify categories                 List all 11 categories',
+                    '    /certify categories                 List all 15 categories',
                     '',
                     '  Categories: security, documentation, testing, dependencies, license,',
-                    '              accessibility, privacy, architecture, seo, performance, ci-cd',
+                    '              accessibility, privacy, architecture, seo, performance, ci-cd,',
+                    '              contracts, authorization, error-handling, supply-chain',
                     '',
                     '  Grading: A (90+), B (75-89), C (60-74), D (40-59), F (<40)',
                     '',
