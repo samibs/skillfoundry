@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.84] - 2026-03-27
+
+### Added — Browser-Level Auth Verification in TEMPER Phase & Layer Check
+
+**Problem**: `/forge` declared "Phase 3 TEMPER: PASS" on LuxComplianceSuite because all `curl` tests passed. But the login was completely broken in a real browser — `set-cookie` dropped on 302 redirects, CSRF token/cookie context mismatches, form fields not reaching the authorize function. `curl` is blind to browser-specific auth failures.
+
+**Root cause**: The three-layer validation (layer-check) had no browser-level verification for auth flows. It accepted `curl` + screenshots as "evidence" for frontend validation, but cookie handling, CSRF pairing, and redirect behavior are invisible to `curl`.
+
+**Changes**:
+
+**Layer Check — Frontend Validation** (all 5 platforms):
+- New "BROWSER-LEVEL VERIFICATION" section in the frontend checklist
+- Login sets session cookie and redirects to dashboard
+- Logout clears session and redirects to login
+- Protected routes redirect unauthenticated users
+- Cookie flags verified (Secure, HttpOnly, SameSite)
+- CSRF token pairing works in browser context
+- Redirects preserve `set-cookie` headers
+- Explicit note: "curl tests backend logic. Browser tests verify the full contract."
+- New evidence requirement: "Auth flow verified in browser (not just curl/httpie)"
+
+**Forge — Phase 3 TEMPER** (all 5 platforms):
+- Added browser-level auth as a mandatory TEMPER check alongside DB, Backend, Frontend
+
+**PRD Template — §10.1 Definition of Done** (both templates):
+- New gate: "Browser-level auth flow verified (login/logout/protected routes — curl is NOT sufficient)"
+
+**Files updated** (15):
+- 5 layer-check skills (Claude Code, Copilot, Cursor, Gemini, Codex)
+- 5 forge skills
+- 2 PRD templates (genesis + docs)
+- Version, README, CHANGELOG, site
+
+---
+
 ## [2.0.83] - 2026-03-27
 
 ### Added — NextAuth v5 Credentials Login Pattern in Known Deployment Quirks
