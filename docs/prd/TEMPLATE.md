@@ -247,6 +247,7 @@ curl -sf http://localhost:<port>/api/health
 | [e.g., Next.js standalone] | [`.next/static/` not in standalone output] | [Copy after build] |
 | [e.g., NextAuth v5 beta] | [`trustHost: true` required behind reverse proxy] | [Add to NextAuth config] |
 | [e.g., Prisma 7] | [Adapter required everywhere, including seed scripts] | [Use shared client] |
+| [e.g., Browser fetch API] | [`fetch()` silently drops `set-cookie` from 302 redirects — session cookies never set] | [Use native `<form method="POST">` for auth, not `fetch()`] |
 
 ---
 
