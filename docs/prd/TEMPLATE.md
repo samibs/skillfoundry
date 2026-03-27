@@ -318,6 +318,7 @@ curl -sf http://localhost:<port>/api/health
 - [ ] All functional requirements pass acceptance criteria
 - [ ] Unit test coverage >= 80% for business logic
 - [ ] Integration tests for all API endpoints
+- [ ] Browser-level auth flow verified (login/logout/protected routes — curl is NOT sufficient)
 - [ ] Security review completed (if applicable)
 - [ ] Documentation updated
 - [ ] Code reviewed and approved

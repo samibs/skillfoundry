@@ -175,11 +175,23 @@ BANNED PATTERNS:
 │ □ Keyboard navigation works                                 │
 │ □ Color contrast meets WCAG                                 │
 │                                                             │
+│ BROWSER-LEVEL VERIFICATION (auth flows, forms, navigation): │
+│ □ Auth flows tested in real browser context (not just curl) │
+│   - Login sets session cookie and redirects to dashboard    │
+│   - Logout clears session and redirects to login            │
+│   - Protected routes redirect unauthenticated users         │
+│ □ Cookie handling verified (Secure, HttpOnly, SameSite)     │
+│ □ CSRF token pairing works (token matches cookie context)   │
+│ □ Redirects preserve set-cookie headers (not dropped)       │
+│ NOTE: curl tests backend logic. Browser tests verify the    │
+│ full contract. Auth failures are invisible to curl.         │
+│                                                             │
 │ EVIDENCE REQUIRED:                                          │
 │ □ Screenshot of each screen state                           │
 │ □ Network tab showing real API calls                        │
 │ □ Form submission works end-to-end                          │
 │ □ Component tests pass                                      │
+│ □ Auth flow verified in browser (not just curl/httpie)      │
 └─────────────────────────────────────────────────────────────┘
 ```
 

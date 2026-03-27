@@ -57,6 +57,7 @@ Execute these phases in order:
 - Database: migrations, constraints, rollback
 - Backend: endpoints, auth, tests
 - Frontend: real API, all states, accessible
+- **Browser-level auth**: login/logout/protected routes verified in real browser context (curl is NOT sufficient for auth flows — it cannot detect cookie handling, CSRF pairing, or redirect set-cookie failures)
 
 **PHASE 4: INSPECT** — Security audit
 ```
