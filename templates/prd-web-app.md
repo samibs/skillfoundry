@@ -234,7 +234,9 @@ src/
 |-----------|-------|-----|
 | Next.js standalone | `.next/static/` and `public/` not in output | Copy after build |
 | NextAuth v5 beta | `trustHost: true` required behind proxy | Add to NextAuth config |
-| NextAuth v5 beta | Credentials login: 4 of 5 approaches fail silently | `signIn()` + default redirect + `SessionProvider` (only pattern) |
+| NextAuth v5 beta | Credentials login: 5 of 6 approaches fail | `signIn({ redirect: false })` + manual redirect + `SessionProvider` |
+| NextAuth v5 + Next.js 16 | Middleware: getToken() and auth() fail in edge | Check cookie existence only, validate server-side |
+| Next.js 16 standalone | Stale chunks on incremental builds → 500s | Always `rm -rf .next` before build |
 | Browser fetch API | `fetch()` drops `set-cookie` from 302 redirects | Use native `<form>` POST for auth, not `fetch()` |
 
 ---

@@ -246,7 +246,9 @@ curl -sf http://localhost:<port>/api/health
 |--------------------|----|-----|
 | [e.g., Next.js standalone] | [`.next/static/` not in standalone output] | [Copy after build] |
 | [e.g., NextAuth v5 beta] | [`trustHost: true` required behind reverse proxy] | [Add to NextAuth config] |
-| [e.g., NextAuth v5 beta] | [Credentials login: 4 of 5 approaches fail silently] | [`signIn("credentials", { ...fields, callbackUrl })` + default redirect + `SessionProvider`] |
+| [e.g., NextAuth v5 beta] | [Credentials login: 5 of 6 approaches fail silently] | [`signIn("credentials", { redirect: false, ...fields })` + manual redirect + `SessionProvider`] |
+| [e.g., NextAuth v5 + Next.js 16] | [Middleware: `getToken()` and `auth()` both fail in edge runtime] | [Check cookie existence only, validate server-side] |
+| [e.g., Next.js 16 standalone] | [Stale server chunks on incremental builds → 500 errors] | [Always `rm -rf .next` before build] |
 | [e.g., Browser fetch API] | [`fetch()` silently drops `set-cookie` from 302 redirects] | [Use native `<form method="POST">` for auth flows] |
 | [e.g., Prisma 7] | [Adapter required everywhere, including seed scripts] | [Use shared client] |
 

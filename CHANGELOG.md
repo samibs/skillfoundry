@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.85] - 2026-03-27
+
+### Fixed — Playwright-Verified NextAuth v5 Patterns (3rd Correction)
+
+**Context**: The Known Deployment Quirks for NextAuth v5 credentials login were corrected **3 times** in this session. Each correction was based on pattern-matching ("this looks right") rather than browser-level verification. Only after running Playwright did the actual working pattern emerge.
+
+**Playwright-verified patterns** (replaces all previous entries):
+
+| Component | Works | Doesn't Work |
+|-----------|-------|-------------|
+| **Login** | `signIn("credentials", { redirect: false })` + manual `window.location.href` + `SessionProvider` | Default redirect, fetch(), native form POST, getCsrfToken() |
+| **Middleware** | Cookie existence check (`__Secure-authjs.session-token`) | `getToken()` (JWE), `auth()` wrapper (Prisma not edge-compatible) |
+| **Build** | `rm -rf .next` + clean rebuild | Incremental (stale server chunks → InvariantError) |
+
+**New quirks added**: middleware edge runtime incompatibility, stale standalone builds.
+
+**Lesson**: Never document a "definitive pattern" based on code inspection. Only Playwright/browser verification counts for auth flows.
+
+---
+
 ## [2.0.84] - 2026-03-27
 
 ### Added — Browser-Level Auth Verification in TEMPER Phase & Layer Check
