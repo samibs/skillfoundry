@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.82] - 2026-03-27
+
+### Changed — PRD Template: Consolidated v2.0.79–v2.0.82
+
+Consolidates 4 rapid-fire PRD template improvements driven by a real `/forge` session on LuxComplianceSuite. Each section was added after observing a specific failure class.
+
+**New PRD Sections (§5.3–§5.8)**:
+
+| Section | Prevents | Failure Observed |
+|---------|----------|-----------------|
+| **§5.3** Dependencies (enhanced) | Unverified package versions | `next-auth@5` doesn't exist, 3 wasted install cycles |
+| **§5.4** Compatibility Notes | Undocumented peer conflicts | `--legacy-peer-deps` bailout, masked real conflicts |
+| **§5.5** Directory Structure | Agent improvising file-system routes | Bash escaping errors on `(auth)` and `[tenantSlug]` dirs |
+| **§5.7** Environment Variables | No `.env.example`, no secrets | Project deployed with zero env config, `/generate auto` had nothing to read |
+| **§5.8** Deployment Environment | Port conflicts, MIME errors, proxy auth failures | Port 3000 crashed another app, static assets served as `text/plain` (3 times), NextAuth 500 behind nginx |
+| **§5.8** Known Deployment Quirks | Framework-specific production gotchas | `trustHost`, standalone static copy, `fetch()` dropping `set-cookie` on 302 redirects (3 login rewrites) |
+
+**Quirks captured**: Next.js standalone static copy, NextAuth `trustHost` behind proxy, NextAuth `signIn()` silent failure, Prisma 7 adapter everywhere, `fetch()` dropping `set-cookie` on 302 redirects.
+
+**Checklist gates added**: dependency versions verified, peer conflicts documented, directory structure specified, env vars listed, deployment environment specified.
+
+**Files updated**: `genesis/TEMPLATE.md`, `docs/prd/TEMPLATE.md`, 5 platform PRD skills, 3 project-type templates (API, Web App, CLI), README, site.
+
+---
+
 ## [2.0.81] - 2026-03-27
 
 ### Added — PRD Template: Deployment Environment (§5.8)
