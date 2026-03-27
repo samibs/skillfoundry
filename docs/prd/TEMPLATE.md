@@ -113,6 +113,29 @@
 
 ## 5. Technical Specifications
 
+### 5.0 Technology Maturity Assessment
+
+<!-- MANDATORY: Evaluate every dependency BEFORE implementation. Determines verification level. -->
+
+| Maturity | Definition | Verification Level |
+|----------|-----------|-------------------|
+| **Stable** | GA, no breaking changes 6+ months | Build + curl + unit tests |
+| **Recent Major** | GA but breaking from prior version | Build + integration + migration test |
+| **Beta** | API unstable, may change between patches | **Playwright/browser mandatory** |
+| **Alpha** | Not production-ready | **Playwright mandatory + human sign-off** |
+
+#### Stack Assessment
+
+| Dependency | Version | Maturity | Breaking From Prior | Known Quirks in KB | Verification Required |
+|-----------|---------|----------|-------------------|-------------------|----------------------|
+| [dependency] | [version] | [Stable/Beta/Alpha] | [what changed] | [N quirks or 0 — uncharted] | [Build+curl / **Playwright**] |
+
+#### Risk Decision (Beta/Alpha deps only)
+
+| Beta Dependency | Stable Alternative | Blast Radius | Justification |
+|----------------|-------------------|-------------|---------------|
+| [dep] | [alternative] | [Critical/Medium/Low] | [why beta over stable] |
+
 ### 5.1 Architecture
 
 <!-- Component diagram or text description -->
@@ -375,6 +398,7 @@ CLARITY:
 [ ] Examples provided for complex requirements
 
 READY FOR IMPLEMENTATION:
+[ ] Technology maturity assessed in §5.0 (Beta deps → Playwright mandatory in TEMPER)
 [ ] Technical dependencies identified
 [ ] All dependency versions verified (npm view / pip index — no unverified versions)
 [ ] Peer dependency conflicts documented in §5.4 (or confirmed "None")

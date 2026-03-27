@@ -47,6 +47,7 @@ Execute these phases in order:
 - Backend: endpoints, auth, tests
 - Frontend: real API, all states, accessible
 - **Browser-level auth**: login/logout/protected routes verified in real browser context (curl is NOT sufficient for auth flows — it cannot detect cookie handling, CSRF pairing, or redirect set-cookie failures)
+- **Playwright mandatory** for any dependency marked Beta/Alpha in §5.0 Technology Maturity Assessment
 
 **PHASE 4: INSPECT** — Security audit
 ```
