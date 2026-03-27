@@ -177,10 +177,31 @@ Client --> Load Balancer --> API Server --> Database
 
 ### 5.3 Dependencies
 
-| Dependency | Version | Purpose | Risk if Unavailable |
-|------------|---------|---------|---------------------|
-| Database (PostgreSQL) | Latest stable | Data persistence | API non-functional |
-| Redis | Latest stable | Caching, rate limiting | Degraded performance |
+<!-- CRITICAL: Verify every version exists before freezing. Run: npm view <pkg> versions --json | tail -5 -->
+
+| Dependency | Version | Verified | Peer Conflicts | Purpose | Risk if Unavailable |
+|------------|---------|----------|----------------|---------|---------------------|
+| Database (PostgreSQL) | Latest stable | [ ] | None | Data persistence | API non-functional |
+| Redis | Latest stable | [ ] | None | Caching, rate limiting | Degraded performance |
+
+### 5.4 Compatibility Notes
+
+| Package A | Package B | Conflict | Resolution | Verified |
+|-----------|-----------|----------|------------|----------|
+
+### 5.5 Directory Structure
+
+<!-- Required for file-system-routed frameworks. Adapt or remove if not applicable. -->
+
+```
+src/
+├── routes/                        # API route handlers
+├── middleware/                     # Auth, validation, rate limiting
+├── services/                      # Business logic
+├── models/                        # Database models / entities
+├── lib/                           # Shared utilities
+└── types/                         # TypeScript type definitions
+```
 
 ---
 
