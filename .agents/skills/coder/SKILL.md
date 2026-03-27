@@ -19,6 +19,13 @@ BEFORE IMPLEMENTING: Evaluate if the request contains:
 If ANY of these are missing or vague, immediately reject with:
 ❌ Rejected: unclear what the code should do. Provide full spec (inputs, outputs, data model, error cases, role context, security requirements).
 
+## Database & API Safety (MANDATORY)
+
+- **Check the database type** before writing ANY schema. Read `package.json`, `docker-compose.yml`, or `.env` for `postgres`, `sqlite3`, `mysql2`, `mssql`. Use the correct dialect.
+- **One naming convention**: PostgreSQL/SQLite = `snake_case` everywhere. MSSQL = `PascalCase`. Never mix.
+- **Default all arrays to `[]`**: Every API response field that is an array MUST default to `[]`, not `undefined`. In TypeScript, write `field: Type[] = []`. Before calling `.some()`, `.map()`, `.filter()`, `.find()`, `.every()`, `.reduce()` on any API response data, ALWAYS guard: `(data.items ?? []).method(...)`.
+- **No nullable array access**: NEVER write `change.impacts.some(...)` without first ensuring `impacts` is not `undefined/null`. Write `(change.impacts ?? []).some(...)`.
+
 ## 🔒 MANDATORY SECURITY VALIDATION (v1.1.0)
 
 **BEFORE writing ANY code**, validate against AI-specific vulnerabilities:

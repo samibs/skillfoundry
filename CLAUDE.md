@@ -73,6 +73,18 @@ curl -s http://localhost:<port>/health | head -1
 - **Commit notifications**: When committing code, notify the developer/admin. In projects with CI/CD, this is handled by GitHub/GitLab webhooks. For PM2-managed projects, use the post-commit hook or the `/generate webhook-secret` + webhook integration.
 - **Deployment notifications**: When an app is redeployed, send a notification (Slack, email, or webhook) confirming the deployment succeeded and the health check passed.
 
+### Database & API Rules
+
+- **One naming convention per project**: Pick ONE and enforce it everywhere.
+  - PostgreSQL → `snake_case` (tables, columns, indexes, constraints)
+  - SQLite → `snake_case`
+  - MSSQL → `PascalCase`
+  - MySQL → `snake_case`
+  - NEVER mix `camelCase`, `snake_case`, and `PascalCase` in the same schema.
+- **Check the DB type before writing schema**: Do NOT write `SERIAL` or `JSONB` (PostgreSQL) when the project uses SQLite. Do NOT write `AUTOINCREMENT` (SQLite) when targeting PostgreSQL. Read `package.json`, `docker-compose.yml`, or `.env` to determine the actual database.
+- **Default all arrays to `[]`**: API response fields that are arrays MUST default to `[]`, never `undefined` or `null`. In TypeScript, use `field: Type[] = []` in interfaces and `(data.field ?? [])` before calling `.some()`, `.map()`, `.filter()`, `.reduce()`, `.find()`, `.every()`.
+- **No `.method()` on nullable arrays**: NEVER call array methods on a field that could be `undefined`. Always guard: `(items ?? []).filter(...)` or `items?.filter(...) ?? []`.
+
 ---
 
 ## Genesis-First Development Workflow
