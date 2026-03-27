@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.85-blue)
+![Version](https://img.shields.io/badge/version-2.0.86-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,14 +24,15 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.85
+### What's New in v2.0.86
 
-PRD template hardening + Playwright-verified auth patterns:
+PRD template hardening driven by a real `/forge` session that exposed 6+ failure classes:
 
-- **Browser-level auth in TEMPER** — `/layer-check` and `/forge` Phase 3 now require auth flows verified in a real browser. `curl` is blind to cookie/CSRF/redirect failures.
-- **Playwright-verified NextAuth v5 pattern** — `signIn({ redirect: false })` + manual redirect + `SessionProvider`. 5 other approaches fail silently. Middleware must check cookie existence only (getToken/auth() fail in edge runtime). Always clean build (`rm -rf .next`).
-- **6 new PRD sections** (§5.3–§5.8) — Verified deps, peer conflicts, directory structure, env vars, deployment environment, known deployment quirks.
-- 6 new checklist gates. Updated across 5 platforms, 3 project-type templates.
+- **§5.0 Technology Maturity Assessment** — Classify every dependency as Stable/Beta/Alpha before implementation. Beta deps with 0 known quirks = uncharted territory = **Playwright mandatory**. Prevents agents from confidently building with unstable APIs and declaring TEMPER PASS with only `curl`.
+- **Browser-level auth in TEMPER** — `/layer-check` and `/forge` Phase 3 require browser verification for auth flows. `curl` is blind to cookie/CSRF/redirect failures.
+- **7 new PRD sections** (§5.0, §5.3–§5.8) — Maturity assessment, verified deps, peer conflicts, directory structure, env vars, deployment environment, deployment quirks.
+- **Playwright-verified quirks** — NextAuth v5 credentials pattern, middleware edge runtime, stale standalone builds.
+- 8 new checklist gates. Updated across 5 platforms, 3 project-type templates.
 
 ### Quick Install
 

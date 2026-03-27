@@ -147,6 +147,48 @@ layers: []            # Affected layers: [database, backend, frontend]
 
 ## 5. Technical Specifications
 
+### 5.0 Technology Maturity Assessment
+
+<!-- MANDATORY: Evaluate every major dependency BEFORE writing implementation stories. -->
+<!-- This section determines the VERIFICATION LEVEL required in TEMPER (Phase 3). -->
+<!-- Beta/unstable deps with 0 known quirks = uncharted territory = Playwright mandatory. -->
+
+#### Maturity Classification
+
+| Maturity | Definition | Verification Level |
+|----------|-----------|-------------------|
+| **Stable** | GA release, no breaking changes in 6+ months | Build + curl + unit tests |
+| **Recent Major** | GA but breaking changes from prior version (e.g., Prisma 5→7) | Build + integration tests + migration verification |
+| **RC/Preview** | Release candidate, API mostly frozen | Build + integration tests + browser smoke test |
+| **Beta** | API unstable, may change between patches | **Playwright/browser mandatory** — curl is NOT sufficient |
+| **Alpha/Experimental** | Not recommended for production | **Playwright mandatory + human sign-off before deploy** |
+
+#### Stack Assessment
+
+<!-- Fill this for EVERY major dependency. The "Known Quirks in KB" column checks -->
+<!-- the framework's knowledge base (memory_bank/, deployment quirks from prior projects). -->
+<!-- 0 known quirks on a Beta dep = you are the first to hit the problems. Plan accordingly. -->
+
+| Dependency | Version | Maturity | API Stability | Breaking Changes From Prior | Known Quirks in KB | Verification Required |
+|-----------|---------|----------|--------------|---------------------------|-------------------|----------------------|
+| [e.g., Next.js] | [16.2.1] | Stable | Minor changes from 15 | [standalone output path changed, middleware deprecated] | [2 quirks] | Build + curl |
+| [e.g., NextAuth] | [5.0.0-beta.30] | **Beta** | **Unstable** | [Complete rewrite from v4] | [0 — uncharted] | **Playwright mandatory** |
+| [e.g., Prisma] | [7.5.0] | Recent Major | Breaking from v5 | [Adapter required, no datasource URL in schema] | [1 quirk] | Build + seed test |
+| [e.g., React] | [19.2.4] | Stable | Stable | [None relevant] | [0] | Build |
+
+<!-- Replace examples with your actual stack. Delete this comment when done. -->
+
+#### Risk Decision
+
+<!-- For any dependency marked Beta or Alpha: -->
+<!-- 1. Is there a stable alternative? If yes, justify why you're using the beta. -->
+<!-- 2. What's the blast radius if it doesn't work? (auth = critical, styling = low) -->
+<!-- 3. Who owns the debugging when the beta breaks? (agent alone = high risk) -->
+
+| Beta/Alpha Dependency | Stable Alternative | Blast Radius | Justification |
+|----------------------|-------------------|-------------|---------------|
+| [e.g., NextAuth v5 beta] | [NextAuth v4 (stable)] | **Critical** (auth) | [v5 is the only version supporting Next.js 16 App Router natively] |
+
 ### 5.1 Architecture
 
 <!-- Component diagram or text description -->
@@ -676,6 +718,7 @@ CONTRACT FREEZE GATE:
 [ ] Ready to generate clients/types from contract
 
 READY FOR IMPLEMENTATION:
+[ ] Technology maturity assessed in §5.0 (Beta deps → Playwright mandatory in TEMPER)
 [ ] Technical dependencies identified
 [ ] All dependency versions verified (npm view / pip index — no unverified versions)
 [ ] Peer dependency conflicts documented in §5.4 (or confirmed "None")

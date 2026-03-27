@@ -118,6 +118,13 @@ Generate a PRD following this exact structure:
 
 ## 5. Technical Specifications
 
+### 5.0 Technology Maturity Assessment
+<!-- Classify each dep: Stable / Recent Major / Beta / Alpha -->
+<!-- Beta/Alpha deps → Playwright verification mandatory in TEMPER -->
+| Dependency | Version | Maturity | Known Quirks | Verification |
+|-----------|---------|----------|-------------|-------------|
+| [dep] | [ver] | [Stable/Beta] | [N or 0=uncharted] | [curl / **Playwright**] |
+
 ### 5.1 Architecture
 [Component diagram or description]
 

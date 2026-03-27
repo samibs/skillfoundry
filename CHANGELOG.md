@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.86] - 2026-03-27
+
+### Added — §5.0 Technology Maturity Assessment
+
+**Problem**: The agent confidently built with NextAuth v5 beta (unstable API, 0 known quirks in the knowledge base) and only discovered it was uncharted territory after 6 login rewrites. The PRD had no mechanism to flag "this dependency is beta, you're the first to hit the problems, test harder."
+
+**§5.0 Technology Maturity Assessment** (new, first section in Technical Specifications):
+- **Maturity Classification Table**: Stable / Recent Major / RC / Beta / Alpha — each with a defined verification level
+- **Stack Assessment**: Every dependency classified with version, maturity, breaking changes from prior, known quirks in KB, and required verification level
+- **Risk Decision Table**: Beta/Alpha deps must justify why the beta is used over a stable alternative, state the blast radius (auth = critical), and acknowledge who owns debugging
+- **Key rule**: Any dep marked Beta/Alpha → **Playwright verification mandatory in TEMPER**. Agent cannot declare TEMPER PASS with only curl.
+
+**Forge TEMPER updated** (all 5 platforms): Playwright mandatory for Beta/Alpha deps per §5.0.
+**PRD checklist updated** (both templates): New gate — "Technology maturity assessed in §5.0."
+**Platform PRD skills updated** (all 5): Compact maturity assessment table.
+
+**How this prevents the LuxComplianceSuite failure**:
+- NextAuth v5 beta.30 would be flagged as Beta + 0 known quirks = uncharted territory
+- Blast radius = Critical (auth) → Playwright mandatory, not optional
+- Agent would know before writing the first line that curl-only verification is insufficient
+
+---
+
 ## [2.0.85] - 2026-03-27
 
 ### Fixed — Playwright-Verified NextAuth v5 Patterns (3rd Correction)
