@@ -190,6 +190,22 @@ src/
 |--------|------------------|---------|-------|
 | [system] | [API/Event/File] | [why] | [team/person] |
 
+### 5.7 Environment Variables
+
+<!-- List ALL env vars the project needs. This is the source of truth for .env.example generation. -->
+<!-- /generate auto uses this table to create .env.example and auto-fill secrets during /forge. -->
+<!-- Generation Method: /generate ... = auto-generated | Manual = user provides | Derived = computed -->
+
+| Variable | Example / Format | Generation Method | Required | Notes |
+|----------|-----------------|-------------------|----------|-------|
+| DATABASE_URL | `postgresql://app_user:pass@localhost:5432/mydb` | Manual | Yes | App user with limited privileges |
+| NEXTAUTH_SECRET | base64, 32 bytes | `/generate secret --length 32 --encoding base64` | Yes | Session encryption |
+| NEXTAUTH_PRIVATE_KEY | RS256 PEM (newlines escaped as `\n`) | `/generate keypair --alg RS256` | Yes | JWT signing |
+| EMAIL_SERVER_PASSWORD | — | Manual (provider app password) | Yes | Never use account password |
+| NODE_ENV | `production` | Derived | Yes | Set per environment |
+
+<!-- Replace the examples above with your actual project variables. -->
+
 ---
 
 ## 6. Constraints & Assumptions
@@ -316,6 +332,7 @@ READY FOR IMPLEMENTATION:
 [ ] All dependency versions verified (npm view / pip index — no unverified versions)
 [ ] Peer dependency conflicts documented in §5.4 (or confirmed "None")
 [ ] Directory structure specified in §5.5 (required for file-system-routed frameworks)
+[ ] Environment variables listed in §5.7 with generation methods (/generate auto or Manual)
 [ ] Data model defined
 [ ] API contracts specified
 [ ] Phases broken down appropriately

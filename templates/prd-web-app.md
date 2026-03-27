@@ -208,6 +208,17 @@ src/
 └── types/
 ```
 
+### 5.6 Environment Variables
+
+<!-- Source of truth for .env.example. /generate auto uses this to create secrets. -->
+
+| Variable | Example / Format | Generation Method | Required | Notes |
+|----------|-----------------|-------------------|----------|-------|
+| DATABASE_URL | `postgresql://app_user:pass@localhost:5432/mydb` | Manual | Yes | App user |
+| NEXTAUTH_SECRET | base64, 32 bytes | `/generate secret --length 32 --encoding base64` | Yes | Session encryption |
+| NEXTAUTH_PRIVATE_KEY | RS256 PEM | `/generate keypair --alg RS256` | Yes | JWT signing |
+| NODE_ENV | `production` | Derived | Yes | |
+
 ---
 
 ## 6. Constraints & Assumptions

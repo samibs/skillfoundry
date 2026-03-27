@@ -203,6 +203,17 @@ src/
 └── types/                         # TypeScript type definitions
 ```
 
+### 5.6 Environment Variables
+
+<!-- Source of truth for .env.example. /generate auto uses this to create secrets. -->
+
+| Variable | Example / Format | Generation Method | Required | Notes |
+|----------|-----------------|-------------------|----------|-------|
+| DATABASE_URL | `postgresql://app_user:pass@localhost:5432/mydb` | Manual | Yes | App user |
+| JWT_SECRET | hex, 64 chars | `/generate secret --length 64 --encoding hex` | Yes | Token signing |
+| REDIS_URL | `redis://localhost:6379` | Manual | No | Caching / rate limiting |
+| PORT | `3000` | Derived | Yes | |
+
 ---
 
 ## 6. Constraints & Assumptions

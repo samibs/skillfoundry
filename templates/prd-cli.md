@@ -172,6 +172,14 @@ CLI Entry Point --> Argument Parser --> Command Router --> Command Handler --> O
 | Package A | Package B | Conflict | Resolution | Verified |
 |-----------|-----------|----------|------------|----------|
 
+### 5.5 Environment Variables
+
+<!-- Source of truth for .env.example. /generate auto uses this to create secrets. -->
+
+| Variable | Example / Format | Generation Method | Required | Notes |
+|----------|-----------------|-------------------|----------|-------|
+| [VAR_NAME] | [format] | [/generate ... or Manual] | [Yes/No] | |
+
 ---
 
 ## 6. Constraints & Assumptions
