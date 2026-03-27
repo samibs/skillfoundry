@@ -139,7 +139,87 @@
 | DOC-004 | Outdated screenshots | Screenshots must match current UI. Re-capture on UI changes | docs |
 | DOC-005 | Code comments describe "what" not "why" | Comments explain WHY, not WHAT. The code shows what | coder |
 
-## CATEGORY 10: LLM-Specific Deviations
+## CATEGORY 10: Authorization & Access Control Deviations
+
+> BOLA/IDOR is the #1 API vulnerability. 53% of teams that shipped AI code found auth issues post-review.
+
+| ID | Pattern | Prevention | Agent |
+|----|---------|------------|-------|
+| AUTH-001 | Missing object-level authorization (BOLA/IDOR) | Every endpoint returning user-scoped data MUST verify the requesting user owns the resource. Test: auth as User A, request User B's resource, expect 403 | security, coder, tester |
+| AUTH-002 | Authorization looks correct but doesn't enforce | Check authorization at the DATA layer, not just the route. `getInvoice(id)` must filter by `user_id`, not just check "is logged in" | security, coder |
+| AUTH-003 | Missing role-based access control on admin routes | Admin endpoints MUST check `user.role === 'admin'` server-side. Frontend-only guards are bypassable | security, coder |
+| AUTH-004 | Session doesn't invalidate on password change | When password changes, invalidate ALL active sessions/tokens for that user | security |
+| AUTH-005 | No brute force protection on login | Rate limit: max 5 attempts per 15 min per IP. Lock account after 10 failed attempts | security |
+| AUTH-006 | JWT stored in localStorage (XSS-accessible) | Access tokens in memory only. Refresh tokens in HttpOnly Secure SameSite=Strict cookies | security |
+| AUTH-007 | Missing CSRF protection on state-changing endpoints | POST/PUT/DELETE endpoints need CSRF tokens or SameSite cookie policy | security |
+| AUTH-008 | Token refresh doesn't rotate refresh token | Issue new refresh token on each use. Detect and block reuse of old refresh tokens | security |
+
+## CATEGORY 11: Silent Logic Failures
+
+> 60% of AI code faults are silent logic errors — code compiles and runs but produces wrong results.
+
+| ID | Pattern | Prevention | Agent |
+|----|---------|------------|-------|
+| LOGIC-001 | Happy path bias — only works with ideal input | Test with: null, undefined, empty string, 0, false, empty array, very long strings, special characters, Unicode, negative numbers | tester, coder |
+| LOGIC-002 | Off-by-one errors in loops and pagination | Verify: first item, last item, empty set, single item, boundary between pages | tester, coder |
+| LOGIC-003 | Incorrect comparison operators | `>` vs `>=`, `<` vs `<=`. Always test boundary values | tester |
+| LOGIC-004 | Swallowed exceptions — catch without action | Every catch block MUST either: re-throw, log + return error response, or handle explicitly. NEVER empty catch | coder |
+| LOGIC-005 | Floating point arithmetic for money | NEVER use float for currency. Use integer cents (amount * 100) or Decimal/BigNumber library | coder, data-architect |
+| LOGIC-006 | Timezone bugs — using local time for storage | Store ALL timestamps as UTC. Convert to local time only at display | coder, data-architect |
+| LOGIC-007 | Race conditions in async code | When multiple async operations modify shared state, use mutex/locks or sequential processing | coder |
+| LOGIC-008 | Incorrect null coalescing (`??` vs `\|\|`) | `??` only catches null/undefined. `\|\|` catches all falsy (0, '', false). Know which you need | coder |
+| LOGIC-009 | String comparison for version numbers | "10.0" < "9.0" as strings. Use semver library for version comparison | coder |
+| LOGIC-010 | Incorrect boolean logic (De Morgan's law) | `!(a && b)` ≠ `(!a && !b)`. It equals `(!a \|\| !b)`. Review complex boolean expressions | coder |
+
+## CATEGORY 12: Supply Chain & Dependency Deviations
+
+> 20% of AI-generated code recommends non-existent packages. 5.2% of commercial model suggestions are hallucinated.
+
+| ID | Pattern | Prevention | Agent |
+|----|---------|------------|-------|
+| SUPPLY-001 | Hallucinated package names (slopsquatting) | VERIFY every `npm install` / `pip install` suggestion exists on the registry BEFORE installing. Check npmjs.com or pypi.org | coder, security |
+| SUPPLY-002 | Outdated packages with known CVEs | Run `npm audit` / `pip audit` after installing. Check last publish date — abandoned packages are risky | dependency-auditor |
+| SUPPLY-003 | Unnecessary dependencies for simple tasks | Don't add a package for something achievable in 5 lines of code. `left-pad` syndrome | coder |
+| SUPPLY-004 | Missing lockfile commitment | ALWAYS commit package-lock.json / yarn.lock / pnpm-lock.yaml for reproducible builds | devops |
+| SUPPLY-005 | Wildcard versions in package.json | NEVER use `"*"` or `"latest"`. Pin major version: `"^4.17.0"` | coder, dependency-auditor |
+| SUPPLY-006 | Dev dependencies in production bundle | Separate devDependencies from dependencies. Don't ship test frameworks to production | coder, devops |
+| SUPPLY-007 | Importing deprecated or replaced packages | Check if package has a successor (e.g., `request` → `node-fetch`, `moment` → `dayjs`) | coder |
+
+## CATEGORY 13: Performance & Scalability Deviations
+
+> AI code has 8x more excessive I/O and 1.42x more performance issues than human code.
+
+| ID | Pattern | Prevention | Agent |
+|----|---------|------------|-------|
+| PERF-001 | Fetching all records without pagination | EVERY list endpoint MUST support pagination. Default: `limit=20, offset=0` | coder, api-design |
+| PERF-002 | N+1 queries (query in a loop) | Use JOINs, batch queries, or eager loading. NEVER `SELECT` inside a `for` loop | coder, data-architect |
+| PERF-003 | No caching for expensive operations | Cache: DB query results (Redis/in-memory), API responses (HTTP cache headers), computed values | coder, performance |
+| PERF-004 | Synchronous file I/O in request handlers | Use `async` fs operations in server code. `readFileSync` blocks the event loop | coder |
+| PERF-005 | Loading entire file into memory | Stream large files. Don't `readFileSync` a 500MB CSV | coder |
+| PERF-006 | Missing database indexes | Every WHERE, JOIN, ORDER BY column needs an index. Check EXPLAIN plans | data-architect, performance |
+| PERF-007 | Unoptimized images | Compress images, use WebP, set dimensions, lazy-load below-fold images | ux-ui, performance |
+| PERF-008 | Importing entire library when only one function needed | `import { debounce } from 'lodash/debounce'` not `import _ from 'lodash'` | coder |
+| PERF-009 | Re-rendering entire component tree on state change | Use `React.memo`, `useMemo`, `useCallback`. Don't put volatile state in root context | coder, performance |
+| PERF-010 | Missing connection pooling | Use pool for DB connections. Don't create new connection per request | coder, data-architect, sre |
+
+## CATEGORY 14: Error Handling Deviations
+
+> Error handling gaps are 2x more common in AI-generated code than human code.
+
+| ID | Pattern | Prevention | Agent |
+|----|---------|------------|-------|
+| ERR-001 | Empty catch blocks (swallowed errors) | Every catch MUST: log, re-throw, or return meaningful error. NEVER `catch (e) {}` | coder |
+| ERR-002 | Generic error messages to users | Show user-friendly message + log detailed error server-side. Never expose stack traces | coder |
+| ERR-003 | Missing try/catch around external calls | EVERY fetch, DB query, file operation, and third-party API call needs error handling | coder |
+| ERR-004 | Not handling network timeouts | Set timeouts on ALL HTTP requests (5s default). Handle timeout as a specific error case | coder, sre |
+| ERR-005 | Returning HTTP 200 with error body | Use correct status codes: 400, 401, 403, 404, 409, 422, 500. NEVER 200 with `{ error: ... }` | coder, api-design |
+| ERR-006 | Not distinguishing client vs server errors | 4xx = client's fault (bad input). 5xx = server's fault (bug). Log 5xx, alert on 5xx | coder, sre |
+| ERR-007 | Missing global error handler | Express: `app.use((err, req, res, next) => ...)`. Next.js: `error.tsx`. React: `ErrorBoundary` | coder |
+| ERR-008 | Unhandled promise rejections crash the process | Add `process.on('unhandledRejection', ...)` handler. Use `--unhandled-rejections=throw` in Node | coder, sre |
+
+## CATEGORY 15: LLM-Specific Deviations
+
+> AI code creates 1.7x more issues than human code. 66% of devs say AI solutions are "almost right, but not quite."
 
 | ID | Pattern | Prevention | Agent |
 |----|---------|------------|-------|
@@ -153,8 +233,31 @@
 | LLM-008 | Losing context and duplicating code | Check for existing code before suggesting changes. Structural diff on context restore | all |
 | LLM-009 | Hallucinating API endpoints or library methods | Verify imports exist. Check docs. Don't invent methods | coder |
 | LLM-010 | Mixing framework versions/syntax | Check actual installed version before writing code (React 18 vs 19, Next 13 vs 14) | coder |
+| LLM-011 | "Almost right" code that passes tests but fails in production | Test with REAL data, not ideal test fixtures. Include edge cases and adversarial input | tester, coder |
+| LLM-012 | Suggesting deprecated or removed APIs | Check current docs before using any API. Verify method exists in installed version | coder |
+| LLM-013 | Cross-file inconsistency (works in isolation, breaks together) | After multi-file changes, verify: imports resolve, types match, API contracts align | coder, architect |
+| LLM-014 | Overcomplicating simple tasks | If a 5-line solution exists, don't write 50 lines. Avoid premature abstraction | coder |
+| LLM-015 | Destroying existing data (database drops, file overwrites) | NEVER run destructive operations without explicit user confirmation. Back up first | all |
+| LLM-016 | Ignoring the project's existing patterns | Read existing code BEFORE writing new code. Match the project's style, not your default | coder |
+| LLM-017 | Generating tests that test the implementation, not behavior | Tests should verify OUTCOMES, not HOW the code works internally | tester |
+| LLM-018 | Not reading error messages before "fixing" | Read the ACTUAL error message. Don't guess. The fix is usually in the error text | debugger, fixer |
 
 ---
+
+## STATISTICS (Source: Research 2025-2026)
+
+| Metric | Value | Source |
+|--------|-------|--------|
+| AI code with security vulnerabilities | 45-53% | Veracode GenAI Report 2025 |
+| AI code issues vs human code | 1.7x more | CodeRabbit AI vs Human Report 2026 |
+| XSS vulnerability increase with AI | 2.74x | IEEE/CodeRabbit |
+| Silent logic failures in AI code | 60% of faults | IEEE Spectrum |
+| Happy path bias | Majority of AI code | Multiple sources |
+| Error handling gaps vs human code | 2x more common | CodeRabbit |
+| Excessive I/O in AI code | 8x higher | CodeRabbit |
+| Hallucinated package names | 5.2% (commercial), 21.7% (open-source) | USENIX Security 2025 |
+| Teams discovering post-ship security issues | 53% | Autonoma |
+| Devs saying AI code is "almost right" | 66% | Developer survey 2026 |
 
 ## ENFORCEMENT
 
