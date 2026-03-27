@@ -234,6 +234,7 @@ src/
 |-----------|-------|-----|
 | Next.js standalone | `.next/static/` and `public/` not in output | Copy after build |
 | NextAuth v5 beta | `trustHost: true` required behind proxy | Add to NextAuth config |
+| Browser fetch API | `fetch()` drops `set-cookie` from 302 redirects | Use native `<form>` POST for auth, not `fetch()` |
 
 ---
 
