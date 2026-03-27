@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.80-blue)
+![Version](https://img.shields.io/badge/version-2.0.81-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,12 +24,13 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.80
+### What's New in v2.0.81
 
-- **PRD Template: Environment Variables** (new §5.7) — Every env var listed with format, generation method (`/generate ...` or Manual), and notes. Source of truth for `.env.example` — agents can't forget to create it anymore.
-- **PRD Template: Dependency Verification** (§5.3) — Verified checkbox and Peer Conflicts columns. No more "version doesn't exist" surprises during `/forge`.
-- **PRD Template: Compatibility Notes** (new §5.4) — Table for peer dependency conflicts before implementation.
-- **PRD Template: Directory Structure** (new §5.5) — Required for file-system-routed frameworks (Next.js, Nuxt, SvelteKit).
+- **PRD Template: Deployment Environment** (new §5.8) — Port allocation, process manager, reverse proxy, SSL, domain, and a "Known Deployment Quirks" table. Prevents agents from improvising infrastructure and hitting MIME type errors, port conflicts, or auth failures behind proxies.
+- **PRD Template: Environment Variables** (§5.7) — Every env var with format, generation method, and notes.
+- **PRD Template: Dependency Verification** (§5.3) — Verified checkbox and Peer Conflicts columns.
+- **PRD Template: Compatibility Notes** (§5.4) — Peer dependency conflicts before implementation.
+- **PRD Template: Directory Structure** (§5.5) — Required for file-system-routed frameworks.
 - Updated across all 5 platforms and 3 project-type templates.
 
 ### Quick Install

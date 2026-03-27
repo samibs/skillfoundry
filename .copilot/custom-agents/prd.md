@@ -154,6 +154,21 @@ Generate a PRD following this exact structure:
 |----------|-----------------|-------------------|----------|
 | [VAR_NAME] | [format] | [/generate ... or Manual] | [Yes/No] |
 
+### 5.8 Deployment Environment
+<!-- Target infrastructure: port allocation, process manager, reverse proxy, SSL, domain -->
+| Aspect | Specification |
+|--------|--------------|
+| Port | [portman assign / manual / dynamic] |
+| Process manager | [PM2 / systemd / Docker] |
+| Reverse proxy | [nginx / Caddy / none] |
+| SSL | [certbot / Cloudflare / none] |
+| Domain | [exact domain] |
+
+**Known Deployment Quirks:**
+| Framework | Quirk | Fix |
+|-----------|-------|-----|
+| [e.g., Next.js standalone] | [static assets not in output] | [copy after build] |
+
 ---
 
 ## 6. Constraints & Assumptions

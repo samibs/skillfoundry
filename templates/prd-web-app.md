@@ -219,6 +219,22 @@ src/
 | NEXTAUTH_PRIVATE_KEY | RS256 PEM | `/generate keypair --alg RS256` | Yes | JWT signing |
 | NODE_ENV | `production` | Derived | Yes | |
 
+### 5.8 Deployment Environment
+
+| Aspect | Specification | Notes |
+|--------|--------------|-------|
+| **Port allocation** | [portman / manual] | `portman assign <app>` or specify exact port |
+| **Process manager** | PM2 (cluster mode) | ecosystem.config.js in project root |
+| **Reverse proxy** | nginx | Proxy to localhost:\<port\>, security headers, static asset caching |
+| **SSL/TLS** | certbot + webroot | Domain must be configured before cert request |
+| **Domain** | [exact domain] | Must match NEXTAUTH_URL |
+
+**Known Deployment Quirks:**
+| Framework | Quirk | Fix |
+|-----------|-------|-----|
+| Next.js standalone | `.next/static/` and `public/` not in output | Copy after build |
+| NextAuth v5 beta | `trustHost: true` required behind proxy | Add to NextAuth config |
+
 ---
 
 ## 6. Constraints & Assumptions

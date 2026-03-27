@@ -243,6 +243,58 @@ src/
 
 <!-- Replace the examples above with your actual project variables. -->
 
+### 5.8 Deployment Environment
+
+<!-- Specify the target deployment infrastructure so the agent doesn't improvise it at runtime. -->
+<!-- Every item here prevents a "works locally, broken in production" failure. -->
+
+#### Infrastructure
+
+| Aspect | Specification | Notes |
+|--------|--------------|-------|
+| **Port allocation** | [portman / manual / dynamic] | If portman: `portman assign <app>`. If manual: specify exact port. Never hardcode 3000 without checking. |
+| **Process manager** | [PM2 / systemd / Docker / none] | Include ecosystem.config.js pattern if PM2 |
+| **Reverse proxy** | [nginx / Caddy / Cloudflare / none] | Specify upstream port and proxy headers needed |
+| **SSL/TLS** | [certbot + webroot / Cloudflare origin cert / self-signed / none] | Include domain and cert renewal method |
+| **Domain** | [exact domain] | Must match NEXTAUTH_URL / CORS origins |
+| **CDN** | [Cloudflare / none] | If Cloudflare: note cache purge needed after deploys |
+
+#### Build & Deploy Commands
+
+<!-- The exact sequence to go from code to running production. No improvisation. -->
+
+```bash
+# Build
+npm run build
+
+# Post-build steps (framework-specific)
+# Example: Next.js standalone requires copying static assets
+cp -r .next/static .next/standalone/<app-path>/.next/static
+cp -r public .next/standalone/<app-path>/public
+
+# Start
+pm2 start ecosystem.config.js
+# OR: systemctl restart <service>
+# OR: docker compose up -d --build
+
+# Verify
+curl -sf http://localhost:<port>/api/health
+```
+
+#### Known Deployment Quirks
+
+<!-- CRITICAL: List framework-specific gotchas that will break production if not handled. -->
+<!-- These save hours of debugging. Add any quirk discovered during development. -->
+
+| Framework / Library | Quirk | Fix |
+|--------------------|----|-----|
+| [e.g., Next.js standalone] | [`.next/static/` and `public/` not included in standalone output] | [Copy after build: `cp -r .next/static .next/standalone/...`] |
+| [e.g., NextAuth v5 beta] | [`trustHost: true` required behind reverse proxy] | [Add to NextAuth config or set `AUTH_TRUST_HOST=true`] |
+| [e.g., NextAuth v5 beta] | [`signIn("credentials", { redirect: false })` doesn't set session cookie] | [POST directly to `/api/auth/callback/credentials` with CSRF token] |
+| [e.g., Prisma 7] | [Adapter required everywhere — including seed scripts] | [Use shared prisma client that includes adapter, not `new PrismaClient()`] |
+
+<!-- Delete example rows and replace with your project's actual quirks. -->
+
 ---
 
 ## 6. Contract Specification (Required for API Features)
@@ -625,6 +677,7 @@ READY FOR IMPLEMENTATION:
 [ ] Peer dependency conflicts documented in §5.4 (or confirmed "None")
 [ ] Directory structure specified in §5.5 (required for file-system-routed frameworks)
 [ ] Environment variables listed in §5.7 with generation methods (/generate auto or Manual)
+[ ] Deployment environment specified in §5.8 (port, process manager, proxy, SSL, domain, known quirks)
 [ ] Data model defined
 [ ] API contracts specified and FROZEN
 [ ] Phases broken down appropriately

@@ -214,6 +214,20 @@ src/
 | REDIS_URL | `redis://localhost:6379` | Manual | No | Caching / rate limiting |
 | PORT | `3000` | Derived | Yes | |
 
+### 5.8 Deployment Environment
+
+| Aspect | Specification | Notes |
+|--------|--------------|-------|
+| **Port allocation** | [portman / manual] | `portman assign <app>` or specify exact port |
+| **Process manager** | [PM2 / systemd / Docker] | ecosystem.config.js or Dockerfile |
+| **Reverse proxy** | nginx | Proxy to localhost:\<port\>, rate limiting at proxy layer |
+| **SSL/TLS** | [certbot + webroot / Cloudflare] | |
+| **Domain** | [exact domain] | Must match CORS allowed origins |
+
+**Known Deployment Quirks:**
+| Framework | Quirk | Fix |
+|-----------|-------|-----|
+
 ---
 
 ## 6. Constraints & Assumptions

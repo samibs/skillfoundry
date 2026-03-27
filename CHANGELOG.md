@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.81] - 2026-03-27
+
+### Added — PRD Template: Deployment Environment (§5.8)
+
+**Problem**: `/forge` on LuxComplianceSuite improvised the entire deployment: used port 3000 (crashed another app), missed Next.js standalone static asset copy (MIME type errors hit 3 times), missed NextAuth `trustHost` behind nginx (500 on all auth), and `signIn()` silently failed. None of this was in the PRD.
+
+**§5.8 Deployment Environment** (new) — Specifies target infrastructure before implementation begins:
+- **Infrastructure table**: port allocation (portman/manual), process manager (PM2/systemd/Docker), reverse proxy, SSL, domain, CDN
+- **Build & Deploy Commands**: exact sequence from code to production — no improvisation
+- **Known Deployment Quirks**: framework-specific gotchas that break production (Next.js standalone static copy, NextAuth trustHost, Prisma adapter everywhere). Saves hours of runtime debugging.
+
+**Files updated** (14 total):
+- `genesis/TEMPLATE.md`, `docs/prd/TEMPLATE.md` — Full section with infrastructure table, deploy commands, quirks table
+- 5 platform PRD skills — Compact deployment section
+- `templates/prd-web-app.md` — Pre-filled with Next.js + PM2 + nginx patterns
+- `templates/prd-api.md` — Pre-filled with API deployment patterns
+- Both checklist gates updated
+
+---
+
 ## [2.0.80] - 2026-03-27
 
 ### Added — PRD Template: Environment Variables Specification (§5.7)

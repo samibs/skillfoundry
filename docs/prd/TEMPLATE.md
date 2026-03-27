@@ -206,6 +206,48 @@ src/
 
 <!-- Replace the examples above with your actual project variables. -->
 
+### 5.8 Deployment Environment
+
+<!-- Specify the target deployment infrastructure so the agent doesn't improvise it at runtime. -->
+
+#### Infrastructure
+
+| Aspect | Specification | Notes |
+|--------|--------------|-------|
+| **Port allocation** | [portman / manual / dynamic] | If portman: `portman assign <app>`. Never hardcode 3000 without checking. |
+| **Process manager** | [PM2 / systemd / Docker / none] | Include ecosystem.config.js pattern if PM2 |
+| **Reverse proxy** | [nginx / Caddy / Cloudflare / none] | Specify upstream port and proxy headers |
+| **SSL/TLS** | [certbot + webroot / Cloudflare origin cert / none] | Include domain and renewal method |
+| **Domain** | [exact domain] | Must match NEXTAUTH_URL / CORS origins |
+| **CDN** | [Cloudflare / none] | Note cache purge needed after deploys |
+
+#### Build & Deploy Commands
+
+```bash
+# Build
+npm run build
+
+# Post-build steps (framework-specific, e.g., Next.js standalone static copy)
+cp -r .next/static .next/standalone/<app-path>/.next/static
+cp -r public .next/standalone/<app-path>/public
+
+# Start
+pm2 start ecosystem.config.js
+
+# Verify
+curl -sf http://localhost:<port>/api/health
+```
+
+#### Known Deployment Quirks
+
+<!-- Framework-specific gotchas that will break production if not handled. -->
+
+| Framework / Library | Quirk | Fix |
+|--------------------|----|-----|
+| [e.g., Next.js standalone] | [`.next/static/` not in standalone output] | [Copy after build] |
+| [e.g., NextAuth v5 beta] | [`trustHost: true` required behind reverse proxy] | [Add to NextAuth config] |
+| [e.g., Prisma 7] | [Adapter required everywhere, including seed scripts] | [Use shared client] |
+
 ---
 
 ## 6. Constraints & Assumptions
@@ -333,6 +375,7 @@ READY FOR IMPLEMENTATION:
 [ ] Peer dependency conflicts documented in §5.4 (or confirmed "None")
 [ ] Directory structure specified in §5.5 (required for file-system-routed frameworks)
 [ ] Environment variables listed in §5.7 with generation methods (/generate auto or Manual)
+[ ] Deployment environment specified in §5.8 (port, process manager, proxy, SSL, domain, known quirks)
 [ ] Data model defined
 [ ] API contracts specified
 [ ] Phases broken down appropriately
