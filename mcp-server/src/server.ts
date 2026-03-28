@@ -3,6 +3,8 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { loadSkills } from "./skills/loader.js";
 import { createMcpServer } from "./mcp/handler.js";
 import { createApiRouter } from "./api/routes.js";
+import { initDatabase } from "./state/db.js";
+import { ensureMetricsTable } from "./state/metrics.js";
 import path from "path";
 
 const PORT = parseInt(process.env.SKILLFOUNDRY_PORT || "9877", 10);
@@ -22,6 +24,11 @@ async function main(): Promise<void> {
   console.log("SkillFoundry MCP Server v3.0.0");
   console.log(`Framework root: ${FRAMEWORK_ROOT}`);
   console.log(`Skill directories: ${SKILL_DIRS.join(", ")}`);
+
+  // Initialize SQLite (knowledge store + metrics)
+  await initDatabase();
+  ensureMetricsTable();
+  console.log("Database initialized");
 
   // Load all skills
   const skills = await loadSkills(SKILL_DIRS);

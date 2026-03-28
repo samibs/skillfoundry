@@ -1,6 +1,8 @@
 import { Router } from "express";
 import type { SkillDefinition } from "../skills/loader.js";
 import { runHarvest, getQuirks } from "../knowledge/harvester.js";
+import { getRoutingTable, getTodaySpend } from "../agents/cost-router.js";
+import { getMetricsSummary, getAgentMetrics } from "../state/metrics.js";
 
 const startTime = Date.now();
 
@@ -107,6 +109,46 @@ export function createApiRouter(
           duration: result.duration,
         },
       });
+    } catch (err) {
+      res.status(500).json({
+        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
+      });
+    }
+  });
+
+  // ─── Cost Router API ────────────────────────────────────────
+
+  router.get("/api/v1/routing", (_req, res) => {
+    res.json({
+      data: getRoutingTable(),
+      spend: getTodaySpend(),
+    });
+  });
+
+  // ─── Metrics API ──────────────────────────────────────────
+
+  router.get("/api/v1/metrics", (req, res) => {
+    try {
+      const since = req.query.since as string | undefined;
+      const summary = getMetricsSummary(since);
+      res.json({ data: summary });
+    } catch (err) {
+      res.status(500).json({
+        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
+      });
+    }
+  });
+
+  router.get("/api/v1/metrics/agents/:name", (req, res) => {
+    try {
+      const metrics = getAgentMetrics(req.params.name);
+      if (metrics.length === 0) {
+        res.status(404).json({
+          error: { code: "NOT_FOUND", message: `No metrics for agent '${req.params.name}'` },
+        });
+        return;
+      }
+      res.json({ data: metrics[0] });
     } catch (err) {
       res.status(500).json({
         error: { code: "INTERNAL_ERROR", message: (err as Error).message },
