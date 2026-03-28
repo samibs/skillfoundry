@@ -4,13 +4,13 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-2.0.86-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that installs 56 agents and 64 skills into your existing IDE. It adds structure, memory, and enforced quality gates to AI-assisted development — so you get production code, not prototypes. Now with runtime intelligence (message bus, agent pool, vector search), security scanners (Gitleaks, Checkov), and a native VS Code extension.
+SkillFoundry is an AI engineering framework with a centralized MCP server, real tool agents, and a skill factory. v3 transforms SkillFoundry from installed prompt files into a single server serving 124+ skills to any IDE via MCP — with Playwright for real browser verification, Semgrep for real SAST, a knowledge base that learns from all your projects, and an iznir-powered skill factory that creates certified skills on the fly.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -24,15 +24,23 @@ SkillFoundry is an AI engineering framework that installs 56 agents and 64 skill
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v2.0.86
+### What's New in v3.0.0
 
-PRD template hardening driven by a real `/forge` session that exposed 6+ failure classes:
+**Major architecture shift: MCP Agent Server + iznir Skill Factory**
 
-- **§5.0 Technology Maturity Assessment** — Classify every dependency as Stable/Beta/Alpha before implementation. Beta deps with 0 known quirks = uncharted territory = **Playwright mandatory**. Prevents agents from confidently building with unstable APIs and declaring TEMPER PASS with only `curl`.
-- **Browser-level auth in TEMPER** — `/layer-check` and `/forge` Phase 3 require browser verification for auth flows. `curl` is blind to cookie/CSRF/redirect failures.
-- **7 new PRD sections** (§5.0, §5.3–§5.8) — Maturity assessment, verified deps, peer conflicts, directory structure, env vars, deployment environment, deployment quirks.
-- **Playwright-verified quirks** — NextAuth v5 credentials pattern, middleware edge runtime, stale standalone builds.
-- 8 new checklist gates. Updated across 5 platforms, 3 project-type templates.
+- **Centralized MCP Server** (`mcp-server/`) — Single server serves 124+ skills to any IDE via MCP. No more installing files into each app. Zero version drift across 60+ projects.
+- **Real Tool Agents** — Playwright for browser auth verification (8 checks + screenshots), Semgrep for real SAST (OWASP rules). Not LLM opinion — deterministic tool output.
+- **Memory Gate** — Knowledge requires tool evidence to be "verified". LLM reasoning = "observed" only. Prevents the 3-wrong-patterns problem.
+- **Knowledge Loop** — Harvests session logs from all apps, extracts failure patterns into shared DB. Quirks from app X prevent failures on app Y.
+- **Skill Factory (iznir engine)** — Creates certified skills on the fly: intent → 6 guardrails → 10-case test → certify → register as live MCP tool. No restart.
+- **Cost Router** — Haiku for search, Sonnet for code, Opus for architecture. Budget cap.
+- **PRD Template Hardening** — §5.0 maturity assessment, §5.3-§5.8, browser-level auth in TEMPER, 8 new checklist gates.
+- **53 tests** across 7 test files.
+
+```
+Connect from any IDE:
+"mcpServers": { "skillfoundry": { "url": "http://localhost:9877/mcp/sse" } }
+```
 
 ### Quick Install
 
