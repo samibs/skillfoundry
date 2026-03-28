@@ -18,7 +18,8 @@
     "@modelcontextprotocol/sdk": "^1.28.0",
     "express": "^5.1.0",
     "glob": "^11.0.2",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "playwright": "^1.58.2"
   },
   "devDependencies": {
     "@types/express": "^5.0.2",
