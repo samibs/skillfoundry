@@ -8,6 +8,8 @@ import { verifyAuthFlow, type AuthTestInput } from "../agents/playwright-agent.j
 import { runSemgrepScan, type SemgrepInput } from "../agents/semgrep-agent.js";
 import { applyGate, canPromote, type EvidenceSource } from "../knowledge/memory-gate.js";
 import { runHarvest, getQuirks } from "../knowledge/harvester.js";
+import { createSkill } from "../agents/skill-factory.js";
+import { insertDynamicSkill, listDynamicSkills, getCertifiedSkills } from "../state/db.js";
 
 // ─── Tool Agent Definitions ──────────────────────────────────────────────────
 
@@ -108,6 +110,32 @@ const TOOL_AGENTS = [
           description: "Framework to query (e.g., nextauth, prisma, next.js). Omit for all.",
         },
       },
+    },
+  },
+  {
+    name: "sf_create_skill",
+    description:
+      "Create a new certified AI skill on the fly using the iznir engine. " +
+      "Analyzes intent, generates 6 guardrails, runs 10-case test suite, " +
+      "certifies (80%+ required), exports as .md, and registers as live MCP tool. " +
+      "Use when the user needs a capability that no existing skill covers.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        description: {
+          type: "string",
+          description: "What the skill should do (natural language description)",
+        },
+      },
+      required: ["description"],
+    },
+  },
+  {
+    name: "sf_list_dynamic_skills",
+    description: "List all dynamically created skills and their certification status.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {},
     },
   },
 ];
@@ -288,6 +316,85 @@ export function createMcpServer(
           text: JSON.stringify({
             data: quirks,
             meta: { total: quirks.length, framework: framework || "all" },
+          }, null, 2),
+        }],
+      };
+    }
+
+    // ─── Skill Factory ────────────────────────────────────────
+    if (name === "sf_create_skill") {
+      const description = typedArgs.description as string;
+
+      try {
+        const newSkill = await createSkill(description);
+
+        // Persist to SQLite
+        insertDynamicSkill(newSkill);
+
+        // If certified, register as a live MCP tool
+        if (newSkill.status === "certified" && newSkill.exportedContent) {
+          skills.set(newSkill.name.toLowerCase().replace(/\s+/g, "-"), {
+            name: newSkill.name.toLowerCase().replace(/\s+/g, "-"),
+            description: newSkill.description,
+            filePath: `factory://${newSkill.id}`,
+            content: newSkill.exportedContent,
+            metadata: { dynamic: true, domain: newSkill.domain, riskLevel: newSkill.riskLevel },
+          });
+        }
+
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              status: newSkill.status,
+              name: newSkill.name,
+              domain: newSkill.domain,
+              riskLevel: newSkill.riskLevel,
+              guardrails: newSkill.guardrails.length,
+              testScore: newSkill.testResults?.score,
+              certified: newSkill.status === "certified",
+              registeredAsMcpTool: newSkill.status === "certified",
+              mcpToolName: newSkill.status === "certified"
+                ? `sf_${newSkill.name.toLowerCase().replace(/\s+/g, "-")}`
+                : null,
+              tags: newSkill.tags,
+            }, null, 2),
+          }],
+          isError: newSkill.status === "failed",
+        };
+      } catch (err) {
+        return {
+          content: [{
+            type: "text" as const,
+            text: JSON.stringify({
+              error: `Skill creation failed: ${(err as Error).message}`,
+            }),
+          }],
+          isError: true,
+        };
+      }
+    }
+
+    if (name === "sf_list_dynamic_skills") {
+      const allSkills = listDynamicSkills();
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            data: allSkills.map((s) => ({
+              name: s.name,
+              status: s.status,
+              domain: s.domain,
+              riskLevel: s.riskLevel,
+              testScore: s.testResults?.score,
+              certified: s.status === "certified",
+              createdAt: s.createdAt,
+            })),
+            meta: {
+              total: allSkills.length,
+              certified: allSkills.filter((s) => s.status === "certified").length,
+              failed: allSkills.filter((s) => s.status === "failed").length,
+            },
           }, null, 2),
         }],
       };

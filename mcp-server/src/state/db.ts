@@ -66,6 +66,32 @@ export async function initDatabase(
     );
 
     CREATE INDEX IF NOT EXISTS idx_sessions_app ON session_logs(app_name);
+
+    CREATE TABLE IF NOT EXISTS dynamic_skills (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      description TEXT NOT NULL,
+      domain TEXT NOT NULL,
+      risk_level TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('draft', 'guardrails_pending', 'testing', 'certified', 'failed')),
+      input_schema TEXT NOT NULL DEFAULT '{}',
+      output_schema TEXT NOT NULL DEFAULT '{}',
+      scope TEXT NOT NULL DEFAULT '[]',
+      out_of_scope TEXT NOT NULL DEFAULT '[]',
+      guardrails TEXT NOT NULL DEFAULT '[]',
+      test_results TEXT,
+      tags TEXT NOT NULL DEFAULT '[]',
+      language TEXT NOT NULL DEFAULT 'en',
+      target_models TEXT NOT NULL DEFAULT '[]',
+      compliance_frameworks TEXT NOT NULL DEFAULT '[]',
+      version TEXT NOT NULL DEFAULT '1.0.0',
+      exported_content TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      certified_at TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_skills_status ON dynamic_skills(status);
+    CREATE INDEX IF NOT EXISTS idx_skills_name ON dynamic_skills(name);
   `);
 
   return db;
@@ -211,6 +237,91 @@ export function insertSessionLog(data: {
     data.errorSignature || null,
     data.forgeLogCount
   );
+}
+
+// ─── Dynamic Skill Operations ───────────────────────────────────────────────
+
+import type { DynamicSkill } from "../agents/skill-factory.js";
+
+export function insertDynamicSkill(skill: DynamicSkill): void {
+  const db = getDatabase();
+  db.prepare(`
+    INSERT OR REPLACE INTO dynamic_skills
+    (id, name, description, domain, risk_level, status, input_schema, output_schema,
+     scope, out_of_scope, guardrails, test_results, tags, language, target_models,
+     compliance_frameworks, version, exported_content, created_at, certified_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    skill.id,
+    skill.name,
+    skill.description,
+    skill.domain,
+    skill.riskLevel,
+    skill.status,
+    JSON.stringify(skill.inputSchema),
+    JSON.stringify(skill.outputSchema),
+    JSON.stringify(skill.scope),
+    JSON.stringify(skill.outOfScope),
+    JSON.stringify(skill.guardrails),
+    skill.testResults ? JSON.stringify(skill.testResults) : null,
+    JSON.stringify(skill.tags),
+    skill.language,
+    JSON.stringify(skill.targetModels),
+    JSON.stringify(skill.complianceFrameworks),
+    skill.version,
+    skill.exportedContent,
+    skill.createdAt,
+    skill.certifiedAt
+  );
+}
+
+export function getCertifiedSkills(): DynamicSkill[] {
+  const db = getDatabase();
+  const rows = db.prepare(
+    "SELECT * FROM dynamic_skills WHERE status = 'certified' ORDER BY created_at DESC"
+  ).all() as Array<Record<string, unknown>>;
+  return rows.map(rowToDynamicSkill);
+}
+
+export function getDynamicSkill(nameOrId: string): DynamicSkill | null {
+  const db = getDatabase();
+  const row = db.prepare(
+    "SELECT * FROM dynamic_skills WHERE id = ? OR name = ? LIMIT 1"
+  ).get(nameOrId, nameOrId) as Record<string, unknown> | undefined;
+  return row ? rowToDynamicSkill(row) : null;
+}
+
+export function listDynamicSkills(): DynamicSkill[] {
+  const db = getDatabase();
+  const rows = db.prepare(
+    "SELECT * FROM dynamic_skills ORDER BY created_at DESC"
+  ).all() as Array<Record<string, unknown>>;
+  return rows.map(rowToDynamicSkill);
+}
+
+function rowToDynamicSkill(row: Record<string, unknown>): DynamicSkill {
+  return {
+    id: row.id as string,
+    name: row.name as string,
+    description: row.description as string,
+    domain: row.domain as DynamicSkill["domain"],
+    riskLevel: row.risk_level as DynamicSkill["riskLevel"],
+    status: row.status as DynamicSkill["status"],
+    inputSchema: JSON.parse(row.input_schema as string),
+    outputSchema: JSON.parse(row.output_schema as string),
+    scope: JSON.parse(row.scope as string),
+    outOfScope: JSON.parse(row.out_of_scope as string),
+    guardrails: JSON.parse(row.guardrails as string),
+    testResults: row.test_results ? JSON.parse(row.test_results as string) : null,
+    tags: JSON.parse(row.tags as string),
+    language: row.language as string,
+    targetModels: JSON.parse(row.target_models as string),
+    complianceFrameworks: JSON.parse(row.compliance_frameworks as string),
+    version: row.version as string,
+    exportedContent: row.exported_content as string | null,
+    createdAt: row.created_at as string,
+    certifiedAt: row.certified_at as string | null,
+  };
 }
 
 /**
