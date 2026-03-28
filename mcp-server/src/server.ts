@@ -3,7 +3,7 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { loadSkills } from "./skills/loader.js";
 import { createMcpServer } from "./mcp/handler.js";
 import { createApiRouter } from "./api/routes.js";
-import { initDatabase } from "./state/db.js";
+import { initDatabase, getCertifiedSkills } from "./state/db.js";
 import { ensureMetricsTable } from "./state/metrics.js";
 import path from "path";
 
@@ -30,9 +30,24 @@ async function main(): Promise<void> {
   ensureMetricsTable();
   console.log("Database initialized");
 
-  // Load all skills
+  // Load all skills (static .md files)
   const skills = await loadSkills(SKILL_DIRS);
-  console.log(`Loaded ${skills.size} skills: ${Array.from(skills.keys()).join(", ")}`);
+
+  // Load dynamic skills from SQLite (created by skill factory)
+  const dynamicSkills = getCertifiedSkills();
+  for (const ds of dynamicSkills) {
+    if (ds.exportedContent && !skills.has(ds.name.toLowerCase().replace(/\s+/g, "-"))) {
+      skills.set(ds.name.toLowerCase().replace(/\s+/g, "-"), {
+        name: ds.name.toLowerCase().replace(/\s+/g, "-"),
+        description: ds.description,
+        filePath: `factory://${ds.id}`,
+        content: ds.exportedContent,
+        metadata: { dynamic: true, domain: ds.domain, riskLevel: ds.riskLevel },
+      });
+    }
+  }
+
+  console.log(`Loaded ${skills.size} skills (${dynamicSkills.length} dynamic)`);
 
   // Create MCP server
   const mcpServer = createMcpServer(skills);
