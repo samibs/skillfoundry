@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.0.0] - 2026-03-29
+
+### BREAKING — SkillFoundry v3: MCP Agent Server + iznir Skill Factory
+
+**Architecture shift**: SkillFoundry transforms from installed prompt files to a centralized MCP server with real tool agents and an on-the-fly skill factory.
+
+#### Phase 1: MCP Server Shell
+- Node.js/TypeScript server with SSE transport for MCP protocol
+- Loads 124 `.md` skill files as MCP tools on startup
+- REST API: `/health`, `/ready`, `/api/v1/agents` (list + detail)
+- PM2 ecosystem config for production deployment
+- Any IDE connects via: `"mcpServers": { "skillfoundry": { "url": "http://localhost:9877/mcp/sse" } }`
+- No more `install.sh` per app. Zero version drift. Single source of truth.
+
+#### Phase 2: Real Tool Agents
+- **Playwright Agent** (`sf_verify_auth`) — 8 browser-level auth checks: page load, form elements, login redirect, session cookie, cookie flags, expected destination, protected route, unauthenticated redirect. Screenshot evidence at each step.
+- **Semgrep Agent** (`sf_security_scan`) — Real SAST with OWASP rule packs. Returns findings with severity, file:line. Replaces regex-based banned pattern matching.
+- **Memory Gate** (`sf_memory_gate`) — Tool evidence (Playwright, Semgrep, build) = `verified`. LLM reasoning alone = `observed`. curl for auth flows = `observed`. Prevents saving wrong "definitive" patterns. Includes warning about 3 corrections in one session.
+
+#### Phase 3: Knowledge Loop
+- **Session Log Scanner** — Walks `~/apps/`, detects AI platforms (`.claude/`, `.cursor/`, `.copilot/`, `.gemini/`), parses forge logs and session monitor data.
+- **Knowledge Aggregator** — Extracts failure patterns across all apps. Promotes recurring patterns (2+ apps or 3+ occurrences) to quirk candidates.
+- **SQLite Knowledge Store** — `known_quirks`, `harvest_runs`, `session_logs` tables. Query by framework. Deduplication on insert.
+- **Harvester** (`sf_harvest_knowledge`, `sf_query_quirks`) — Full pipeline: scan → aggregate → deduplicate → persist. Live tested: 42 forge logs → 2 quirks extracted.
+
+#### Phase 4: Optimization
+- **Cost Router** — Routes tasks to Haiku ($0.25/M) for search/grep, Sonnet ($3/M) for code gen, Opus ($15/M) for architecture. Per-agent overrides. Daily budget cap. Token spend tracking.
+- **Metrics Collector** — Per-agent invocation tracking: count, success/fail rate, duration, tokens, model tier. REST: `/api/v1/metrics`.
+- **iznir Integration** — REST client for dynamic skill generation via iznir.hexalab.dev.
+
+#### iznir Engine Merge
+- **Skill Factory** (`sf_create_skill`) — Ported from iznir.hexalab.dev core engine. Creates certified AI skills on the fly:
+  - `analyzeIntent()` — Claude analyzes description into structured SkillProposal
+  - `generateGuardrails()` — 6 domain/risk-aware guardrails (hallucination, unknown handling, source grounding, scope enforcement, audit trail, version contract)
+  - `runSkillTest()` — 10-case automated test suite (80% pass required for certification)
+  - `exportAsClaudeSkill()` — Exports as `.md` compatible with SkillFoundry's skill loader
+  - Auto-registers certified skills as live MCP tools without server restart
+  - Persists to SQLite, reloads on startup
+- **Flow**: user needs capability → no existing skill → `sf_create_skill("description")` → Claude analyzes → guardrails → tests → if 80%+ → certified → registered → available immediately
+
+#### PRD Template Hardening (v2.0.79–v2.0.86)
+- §5.0 Technology Maturity Assessment (Beta deps → Playwright mandatory)
+- §5.3 Dependencies (verified versions + peer conflicts)
+- §5.4 Compatibility Notes
+- §5.5 Directory Structure
+- §5.7 Environment Variables
+- §5.8 Deployment Environment + Known Deployment Quirks
+- Browser-level auth verification in TEMPER phase and layer-check (all 5 platforms)
+- Playwright-verified NextAuth v5 credentials login pattern
+- 8 new checklist gates
+
+**Files**: `mcp-server/` (20 source files, 7 test files, ~6,500 lines TypeScript)
+**Tests**: 53 passing across 7 test files
+**MCP Tools**: 124 LLM skills + 7 tool agents + 2 knowledge tools = 133 total
+
+---
+
 ## [2.0.86] - 2026-03-27
 
 ### Added — §5.0 Technology Maturity Assessment
