@@ -1,5 +1,6 @@
 import { Router } from "express";
 import type { SkillDefinition } from "../skills/loader.js";
+import { runHarvest, getQuirks } from "../knowledge/harvester.js";
 
 const startTime = Date.now();
 
@@ -67,6 +68,50 @@ export function createApiRouter(
         contentLength: skill.content.length,
       },
     });
+  });
+
+  // ─── Knowledge API ──────────────────────────────────────────
+
+  // Query known quirks
+  router.get("/api/v1/knowledge/quirks", async (req, res) => {
+    try {
+      const framework = req.query.framework as string | undefined;
+      const quirks = await getQuirks(framework);
+      res.json({ data: quirks, meta: { total: quirks.length } });
+    } catch (err) {
+      res.status(500).json({
+        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
+      });
+    }
+  });
+
+  // Trigger knowledge harvest
+  router.post("/api/v1/knowledge/harvest", async (req, res) => {
+    try {
+      const appsRoot = (req.body as Record<string, unknown>)?.appsRoot as string;
+      if (!appsRoot) {
+        res.status(400).json({
+          error: { code: "VALIDATION_FAILED", message: "appsRoot is required" },
+        });
+        return;
+      }
+      const result = await runHarvest(appsRoot);
+      res.json({
+        data: {
+          runId: result.runId,
+          appsScanned: result.aggregation.appsScanned,
+          appsWithData: result.aggregation.appsWithData,
+          newQuirksInserted: result.newQuirksInserted,
+          duplicatesSkipped: result.duplicatesSkipped,
+          failurePatterns: result.aggregation.failurePatterns.length,
+          duration: result.duration,
+        },
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
+      });
+    }
   });
 
   return router;

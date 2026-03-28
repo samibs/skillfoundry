@@ -7,6 +7,7 @@ import type { SkillDefinition } from "../skills/loader.js";
 import { verifyAuthFlow, type AuthTestInput } from "../agents/playwright-agent.js";
 import { runSemgrepScan, type SemgrepInput } from "../agents/semgrep-agent.js";
 import { applyGate, canPromote, type EvidenceSource } from "../knowledge/memory-gate.js";
+import { runHarvest, getQuirks } from "../knowledge/harvester.js";
 
 // ─── Tool Agent Definitions ──────────────────────────────────────────────────
 
@@ -77,6 +78,36 @@ const TOOL_AGENTS = [
         evidenceSummary: { type: "string", description: "Brief summary of the evidence" },
       },
       required: ["action", "framework", "quirk", "evidenceSource"],
+    },
+  },
+  {
+    name: "sf_harvest_knowledge",
+    description:
+      "Scan all app directories for AI session logs, extract failure patterns, " +
+      "aggregate into knowledge base. Returns quirk candidates and stats.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        appsRoot: {
+          type: "string",
+          description: "Root directory containing app folders (e.g., /home/user/apps)",
+        },
+      },
+      required: ["appsRoot"],
+    },
+  },
+  {
+    name: "sf_query_quirks",
+    description:
+      "Query the knowledge base for known deployment quirks by framework.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        framework: {
+          type: "string",
+          description: "Framework to query (e.g., nextauth, prisma, next.js). Omit for all.",
+        },
+      },
     },
   },
 ];
@@ -222,6 +253,43 @@ export function createMcpServer(
           text: JSON.stringify({ error: `Unknown action: ${action}` }),
         }],
         isError: true,
+      };
+    }
+
+    // ─── Knowledge Harvester ──────────────────────────────────
+    if (name === "sf_harvest_knowledge") {
+      const appsRoot = typedArgs.appsRoot as string;
+      const result = await runHarvest(appsRoot);
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            runId: result.runId,
+            appsScanned: result.aggregation.appsScanned,
+            appsWithData: result.aggregation.appsWithData,
+            totalForgeLogs: result.aggregation.totalForgeLogs,
+            failurePatterns: result.aggregation.failurePatterns.length,
+            newQuirksInserted: result.newQuirksInserted,
+            duplicatesSkipped: result.duplicatesSkipped,
+            topEvents: result.aggregation.stats.topEvents.slice(0, 5),
+            platformDistribution: result.aggregation.stats.platformDistribution,
+            duration: result.duration,
+          }, null, 2),
+        }],
+      };
+    }
+
+    if (name === "sf_query_quirks") {
+      const framework = typedArgs.framework as string | undefined;
+      const quirks = await getQuirks(framework);
+      return {
+        content: [{
+          type: "text" as const,
+          text: JSON.stringify({
+            data: quirks,
+            meta: { total: quirks.length, framework: framework || "all" },
+          }, null, 2),
+        }],
       };
     }
 
