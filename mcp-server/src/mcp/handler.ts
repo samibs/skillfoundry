@@ -10,6 +10,8 @@ import { applyGate, canPromote, type EvidenceSource } from "../knowledge/memory-
 import { runHarvest, getQuirks } from "../knowledge/harvester.js";
 import { createSkill } from "../agents/skill-factory.js";
 import { insertDynamicSkill, listDynamicSkills, getCertifiedSkills } from "../state/db.js";
+import { ALL_TOOL_AGENTS } from "./tool-registry.js";
+import { dispatchToolAgent } from "./tool-dispatch.js";
 
 // ─── Tool Agent Definitions ──────────────────────────────────────────────────
 
@@ -178,6 +180,7 @@ export function createMcpServer(
 
     // Tool agent tools
     tools.push(...TOOL_AGENTS);
+    tools.push(...ALL_TOOL_AGENTS);
 
     return { tools };
   });
@@ -320,6 +323,10 @@ export function createMcpServer(
         }],
       };
     }
+
+    // ─── Tier 1/2/3 Tool Agents ─────────────────────────────
+    const toolResult = await dispatchToolAgent(name, typedArgs);
+    if (toolResult) return toolResult;
 
     // ─── Skill Factory ────────────────────────────────────────
     if (name === "sf_create_skill") {
