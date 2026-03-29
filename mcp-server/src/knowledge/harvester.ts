@@ -1,4 +1,4 @@
-import { scanAllApps } from "./scanner.js";
+import { scanAllApps, scanMultipleRoots } from "./scanner.js";
 import { aggregateKnowledge, type AggregationResult } from "./aggregator.js";
 import {
   initDatabase,
@@ -9,6 +9,7 @@ import {
   insertSessionLog,
   queryQuirks,
   closeDatabase,
+  upsertFleetHealth,
 } from "../state/db.js";
 
 export interface HarvestResult {
@@ -28,7 +29,7 @@ export interface HarvestResult {
  * 5. Return harvest report
  */
 export async function runHarvest(
-  appsRoot: string,
+  appsRoots: string | string[],
   dbPath?: string
 ): Promise<HarvestResult> {
   const start = Date.now();
@@ -38,8 +39,11 @@ export async function runHarvest(
   const runId = startHarvestRun();
 
   try {
-    // Step 1: Scan
-    const scanResults = await scanAllApps(appsRoot);
+    // Step 1: Scan (supports single root or multiple roots)
+    const roots = Array.isArray(appsRoots) ? appsRoots : [appsRoots];
+    const scanResults = roots.length === 1
+      ? await scanAllApps(roots[0])
+      : await scanMultipleRoots(roots);
 
     // Step 2: Aggregate
     const aggregation = aggregateKnowledge(scanResults);
@@ -57,7 +61,7 @@ export async function runHarvest(
       newQuirksInserted++;
     }
 
-    // Log session data for each app
+    // Log session data + fleet health for each app
     for (const app of scanResults) {
       const primaryPlatform = app.platforms[0] || "unknown";
       insertSessionLog({
@@ -68,6 +72,21 @@ export async function runHarvest(
         totalFailures: app.sessionMonitor?.totalFailures,
         errorSignature: app.sessionMonitor?.lastErrorSignature,
         forgeLogCount: app.forgeLogs.length,
+      });
+
+      // Populate fleet health dashboard
+      upsertFleetHealth({
+        appName: app.appName,
+        appPath: app.appPath,
+        lastAssessedAt: null,
+        lastHarvestAt: new Date().toISOString(),
+        assessmentScore: null,
+        testCount: 0,
+        platforms: app.platforms,
+        frameworkVersion: app.frameworkMeta?.version || null,
+        hasForgeSession: app.forgeLogs.length > 0,
+        hasMemoryBank: app.memoryBankStats !== null,
+        instructionFileCount: app.instructionFiles.length,
       });
     }
 

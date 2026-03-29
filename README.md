@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-3.0.0-blue)
+![Version](https://img.shields.io/badge/version-4.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,18 +24,18 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, real 
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v3.0.0
+### What's New in v4.0.0
 
-**Major architecture shift: MCP Agent Server + iznir Skill Factory**
+**Major: Tier 4 Tool Agents, Fleet Health, Multi-Platform Intelligence**
 
-- **Centralized MCP Server** (`mcp-server/`) — Single server serves 124+ skills to any IDE via MCP. No more installing files into each app. Zero version drift across 60+ projects.
-- **Real Tool Agents** — Playwright for browser auth verification (8 checks + screenshots), Semgrep for real SAST (OWASP rules). Not LLM opinion — deterministic tool output.
-- **Memory Gate** — Knowledge requires tool evidence to be "verified". LLM reasoning = "observed" only. Prevents the 3-wrong-patterns problem.
-- **Knowledge Loop** — Harvests session logs from all apps, extracts failure patterns into shared DB. Quirks from app X prevent failures on app Y.
-- **Skill Factory (iznir engine)** — Creates certified skills on the fly: intent → 6 guardrails → 10-case test → certify → register as live MCP tool. No restart.
-- **Cost Router** — Haiku for search, Sonnet for code, Opus for architecture. Budget cap.
-- **PRD Template Hardening** — §5.0 maturity assessment, §5.3-§5.8, browser-level auth in TEMPER, 8 new checklist gates.
-- **53 tests** across 7 test files.
+- **5 New Tier 4 Tool Agents** — Contract Check (validates frontend calls match backend routes), Project Context (auto-detects framework/DB/auth/ORM), Security Scan Lite (14-rule fast regex SAST), Version Check (PRD version specs vs installed packages), Session Recorder (captures decisions/corrections/errors during dev).
+- **Fleet Health Dashboard** — `GET /api/v1/fleet/health` tracks all apps: assessment coverage, stale framework versions, platform distribution, memory bank status. Know the state of your entire fleet at a glance.
+- **Multi-Platform AI Detection** — Scanner now detects Claude Code, Cursor, GitHub Copilot, Google Gemini, and OpenAI Codex artifacts. Instruction files, commands, agents, memory banks, and framework metadata across all 5 platforms.
+- **Knowledge Scope** — Every knowledge entry is tagged `"project"` (local) or `"universal"` (eligible for cross-project promotion). Session recorder auto-detects scope from content.
+- **Multi-Root Harvest** — `appsRoots: string[]` support. Scan multiple directories in a single harvest run (`~/apps` + `~/wapplications` + `~/tools`).
+- **BPSBS Production Rules Recovery** — 7 critical production rules (auth/token security, centralized logger, .gitignore security, migration strategy, incident response, PM2 scripts, observability) recovered from cross-project analysis and encoded for agent reference.
+- **Hook Templates** — Pre-commit security scan, post-edit contract check, and post-tool session recorder hooks ready to install.
+- **12 Tier 1-3 Tool Agents** (from v3) — Build, Test, Deps, Port, Git, TypeCheck, Lint, Migration, Env, Lighthouse, Docker, Nginx.
 
 ```
 Connect from any IDE:

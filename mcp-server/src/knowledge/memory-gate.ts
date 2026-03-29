@@ -19,6 +19,13 @@ export type EvidenceSource =
   | "llm_reasoning"
   | "manual";
 
+/**
+ * Scope controls knowledge promotion:
+ * - "project": stays local to the originating project, never promoted
+ * - "universal": eligible for cross-project promotion
+ */
+export type KnowledgeScope = "project" | "universal";
+
 export interface KnowledgeEntry {
   framework: string;
   versionRange: string;
@@ -29,6 +36,7 @@ export interface KnowledgeEntry {
   evidenceSummary: string;
   discoveredAt: string;
   discoveredIn?: string;
+  scope?: KnowledgeScope;
 }
 
 interface GateDecision {

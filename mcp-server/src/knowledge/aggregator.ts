@@ -1,4 +1,5 @@
 import type { AppScanResult, ForgeLogEntry } from "./scanner.js";
+import { appHasData } from "./scanner.js";
 import type { KnowledgeEntry, Confidence } from "./memory-gate.js";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -28,6 +29,37 @@ interface AggregationStats {
   topEvents: { event: string; count: number }[];
   appsWithFailures: number;
   platformDistribution: Record<string, number>;
+  /** New: per-platform artifact summary */
+  artifactSummary: ArtifactSummary;
+}
+
+export interface ArtifactSummary {
+  /** Total instruction files across all apps */
+  totalInstructionFiles: number;
+  /** Apps with root CLAUDE.md */
+  appsWithClaudeMd: number;
+  /** Apps with .cursorrules */
+  appsWithCursorRules: number;
+  /** Apps with GEMINI.md */
+  appsWithGeminiMd: number;
+  /** Apps with AGENTS.md */
+  appsWithAgentsMd: number;
+  /** Apps with .github/copilot-instructions.md */
+  appsWithCopilotInstructions: number;
+  /** Apps with memory_bank/ */
+  appsWithMemoryBank: number;
+  /** Total memory bank entries (JSONL lines) */
+  totalMemoryBankEntries: number;
+  /** Total Claude commands across all apps */
+  totalClaudeCommands: number;
+  /** Total Claude agents across all apps */
+  totalClaudeAgents: number;
+  /** Total Copilot custom agents across all apps */
+  totalCopilotAgents: number;
+  /** Apps with framework metadata */
+  appsWithFrameworkMeta: number;
+  /** Framework version distribution */
+  frameworkVersions: Record<string, number>;
 }
 
 // ─── Pattern Extraction ─────────────────────────────────────────────────────
@@ -136,6 +168,67 @@ function suggestFix(pattern: FailurePattern): string {
   }
 }
 
+// ─── Artifact Summary ───────────────────────────────────────────────────────
+
+function computeArtifactSummary(scanResults: AppScanResult[]): ArtifactSummary {
+  const summary: ArtifactSummary = {
+    totalInstructionFiles: 0,
+    appsWithClaudeMd: 0,
+    appsWithCursorRules: 0,
+    appsWithGeminiMd: 0,
+    appsWithAgentsMd: 0,
+    appsWithCopilotInstructions: 0,
+    appsWithMemoryBank: 0,
+    totalMemoryBankEntries: 0,
+    totalClaudeCommands: 0,
+    totalClaudeAgents: 0,
+    totalCopilotAgents: 0,
+    appsWithFrameworkMeta: 0,
+    frameworkVersions: {},
+  };
+
+  for (const app of scanResults) {
+    summary.totalInstructionFiles += app.instructionFiles.length;
+
+    // Check root instruction files
+    const rootFiles = app.instructionFiles
+      .filter((f) => f.location === "root")
+      .map((f) => f.fileName);
+
+    if (rootFiles.includes("CLAUDE.md")) summary.appsWithClaudeMd++;
+    if (rootFiles.includes(".cursorrules")) summary.appsWithCursorRules++;
+    if (rootFiles.includes("GEMINI.md")) summary.appsWithGeminiMd++;
+    if (rootFiles.includes("AGENTS.md")) summary.appsWithAgentsMd++;
+    if (rootFiles.includes(".github/copilot-instructions.md")) summary.appsWithCopilotInstructions++;
+
+    // Memory bank
+    if (app.memoryBankStats) {
+      summary.appsWithMemoryBank++;
+      summary.totalMemoryBankEntries += app.memoryBankStats.totalEntries;
+    }
+
+    // Claude artifacts
+    if (app.platformArtifacts.claude) {
+      summary.totalClaudeCommands += app.platformArtifacts.claude.commandCount;
+      summary.totalClaudeAgents += app.platformArtifacts.claude.agentCount;
+    }
+
+    // Copilot artifacts
+    if (app.platformArtifacts.copilot) {
+      summary.totalCopilotAgents += app.platformArtifacts.copilot.customAgentCount;
+    }
+
+    // Framework metadata
+    if (app.frameworkMeta) {
+      summary.appsWithFrameworkMeta++;
+      const ver = app.frameworkMeta.version;
+      summary.frameworkVersions[ver] = (summary.frameworkVersions[ver] || 0) + 1;
+    }
+  }
+
+  return summary;
+}
+
 // ─── Stats Computation ──────────────────────────────────────────────────────
 
 function computeStats(scanResults: AppScanResult[]): AggregationStats {
@@ -166,12 +259,15 @@ function computeStats(scanResults: AppScanResult[]): AggregationStats {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 
+  const artifactSummary = computeArtifactSummary(scanResults);
+
   return {
     totalErrors,
     totalWarnings,
     topEvents,
     appsWithFailures,
     platformDistribution: platformCounts,
+    artifactSummary,
   };
 }
 
@@ -183,9 +279,7 @@ function computeStats(scanResults: AppScanResult[]): AggregationStats {
 export function aggregateKnowledge(
   scanResults: AppScanResult[]
 ): AggregationResult {
-  const appsWithData = scanResults.filter(
-    (r) => r.forgeLogs.length > 0 || r.sessionMonitor !== null
-  ).length;
+  const appsWithData = scanResults.filter(appHasData).length;
 
   const totalForgeLogs = scanResults.reduce(
     (sum, r) => sum + r.forgeLogs.length,

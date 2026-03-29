@@ -190,4 +190,96 @@ export const TIER3_TOOLS = [
   },
 ];
 
-export const ALL_TOOL_AGENTS = [...TIER1_TOOLS, ...TIER2_TOOLS, ...TIER3_TOOLS];
+// Tier 4: Knowledge & Analysis agents (from cross-project analysis lessons)
+export const TIER4_TOOLS = [
+  {
+    name: "sf_contract_check",
+    description:
+      "Validate frontend API calls match actual backend endpoints. " +
+      "Catches the #1 vibe-coding failure: frontend/backend contract mismatches.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Project root path" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_project_context",
+    description:
+      "Generate project-specific context by scanning package.json, DB config, env vars, " +
+      "and project structure. Produces what a project-specific CLAUDE.md should contain.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Project root path" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_security_scan_lite",
+    description:
+      "Fast regex-based security scan for hardcoded secrets, CORS wildcards, SQL injection, " +
+      "eval usage, and missing auth guards. Lighter than sf_security_scan (Semgrep).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Project root path" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_version_check",
+    description:
+      "Compare PRD version specifications against actual installed packages. " +
+      "Catches version drift (e.g., PRD says Prisma 5 but npm installed Prisma 7).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Project root path" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_session_record",
+    description:
+      "Record decisions, corrections, errors, and patterns during development. " +
+      "Auto-detects scope (project vs universal) and tags. Use during any dev session, not just forge.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        action: {
+          type: "string",
+          enum: ["record", "query", "promote"],
+          description: "record: save entry, query: search entries, promote: list universal entries",
+        },
+        projectPath: { type: "string", description: "Project root path" },
+        entryType: {
+          type: "string",
+          enum: ["decision", "correction", "error", "fact", "pattern"],
+          description: "Type of knowledge entry",
+        },
+        content: { type: "string", description: "The knowledge content to record" },
+        context: { type: "string", description: "Additional context (what triggered this)" },
+        scope: {
+          type: "string",
+          enum: ["project", "universal"],
+          description: "Scope for promotion (auto-detected if omitted)",
+        },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Tags (auto-extracted if omitted)",
+        },
+        limit: { type: "number", description: "Max results for query action" },
+      },
+      required: ["action", "projectPath"],
+    },
+  },
+];
+
+export const ALL_TOOL_AGENTS = [...TIER1_TOOLS, ...TIER2_TOOLS, ...TIER3_TOOLS, ...TIER4_TOOLS];

@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "path";
 import { mkdir } from "fs/promises";
-import type { Confidence, EvidenceSource, KnowledgeEntry } from "../knowledge/memory-gate.js";
+import type { Confidence, EvidenceSource, KnowledgeEntry, KnowledgeScope } from "../knowledge/memory-gate.js";
 
 let db: Database.Database | null = null;
 
@@ -41,6 +41,41 @@ export async function initDatabase(
 
     CREATE INDEX IF NOT EXISTS idx_quirks_framework ON known_quirks(framework);
     CREATE INDEX IF NOT EXISTS idx_quirks_confidence ON known_quirks(confidence);
+
+    CREATE TABLE IF NOT EXISTS fleet_health (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      app_name TEXT NOT NULL,
+      app_path TEXT NOT NULL,
+      last_assessed_at TEXT,
+      last_harvest_at TEXT NOT NULL DEFAULT (datetime('now')),
+      assessment_score REAL,
+      test_count INTEGER NOT NULL DEFAULT 0,
+      platforms TEXT NOT NULL DEFAULT '[]',
+      framework_version TEXT,
+      has_forge_sessions INTEGER NOT NULL DEFAULT 0,
+      has_memory_bank INTEGER NOT NULL DEFAULT 0,
+      instruction_file_count INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(app_path)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_fleet_app ON fleet_health(app_name);
+
+    CREATE TABLE IF NOT EXISTS session_recordings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      app_name TEXT NOT NULL,
+      app_path TEXT NOT NULL,
+      entry_type TEXT NOT NULL CHECK(entry_type IN ('decision', 'correction', 'error', 'fact', 'pattern')),
+      scope TEXT NOT NULL DEFAULT 'project' CHECK(scope IN ('project', 'universal')),
+      content TEXT NOT NULL,
+      context TEXT,
+      tags TEXT NOT NULL DEFAULT '[]',
+      recorded_at TEXT NOT NULL DEFAULT (datetime('now')),
+      session_id TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_recordings_app ON session_recordings(app_name);
+    CREATE INDEX IF NOT EXISTS idx_recordings_type ON session_recordings(entry_type);
+    CREATE INDEX IF NOT EXISTS idx_recordings_scope ON session_recordings(scope);
 
     CREATE TABLE IF NOT EXISTS harvest_runs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,6 +129,11 @@ export async function initDatabase(
     CREATE INDEX IF NOT EXISTS idx_skills_name ON dynamic_skills(name);
   `);
 
+  // Migrations: add columns to existing tables
+  try {
+    db.exec(`ALTER TABLE known_quirks ADD COLUMN scope TEXT NOT NULL DEFAULT 'universal' CHECK(scope IN ('project', 'universal'))`);
+  } catch { /* column already exists */ }
+
   return db;
 }
 
@@ -110,8 +150,8 @@ export function getDatabase(): Database.Database {
 export function insertQuirk(entry: KnowledgeEntry): number {
   const db = getDatabase();
   const stmt = db.prepare(`
-    INSERT INTO known_quirks (framework, version_range, quirk, fix, confidence, evidence_source, evidence_summary, discovered_at, discovered_in)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO known_quirks (framework, version_range, quirk, fix, confidence, evidence_source, evidence_summary, discovered_at, discovered_in, scope)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const result = stmt.run(
     entry.framework,
@@ -122,7 +162,8 @@ export function insertQuirk(entry: KnowledgeEntry): number {
     entry.evidenceSource,
     entry.evidenceSummary,
     entry.discoveredAt,
-    entry.discoveredIn || null
+    entry.discoveredIn || null,
+    entry.scope || "universal"
   );
   return result.lastInsertRowid as number;
 }
@@ -189,6 +230,7 @@ function rowToEntry(row: Record<string, unknown>): KnowledgeEntry {
     evidenceSummary: row.evidence_summary as string,
     discoveredAt: row.discovered_at as string,
     discoveredIn: row.discovered_in as string | undefined,
+    scope: (row.scope as KnowledgeScope) || "universal",
   };
 }
 
@@ -322,6 +364,135 @@ function rowToDynamicSkill(row: Record<string, unknown>): DynamicSkill {
     createdAt: row.created_at as string,
     certifiedAt: row.certified_at as string | null,
   };
+}
+
+// ─── Fleet Health Operations ──────────────────────────────────────────────
+
+export interface FleetHealthRecord {
+  appName: string;
+  appPath: string;
+  lastAssessedAt: string | null;
+  lastHarvestAt: string;
+  assessmentScore: number | null;
+  testCount: number;
+  platforms: string[];
+  frameworkVersion: string | null;
+  hasForgeSession: boolean;
+  hasMemoryBank: boolean;
+  instructionFileCount: number;
+}
+
+export function upsertFleetHealth(record: FleetHealthRecord): void {
+  const db = getDatabase();
+  db.prepare(`
+    INSERT INTO fleet_health (app_name, app_path, last_assessed_at, assessment_score, test_count,
+      platforms, framework_version, has_forge_sessions, has_memory_bank, instruction_file_count)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(app_path) DO UPDATE SET
+      last_harvest_at = datetime('now'),
+      last_assessed_at = COALESCE(excluded.last_assessed_at, fleet_health.last_assessed_at),
+      assessment_score = COALESCE(excluded.assessment_score, fleet_health.assessment_score),
+      test_count = excluded.test_count,
+      platforms = excluded.platforms,
+      framework_version = excluded.framework_version,
+      has_forge_sessions = excluded.has_forge_sessions,
+      has_memory_bank = excluded.has_memory_bank,
+      instruction_file_count = excluded.instruction_file_count
+  `).run(
+    record.appName,
+    record.appPath,
+    record.lastAssessedAt,
+    record.assessmentScore,
+    record.testCount,
+    JSON.stringify(record.platforms),
+    record.frameworkVersion,
+    record.hasForgeSession ? 1 : 0,
+    record.hasMemoryBank ? 1 : 0,
+    record.instructionFileCount
+  );
+}
+
+export function getFleetHealth(): FleetHealthRecord[] {
+  const db = getDatabase();
+  const rows = db.prepare("SELECT * FROM fleet_health ORDER BY app_name").all() as Array<Record<string, unknown>>;
+  return rows.map((r) => ({
+    appName: r.app_name as string,
+    appPath: r.app_path as string,
+    lastAssessedAt: r.last_assessed_at as string | null,
+    lastHarvestAt: r.last_harvest_at as string,
+    assessmentScore: r.assessment_score as number | null,
+    testCount: r.test_count as number,
+    platforms: JSON.parse(r.platforms as string),
+    frameworkVersion: r.framework_version as string | null,
+    hasForgeSession: !!(r.has_forge_sessions as number),
+    hasMemoryBank: !!(r.has_memory_bank as number),
+    instructionFileCount: r.instruction_file_count as number,
+  }));
+}
+
+// ─── Session Recording Operations ─────────────────────────────────────────
+
+export interface SessionRecording {
+  id?: number;
+  appName: string;
+  appPath: string;
+  entryType: "decision" | "correction" | "error" | "fact" | "pattern";
+  scope: KnowledgeScope;
+  content: string;
+  context?: string;
+  tags: string[];
+  recordedAt?: string;
+  sessionId?: string;
+}
+
+export function insertSessionRecording(recording: SessionRecording): number {
+  const db = getDatabase();
+  const result = db.prepare(`
+    INSERT INTO session_recordings (app_name, app_path, entry_type, scope, content, context, tags, session_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    recording.appName,
+    recording.appPath,
+    recording.entryType,
+    recording.scope,
+    recording.content,
+    recording.context || null,
+    JSON.stringify(recording.tags),
+    recording.sessionId || null
+  );
+  return result.lastInsertRowid as number;
+}
+
+export function querySessionRecordings(filters?: {
+  appName?: string;
+  entryType?: string;
+  scope?: KnowledgeScope;
+  limit?: number;
+}): SessionRecording[] {
+  const db = getDatabase();
+  let sql = "SELECT * FROM session_recordings WHERE 1=1";
+  const params: unknown[] = [];
+
+  if (filters?.appName) { sql += " AND app_name = ?"; params.push(filters.appName); }
+  if (filters?.entryType) { sql += " AND entry_type = ?"; params.push(filters.entryType); }
+  if (filters?.scope) { sql += " AND scope = ?"; params.push(filters.scope); }
+
+  sql += " ORDER BY recorded_at DESC";
+  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
+
+  const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
+  return rows.map((r) => ({
+    id: r.id as number,
+    appName: r.app_name as string,
+    appPath: r.app_path as string,
+    entryType: r.entry_type as SessionRecording["entryType"],
+    scope: r.scope as KnowledgeScope,
+    content: r.content as string,
+    context: r.context as string | undefined,
+    tags: JSON.parse(r.tags as string),
+    recordedAt: r.recorded_at as string,
+    sessionId: r.session_id as string | undefined,
+  }));
 }
 
 /**
