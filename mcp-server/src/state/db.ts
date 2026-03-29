@@ -129,6 +129,144 @@ export async function initDatabase(
     CREATE INDEX IF NOT EXISTS idx_skills_name ON dynamic_skills(name);
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS session_transcripts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      app_name TEXT NOT NULL,
+      app_path TEXT NOT NULL,
+      platform TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      session_date TEXT,
+      message_count INTEGER NOT NULL DEFAULT 0,
+      user_message_count INTEGER NOT NULL DEFAULT 0,
+      assistant_message_count INTEGER NOT NULL DEFAULT 0,
+      tool_use_count INTEGER NOT NULL DEFAULT 0,
+      error_count INTEGER NOT NULL DEFAULT 0,
+      duration_minutes REAL,
+      file_path TEXT NOT NULL,
+      file_size_bytes INTEGER NOT NULL DEFAULT 0,
+      parsed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(app_path, session_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_transcripts_app ON session_transcripts(app_name);
+    CREATE INDEX IF NOT EXISTS idx_transcripts_platform ON session_transcripts(platform);
+    CREATE INDEX IF NOT EXISTS idx_transcripts_date ON session_transcripts(session_date);
+
+    CREATE TABLE IF NOT EXISTS platform_insights (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      app_name TEXT NOT NULL,
+      app_path TEXT NOT NULL,
+      platform TEXT NOT NULL,
+      session_id TEXT,
+      insight_type TEXT NOT NULL CHECK(insight_type IN ('error', 'fix', 'pattern', 'correction', 'tool_failure', 'dependency_issue', 'security_finding', 'performance_issue')),
+      severity TEXT NOT NULL DEFAULT 'info' CHECK(severity IN ('critical', 'high', 'medium', 'low', 'info')),
+      content TEXT NOT NULL,
+      context TEXT,
+      file_reference TEXT,
+      tags TEXT NOT NULL DEFAULT '[]',
+      discovered_at TEXT NOT NULL DEFAULT (datetime('now')),
+      harvested_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(app_path, platform, content)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_insights_app ON platform_insights(app_name);
+    CREATE INDEX IF NOT EXISTS idx_insights_type ON platform_insights(insight_type);
+    CREATE INDEX IF NOT EXISTS idx_insights_severity ON platform_insights(severity);
+    CREATE INDEX IF NOT EXISTS idx_insights_platform ON platform_insights(platform);
+
+    CREATE TABLE IF NOT EXISTS project_artifacts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      app_name TEXT NOT NULL,
+      app_path TEXT NOT NULL,
+      artifact_type TEXT NOT NULL CHECK(artifact_type IN (
+        'scratchpad', 'memory_bank', 'genesis_prd', 'story',
+        'claude_md', 'agent_protocol', 'known_deviations',
+        'anti_patterns', 'backup_snapshot'
+      )),
+      artifact_path TEXT NOT NULL,
+      title TEXT,
+      content TEXT NOT NULL,
+      content_size_bytes INTEGER NOT NULL DEFAULT 0,
+      metadata TEXT NOT NULL DEFAULT '{}',
+      harvested_at TEXT NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(app_path, artifact_type, artifact_path)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_artifacts_app ON project_artifacts(app_name);
+    CREATE INDEX IF NOT EXISTS idx_artifacts_type ON project_artifacts(artifact_type);
+
+    CREATE TABLE IF NOT EXISTS deviation_rules (
+      id TEXT PRIMARY KEY,
+      category TEXT NOT NULL,
+      pattern_description TEXT NOT NULL,
+      prevention TEXT NOT NULL,
+      responsible_agent TEXT,
+      detection_regex TEXT,
+      file_glob TEXT,
+      severity TEXT NOT NULL DEFAULT 'medium' CHECK(severity IN ('critical', 'high', 'medium', 'low', 'info')),
+      active INTEGER NOT NULL DEFAULT 1,
+      source TEXT NOT NULL DEFAULT 'catalog',
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_deviation_category ON deviation_rules(category);
+    CREATE INDEX IF NOT EXISTS idx_deviation_severity ON deviation_rules(severity);
+
+    CREATE TABLE IF NOT EXISTS correction_patterns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      pattern_hash TEXT NOT NULL UNIQUE,
+      description TEXT NOT NULL,
+      occurrence_count INTEGER NOT NULL DEFAULT 1,
+      project_count INTEGER NOT NULL DEFAULT 1,
+      projects TEXT NOT NULL DEFAULT '[]',
+      first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+      last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+      auto_rule_generated INTEGER NOT NULL DEFAULT 0,
+      generated_rule_id TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS project_health_scores (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      app_name TEXT NOT NULL,
+      app_path TEXT NOT NULL,
+      run_id INTEGER NOT NULL,
+      scan_date TEXT NOT NULL DEFAULT (datetime('now')),
+      security_critical INTEGER NOT NULL DEFAULT 0,
+      security_high INTEGER NOT NULL DEFAULT 0,
+      security_medium INTEGER NOT NULL DEFAULT 0,
+      security_low INTEGER NOT NULL DEFAULT 0,
+      contract_frontend_calls INTEGER NOT NULL DEFAULT 0,
+      contract_backend_routes INTEGER NOT NULL DEFAULT 0,
+      contract_matched INTEGER NOT NULL DEFAULT 0,
+      contract_mismatches INTEGER NOT NULL DEFAULT 0,
+      deviation_violations INTEGER NOT NULL DEFAULT 0,
+      import_errors INTEGER NOT NULL DEFAULT 0,
+      health_grade TEXT,
+      health_score REAL,
+      UNIQUE(app_name, run_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_health_app ON project_health_scores(app_name);
+    CREATE INDEX IF NOT EXISTS idx_health_date ON project_health_scores(scan_date);
+
+    CREATE TABLE IF NOT EXISTS nightly_harvest_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      started_at TEXT NOT NULL DEFAULT (datetime('now')),
+      completed_at TEXT,
+      status TEXT NOT NULL DEFAULT 'running' CHECK(status IN ('running', 'completed', 'failed')),
+      apps_scanned INTEGER NOT NULL DEFAULT 0,
+      sessions_parsed INTEGER NOT NULL DEFAULT 0,
+      insights_extracted INTEGER NOT NULL DEFAULT 0,
+      new_quirks INTEGER NOT NULL DEFAULT 0,
+      security_findings INTEGER NOT NULL DEFAULT 0,
+      contract_mismatches INTEGER NOT NULL DEFAULT 0,
+      report_path TEXT,
+      error_message TEXT
+    );
+  `);
+
   // Migrations: add columns to existing tables
   try {
     db.exec(`ALTER TABLE known_quirks ADD COLUMN scope TEXT NOT NULL DEFAULT 'universal' CHECK(scope IN ('project', 'universal'))`);
@@ -493,6 +631,474 @@ export function querySessionRecordings(filters?: {
     recordedAt: r.recorded_at as string,
     sessionId: r.session_id as string | undefined,
   }));
+}
+
+// ─── Session Transcript Operations ─────────────────────────────────────────
+
+export interface SessionTranscriptRecord {
+  appName: string;
+  appPath: string;
+  platform: string;
+  sessionId: string;
+  sessionDate: string | null;
+  messageCount: number;
+  userMessageCount: number;
+  assistantMessageCount: number;
+  toolUseCount: number;
+  errorCount: number;
+  durationMinutes: number | null;
+  filePath: string;
+  fileSizeBytes: number;
+}
+
+export function upsertSessionTranscript(record: SessionTranscriptRecord): void {
+  const db = getDatabase();
+  db.prepare(`
+    INSERT INTO session_transcripts (app_name, app_path, platform, session_id, session_date,
+      message_count, user_message_count, assistant_message_count, tool_use_count, error_count,
+      duration_minutes, file_path, file_size_bytes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(app_path, session_id) DO UPDATE SET
+      message_count = excluded.message_count,
+      user_message_count = excluded.user_message_count,
+      assistant_message_count = excluded.assistant_message_count,
+      tool_use_count = excluded.tool_use_count,
+      error_count = excluded.error_count,
+      duration_minutes = excluded.duration_minutes,
+      file_size_bytes = excluded.file_size_bytes,
+      parsed_at = datetime('now')
+  `).run(
+    record.appName, record.appPath, record.platform, record.sessionId,
+    record.sessionDate, record.messageCount, record.userMessageCount,
+    record.assistantMessageCount, record.toolUseCount, record.errorCount,
+    record.durationMinutes, record.filePath, record.fileSizeBytes
+  );
+}
+
+export function getSessionTranscripts(filters?: {
+  appName?: string;
+  platform?: string;
+  limit?: number;
+}): SessionTranscriptRecord[] {
+  const db = getDatabase();
+  let sql = "SELECT * FROM session_transcripts WHERE 1=1";
+  const params: unknown[] = [];
+  if (filters?.appName) { sql += " AND app_name = ?"; params.push(filters.appName); }
+  if (filters?.platform) { sql += " AND platform = ?"; params.push(filters.platform); }
+  sql += " ORDER BY session_date DESC";
+  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
+  return db.prepare(sql).all(...params) as SessionTranscriptRecord[];
+}
+
+export function transcriptExists(appPath: string, sessionId: string): boolean {
+  const db = getDatabase();
+  const row = db.prepare(
+    "SELECT 1 FROM session_transcripts WHERE app_path = ? AND session_id = ? LIMIT 1"
+  ).get(appPath, sessionId);
+  return !!row;
+}
+
+// ─── Platform Insight Operations ──────────────────────────────────────────
+
+export interface PlatformInsightRecord {
+  appName: string;
+  appPath: string;
+  platform: string;
+  sessionId: string | null;
+  insightType: "error" | "fix" | "pattern" | "correction" | "tool_failure" | "dependency_issue" | "security_finding" | "performance_issue";
+  severity: "critical" | "high" | "medium" | "low" | "info";
+  content: string;
+  context: string | null;
+  fileReference: string | null;
+  tags: string[];
+}
+
+export function insertPlatformInsight(insight: PlatformInsightRecord): boolean {
+  const db = getDatabase();
+  try {
+    db.prepare(`
+      INSERT INTO platform_insights (app_name, app_path, platform, session_id, insight_type,
+        severity, content, context, file_reference, tags)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(app_path, platform, content) DO NOTHING
+    `).run(
+      insight.appName, insight.appPath, insight.platform, insight.sessionId,
+      insight.insightType, insight.severity, insight.content, insight.context,
+      insight.fileReference, JSON.stringify(insight.tags)
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function queryPlatformInsights(filters?: {
+  appName?: string;
+  platform?: string;
+  insightType?: string;
+  severity?: string;
+  limit?: number;
+}): PlatformInsightRecord[] {
+  const db = getDatabase();
+  let sql = "SELECT * FROM platform_insights WHERE 1=1";
+  const params: unknown[] = [];
+  if (filters?.appName) { sql += " AND app_name = ?"; params.push(filters.appName); }
+  if (filters?.platform) { sql += " AND platform = ?"; params.push(filters.platform); }
+  if (filters?.insightType) { sql += " AND insight_type = ?"; params.push(filters.insightType); }
+  if (filters?.severity) { sql += " AND severity = ?"; params.push(filters.severity); }
+  sql += " ORDER BY discovered_at DESC";
+  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
+  const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
+  return rows.map((r) => ({
+    appName: r.app_name as string,
+    appPath: r.app_path as string,
+    platform: r.platform as string,
+    sessionId: r.session_id as string | null,
+    insightType: r.insight_type as PlatformInsightRecord["insightType"],
+    severity: r.severity as PlatformInsightRecord["severity"],
+    content: r.content as string,
+    context: r.context as string | null,
+    fileReference: r.file_reference as string | null,
+    tags: JSON.parse(r.tags as string),
+  }));
+}
+
+// ─── Project Artifact Operations ─────────────────────────────────────────
+
+export type ProjectArtifactType =
+  | "scratchpad" | "memory_bank" | "genesis_prd" | "story"
+  | "claude_md" | "agent_protocol" | "known_deviations"
+  | "anti_patterns" | "backup_snapshot";
+
+export interface ProjectArtifactRecord {
+  appName: string;
+  appPath: string;
+  artifactType: ProjectArtifactType;
+  artifactPath: string;
+  title: string | null;
+  content: string;
+  contentSizeBytes: number;
+  metadata: Record<string, unknown>;
+}
+
+export function upsertProjectArtifact(artifact: ProjectArtifactRecord): boolean {
+  const db = getDatabase();
+  try {
+    db.prepare(`
+      INSERT INTO project_artifacts (app_name, app_path, artifact_type, artifact_path,
+        title, content, content_size_bytes, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(app_path, artifact_type, artifact_path) DO UPDATE SET
+        content = excluded.content,
+        content_size_bytes = excluded.content_size_bytes,
+        metadata = excluded.metadata,
+        harvested_at = datetime('now')
+    `).run(
+      artifact.appName, artifact.appPath, artifact.artifactType, artifact.artifactPath,
+      artifact.title, artifact.content, artifact.contentSizeBytes,
+      JSON.stringify(artifact.metadata)
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function queryProjectArtifacts(filters?: {
+  appName?: string;
+  artifactType?: ProjectArtifactType;
+  limit?: number;
+}): ProjectArtifactRecord[] {
+  const db = getDatabase();
+  let sql = "SELECT * FROM project_artifacts WHERE 1=1";
+  const params: unknown[] = [];
+  if (filters?.appName) { sql += " AND app_name = ?"; params.push(filters.appName); }
+  if (filters?.artifactType) { sql += " AND artifact_type = ?"; params.push(filters.artifactType); }
+  sql += " ORDER BY harvested_at DESC";
+  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
+  const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
+  return rows.map((r) => ({
+    appName: r.app_name as string,
+    appPath: r.app_path as string,
+    artifactType: r.artifact_type as ProjectArtifactType,
+    artifactPath: r.artifact_path as string,
+    title: r.title as string | null,
+    content: r.content as string,
+    contentSizeBytes: r.content_size_bytes as number,
+    metadata: JSON.parse(r.metadata as string),
+  }));
+}
+
+export function getArtifactStats(): Record<string, { count: number; totalBytes: number }> {
+  const db = getDatabase();
+  const rows = db.prepare(`
+    SELECT artifact_type, COUNT(*) as count, SUM(content_size_bytes) as total_bytes
+    FROM project_artifacts GROUP BY artifact_type
+  `).all() as Array<{ artifact_type: string; count: number; total_bytes: number }>;
+  const stats: Record<string, { count: number; totalBytes: number }> = {};
+  for (const r of rows) {
+    stats[r.artifact_type] = { count: r.count, totalBytes: r.total_bytes };
+  }
+  return stats;
+}
+
+// ─── Nightly Harvest Run Operations ───────────────────────────────────────
+
+export function startNightlyHarvestRun(): number {
+  const db = getDatabase();
+  const result = db.prepare(
+    "INSERT INTO nightly_harvest_runs (started_at) VALUES (datetime('now'))"
+  ).run();
+  return result.lastInsertRowid as number;
+}
+
+export function completeNightlyHarvestRun(
+  runId: number,
+  stats: {
+    appsScanned: number;
+    sessionsParsed: number;
+    insightsExtracted: number;
+    newQuirks: number;
+    securityFindings: number;
+    contractMismatches: number;
+    reportPath: string | null;
+  }
+): void {
+  const db = getDatabase();
+  db.prepare(`
+    UPDATE nightly_harvest_runs SET
+      completed_at = datetime('now'), status = 'completed',
+      apps_scanned = ?, sessions_parsed = ?, insights_extracted = ?,
+      new_quirks = ?, security_findings = ?, contract_mismatches = ?, report_path = ?
+    WHERE id = ?
+  `).run(
+    stats.appsScanned, stats.sessionsParsed, stats.insightsExtracted,
+    stats.newQuirks, stats.securityFindings, stats.contractMismatches,
+    stats.reportPath, runId
+  );
+}
+
+export function failNightlyHarvestRun(runId: number, error: string): void {
+  const db = getDatabase();
+  db.prepare(`
+    UPDATE nightly_harvest_runs SET completed_at = datetime('now'), status = 'failed', error_message = ?
+    WHERE id = ?
+  `).run(error, runId);
+}
+
+// ─── Deviation Rule Operations ───────────────────────────────────────────
+
+export interface DeviationRule {
+  id: string;
+  category: string;
+  patternDescription: string;
+  prevention: string;
+  responsibleAgent: string | null;
+  detectionRegex: string | null;
+  fileGlob: string | null;
+  severity: string;
+  active: boolean;
+  source: string;
+}
+
+export function upsertDeviationRule(rule: DeviationRule): void {
+  const db = getDatabase();
+  db.prepare(`
+    INSERT INTO deviation_rules (id, category, pattern_description, prevention,
+      responsible_agent, detection_regex, file_glob, severity, active, source)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      category = excluded.category,
+      pattern_description = excluded.pattern_description,
+      prevention = excluded.prevention,
+      responsible_agent = excluded.responsible_agent,
+      detection_regex = excluded.detection_regex,
+      file_glob = excluded.file_glob,
+      severity = excluded.severity,
+      active = excluded.active,
+      updated_at = datetime('now')
+  `).run(
+    rule.id, rule.category, rule.patternDescription, rule.prevention,
+    rule.responsibleAgent, rule.detectionRegex, rule.fileGlob,
+    rule.severity, rule.active ? 1 : 0, rule.source
+  );
+}
+
+export function getDeviationRules(filters?: {
+  category?: string;
+  severity?: string;
+  active?: boolean;
+}): DeviationRule[] {
+  const db = getDatabase();
+  let sql = "SELECT * FROM deviation_rules WHERE 1=1";
+  const params: unknown[] = [];
+  if (filters?.category) { sql += " AND category = ?"; params.push(filters.category); }
+  if (filters?.severity) { sql += " AND severity = ?"; params.push(filters.severity); }
+  if (filters?.active !== undefined) { sql += " AND active = ?"; params.push(filters.active ? 1 : 0); }
+  sql += " ORDER BY category, id";
+  const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
+  return rows.map((r) => ({
+    id: r.id as string,
+    category: r.category as string,
+    patternDescription: r.pattern_description as string,
+    prevention: r.prevention as string,
+    responsibleAgent: r.responsible_agent as string | null,
+    detectionRegex: r.detection_regex as string | null,
+    fileGlob: r.file_glob as string | null,
+    severity: r.severity as string,
+    active: r.active === 1,
+    source: r.source as string,
+  }));
+}
+
+export function getDeviationRuleCount(): number {
+  const db = getDatabase();
+  return (db.prepare("SELECT COUNT(*) as c FROM deviation_rules WHERE active = 1").get() as { c: number }).c;
+}
+
+// ─── Correction Pattern Operations ───────────────────────────────────────
+
+export interface CorrectionPattern {
+  patternHash: string;
+  description: string;
+  occurrenceCount: number;
+  projectCount: number;
+  projects: string[];
+  autoRuleGenerated: boolean;
+  generatedRuleId: string | null;
+}
+
+export function upsertCorrectionPattern(pattern: CorrectionPattern): void {
+  const db = getDatabase();
+  db.prepare(`
+    INSERT INTO correction_patterns (pattern_hash, description, occurrence_count,
+      project_count, projects, auto_rule_generated, generated_rule_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(pattern_hash) DO UPDATE SET
+      occurrence_count = excluded.occurrence_count,
+      project_count = excluded.project_count,
+      projects = excluded.projects,
+      last_seen = datetime('now'),
+      auto_rule_generated = excluded.auto_rule_generated,
+      generated_rule_id = excluded.generated_rule_id
+  `).run(
+    pattern.patternHash, pattern.description, pattern.occurrenceCount,
+    pattern.projectCount, JSON.stringify(pattern.projects),
+    pattern.autoRuleGenerated ? 1 : 0, pattern.generatedRuleId
+  );
+}
+
+export function getCorrectionPatterns(minOccurrences = 1): CorrectionPattern[] {
+  const db = getDatabase();
+  const rows = db.prepare(
+    "SELECT * FROM correction_patterns WHERE occurrence_count >= ? ORDER BY occurrence_count DESC"
+  ).all(minOccurrences) as Array<Record<string, unknown>>;
+  return rows.map((r) => ({
+    patternHash: r.pattern_hash as string,
+    description: r.description as string,
+    occurrenceCount: r.occurrence_count as number,
+    projectCount: r.project_count as number,
+    projects: JSON.parse(r.projects as string),
+    autoRuleGenerated: r.auto_rule_generated === 1,
+    generatedRuleId: r.generated_rule_id as string | null,
+  }));
+}
+
+// ─── Project Health Score Operations ─────────────────────────────────────
+
+export interface ProjectHealthScore {
+  appName: string;
+  appPath: string;
+  runId: number;
+  scanDate: string;
+  securityCritical: number;
+  securityHigh: number;
+  securityMedium: number;
+  securityLow: number;
+  contractFrontendCalls: number;
+  contractBackendRoutes: number;
+  contractMatched: number;
+  contractMismatches: number;
+  deviationViolations: number;
+  importErrors: number;
+  healthGrade: string | null;
+  healthScore: number | null;
+}
+
+export function upsertProjectHealthScore(score: ProjectHealthScore): void {
+  const db = getDatabase();
+  db.prepare(`
+    INSERT INTO project_health_scores (app_name, app_path, run_id, scan_date,
+      security_critical, security_high, security_medium, security_low,
+      contract_frontend_calls, contract_backend_routes, contract_matched, contract_mismatches,
+      deviation_violations, import_errors, health_grade, health_score)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(app_name, run_id) DO UPDATE SET
+      security_critical = excluded.security_critical,
+      security_high = excluded.security_high,
+      security_medium = excluded.security_medium,
+      security_low = excluded.security_low,
+      contract_frontend_calls = excluded.contract_frontend_calls,
+      contract_backend_routes = excluded.contract_backend_routes,
+      contract_matched = excluded.contract_matched,
+      contract_mismatches = excluded.contract_mismatches,
+      deviation_violations = excluded.deviation_violations,
+      import_errors = excluded.import_errors,
+      health_grade = excluded.health_grade,
+      health_score = excluded.health_score
+  `).run(
+    score.appName, score.appPath, score.runId, score.scanDate,
+    score.securityCritical, score.securityHigh, score.securityMedium, score.securityLow,
+    score.contractFrontendCalls, score.contractBackendRoutes,
+    score.contractMatched, score.contractMismatches,
+    score.deviationViolations, score.importErrors,
+    score.healthGrade, score.healthScore
+  );
+}
+
+export function getProjectHealthHistory(appName: string, limit = 10): ProjectHealthScore[] {
+  const db = getDatabase();
+  const rows = db.prepare(
+    "SELECT * FROM project_health_scores WHERE app_name = ? ORDER BY scan_date DESC LIMIT ?"
+  ).all(appName, limit) as Array<Record<string, unknown>>;
+  return rows.map((r) => ({
+    appName: r.app_name as string,
+    appPath: r.app_path as string,
+    runId: r.run_id as number,
+    scanDate: r.scan_date as string,
+    securityCritical: r.security_critical as number,
+    securityHigh: r.security_high as number,
+    securityMedium: r.security_medium as number,
+    securityLow: r.security_low as number,
+    contractFrontendCalls: r.contract_frontend_calls as number,
+    contractBackendRoutes: r.contract_backend_routes as number,
+    contractMatched: r.contract_matched as number,
+    contractMismatches: r.contract_mismatches as number,
+    deviationViolations: r.deviation_violations as number,
+    importErrors: r.import_errors as number,
+    healthGrade: r.health_grade as string | null,
+    healthScore: r.health_score as number | null,
+  }));
+}
+
+export function getFleetHealthSummary(): Array<{
+  appName: string;
+  healthGrade: string | null;
+  healthScore: number | null;
+  scanDate: string;
+}> {
+  const db = getDatabase();
+  return db.prepare(`
+    SELECT app_name, health_grade, health_score, scan_date
+    FROM project_health_scores
+    WHERE id IN (SELECT MAX(id) FROM project_health_scores GROUP BY app_name)
+    ORDER BY health_score ASC
+  `).all() as Array<{
+    appName: string;
+    healthGrade: string | null;
+    healthScore: number | null;
+    scanDate: string;
+  }>;
 }
 
 /**

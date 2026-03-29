@@ -7,6 +7,79 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.0.0] - 2026-03-29
+
+### BREAKING — SkillFoundry v5: Learning-Driven Intelligence
+
+**Data-driven upgrade**: Every feature in v5 was derived from analysis of 2,792 harvested artifacts, 115 AI session transcripts, 267 extracted insights, and security/contract assessments across 49 projects. This is the first release where the MCP server's own knowledge loop drove the feature set.
+
+#### Secret Guard Agent (`sf_secret_guard`)
+- 11 detection rules: hardcoded passwords, API keys, secrets, tokens, database URLs, JWT secrets, private keys, AWS keys, Stripe keys, SendGrid keys, basic auth URLs
+- False-positive filtering: validation messages, setup scripts, localhost URLs, comments, .env.example files, documentation, process.env references
+- `.env.example` completeness validation: cross-references `process.env.*` references against defined vars
+- Redacted output in MCP responses to prevent secret exfiltration
+
+#### Import Resolution Validator (`sf_import_validator`)
+- Validates JS/TS `import`/`require` and Python `import`/`from...import` statements
+- Cross-references against `package.json` dependencies, `node_modules`, `requirements.txt`, `pyproject.toml`
+- Detects native modules requiring build tools (better-sqlite3, sharp, bcrypt, etc.)
+- Node.js builtin module skip list (60+ modules)
+- Local import resolution with extension and index file fallbacks
+
+#### Deviation Enforcement Engine (`sf_deviation_enforcer`)
+- Parses 161 known LLM deviation patterns from the knowledge store catalog
+- 16 categories: Frontend, Backend, Database, TypeScript, Security, Authorization, Error Handling, LLM-Specific, and more
+- Regex-based detection rules derived from pattern descriptions
+- Rules stored in SQLite `deviation_rules` table — queryable, extensible, per-project allowlists
+- `loadDeviationCatalog()` loads from knowledge store; `enforceDeviations()` scans projects
+
+#### Enhanced Contract Resolution (`sf_contract_check` upgrade)
+- **NestJS support**: `@Controller('/api/users')` + `@Get('/:id')` = `/api/users/:id` full path resolution
+- **FastAPI support**: `APIRouter(prefix="/api/v1")` + `@router.get("/users")` = `/api/v1/users`
+- **Centralized API client tracing**: `axios.create({ baseURL: '/api/v1' })` → `api.get('/users')` = `/api/v1/users`
+- Contract match rate improved from 17.5% to 70.8% on tested projects
+
+#### Correction Feedback Loop
+- Extracts correction events from AI session transcripts
+- Groups corrections by semantic similarity using keyword-based phrase extraction
+- SHA-256 hashing for stable pattern identification
+- Auto-generates deviation rules when threshold met: 3+ occurrences across 2+ projects
+- Generated rules stored with `source: "auto_correction"` in `deviation_rules`
+- Per-project correction history queryable via `sf_query_corrections`
+
+#### Project Health Scores
+- Per-project A-F grades with 0-100 scoring
+- Formula: 100 base, -15/critical, -8/high, -3/medium, -1/low security, -2/contract mismatch, -5/import error, -10/secret finding
+- Stored in `project_health_scores` table with run-by-run history
+- Fleet-wide health summary with grade distribution
+- Trend tracking for week-over-week regression detection
+
+#### Nightly Harvest Pipeline v2
+- All 5 new agents integrated into the nightly pipeline
+- New stages: Secret Guard, Import Validator, Deviation Enforcer, Correction Analyzer, Health Scorer
+- Enhanced report with fleet health table, deviation violations, correction patterns
+- Version bumped to v5.0.0 in report footer
+
+#### Security Hardening
+- `validateProjectPath()` on all MCP tool endpoints — resolves path, checks allowlist, verifies directory
+- Secret content redacted in MCP responses (first 20 chars + `****[REDACTED]`)
+- Regex construction from DB wrapped in try/catch with 500-char length cap
+- `maxViolations` input capped at 500
+
+#### New Database Tables
+- `deviation_rules` — 161 LLM failure patterns with regex detection, file globs, severity
+- `correction_patterns` — semantic groups of user corrections with threshold tracking
+- `project_health_scores` — per-project per-run health metrics and grades
+
+#### New MCP Tools (5)
+- `sf_secret_guard` — scan project for hardcoded secrets
+- `sf_import_validator` — validate all imports resolve
+- `sf_deviation_enforcer` — enforce 161 deviation rules
+- `sf_contract_check` — enhanced frontend-backend contract validation
+- `sf_query_corrections` — query correction patterns and trends
+
+---
+
 ## [4.0.0] - 2026-03-29
 
 ### BREAKING — SkillFoundry v4: Tier 4 Tool Agents, Fleet Intelligence, Multi-Platform Detection

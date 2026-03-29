@@ -4,13 +4,13 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-4.0.0-blue)
+![Version](https://img.shields.io/badge/version-5.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework with a centralized MCP server, real tool agents, and a skill factory. v3 transforms SkillFoundry from installed prompt files into a single server serving 124+ skills to any IDE via MCP — with Playwright for real browser verification, Semgrep for real SAST, a knowledge base that learns from all your projects, and an iznir-powered skill factory that creates certified skills on the fly.
+SkillFoundry is an AI engineering framework with a centralized MCP server, 22 real tool agents, and a skill factory. v5 adds learning-driven intelligence: secret guard, deviation enforcement (161 rules), import validation, correction feedback loops, and per-project health scores — all derived from analysis of 2,792 artifacts across 49 projects. One server serves 124+ skills to any IDE via MCP with Playwright, Semgrep, a knowledge base that learns from every failure, and an iznir-powered skill factory.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -24,18 +24,21 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, real 
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v4.0.0
+### What's New in v5.0.0
 
-**Major: Tier 4 Tool Agents, Fleet Health, Multi-Platform Intelligence**
+**Major: Learning-Driven Intelligence — Secret Guard, Deviation Enforcer, Import Validator, Correction Feedback Loop, Health Scores**
 
-- **5 New Tier 4 Tool Agents** — Contract Check (validates frontend calls match backend routes), Project Context (auto-detects framework/DB/auth/ORM), Security Scan Lite (14-rule fast regex SAST), Version Check (PRD version specs vs installed packages), Session Recorder (captures decisions/corrections/errors during dev).
-- **Fleet Health Dashboard** — `GET /api/v1/fleet/health` tracks all apps: assessment coverage, stale framework versions, platform distribution, memory bank status. Know the state of your entire fleet at a glance.
-- **Multi-Platform AI Detection** — Scanner now detects Claude Code, Cursor, GitHub Copilot, Google Gemini, and OpenAI Codex artifacts. Instruction files, commands, agents, memory banks, and framework metadata across all 5 platforms.
-- **Knowledge Scope** — Every knowledge entry is tagged `"project"` (local) or `"universal"` (eligible for cross-project promotion). Session recorder auto-detects scope from content.
-- **Multi-Root Harvest** — `appsRoots: string[]` support. Scan multiple directories in a single harvest run (`~/apps` + `~/wapplications` + `~/tools`).
-- **BPSBS Production Rules Recovery** — 7 critical production rules (auth/token security, centralized logger, .gitignore security, migration strategy, incident response, PM2 scripts, observability) recovered from cross-project analysis and encoded for agent reference.
-- **Hook Templates** — Pre-commit security scan, post-edit contract check, and post-tool session recorder hooks ready to install.
-- **12 Tier 1-3 Tool Agents** (from v3) — Build, Test, Deps, Port, Git, TypeCheck, Lint, Migration, Env, Lighthouse, Docker, Nginx.
+Built from analysis of 2,792 harvested artifacts, 115 AI session transcripts, and 267 extracted insights across 49 projects. Every feature addresses a real, recurring problem measured from production data.
+
+- **Secret Guard Agent** (`sf_secret_guard`) — Pre-commit secret detection: 11 rules for API keys, passwords, tokens, DB URLs, JWT secrets, AWS keys, Stripe keys. False-positive filtering (validation messages, localhost, test fixtures, comments). Cross-references `process.env.*` against `.env.example` for completeness.
+- **Import Resolution Validator** (`sf_import_validator`) — Validates every `import`/`require` resolves to an actual package or local file. Detects missing npm packages, broken local imports, native module dependencies (better-sqlite3, sharp, bcrypt). Supports JS/TS/Python.
+- **Deviation Enforcement Engine** (`sf_deviation_enforcer`) — Programmatic enforcement of 161 known LLM failure patterns across 16 categories (Frontend, Backend, Database, TypeScript, Security, Auth, Error Handling, LLM-Specific). Regex-based detection stored in SQLite, queryable, extensible.
+- **Enhanced Contract Resolution** (`sf_contract_check`) — NestJS `@Controller` prefix + `@Get/@Post` route resolution. FastAPI `APIRouter(prefix=...)` support. Centralized API client `baseURL` tracing (`axios.create({ baseURL })` → path joining). Match rate improved from 17.5% to 70.8%.
+- **Correction Feedback Loop** — Analyzes user corrections from AI sessions, groups by semantic similarity, auto-generates deviation rules when a pattern appears 3+ times across 2+ projects. Closes the loop between human feedback and agent behavior.
+- **Project Health Scores** — Per-project A-F grades with 0-100 scoring based on security findings, contract mismatches, import errors, and secret detections. Fleet-wide health summary in nightly reports. Trend tracking via `project_health_scores` table.
+- **Nightly Report Trends** — Enhanced nightly harvest pipeline with all new agents integrated. Reports now include secret guard findings, import errors, deviation violations, correction patterns, and fleet health scores.
+- **Path Validation** — All MCP tool endpoints validate `projectPath` against an allowlist, resolve the path, and verify it's a real directory. Prevents path traversal attacks.
+- **22 Total Tool Agents** — 12 Tier 1-3 (Build, Test, Deps, Port, Git, TypeCheck, Lint, Migration, Env, Lighthouse, Docker, Nginx) + 5 Tier 4 (Contract Check, Project Context, Security Scan Lite, Version Check, Session Recorder) + 5 new v5 agents (Secret Guard, Import Validator, Deviation Enforcer, Contract Check Enhanced, Query Corrections).
 
 ```
 Connect from any IDE:

@@ -12,6 +12,32 @@ import { createSkill } from "../agents/skill-factory.js";
 import { insertDynamicSkill, listDynamicSkills, getCertifiedSkills } from "../state/db.js";
 import { ALL_TOOL_AGENTS } from "./tool-registry.js";
 import { dispatchToolAgent } from "./tool-dispatch.js";
+import { guardSecrets } from "../agents/secret-guard-agent.js";
+import { validateImports } from "../agents/import-validator-agent.js";
+import { enforceDeviations, loadDeviationCatalog } from "../agents/deviation-enforcer-agent.js";
+import { analyzeCorrections, queryProjectCorrections, getCorrectionTrend } from "../knowledge/correction-analyzer.js";
+import { checkContracts } from "../agents/contract-check-agent.js";
+import { stat } from "fs/promises";
+import pathMod from "path";
+
+// ─── Input Validation ─────────────────────────────────────────────────────
+
+const ALLOWED_ROOTS = ["/home/", "/tmp/"];
+
+async function validateProjectPath(raw: unknown): Promise<string> {
+  if (typeof raw !== "string" || raw.length === 0) {
+    throw new Error("projectPath must be a non-empty string");
+  }
+  const resolved = pathMod.resolve(raw);
+  if (!ALLOWED_ROOTS.some(r => resolved.startsWith(r))) {
+    throw new Error(`projectPath must be under ${ALLOWED_ROOTS.join(" or ")}`);
+  }
+  const s = await stat(resolved);
+  if (!s.isDirectory()) {
+    throw new Error("projectPath must be a directory");
+  }
+  return resolved;
+}
 
 // ─── Tool Agent Definitions ──────────────────────────────────────────────────
 
@@ -140,6 +166,71 @@ const TOOL_AGENTS = [
       properties: {},
     },
   },
+  {
+    name: "sf_secret_guard",
+    description:
+      "Scan a project for hardcoded secrets (API keys, passwords, tokens, DB URLs, JWT secrets) " +
+      "and validate .env.example completeness. Pre-commit secret prevention.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Absolute path to project to scan" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_import_validator",
+    description:
+      "Validate all import/require statements in a project resolve to actual packages or local files. " +
+      "Detects missing packages, broken local imports, and native module dependencies.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Absolute path to project to validate" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_deviation_enforcer",
+    description:
+      "Scan a project against all known LLM deviation patterns (161 rules, 16 categories). " +
+      "Detects code that matches known AI failure patterns.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Absolute path to project to scan" },
+        maxViolations: { type: "number", description: "Max violations to report (default: 200)" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_contract_check",
+    description:
+      "Validate frontend API calls match actual backend endpoints. " +
+      "Supports NestJS controller prefixes, FastAPI router prefixes, and centralized API client baseURL resolution.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Absolute path to project to check" },
+      },
+      required: ["projectPath"],
+    },
+  },
+  {
+    name: "sf_query_corrections",
+    description:
+      "Query user correction patterns from AI session analysis. " +
+      "Shows what the AI agents tend to get wrong and how often.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        appName: { type: "string", description: "Filter by project name (optional)" },
+      },
+    },
+  },
 ];
 
 // ─── MCP Server ──────────────────────────────────────────────────────────────
@@ -148,7 +239,7 @@ export function createMcpServer(
   skills: Map<string, SkillDefinition>
 ): Server {
   const server = new Server(
-    { name: "skillfoundry", version: "4.0.0" },
+    { name: "skillfoundry", version: "5.0.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -321,6 +412,68 @@ export function createMcpServer(
             meta: { total: quirks.length, framework: framework || "all" },
           }, null, 2),
         }],
+      };
+    }
+
+    // ─── Secret Guard ────────────────────────────────────────
+    if (name === "sf_secret_guard") {
+      const pp = await validateProjectPath(typedArgs.projectPath);
+      const result = await guardSecrets(pp);
+      // Redact matched content to prevent secret exfiltration
+      for (const f of result.findings) {
+        f.matchedContent = f.matchedContent.slice(0, 20) + "****[REDACTED]";
+      }
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        isError: result.summary.total > 0,
+      };
+    }
+
+    // ─── Import Validator ────────────────────────────────────
+    if (name === "sf_import_validator") {
+      const pp = await validateProjectPath(typedArgs.projectPath);
+      const result = await validateImports(pp);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        isError: result.summary.total > 0,
+      };
+    }
+
+    // ─── Deviation Enforcer ──────────────────────────────────
+    if (name === "sf_deviation_enforcer") {
+      const pp = await validateProjectPath(typedArgs.projectPath);
+      await loadDeviationCatalog();
+      const maxV = typeof typedArgs.maxViolations === "number" && typedArgs.maxViolations > 0
+        ? Math.min(typedArgs.maxViolations, 500) : 200;
+      const result = await enforceDeviations(pp, undefined, { maxViolations: maxV });
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        isError: result.totalViolations > 0,
+      };
+    }
+
+    // ─── Contract Check ──────────────────────────────────────
+    if (name === "sf_contract_check") {
+      const pp = await validateProjectPath(typedArgs.projectPath);
+      const result = await checkContracts(pp);
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
+        isError: !result.passed,
+      };
+    }
+
+    // ─── Query Corrections ───────────────────────────────────
+    if (name === "sf_query_corrections") {
+      const appName = typedArgs.appName as string | undefined;
+      if (appName) {
+        const patterns = queryProjectCorrections(appName);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify({ appName, patterns }, null, 2) }],
+        };
+      }
+      const trend = getCorrectionTrend();
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify(trend, null, 2) }],
       };
     }
 

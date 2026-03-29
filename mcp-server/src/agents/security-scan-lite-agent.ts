@@ -66,7 +66,7 @@ const RULES: Rule[] = [
     pattern: /(?:password|passwd|pwd)\s*[:=]\s*['"][^'"]{4,}['"]/gi,
     detail: "Hardcoded password found in source code",
     fix: "Move to environment variable: process.env.DB_PASSWORD",
-    skipPaths: [/\.test\.|\.spec\.|__test__|fixtures|mock|example/i],
+    skipPaths: [/\.test\.|\.spec\.|__test__|fixtures|mock|example|\/scripts\/|seed\.|create[-_](?:admin|user)|setup[-_]|ecosystem\.config/i],
   },
   {
     id: "hardcoded-secret-key",
@@ -75,7 +75,7 @@ const RULES: Rule[] = [
     pattern: /(?:secret|api_key|apikey|auth_token|access_token|private_key)\s*[:=]\s*['"][A-Za-z0-9+/=_-]{8,}['"]/gi,
     detail: "Hardcoded secret/API key found in source code",
     fix: "Move to environment variable and use process.env.<VAR_NAME>",
-    skipPaths: [/\.test\.|\.spec\.|__test__|fixtures|\.example|\.sample/i],
+    skipPaths: [/\.test\.|\.spec\.|__test__|fixtures|\.example|\.sample|\/scripts\/|seed\.|create[-_](?:admin|user)|setup[-_]|ecosystem\.config/i],
   },
   {
     id: "hardcoded-db-url",
@@ -84,7 +84,7 @@ const RULES: Rule[] = [
     pattern: /(?:postgres|mysql|mongodb|redis):\/\/[^'"}\s]{10,}/g,
     detail: "Hardcoded database connection string found",
     fix: "Use process.env.DATABASE_URL instead of hardcoding the connection string",
-    skipPaths: [/\.example|\.sample|\.md$|CLAUDE\.md/i],
+    skipPaths: [/\.example|\.sample|\.md$|CLAUDE\.md|ecosystem\.config|docker-compose/i],
   },
   {
     id: "jwt-weak-secret",
@@ -197,6 +197,24 @@ const RULES: Rule[] = [
   },
 ];
 
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+const TEST_FILE_PATTERN = /\/tests?\/|\.test\.|\.spec\.|test_|_test\.|fixtures|__test__|mock|e2e\//i;
+const SETUP_SCRIPT_PATTERN = /\/scripts\/|\/seed[\./]|seed\.(?:ts|js|py)|create[-_](?:admin|user|tenant)|setup[-_]|ecosystem\.config|\.seed\./i;
+const VALIDATION_MSG_PATTERN = /(?:required|invalid|missing|enter|provide|must\s+be|cannot\s+be|is\s+required)/i;
+
+function isTestFile(relPath: string): boolean {
+  return TEST_FILE_PATTERN.test(relPath);
+}
+
+function isSetupScript(relPath: string): boolean {
+  return SETUP_SCRIPT_PATTERN.test(relPath);
+}
+
+function isLocalhostUrl(code: string): boolean {
+  return /(?:localhost|127\.0\.0\.1)/.test(code);
+}
+
 // ─── Scanner ────────────────────────────────────────────────────────────────
 
 async function findSourceFiles(projectPath: string): Promise<string[]> {
@@ -211,6 +229,9 @@ async function findSourceFiles(projectPath: string): Promise<string[]> {
     "-not", "-path", "*/__pycache__/*",
     "-not", "-path", "*/venv/*",
     "-not", "-path", "*/.venv/*",
+    "-not", "-path", "*/.history/*",
+    "-not", "-path", "*/.angular/*",
+    "-not", "-name", "*.bak",
   ], { cwd: projectPath, timeout: 10000 });
 
   if (!result.success) return [];
@@ -224,7 +245,7 @@ export async function runSecurityScanLite(projectPath: string): Promise<Security
   const files = await findSourceFiles(projectPath);
   let filesScanned = 0;
 
-  for (const file of files.slice(0, 500)) {
+  for (const file of files.slice(0, 1000)) {
     try {
       const content = await readFile(file, "utf-8");
       const relPath = path.relative(projectPath, file);
@@ -238,6 +259,9 @@ export async function runSecurityScanLite(projectPath: string): Promise<Security
         // Check skip paths
         if (rule.skipPaths?.some((p) => p.test(relPath))) continue;
 
+        // Skip hardcoded-secret rules in test files and setup scripts
+        if (rule.category === "hardcoded-secret" && (isTestFile(relPath) || isSetupScript(relPath))) continue;
+
         rule.pattern.lastIndex = 0;
         let match;
         while ((match = rule.pattern.exec(content)) !== null) {
@@ -247,6 +271,15 @@ export async function runSecurityScanLite(projectPath: string): Promise<Security
 
           // Skip if in a comment
           if (line.startsWith("//") || line.startsWith("#") || line.startsWith("*")) continue;
+
+          // Skip hardcoded-password if it's a validation message (e.g., "Password is required")
+          if (rule.id === "hardcoded-password" && VALIDATION_MSG_PATTERN.test(match[0])) continue;
+
+          // Skip hardcoded-db-url if it's a localhost/dev connection
+          if (rule.id === "hardcoded-db-url" && isLocalhostUrl(match[0])) continue;
+
+          // Skip SQL injection if using parameterized queries ($1, $2 or ?, ?)
+          if (rule.id === "sql-string-concat" && /\$\d+|(?:\?\s*,\s*){1,}/.test(line)) continue;
 
           findings.push({
             severity: rule.severity,
