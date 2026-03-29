@@ -12,9 +12,19 @@ import { exec } from "./exec-utils.js";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
+export interface SubProject {
+  name: string;
+  relativePath: string;
+  language: string;
+  framework: string | null;
+  manifestFile: string;
+}
+
 export interface ProjectContext {
   projectName: string;
   projectPath: string;
+  isMonorepo: boolean;
+  subProjects: SubProject[];
   language: string;
   framework: string | null;
   runtime: string | null;
@@ -137,6 +147,8 @@ function detectKeyDeps(deps: Record<string, string>): DependencyInfo[] {
     "express": "server",
     "fastify": "server",
     "hono": "server",
+    "@nestjs/core": "server",
+    "vite": "build-tool",
     "tailwindcss": "css-framework",
     "stripe": "payments",
     "@anthropic-ai/sdk": "ai",
@@ -229,6 +241,72 @@ async function detectPythonProject(projectPath: string): Promise<Partial<Project
   };
 }
 
+// ─── Monorepo Detection ─────────────────────────────────────────────────────
+
+async function detectSubProjects(projectPath: string): Promise<SubProject[]> {
+  const result = await exec("find", [
+    projectPath, "-maxdepth", "3", "-type", "f",
+    "(", "-name", "package.json", "-o", "-name", "requirements.txt", "-o", "-name", "pyproject.toml", ")",
+    "-not", "-path", "*/node_modules/*",
+    "-not", "-path", "*/.next/*",
+    "-not", "-path", "*/dist/*",
+    "-not", "-path", "*/build/*",
+    "-not", "-path", "*/venv/*",
+    "-not", "-path", "*/.venv/*",
+    "-not", "-path", "*/.angular/*",
+  ], { cwd: projectPath, timeout: 5000 });
+
+  if (!result.success) return [];
+
+  const files = result.stdout.trim().split("\n").filter(Boolean);
+  const subs: SubProject[] = [];
+
+  for (const file of files) {
+    const rel = path.relative(projectPath, file);
+    // Skip root-level manifests (those are the main project)
+    if (!rel.includes("/")) continue;
+
+    const dir = path.dirname(file);
+    const dirRel = path.relative(projectPath, dir);
+    const name = path.basename(dir);
+    const fileName = path.basename(file);
+    const isNodeManifest = fileName === "package.json";
+    const isPythonManifest = fileName === "requirements.txt" || fileName === "pyproject.toml";
+
+    let framework: string | null = null;
+    let language = isNodeManifest ? "typescript" : "python";
+
+    if (isNodeManifest) {
+      const pkg = await safeReadJson(file);
+      if (pkg) {
+        const deps = { ...(pkg.dependencies as Record<string, string> || {}), ...(pkg.devDependencies as Record<string, string> || {}) };
+        if (deps["@angular/core"]) framework = `angular@${deps["@angular/core"]}`;
+        else if (deps["next"]) framework = `next@${deps["next"]}`;
+        else if (deps["@nestjs/core"]) framework = `nestjs@${deps["@nestjs/core"]}`;
+        else if (deps["react-scripts"]) framework = deps["@craco/craco"] ? "react-cra-craco" : "react-scripts";
+        else if (deps["vite"] && deps["react"]) framework = `vite+react@${deps["react"]}`;
+        else if (deps["vite"] && deps["vue"]) framework = `vite+vue@${deps["vue"]}`;
+        else if (deps["vite"]) framework = "vite";
+        else if (deps["react"]) framework = `react@${deps["react"]}`;
+        else if (deps["vue"]) framework = `vue@${deps["vue"]}`;
+        else if (deps["express"]) framework = "express";
+        else if (deps["fastify"]) framework = "fastify";
+      }
+    } else {
+      const content = await safeReadText(file);
+      if (content) {
+        if (content.includes("fastapi") || content.includes("FastAPI")) framework = "fastapi";
+        else if (content.includes("django") || content.includes("Django")) framework = "django";
+        else if (content.includes("flask") || content.includes("Flask")) framework = "flask";
+      }
+    }
+
+    subs.push({ name, relativePath: dirRel, language, framework, manifestFile: path.basename(file) });
+  }
+
+  return subs;
+}
+
 // ─── Main ───────────────────────────────────────────────────────────────────
 
 export async function generateProjectContext(projectPath: string): Promise<ProjectContext> {
@@ -273,12 +351,25 @@ export async function generateProjectContext(projectPath: string): Promise<Proje
         .slice(0, 30)
     : [];
 
+  // Detect sub-projects for monorepo support
+  const subProjects = await detectSubProjects(projectPath);
+  // Detect monorepo: >1 sub-projects, or workspaces defined, or no root manifest with subs
+  const hasWorkspaces = pkg && (Array.isArray((pkg as Record<string, unknown>).workspaces) ||
+    typeof (pkg as Record<string, unknown>).workspaces === "object");
+  const isMonorepo = subProjects.length > 1 || hasWorkspaces || (!pkg && !pythonProject && subProjects.length > 0);
+
   if (pythonProject && !pkg) {
+    // Infer combined language if monorepo has both
+    const languages = new Set([pythonProject.language || "python", ...subProjects.map(s => s.language)]);
+    const frameworks = [...new Set([pythonProject.framework, ...subProjects.map(s => s.framework)].filter(Boolean))];
+
     return {
       projectName,
       projectPath,
-      language: pythonProject.language || "python",
-      framework: pythonProject.framework || null,
+      isMonorepo,
+      subProjects,
+      language: Array.from(languages).join("+"),
+      framework: frameworks.join("+") || pythonProject.framework || null,
       runtime: pythonProject.runtime || "python3",
       database: null,
       auth: null,
@@ -302,9 +393,22 @@ export async function generateProjectContext(projectPath: string): Promise<Proje
   }
 
   if (!pkg) {
+    if (isMonorepo) {
+      const languages = [...new Set(subProjects.map(s => s.language))];
+      const frameworks = [...new Set(subProjects.map(s => s.framework).filter(Boolean))];
+      return {
+        projectName, projectPath, isMonorepo, subProjects,
+        language: languages.join("+"), framework: frameworks.join(" + ") || null, runtime: null,
+        database: null, auth: null, orm: null, testFramework: null, linter: null,
+        buildTool: null, packageManager: "unknown", cssFramework: null, uiLibrary: null,
+        apiStyle: null, envVars: [], scripts: {}, ports: [], platforms,
+        keyDependencies: [], projectStructure, warnings, duration: Date.now() - start,
+      };
+    }
     warnings.push("No package.json or requirements.txt found");
     return {
-      projectName, projectPath, language: "unknown", framework: null, runtime: null,
+      projectName, projectPath, isMonorepo: false, subProjects: [],
+      language: "unknown", framework: null, runtime: null,
       database: null, auth: null, orm: null, testFramework: null, linter: null,
       buildTool: null, packageManager: "unknown", cssFramework: null, uiLibrary: null,
       apiStyle: null, envVars: [], scripts: {}, ports: [], platforms,
@@ -321,22 +425,36 @@ export async function generateProjectContext(projectPath: string): Promise<Proje
 
   // Framework detection
   let framework: string | null = null;
-  if (allDeps["next"]) framework = `next@${allDeps["next"]}`;
+  if (allDeps["@angular/core"]) framework = `angular@${allDeps["@angular/core"]}`;
+  else if (allDeps["next"]) framework = `next@${allDeps["next"]}`;
   else if (allDeps["nuxt"]) framework = `nuxt@${allDeps["nuxt"]}`;
   else if (allDeps["svelte"]) framework = "sveltekit";
+  else if (allDeps["@nestjs/core"]) framework = `nestjs@${allDeps["@nestjs/core"]}`;
   else if (allDeps["express"]) framework = "express";
   else if (allDeps["fastify"]) framework = "fastify";
   else if (allDeps["hono"]) framework = "hono";
+  else if (allDeps["vite"]) framework = "vite";
+  else if (allDeps["react-scripts"]) framework = allDeps["@craco/craco"] ? "react-cra-craco" : "react-scripts";
+
+  // Monorepo fallback: if root has no framework, aggregate from sub-projects
+  if (!framework && subProjects.length > 0) {
+    const subFrameworks = [...new Set(subProjects.map(s => s.framework).filter(Boolean))];
+    if (subFrameworks.length > 0) {
+      framework = subFrameworks.join(" + ");
+    }
+  }
 
   // UI library
   let uiLibrary: string | null = null;
-  if (allDeps["react"]) uiLibrary = `react@${allDeps["react"]}`;
+  if (allDeps["@angular/core"]) uiLibrary = `angular@${allDeps["@angular/core"]}`;
+  else if (allDeps["react"]) uiLibrary = `react@${allDeps["react"]}`;
   else if (allDeps["vue"]) uiLibrary = `vue@${allDeps["vue"]}`;
   else if (allDeps["svelte"]) uiLibrary = `svelte@${allDeps["svelte"]}`;
 
   // CSS framework
   let cssFramework: string | null = null;
   if (allDeps["tailwindcss"]) cssFramework = "tailwind";
+  else if (allDeps["@angular/material"]) cssFramework = "angular-material";
   else if (allDeps["@chakra-ui/react"]) cssFramework = "chakra-ui";
   else if (allDeps["@mui/material"]) cssFramework = "material-ui";
   else if (allDeps["bootstrap"]) cssFramework = "bootstrap";
@@ -397,6 +515,8 @@ export async function generateProjectContext(projectPath: string): Promise<Proje
   return {
     projectName,
     projectPath,
+    isMonorepo,
+    subProjects,
     language: "typescript",
     framework,
     runtime: `node@${process.version}`,

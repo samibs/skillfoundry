@@ -17,7 +17,7 @@ export function createApiRouter(
     res.json({
       status: "ok",
       name: "skillfoundry-mcp-server",
-      version: "4.0.0",
+      version: "5.0.0",
       skills: skills.size,
       uptime: Math.floor((Date.now() - startTime) / 1000),
       timestamp: new Date().toISOString(),

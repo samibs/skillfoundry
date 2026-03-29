@@ -188,10 +188,11 @@ function computeArtifactSummary(scanResults: AppScanResult[]): ArtifactSummary {
   };
 
   for (const app of scanResults) {
-    summary.totalInstructionFiles += app.instructionFiles.length;
+    const instrFiles = app.instructionFiles ?? [];
+    summary.totalInstructionFiles += instrFiles.length;
 
     // Check root instruction files
-    const rootFiles = app.instructionFiles
+    const rootFiles = instrFiles
       .filter((f) => f.location === "root")
       .map((f) => f.fileName);
 
@@ -208,13 +209,13 @@ function computeArtifactSummary(scanResults: AppScanResult[]): ArtifactSummary {
     }
 
     // Claude artifacts
-    if (app.platformArtifacts.claude) {
+    if (app.platformArtifacts?.claude) {
       summary.totalClaudeCommands += app.platformArtifacts.claude.commandCount;
       summary.totalClaudeAgents += app.platformArtifacts.claude.agentCount;
     }
 
     // Copilot artifacts
-    if (app.platformArtifacts.copilot) {
+    if (app.platformArtifacts?.copilot) {
       summary.totalCopilotAgents += app.platformArtifacts.copilot.customAgentCount;
     }
 
