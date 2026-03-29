@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [4.0.0] - 2026-03-29
+
+### BREAKING — SkillFoundry v4: Tier 4 Tool Agents, Fleet Intelligence, Multi-Platform Detection
+
+**Architecture expansion**: SkillFoundry gains 5 new Tier 4 tool agents, fleet-wide health monitoring, multi-platform AI artifact detection, knowledge scoping, and BPSBS production rules recovery.
+
+#### Tier 4 Tool Agents (5 new MCP tools)
+- **Contract Check** (`sf_contract_check`) — Validates frontend API calls (fetch/axios) match actual backend endpoints. Detects path mismatches, HTTP method conflicts, and orphaned calls. Supports Next.js App Router, Express, Fastify, and FastAPI.
+- **Project Context** (`sf_project_context`) — Auto-generates project-specific context by scanning package.json, requirements.txt, .env files, and directory structure. Detects framework, DB, auth provider, ORM, test framework, linter, CSS framework, UI library, and API style.
+- **Security Scan Lite** (`sf_security_scan_lite`) — Fast 14-rule regex-based security scanner for pre-commit checks. Catches hardcoded secrets, CORS misconfig, eval/exec, SQL injection, data leaks, insecure cookies, and type evasion. Runs in <500ms vs Semgrep's 30s+.
+- **Version Check** (`sf_version_check`) — Compares PRD version specifications against actual installed packages. Catches major/minor drift before implementation begins (PRD says Prisma 5, npm has Prisma 7).
+- **Session Recorder** (`sf_session_record`) — Records decisions, corrections, errors, facts, and patterns during development sessions. Auto-detects scope (project vs universal) and extracts framework/category tags.
+
+#### Fleet Health Dashboard
+- `GET /api/v1/fleet/health` — Real-time fleet overview: total apps, assessment coverage %, stale apps (below framework v2.0.70), platform distribution, framework version distribution, memory bank presence.
+- `GET /api/v1/knowledge/recordings` — Query session recordings by app, type, scope, with pagination.
+- Fleet health auto-populated during harvest runs via `upsertFleetHealth()`.
+
+#### Multi-Platform AI Detection
+- Scanner now detects artifacts from all 5 AI coding platforms: Claude Code (`.claude/`), Cursor (`.cursor/`), GitHub Copilot (`.copilot/`, `.github/copilot/`), Google Gemini (`.gemini/`), OpenAI Codex (`.codex/`, `.agents/`).
+- Root instruction files detected: `CLAUDE.md`, `.cursorrules`, `.cursorrc`, `copilot-instructions.md`, `.gemini.md`, `AGENTS.md`, `codex.md`.
+- Per-platform artifact scanning: commands, agents, rules, skills, prompts, memory banks.
+
+#### Knowledge System Enhancements
+- **Scope tagging**: `"project"` (local) vs `"universal"` (eligible for cross-project promotion) on every knowledge entry.
+- **Multi-root harvest**: `appsRoots: string[]` — scan multiple directories in one harvest (`~/apps` + `~/wapplications`).
+- **Session recordings table**: Captures non-forge development knowledge (decisions, corrections, errors, facts, patterns) with auto-scope and auto-tags.
+- **`appHasData()` rewrite**: Detects real platform artifacts instead of only forge logs — harvest now correctly identifies apps with AI development data.
+
+#### BPSBS Production Rules Recovery
+- 7 critical rules recovered from cross-project analysis of 37 apps and encoded in `agents/_bpsbs-production-rules.md`:
+  1. Authentication & Token Security (HttpOnly cookies, RS256/ES256, refresh rotation)
+  2. Centralized Logger (replace console.log, sensitive field sanitization)
+  3. .gitignore Security Template (secrets, tokens, IDE files, build artifacts)
+  4. Database Migration Strategy (dangerous ops matrix, linear chain rules)
+  5. Incident Response Protocol (P0-P4 severity, 8-step response, post-incident template)
+  6. PM2 Production Scripts (ecosystem.config.cjs template)
+  7. Observability Stack (RED method, structured log format)
+
+#### Hook Templates
+- `hooks/pre-commit-security-scan.sh` — Pre-commit hook checking staged files for secrets, credentials, and API keys.
+- `hooks/post-edit-contract-check.sh` — Post-edit hook for API files triggering contract validation.
+- `hooks/post-tool-session-recorder.sh` — Auto-records tool failures to session recordings.
+
+#### Tier 1-3 Tool Agents (12 — from v3.0.0-rc)
+- Build (`sf_build`), Test (`sf_test`), Deps (`sf_deps`), Port (`sf_port`), Git (`sf_git`), TypeCheck (`sf_typecheck`), Lint (`sf_lint`), Migration (`sf_migration`), Env (`sf_env`), Lighthouse (`sf_lighthouse`), Docker (`sf_docker`), Nginx (`sf_nginx`).
+
+---
+
 ## [3.0.0] - 2026-03-29
 
 ### BREAKING — SkillFoundry v3: MCP Agent Server + iznir Skill Factory

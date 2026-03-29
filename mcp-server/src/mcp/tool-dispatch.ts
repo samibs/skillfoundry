@@ -14,6 +14,11 @@ import { checkAndGenerateEnv } from "../agents/env-agent.js";
 import { runLighthouse } from "../agents/lighthouse-agent.js";
 import { dockerBuild, composeUp } from "../agents/docker-agent.js";
 import { setupNginxForApp } from "../agents/nginx-agent.js";
+import { checkContracts } from "../agents/contract-check-agent.js";
+import { generateProjectContext } from "../agents/project-context-agent.js";
+import { runSecurityScanLite } from "../agents/security-scan-lite-agent.js";
+import { checkVersions } from "../agents/version-check-agent.js";
+import { handleSessionRecording } from "../agents/session-recorder-agent.js";
 
 type McpContent = { type: "text"; text: string };
 type McpResult = { content: McpContent[]; isError?: boolean };
@@ -136,6 +141,41 @@ export async function dispatchToolAgent(
         ssl: (args.ssl as boolean) ?? true,
       });
       return jsonResult(result);
+    }
+
+    // ─── Tier 4 ───────────────────────────────────────────
+    case "sf_contract_check": {
+      const result = await checkContracts(args.projectPath as string);
+      return jsonResult(result, !result.passed);
+    }
+
+    case "sf_project_context": {
+      const result = await generateProjectContext(args.projectPath as string);
+      return jsonResult(result);
+    }
+
+    case "sf_security_scan_lite": {
+      const result = await runSecurityScanLite(args.projectPath as string);
+      return jsonResult(result, !result.passed);
+    }
+
+    case "sf_version_check": {
+      const result = await checkVersions(args.projectPath as string);
+      return jsonResult(result, !result.passed);
+    }
+
+    case "sf_session_record": {
+      const result = await handleSessionRecording({
+        action: args.action as "record" | "query" | "promote",
+        projectPath: args.projectPath as string,
+        entryType: args.entryType as "decision" | "correction" | "error" | "fact" | "pattern" | undefined,
+        content: args.content as string | undefined,
+        context: args.context as string | undefined,
+        scope: args.scope as "project" | "universal" | undefined,
+        tags: args.tags as string[] | undefined,
+        limit: args.limit as number | undefined,
+      });
+      return jsonResult(result, !result.success);
     }
 
     default:
