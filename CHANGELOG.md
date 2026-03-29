@@ -7,6 +7,185 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.0.0] - 2026-03-29
+
+### BREAKING — SkillFoundry v5: Learning-Driven Intelligence
+
+**Data-driven upgrade**: Every feature in v5 was derived from analysis of 2,792 harvested artifacts, 115 AI session transcripts, 267 extracted insights, and security/contract assessments across 49 projects. This is the first release where the MCP server's own knowledge loop drove the feature set.
+
+#### Secret Guard Agent (`sf_secret_guard`)
+- 11 detection rules: hardcoded passwords, API keys, secrets, tokens, database URLs, JWT secrets, private keys, AWS keys, Stripe keys, SendGrid keys, basic auth URLs
+- False-positive filtering: validation messages, setup scripts, localhost URLs, comments, .env.example files, documentation, process.env references
+- `.env.example` completeness validation: cross-references `process.env.*` references against defined vars
+- Redacted output in MCP responses to prevent secret exfiltration
+
+#### Import Resolution Validator (`sf_import_validator`)
+- Validates JS/TS `import`/`require` and Python `import`/`from...import` statements
+- Cross-references against `package.json` dependencies, `node_modules`, `requirements.txt`, `pyproject.toml`
+- Detects native modules requiring build tools (better-sqlite3, sharp, bcrypt, etc.)
+- Node.js builtin module skip list (60+ modules)
+- Local import resolution with extension and index file fallbacks
+
+#### Deviation Enforcement Engine (`sf_deviation_enforcer`)
+- Parses 161 known LLM deviation patterns from the knowledge store catalog
+- 16 categories: Frontend, Backend, Database, TypeScript, Security, Authorization, Error Handling, LLM-Specific, and more
+- Regex-based detection rules derived from pattern descriptions
+- Rules stored in SQLite `deviation_rules` table — queryable, extensible, per-project allowlists
+- `loadDeviationCatalog()` loads from knowledge store; `enforceDeviations()` scans projects
+
+#### Enhanced Contract Resolution (`sf_contract_check` upgrade)
+- **NestJS support**: `@Controller('/api/users')` + `@Get('/:id')` = `/api/users/:id` full path resolution
+- **FastAPI support**: `APIRouter(prefix="/api/v1")` + `@router.get("/users")` = `/api/v1/users`
+- **Centralized API client tracing**: `axios.create({ baseURL: '/api/v1' })` → `api.get('/users')` = `/api/v1/users`
+- Contract match rate improved from 17.5% to 70.8% on tested projects
+
+#### Correction Feedback Loop
+- Extracts correction events from AI session transcripts
+- Groups corrections by semantic similarity using keyword-based phrase extraction
+- SHA-256 hashing for stable pattern identification
+- Auto-generates deviation rules when threshold met: 3+ occurrences across 2+ projects
+- Generated rules stored with `source: "auto_correction"` in `deviation_rules`
+- Per-project correction history queryable via `sf_query_corrections`
+
+#### Project Health Scores
+- Per-project A-F grades with 0-100 scoring
+- Formula: 100 base, -15/critical, -8/high, -3/medium, -1/low security, -2/contract mismatch, -5/import error, -10/secret finding
+- Stored in `project_health_scores` table with run-by-run history
+- Fleet-wide health summary with grade distribution
+- Trend tracking for week-over-week regression detection
+
+#### Nightly Harvest Pipeline v2
+- All 5 new agents integrated into the nightly pipeline
+- New stages: Secret Guard, Import Validator, Deviation Enforcer, Correction Analyzer, Health Scorer
+- Enhanced report with fleet health table, deviation violations, correction patterns
+- Version bumped to v5.0.0 in report footer
+
+#### Security Hardening
+- `validateProjectPath()` on all MCP tool endpoints — resolves path, checks allowlist, verifies directory
+- Secret content redacted in MCP responses (first 20 chars + `****[REDACTED]`)
+- Regex construction from DB wrapped in try/catch with 500-char length cap
+- `maxViolations` input capped at 500
+
+#### New Database Tables
+- `deviation_rules` — 161 LLM failure patterns with regex detection, file globs, severity
+- `correction_patterns` — semantic groups of user corrections with threshold tracking
+- `project_health_scores` — per-project per-run health metrics and grades
+
+#### New MCP Tools (5)
+- `sf_secret_guard` — scan project for hardcoded secrets
+- `sf_import_validator` — validate all imports resolve
+- `sf_deviation_enforcer` — enforce 161 deviation rules
+- `sf_contract_check` — enhanced frontend-backend contract validation
+- `sf_query_corrections` — query correction patterns and trends
+
+---
+
+## [4.0.0] - 2026-03-29
+
+### BREAKING — SkillFoundry v4: Tier 4 Tool Agents, Fleet Intelligence, Multi-Platform Detection
+
+**Architecture expansion**: SkillFoundry gains 5 new Tier 4 tool agents, fleet-wide health monitoring, multi-platform AI artifact detection, knowledge scoping, and BPSBS production rules recovery.
+
+#### Tier 4 Tool Agents (5 new MCP tools)
+- **Contract Check** (`sf_contract_check`) — Validates frontend API calls (fetch/axios) match actual backend endpoints. Detects path mismatches, HTTP method conflicts, and orphaned calls. Supports Next.js App Router, Express, Fastify, and FastAPI.
+- **Project Context** (`sf_project_context`) — Auto-generates project-specific context by scanning package.json, requirements.txt, .env files, and directory structure. Detects framework, DB, auth provider, ORM, test framework, linter, CSS framework, UI library, and API style.
+- **Security Scan Lite** (`sf_security_scan_lite`) — Fast 14-rule regex-based security scanner for pre-commit checks. Catches hardcoded secrets, CORS misconfig, eval/exec, SQL injection, data leaks, insecure cookies, and type evasion. Runs in <500ms vs Semgrep's 30s+.
+- **Version Check** (`sf_version_check`) — Compares PRD version specifications against actual installed packages. Catches major/minor drift before implementation begins (PRD says Prisma 5, npm has Prisma 7).
+- **Session Recorder** (`sf_session_record`) — Records decisions, corrections, errors, facts, and patterns during development sessions. Auto-detects scope (project vs universal) and extracts framework/category tags.
+
+#### Fleet Health Dashboard
+- `GET /api/v1/fleet/health` — Real-time fleet overview: total apps, assessment coverage %, stale apps (below framework v2.0.70), platform distribution, framework version distribution, memory bank presence.
+- `GET /api/v1/knowledge/recordings` — Query session recordings by app, type, scope, with pagination.
+- Fleet health auto-populated during harvest runs via `upsertFleetHealth()`.
+
+#### Multi-Platform AI Detection
+- Scanner now detects artifacts from all 5 AI coding platforms: Claude Code (`.claude/`), Cursor (`.cursor/`), GitHub Copilot (`.copilot/`, `.github/copilot/`), Google Gemini (`.gemini/`), OpenAI Codex (`.codex/`, `.agents/`).
+- Root instruction files detected: `CLAUDE.md`, `.cursorrules`, `.cursorrc`, `copilot-instructions.md`, `.gemini.md`, `AGENTS.md`, `codex.md`.
+- Per-platform artifact scanning: commands, agents, rules, skills, prompts, memory banks.
+
+#### Knowledge System Enhancements
+- **Scope tagging**: `"project"` (local) vs `"universal"` (eligible for cross-project promotion) on every knowledge entry.
+- **Multi-root harvest**: `appsRoots: string[]` — scan multiple directories in one harvest (`~/apps` + `~/wapplications`).
+- **Session recordings table**: Captures non-forge development knowledge (decisions, corrections, errors, facts, patterns) with auto-scope and auto-tags.
+- **`appHasData()` rewrite**: Detects real platform artifacts instead of only forge logs — harvest now correctly identifies apps with AI development data.
+
+#### BPSBS Production Rules Recovery
+- 7 critical rules recovered from cross-project analysis of 37 apps and encoded in `agents/_bpsbs-production-rules.md`:
+  1. Authentication & Token Security (HttpOnly cookies, RS256/ES256, refresh rotation)
+  2. Centralized Logger (replace console.log, sensitive field sanitization)
+  3. .gitignore Security Template (secrets, tokens, IDE files, build artifacts)
+  4. Database Migration Strategy (dangerous ops matrix, linear chain rules)
+  5. Incident Response Protocol (P0-P4 severity, 8-step response, post-incident template)
+  6. PM2 Production Scripts (ecosystem.config.cjs template)
+  7. Observability Stack (RED method, structured log format)
+
+#### Hook Templates
+- `hooks/pre-commit-security-scan.sh` — Pre-commit hook checking staged files for secrets, credentials, and API keys.
+- `hooks/post-edit-contract-check.sh` — Post-edit hook for API files triggering contract validation.
+- `hooks/post-tool-session-recorder.sh` — Auto-records tool failures to session recordings.
+
+#### Tier 1-3 Tool Agents (12 — from v3.0.0-rc)
+- Build (`sf_build`), Test (`sf_test`), Deps (`sf_deps`), Port (`sf_port`), Git (`sf_git`), TypeCheck (`sf_typecheck`), Lint (`sf_lint`), Migration (`sf_migration`), Env (`sf_env`), Lighthouse (`sf_lighthouse`), Docker (`sf_docker`), Nginx (`sf_nginx`).
+
+---
+
+## [3.0.0] - 2026-03-29
+
+### BREAKING — SkillFoundry v3: MCP Agent Server + iznir Skill Factory
+
+**Architecture shift**: SkillFoundry transforms from installed prompt files to a centralized MCP server with real tool agents and an on-the-fly skill factory.
+
+#### Phase 1: MCP Server Shell
+- Node.js/TypeScript server with SSE transport for MCP protocol
+- Loads 124 `.md` skill files as MCP tools on startup
+- REST API: `/health`, `/ready`, `/api/v1/agents` (list + detail)
+- PM2 ecosystem config for production deployment
+- Any IDE connects via: `"mcpServers": { "skillfoundry": { "url": "http://localhost:9877/mcp/sse" } }`
+- No more `install.sh` per app. Zero version drift. Single source of truth.
+
+#### Phase 2: Real Tool Agents
+- **Playwright Agent** (`sf_verify_auth`) — 8 browser-level auth checks: page load, form elements, login redirect, session cookie, cookie flags, expected destination, protected route, unauthenticated redirect. Screenshot evidence at each step.
+- **Semgrep Agent** (`sf_security_scan`) — Real SAST with OWASP rule packs. Returns findings with severity, file:line. Replaces regex-based banned pattern matching.
+- **Memory Gate** (`sf_memory_gate`) — Tool evidence (Playwright, Semgrep, build) = `verified`. LLM reasoning alone = `observed`. curl for auth flows = `observed`. Prevents saving wrong "definitive" patterns. Includes warning about 3 corrections in one session.
+
+#### Phase 3: Knowledge Loop
+- **Session Log Scanner** — Walks `~/apps/`, detects AI platforms (`.claude/`, `.cursor/`, `.copilot/`, `.gemini/`), parses forge logs and session monitor data.
+- **Knowledge Aggregator** — Extracts failure patterns across all apps. Promotes recurring patterns (2+ apps or 3+ occurrences) to quirk candidates.
+- **SQLite Knowledge Store** — `known_quirks`, `harvest_runs`, `session_logs` tables. Query by framework. Deduplication on insert.
+- **Harvester** (`sf_harvest_knowledge`, `sf_query_quirks`) — Full pipeline: scan → aggregate → deduplicate → persist. Live tested: 42 forge logs → 2 quirks extracted.
+
+#### Phase 4: Optimization
+- **Cost Router** — Routes tasks to Haiku ($0.25/M) for search/grep, Sonnet ($3/M) for code gen, Opus ($15/M) for architecture. Per-agent overrides. Daily budget cap. Token spend tracking.
+- **Metrics Collector** — Per-agent invocation tracking: count, success/fail rate, duration, tokens, model tier. REST: `/api/v1/metrics`.
+- **iznir Integration** — REST client for dynamic skill generation via iznir.hexalab.dev.
+
+#### iznir Engine Merge
+- **Skill Factory** (`sf_create_skill`) — Ported from iznir.hexalab.dev core engine. Creates certified AI skills on the fly:
+  - `analyzeIntent()` — Claude analyzes description into structured SkillProposal
+  - `generateGuardrails()` — 6 domain/risk-aware guardrails (hallucination, unknown handling, source grounding, scope enforcement, audit trail, version contract)
+  - `runSkillTest()` — 10-case automated test suite (80% pass required for certification)
+  - `exportAsClaudeSkill()` — Exports as `.md` compatible with SkillFoundry's skill loader
+  - Auto-registers certified skills as live MCP tools without server restart
+  - Persists to SQLite, reloads on startup
+- **Flow**: user needs capability → no existing skill → `sf_create_skill("description")` → Claude analyzes → guardrails → tests → if 80%+ → certified → registered → available immediately
+
+#### PRD Template Hardening (v2.0.79–v2.0.86)
+- §5.0 Technology Maturity Assessment (Beta deps → Playwright mandatory)
+- §5.3 Dependencies (verified versions + peer conflicts)
+- §5.4 Compatibility Notes
+- §5.5 Directory Structure
+- §5.7 Environment Variables
+- §5.8 Deployment Environment + Known Deployment Quirks
+- Browser-level auth verification in TEMPER phase and layer-check (all 5 platforms)
+- Playwright-verified NextAuth v5 credentials login pattern
+- 8 new checklist gates
+
+**Files**: `mcp-server/` (20 source files, 7 test files, ~6,500 lines TypeScript)
+**Tests**: 53 passing across 7 test files
+**MCP Tools**: 124 LLM skills + 7 tool agents + 2 knowledge tools = 133 total
+
+---
+
 ## [2.0.86] - 2026-03-27
 
 ### Added — §5.0 Technology Maturity Assessment
