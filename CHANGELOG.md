@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.1.0] - 2026-04-02
+
+### Harness Engineering Upgrade — Claude Code Architecture Parity
+
+Architectural patterns extracted from Claude Code's production harness (1,902 TypeScript files, 207 commands, 184 tool entries) applied to SkillFoundry's MCP server.
+
+#### Tool Module System
+- Self-contained tool folders: each of 15 tools lives in `mcp-server/src/tools/{ToolName}/` with dedicated execution logic, prompt, constants, and permissions
+- Auto-discovery registry scans `src/tools/` at startup — add a folder, get an MCP tool
+- 20 MCP tools across 15 modules: BuildAgent, TestRunner, GitAgent, DependencyAgent, PortAgent, TypecheckAgent, LintAgent, MigrationAgent, EnvAgent, LighthouseAgent, DockerAgent, NginxAgent, PlaywrightAgent, SemgrepAgent, VerificationAgent
+
+#### Permission Engine
+- `ToolPermissionContext` with deny-list (by name), prefix-blocking, simple-mode (core tools only), and workspace trust gates
+- Trust-required tools (sf_verify_auth, sf_security_scan, sf_harvest_knowledge, sf_create_skill, sf_memory_gate) blocked in untrusted workspaces
+- Simple mode restricts to sf_build, sf_run_tests, sf_git_status only
+- All denials logged with tool name, reason, and timestamp
+
+#### Streaming Event Protocol
+- SSE event types: `message_start`, `tool_match`, `message_delta`, `message_stop`, `permission_denial`
+- `StreamEmitter` class manages connected SSE clients
+- Fire-and-forget — no overhead if no clients are listening
+
+#### Session Intelligence
+- `SessionConfig` with configurable max turns, token budget, compaction threshold
+- `UsageSummary` with functional (immutable) updates — `addTurn()` returns new object
+- `TranscriptStore` with automatic compaction when turn threshold exceeded
+- File-based session persistence (`.sf_sessions/{id}.json`) with load/save/list
+- `SessionEngine` orchestrates budget enforcement + auto-compaction
+- REST API: `GET /api/v1/sessions`, `GET /api/v1/sessions/:id`
+
+#### Bootstrap Pipeline
+- 7-stage startup: prefetch -> guards -> tool-registry -> skill-load -> deferred-init -> permissions -> transport
+- Stage 2 (guards): fail-fast on Node < 20, missing git/npm
+- Stage 5 (deferred-init): trust-gated — checks Playwright/Semgrep binaries, skips in untrusted workspaces
+- Non-required stages log warnings and continue instead of crashing
+
+#### Verification Agent
+- New `sf_verify` MCP tool validates other agents' output with tool evidence
+- Strategies: build, test, typecheck, lint — each runs the real tool and compares against claimed output
+- Returns structured `VerificationReport` with per-check evidence
+- Optional auto-verify hook after any tool execution (`SKILLFOUNDRY_AUTO_VERIFY=true`)
+
+#### Command Graph & Enhanced Health
+- Tools categorized as builtin/plugin/skill/dynamic via `CommandGraph`
+- `GET /api/v1/agents?category=builtin` for filtered listing
+- `/health` reports bootstrap stage, completion progress, duration, session metrics, and permission state
+- `/ready` returns 503 until all 7 bootstrap stages complete
+
+#### Environment Variables (New)
+- `SKILLFOUNDRY_DENY_TOOLS` — comma-separated tool deny list
+- `SKILLFOUNDRY_DENY_PREFIXES` — comma-separated prefix deny list
+- `SKILLFOUNDRY_SIMPLE_MODE` — restrict to core tools
+- `SKILLFOUNDRY_TRUST` — workspace trust level (default: true)
+- `SKILLFOUNDRY_MAX_TURNS` — session turn limit (default: 50)
+- `SKILLFOUNDRY_MAX_BUDGET_TOKENS` — session token budget (default: 100000)
+- `SKILLFOUNDRY_COMPACT_AFTER` — compaction threshold (default: 30)
+- `SKILLFOUNDRY_SESSION_DIR` — session persistence directory (default: .sf_sessions)
+- `SKILLFOUNDRY_AUTO_VERIFY` — auto-verify after tool execution (default: false)
+
+---
+
 ## [5.0.0] - 2026-03-29
 
 ### BREAKING — SkillFoundry v5: Learning-Driven Intelligence
@@ -36,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Enhanced Contract Resolution (`sf_contract_check` upgrade)
 - **NestJS support**: `@Controller('/api/users')` + `@Get('/:id')` = `/api/users/:id` full path resolution
 - **FastAPI support**: `APIRouter(prefix="/api/v1")` + `@router.get("/users")` = `/api/v1/users`
-- **Centralized API client tracing**: `axios.create({ baseURL: '/api/v1' })` → `api.get('/users')` = `/api/v1/users`
+- **Centralized API client tracing**: `axios.create({ baseURL: '/api/v1' })` -> `api.get('/users')` = `/api/v1/users`
 - Contract match rate improved from 17.5% to 70.8% on tested projects
 
 #### Correction Feedback Loop
