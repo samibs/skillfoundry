@@ -1,11 +1,41 @@
 import { Router } from "express";
 import type { SkillDefinition } from "../skills/loader.js";
+import type { BootstrapState } from "../bootstrap/pipeline.js";
+import type { ToolModule, ToolCategory } from "../tools/types.js";
+import { buildCommandGraph, graphSummary } from "../registry/command-graph.js";
 import { runHarvest, getQuirks } from "../knowledge/harvester.js";
 import { getRoutingTable, getTodaySpend } from "../agents/cost-router.js";
 import { getMetricsSummary, getAgentMetrics } from "../state/metrics.js";
 import { getFleetHealth, querySessionRecordings } from "../state/db.js";
+import { listSessions, loadSession } from "../session/persistence.js";
+import { createSessionConfig } from "../session/config.js";
 
+const VERSION = "5.1.0";
 const startTime = Date.now();
+
+let storedBootstrapState: BootstrapState | null = null;
+let registeredTools: ToolModule[] = [];
+
+const VALID_CATEGORIES = new Set<ToolCategory>(['builtin', 'plugin', 'skill', 'dynamic']);
+
+/**
+ * Store the bootstrap state so the /health and /ready endpoints can report it.
+ * Call this from the server after the bootstrap pipeline completes (or fails).
+ * @param state - Snapshot of the bootstrap pipeline state
+ */
+export function setBootstrapState(state: BootstrapState): void {
+  storedBootstrapState = state;
+}
+
+/**
+ * Store the registered tool modules so the /api/v1/agents endpoint can
+ * segment them via the command graph.
+ * Call this from server.ts after tool discovery completes.
+ * @param tools - Array of registered ToolModule instances
+ */
+export function setRegisteredTools(tools: ToolModule[]): void {
+  registeredTools = tools;
+}
 
 export function createApiRouter(
   skills: Map<string, SkillDefinition>
@@ -14,26 +44,102 @@ export function createApiRouter(
 
   // Health check
   router.get("/health", (_req, res) => {
+    const bsState = storedBootstrapState;
+
+    if (bsState === null) {
+      res.json({
+        status: "starting",
+        version: VERSION,
+        bootstrap: { stage: "unknown" },
+        tools: { registered: skills.size },
+        uptime: Math.floor((Date.now() - startTime) / 1000),
+        timestamp: new Date().toISOString(),
+      });
+      return;
+    }
+
+    const isComplete = bsState.currentStage === "complete";
+
     res.json({
-      status: "ok",
+      status: isComplete ? "healthy" : "starting",
       name: "skillfoundry-mcp-server",
-      version: "5.0.0",
-      skills: skills.size,
+      version: VERSION,
+      bootstrap: {
+        stage: isComplete ? "ready" : bsState.currentStage,
+        completed: bsState.completedStages,
+        total: bsState.totalStages,
+        durationMs: bsState.durationMs,
+        errors: bsState.errors,
+      },
+      tools: {
+        registered: skills.size,
+      },
       uptime: Math.floor((Date.now() - startTime) / 1000),
       timestamp: new Date().toISOString(),
     });
   });
 
-  // Ready check (same as health for Phase 1 — Phase 2 adds DB check)
+  // Readiness probe — returns 503 until bootstrap is fully complete
   router.get("/ready", (_req, res) => {
-    res.json({
-      status: "ready",
-      skills: skills.size,
+    if (
+      storedBootstrapState !== null &&
+      storedBootstrapState.currentStage === "complete"
+    ) {
+      res.json({ status: "ready" });
+      return;
+    }
+
+    const currentStage = storedBootstrapState?.currentStage ?? "unknown";
+    res.status(503).json({
+      status: "not_ready",
+      stage: currentStage,
     });
   });
 
-  // List all loaded agents/skills
-  router.get("/api/v1/agents", (_req, res) => {
+  // List all loaded agents/skills, with optional category segmentation
+  router.get("/api/v1/agents", (req, res) => {
+    const categoryParam = req.query.category as string | undefined;
+
+    // Build the command graph from registered tool modules
+    const graph = buildCommandGraph(registeredTools);
+    const summary = graphSummary(graph);
+
+    // If a specific category was requested, validate and return only that segment
+    if (categoryParam !== undefined) {
+      if (!VALID_CATEGORIES.has(categoryParam as ToolCategory)) {
+        res.status(400).json({
+          error: {
+            code: "INVALID_CATEGORY",
+            message: `Invalid category '${categoryParam}'. Valid values: builtin, plugin, skill, dynamic`,
+          },
+        });
+        return;
+      }
+
+      const categoryKey = categoryParam as ToolCategory;
+      const segmentKeyMap: Record<ToolCategory, keyof typeof graph> = {
+        builtin: 'builtins',
+        plugin: 'plugins',
+        skill: 'skills',
+        dynamic: 'dynamic',
+      };
+      const segment = graph[segmentKeyMap[categoryKey]];
+      const tools = segment.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        tier: tool.tier,
+        category: tool.category,
+        status: "active",
+      }));
+
+      res.json({
+        data: tools,
+        meta: { category: categoryKey, total: tools.length },
+      });
+      return;
+    }
+
+    // No category filter — return skill-based agents plus command graph summary
     const agents = Array.from(skills.entries()).map(([name, skill]) => ({
       name,
       mcpToolName: `sf_${name}`,
@@ -45,7 +151,10 @@ export function createApiRouter(
 
     res.json({
       data: agents,
-      meta: { total: agents.length },
+      meta: {
+        total: agents.length,
+        graph: summary,
+      },
     });
   });
 
@@ -262,6 +371,51 @@ export function createApiRouter(
         return;
       }
       res.json({ data: metrics[0] });
+    } catch (err) {
+      res.status(500).json({
+        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
+      });
+    }
+  });
+
+  // ─── Sessions API ──────────────────────────────────────────
+
+  router.get("/api/v1/sessions", (_req, res) => {
+    try {
+      const sessionConfig = createSessionConfig();
+      const sessionIds = listSessions(sessionConfig.persistDirectory);
+      res.json({
+        data: sessionIds,
+        meta: { total: sessionIds.length },
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
+      });
+    }
+  });
+
+  router.get("/api/v1/sessions/:id", (req, res) => {
+    try {
+      const sessionConfig = createSessionConfig();
+      const stored = loadSession(req.params.id, sessionConfig.persistDirectory);
+      if (!stored) {
+        res.status(404).json({
+          error: { code: "NOT_FOUND", message: `Session '${req.params.id}' not found` },
+        });
+        return;
+      }
+      res.json({
+        data: {
+          sessionId: stored.sessionId,
+          inputTokens: stored.inputTokens,
+          outputTokens: stored.outputTokens,
+          totalTokens: stored.inputTokens + stored.outputTokens,
+          turnCount: stored.turnCount,
+          createdAt: stored.createdAt,
+          lastActive: stored.lastActive,
+        },
+      });
     } catch (err) {
       res.status(500).json({
         error: { code: "INTERNAL_ERROR", message: (err as Error).message },
