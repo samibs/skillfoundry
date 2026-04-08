@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.2.0] - 2026-04-02
+
+### Multi-Tenant Security Enforcement — PRD-to-Code Traceability
+
+Closes the #1 gap in AI-generated multi-tenant apps: PRD says "multi-tenant" but the agent builds flat storage, unprotected downloads, and no tenant scoping. Triggered by the AutoKYC incident (2026-04-02).
+
+#### Story Generator — Security Trait Detection
+- Scans PRDs for multi-tenant/multi-user/file-upload/auth trigger words
+- Auto-injects mandatory security stories (SEC-001 through SEC-006):
+  - SEC-001: Tenant data model with scoped queries (every table, every query)
+  - SEC-002: Tenant-scoped file storage (no flat `uploads/{id}/`)
+  - SEC-003: Auth on every endpoint (no unprotected downloads)
+  - SEC-004: Cross-tenant isolation tests (User A cannot access User B's data)
+  - SEC-005: Secure file handling (path traversal prevention, type validation)
+  - SEC-006: No hardcoded credentials (no defaults in config)
+- Security stories are MUST priority and block all endpoint/model/storage stories
+
+#### Gate Keeper — Multi-Tenant Isolation Gate
+- 7 mandatory checks when PRD mentions multi-tenant:
+  - Every data model has tenant_id column
+  - Every query scoped by tenant
+  - File storage paths include tenant directory
+  - Every data endpoint has auth middleware
+  - Download endpoints verify tenant ownership
+  - No hardcoded credentials in config
+  - Cross-tenant isolation tests exist
+- PRD-to-Code Traceability: cross-references PRD claims against actual implementation
+- NON-NEGOTIABLE: BLOCK on any failure
+
+#### Known Deviations — Category 10b: Multi-Tenant Isolation Failures
+- 10 new patterns (MT-001 through MT-010):
+  - MT-001: Flat file storage without tenant directory
+  - MT-002: Download/export endpoint without auth
+  - MT-003: Unscoped database queries
+  - MT-004: PRD says multi-tenant but code ignores it
+  - MT-005: Existing security service bypassed by new code
+  - MT-006: Hardcoded default credentials
+  - MT-007: Download accepts user-supplied path (traversal)
+  - MT-008: No cross-tenant isolation tests
+  - MT-009: HTTPBasic auth on data endpoints
+  - MT-010: Tenant ID from request body instead of auth token
+
+#### PRD Template
+- New §4.2.1 Multi-Tenant Isolation section with tenancy model, scoping strategy, file storage isolation, cross-tenant testing requirements
+- Empty section on multi-tenant PRD is a BLOCKING issue during validation
+
+#### Install Flow
+- Installer creates `.vscode/mcp.json` for VS Code MCP server auto-discovery
+- Installer creates `.github/copilot-instructions.md` for Copilot Chat tool awareness
+- Works with any MCP-compatible IDE (VS Code, Cursor, Claude Code extension)
+
+---
+
 ## [5.1.0] - 2026-04-02
 
 ### Harness Engineering Upgrade — Claude Code Architecture Parity

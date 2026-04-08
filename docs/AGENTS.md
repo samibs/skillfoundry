@@ -1,6 +1,6 @@
 # SkillFoundry - Complete Agent Team Reference
 
-**Version 3.1.0** | **The Forge: 53 Core Agents / 124+ Skills / 20 MCP Tool Agents** | **Penta Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini) | **62 A2A Cards** | **37 Compliance Checks**
+**Version 5.2.0** | **The Forge: 53 Core Agents / 124+ Skills / 20 MCP Tool Agents** | **Penta Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini) | **62 A2A Cards** | **37 Compliance Checks**
 
 ---
 
