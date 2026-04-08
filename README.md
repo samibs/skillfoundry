@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.1.0-blue)
+![Version](https://img.shields.io/badge/version-5.2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,32 +24,25 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.1.0
+### What's New in v5.2.0
 
-**Harness Engineering Upgrade + Learning-Driven Intelligence**
+**Multi-Tenant Security Enforcement — PRD-to-Code Traceability**
 
-v5.1.0 combines the v5.0.0 learning-driven intelligence features with harness engineering patterns extracted from Claude Code's production harness (1,902 TypeScript files, 207 commands, 184 tool entries).
+v5.2.0 closes the #1 gap in AI-generated multi-tenant apps: the PRD says "multi-tenant" but the agent builds flat storage, unprotected downloads, and no tenant scoping. Three layers of defense now prevent this.
 
-#### Learning-Driven Intelligence (from v5.0.0)
+- **Auto-Injected Security Stories** — When a PRD mentions "multi-tenant" or "multi-user", the story generator automatically injects 4-6 mandatory security stories (SEC-001 through SEC-006) covering tenant data models, scoped queries, tenant-scoped file storage, auth on every endpoint, and cross-tenant isolation tests. These stories **block** all endpoint/model/storage stories until tenant isolation is in place.
+- **Multi-Tenant Isolation Gate** — The Gate Keeper now cross-references PRD claims against actual code. 7 mandatory checks: tenant_id on models, scoped queries, tenant-scoped storage, auth on all endpoints, ownership on downloads, no hardcoded credentials, cross-tenant tests. BLOCK on any failure.
+- **10 New Deviation Patterns (MT-001–MT-010)** — Flat storage, unscoped queries, PRD-to-code drift, existing security bypass, path traversal, hardcoded credentials, tenant ID from request body. Every agent is now aware of these patterns.
+- **PRD Template §4.2.1** — New Multi-Tenant Isolation section forces developers to specify tenancy model, scoping strategy, and file storage isolation before implementation begins.
+- **MCP Install for VS Code** — Installer now creates `.vscode/mcp.json` and `.github/copilot-instructions.md` so VS Code Copilot Chat discovers SkillFoundry tools without manual setup.
 
-- **Secret Guard Agent** (`sf_secret_guard`) — Pre-commit secret detection: 11 rules for API keys, passwords, tokens, DB URLs, JWT secrets, AWS keys, Stripe keys. False-positive filtering (validation messages, localhost, test fixtures, comments). Cross-references `process.env.*` against `.env.example` for completeness.
-- **Import Resolution Validator** (`sf_import_validator`) — Validates every `import`/`require` resolves to an actual package or local file. Detects missing npm packages, broken local imports, native module dependencies (better-sqlite3, sharp, bcrypt). Supports JS/TS/Python.
-- **Deviation Enforcement Engine** (`sf_deviation_enforcer`) — Programmatic enforcement of 161 known LLM failure patterns across 16 categories (Frontend, Backend, Database, TypeScript, Security, Auth, Error Handling, LLM-Specific). Regex-based detection stored in SQLite, queryable, extensible.
-- **Enhanced Contract Resolution** (`sf_contract_check`) — NestJS `@Controller` prefix + `@Get/@Post` route resolution. FastAPI `APIRouter(prefix=...)` support. Centralized API client `baseURL` tracing (`axios.create({ baseURL })` → path joining). Match rate improved from 17.5% to 70.8%.
-- **Correction Feedback Loop** — Analyzes user corrections from AI sessions, groups by semantic similarity, auto-generates deviation rules when a pattern appears 3+ times across 2+ projects.
-- **Project Health Scores** — Per-project A-F grades with 0-100 scoring. Fleet-wide health summary in nightly reports.
-- **22 Total Tool Agents** — 12 Tier 1-3 + 5 Tier 4 + 5 v5 agents.
+#### Previous: Harness Engineering (v5.1.0)
 
-#### Harness Engineering (from v5.1.0)
+- Self-contained tool modules (15 folders, auto-discovered), permission engine, streaming protocol, session intelligence, 7-stage bootstrap, verification agent, command graph, enhanced health.
 
-- **Self-Contained Tool Modules** — 15 tool folders in `mcp-server/src/tools/`, each with its own execution logic, prompt, constants, and permissions. Auto-discovered at startup.
-- **Permission Engine** — Deny-list + prefix-blocking + simple-mode + trust gates. Block tools by name/prefix, restrict to core-only mode, or gate advanced tools behind workspace trust.
-- **Streaming Event Protocol** — SSE events during tool execution: `message_start -> tool_match -> message_delta -> message_stop`. Real-time progress for IDE clients.
-- **Session Intelligence** — Token budget enforcement, transcript compaction (auto-prune old messages), session persistence to disk with resumption support.
-- **7-Stage Bootstrap Pipeline** — Staged server startup with prefetch, environment guards, trust-gated deferred init. Fail-fast on bad environments.
-- **Verification Agent** (`sf_verify`) — Validates other agents' output by running build/test/typecheck/lint and comparing results against claimed output.
-- **Command Graph** — Tools categorized as builtin/plugin/skill/dynamic. Filter via `GET /api/v1/agents?category=builtin`.
-- **Enhanced Health** — `/health` reports bootstrap stage, session metrics, and permission state. `/ready` returns 503 until fully bootstrapped.
+#### Previous: Learning-Driven Intelligence (v5.0.0)
+
+- Secret Guard, Import Validator, Deviation Enforcer (161 rules), Enhanced Contracts, Correction Loop, Health Scores, 22 tool agents.
 
 ```
 Connect from any IDE:

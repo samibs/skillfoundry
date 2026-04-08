@@ -23,7 +23,7 @@ const SKILL_DIRS = [
 ];
 
 async function main(): Promise<void> {
-  console.log("SkillFoundry MCP Server v5.1.0");
+  console.log("SkillFoundry MCP Server v5.2.0");
   console.log(`Framework root: ${FRAMEWORK_ROOT}`);
   console.log(`Skill directories: ${SKILL_DIRS.join(", ")}`);
 
