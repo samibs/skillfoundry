@@ -115,6 +115,24 @@ layers: []            # Affected layers: [database, backend, frontend]
 | CORS Policy | [allowed origins (specific, not *), credentials mode] |
 | Concurrent Access | [optimistic locking via ETag/version field on shared resources] |
 
+### 4.2.1 Multi-Tenant Isolation (REQUIRED if multi-user or multi-tenant)
+
+<!-- MANDATORY if this app serves multiple users, tenants, organizations, or clients. -->
+<!-- If this section is skipped, the story generator will NOT inject tenant isolation stories. -->
+<!-- If this section is filled, the gate keeper WILL enforce tenant isolation at every checkpoint. -->
+
+| Aspect | Requirement |
+|--------|-------------|
+| Tenancy Model | [single-tenant / multi-tenant / per-user isolation] |
+| Tenant Identifier | [field name: tenant_id / org_id / user_id / fiduciary_id] |
+| Data Scoping | [every query filtered by tenant / RLS at database level / both] |
+| File Storage Isolation | [tenant-scoped paths: tenants/{id}/... / S3 prefix per tenant / encrypted per-tenant] |
+| Cross-Tenant Testing | [required: User A cannot access User B's data/files] |
+| Download Security | [all file-serving endpoints require auth + tenant ownership verification] |
+
+<!-- If ANY row says "not applicable" for a multi-user app, explain WHY in Constraints section. -->
+<!-- Leaving this section empty on a multi-tenant app is a BLOCKING issue during PRD validation. -->
+
 ### 4.3 Scalability
 
 <!-- How should this scale? Horizontal/vertical? Auto-scaling triggers? -->
