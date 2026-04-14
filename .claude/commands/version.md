@@ -161,31 +161,26 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v2.0.52**
+**SkillFoundry v5.1.0**
 
 - **56 Agents, 63 Skills** - Complete development lifecycle coverage
 - **5 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini
 - **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
+- **164 Deviation Patterns** - LLM failure prevention across 16 categories
+- **Pre-Execution Verification** - Goal reframing and assumption surfacing before implementation
+- **Anvil T4b Traceability** - Line-level change traceability gate
 - **Auto-Remediation** - 90%+ violations fixed autonomously
 - **Execution Modes** - Supervised, Semi-Autonomous, Autonomous
 - **Native Debugger** - CDP-based interactive debugging for AI agents
-- **Batch Execution** - Context exhaustion prevention with resume support
-- **Delivery Audit** - Planned vs actual deliverable verification
-- **Metrics Baseline** - `sf metrics baseline` for quality snapshot capture
-- **HTML Reports** - `sf report --html` for self-contained quality reports
 
 ### Recent Milestones
 
 | Version | Date | Milestone |
 |---------|------|-----------|
-| 2.0.52 | 2026-03-16 | Metrics baseline, HTML reports, Docusaurus docs site |
-| 2.0.41 | 2026-03-13 | Smart output compression — 60-90% token savings on tool output |
-| 2.0.40 | 2026-03-13 | Pipeline resilience — batch execution, delivery audit, git pre-flight |
-| 2.0.39 | 2026-03-12 | Native debugger integration (CDP + 6 debug tools) |
-| 2.0.38 | 2026-03-08 | Correctness contracts (T0, MG0, MG1.5) |
-| 2.0.37 | 2026-03-05 | Platform memory migration |
-| 2.0.36 | 2026-03-03 | Automatic memory harvesting |
-| 2.0.35 | 2026-03-01 | Two-pass pipeline (FORGE + POLISH) |
+| 5.1.0 | 2026-04-14 | Karpathy-inspired: Pre-Execution Verification, T4b Traceability, 3 new deviation patterns |
+| 5.0.0 | 2026-03-29 | Learning-driven intelligence: Secret Guard, Deviation Enforcer, Import Validator, Health Scores |
+| 4.0.0 | 2026-03-29 | Tier 4 agents, fleet health, multi-platform intelligence |
+| 3.0.0 | 2026-03-29 | MCP Agent Server + iznir Skill Factory |
 
 ## Implementation
 

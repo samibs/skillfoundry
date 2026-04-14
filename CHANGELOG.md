@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.1.0] - 2026-04-14
+
+### Added — Karpathy-Inspired Agent Intelligence
+
+**Derived from** [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (16.2k stars) — three improvements that close gaps in LLM self-discipline: silent assumption-making, orthogonal code changes, and imperative-over-declarative task framing.
+
+#### Pre-Execution Verification Protocol (`_agent-protocol.md`)
+- New mandatory phase between Session Boot and task execution for moderate/complex tasks
+- **Goal Reframing**: Transforms imperative requests ("add caching") into verifiable success criteria ("repeated GET requests return cached response within <10ms")
+- **Assumption Surfacing**: Agents must list every assumption explicitly before proceeding — silent assumption-making is now a deviation violation (LLM-019)
+- **Interpretation Presentation**: When a request is ambiguous, agents present multiple interpretations instead of silently picking one
+- Skippable for simple tasks (<10 lines, unambiguous intent)
+
+#### Anvil T4b: Traceability Test (`_scope-validation.md`, `_anvil-protocol.md`)
+- New sub-tier of T4 (Scope Validation) that validates at the **line level**, not just file level
+- Every changed line categorized as: Direct (PASS), Supporting (PASS), Orthogonal (WARN), Suspicious (BLOCK)
+- Orthogonal changes in security-sensitive files (auth, config, middleware) automatically BLOCK
+- >20% orthogonal lines triggers escalation regardless of file sensitivity
+- Prevents "while I'm here" drive-by refactoring (LLM-020)
+- Fixer Orchestrator generates surgical revert patches for flagged hunks only
+
+#### New LLM Deviation Patterns (LLM-019, LLM-020, LLM-021)
+- **LLM-019**: Silent assumption-making — picking one interpretation without asking when ambiguous
+- **LLM-020**: Orthogonal/drive-by changes — modifying unrelated code, unsolicited refactors, "while I'm here" cleanup
+- **LLM-021**: Not pushing back when a simpler alternative exists — decision complexity (distinct from LLM-014 code complexity)
+- All three patterns added to central deviation catalog and extracted `_deviations-llm.md`
+- Total deviation patterns: 164 (was 161)
+
+#### Cross-References
+- Pre-Execution Verification references LLM-019 and LLM-020
+- T4b references LLM-020 and LLM-016
+- LLM-019 prevention references Pre-Execution Verification protocol
+- LLM-020 prevention references Anvil T4b traceability check
+- All references are bidirectional
+
+---
+
 ## [5.0.0] - 2026-03-29
 
 ### BREAKING — SkillFoundry v5: Learning-Driven Intelligence

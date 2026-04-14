@@ -1,6 +1,6 @@
 # SkillFoundry Framework — Agent Instructions for OpenAI Codex
 
-**Version 2.0.10** | **Penta-Platform: Claude Code · Cursor · Copilot · Codex · Gemini** | **60 Skills**
+**Version 2.0.11** | **Penta-Platform: Claude Code · Cursor · Copilot · Codex · Gemini** | **60 Skills**
 
 ---
 
@@ -109,12 +109,13 @@ $architect                   # System design
 ### Zero Tolerance Banned Patterns
 `TODO`, `FIXME`, `PLACEHOLDER`, `STUB`, `MOCK`, `HACK`, `XXX`, `WIP`, `TEMP`, `COMING SOON`, `NotImplementedError`, empty function bodies — all trigger immediate rejection.
 
-### The Anvil — 6-Tier Quality Gate
+### The Anvil — 7-Tier Quality Gate
 Between every agent handoff:
 - **T1**: Shell pre-flight (syntax, imports, banned patterns)
 - **T2**: Canary smoke test (module imports, endpoint responds)
 - **T3**: Self-adversarial review (coder breaks own code)
 - **T4**: Scope validation (expected vs actual changes)
+- **T4b**: Traceability test (every changed line traces to request)
 - **T5**: Contract enforcement (API spec vs implementation)
 - **T6**: Shadow tester (parallel risk assessment)
 
@@ -138,4 +139,4 @@ scripts/              # Automation scripts
 
 ---
 
-*SkillFoundry Framework v2.0.10 — Penta-Platform Support*
+*SkillFoundry Framework v2.0.11 — Penta-Platform Support*

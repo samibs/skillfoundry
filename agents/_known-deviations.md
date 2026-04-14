@@ -274,6 +274,9 @@ NEVER assume the API shape. ALWAYS verify.
 | LLM-016 | Ignoring the project's existing patterns | Read existing code BEFORE writing new code. Match the project's style, not your default | coder |
 | LLM-017 | Generating tests that test the implementation, not behavior | Tests should verify OUTCOMES, not HOW the code works internally | tester |
 | LLM-018 | Not reading error messages before "fixing" | Read the ACTUAL error message. Don't guess. The fix is usually in the error text | debugger, fixer |
+| LLM-019 | Silent assumption-making (picking one interpretation without asking) | When a request is ambiguous, STOP and present interpretations. Never silently pick one. Use Pre-Execution Verification (`agents/_agent-protocol.md`) | all |
+| LLM-020 | Orthogonal/drive-by changes (modifying unrelated code) | Touch ONLY what the task requires. No "while I'm here" cleanup, no unsolicited refactors. Every changed line must trace to the request. See Anvil T4b traceability check | all |
+| LLM-021 | Not pushing back when a simpler alternative exists | Before implementing a complex solution, ask: "Is there a simpler way?" If a 1-step solution exists, don't build a 5-step one. Covers decision complexity (distinct from LLM-014 code complexity) | all |
 
 ---
 

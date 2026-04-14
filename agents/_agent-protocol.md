@@ -52,6 +52,71 @@ The hub pull at step 0 ensures the session starts with the latest knowledge from
 
 ---
 
+## Pre-Execution Verification
+
+Before executing any task, agents MUST reframe the request into verifiable success criteria. LLMs perform significantly better when optimizing toward measurable goals than when following imperative step-by-step instructions.
+
+> **Core Insight**: "Don't tell it what to do — give it success criteria and watch it go." — Karpathy principle
+
+### Step 1: Reframe Imperative to Declarative
+
+Transform the user's request from "do X" into "success looks like Y":
+
+```
+RECEIVED: "Add caching to the API"
+
+REFRAMED:
+  Goal: API responses for repeated queries are served from cache
+  Success Criteria:
+    1. Repeated identical GET requests return cached response within <10ms
+    2. Cache invalidates when underlying data changes
+    3. Cache-Control headers are set correctly on responses
+    4. No cached data leaks between authenticated users
+  Verifiable: Each criterion has a testable assertion
+```
+
+### Step 2: Surface Assumptions
+
+List every assumption explicitly. Silent assumptions are the #1 source of "almost right" implementations (see `LLM-019` in `agents/_known-deviations.md`).
+
+```
+ASSUMPTIONS I'M MAKING:
+1. Redis is available (checked: yes, in docker-compose.yml)
+2. Cache TTL should be 5 minutes (NOT verified — asking user)
+3. Only GET endpoints need caching (reasonable default, confirming)
+→ Correct me now or I'll proceed with these.
+```
+
+### Step 3: Present Interpretations (When Ambiguous)
+
+When the request has multiple valid interpretations, present them instead of silently picking one:
+
+```
+INTERPRETATIONS:
+  A) In-memory cache (fastest, lost on restart, single-instance only)
+  B) Redis cache (shared across instances, persists restarts)
+  C) HTTP cache headers only (client-side, no server memory)
+→ Which interpretation matches your intent? I'm leaning toward B.
+```
+
+### Step 4: Confirm or Proceed
+
+- **If ambiguous**: Wait for user confirmation before proceeding
+- **If clear**: State the reframed goal and proceed, noting that assumptions can be corrected
+- **If autonomous mode**: Log the reframing to scratchpad and proceed with the most conservative interpretation
+
+### When to Skip
+
+Pre-Execution Verification is MANDATORY for `moderate` and `complex` tasks. It MAY be skipped for `simple` tasks (single-file, <10 lines, unambiguous intent) — but assumptions must still be documented in the agent response's `decisions` field.
+
+### Integration
+
+- **Deviation Prevention**: Directly prevents `LLM-019` (silent assumption-making) and `LLM-020` (orthogonal changes)
+- **Handoff Protocol**: Reframed success criteria carry forward in the `acceptance_criteria` field of the Agent Request message
+- **Reflection Protocol**: Satisfies the "Assumption Check" from `agents/_reflection-protocol.md`
+
+---
+
 ## Message Format
 
 ### Agent Request (Inbound)

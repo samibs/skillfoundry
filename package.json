@@ -1,6 +1,6 @@
 {
   "name": "skillfoundry",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "description": "AI engineering framework — turn requirements into tested, production-ready code with quality gates your AI can't skip",
   "type": "module",
   "bin": {
