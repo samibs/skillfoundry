@@ -23,6 +23,7 @@ The Anvil is a 7-tier validation system that runs between every agent phase in t
 | **T2** | Canary Smoke Test | Quick execution test | After Coder, before Tester | Fundamental breakage — module won't import, won't compile |
 | **T3** | Self-Adversarial Review | Coder self-critique | After Coder writes code | Coder's blind spots, untested failure modes |
 | **T4** | Scope Validation | Diff comparison | In Gate-Keeper validation | Scope creep, incomplete implementation |
+| **T4b** | Traceability Test | Line-level diff analysis | In Gate-Keeper validation (after T4) | Orthogonal changes — lines that don't trace to the request (see `LLM-020`) |
 | **T5** | Contract Enforcement | API contract check | In Gate-Keeper validation | API drift, wrong signatures, missing endpoints |
 | **T6** | Shadow Tester | Parallel risk agent | Concurrent with Coder | Risk prioritization for Tester, early warnings |
 
@@ -52,6 +53,7 @@ FOR EACH story:
 
   4. Gate-Keeper validates
      └── ANVIL T4: Scope validation (expected vs actual files)
+     └── ANVIL T4b: Traceability test (every changed line traces to request)
      └── ANVIL T5: Contract enforcement (API matches declaration)
 ```
 
@@ -103,6 +105,8 @@ Action: CONTINUE / FIX_REQUIRED / BLOCK
 | Expected file not changed | BLOCK |
 | API contract mismatch | BLOCK |
 | Unexpected file changed (scope creep) | WARN |
+| Changed line not traceable to request (T4b) | WARN |
+| Changed line in security/auth file not traceable (T4b) | BLOCK |
 | Suspicious duplicate content | WARN |
 | Shadow tester HIGH risk | WARN |
 | Shadow tester MEDIUM risk | INFO |
@@ -160,6 +164,7 @@ Each tier has a dedicated protocol file:
 | T2 | `agents/_canary-smoke-test.md` |
 | T3 | `agents/_self-adversarial-review.md` |
 | T4 | `agents/_scope-validation.md` |
+| T4b | `agents/_scope-validation.md` (Traceability Test section) |
 | T5 | `agents/_contract-enforcement.md` |
 | T6 | `agents/_shadow-tester.md` |
 
@@ -176,6 +181,7 @@ Track Anvil effectiveness:
 | T2 canary catch rate (broken code before Tester) | >80% of import/compile errors |
 | T3 adversarial miss rate (failures coder missed) | <20% unmitigated failure modes |
 | T4 scope accuracy (expected vs actual) | >90% match rate |
+| T4b traceability accuracy (lines traceable to request) | >95% of changed lines traceable |
 | T5 contract match (API implementation vs spec) | 100% for declared endpoints |
 | T6 risk prediction accuracy | >60% of HIGH risks confirmed by Tester |
 

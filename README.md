@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.0.0-blue)
+![Version](https://img.shields.io/badge/version-5.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,7 +24,18 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.0.0
+### What's New in v5.1.0
+
+**Karpathy-Inspired Agent Intelligence — Goal Reframing, Assumption Surfacing, Traceability Gate**
+
+Inspired by [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (16.2k stars). Three improvements that close gaps in LLM self-discipline.
+
+- **Pre-Execution Verification Protocol** — Agents must reframe imperative requests into verifiable success criteria before implementation. Surfaces assumptions explicitly, presents multiple interpretations when ambiguous. Mandatory for moderate/complex tasks.
+- **Anvil T4b: Traceability Test** — Line-level validation that every changed line traces to the user's request. Categorizes lines as Direct/Supporting/Orthogonal/Suspicious. Orthogonal changes in security files auto-block. Prevents drive-by refactoring.
+- **3 New LLM Deviation Patterns** — LLM-019 (silent assumption-making), LLM-020 (orthogonal changes), LLM-021 (not pushing back on complexity). Total deviation patterns: 164.
+
+<details>
+<summary><strong>What was in v5.0.0</strong></summary>
 
 **Major: Learning-Driven Intelligence — Secret Guard, Deviation Enforcer, Import Validator, Correction Feedback Loop, Health Scores**
 
@@ -32,13 +43,15 @@ Built from analysis of 2,792 harvested artifacts, 115 AI session transcripts, an
 
 - **Secret Guard Agent** (`sf_secret_guard`) — Pre-commit secret detection: 11 rules for API keys, passwords, tokens, DB URLs, JWT secrets, AWS keys, Stripe keys. False-positive filtering (validation messages, localhost, test fixtures, comments). Cross-references `process.env.*` against `.env.example` for completeness.
 - **Import Resolution Validator** (`sf_import_validator`) — Validates every `import`/`require` resolves to an actual package or local file. Detects missing npm packages, broken local imports, native module dependencies (better-sqlite3, sharp, bcrypt). Supports JS/TS/Python.
-- **Deviation Enforcement Engine** (`sf_deviation_enforcer`) — Programmatic enforcement of 161 known LLM failure patterns across 16 categories (Frontend, Backend, Database, TypeScript, Security, Auth, Error Handling, LLM-Specific). Regex-based detection stored in SQLite, queryable, extensible.
+- **Deviation Enforcement Engine** (`sf_deviation_enforcer`) — Programmatic enforcement of 164 known LLM failure patterns across 16 categories (Frontend, Backend, Database, TypeScript, Security, Auth, Error Handling, LLM-Specific). Regex-based detection stored in SQLite, queryable, extensible.
 - **Enhanced Contract Resolution** (`sf_contract_check`) — NestJS `@Controller` prefix + `@Get/@Post` route resolution. FastAPI `APIRouter(prefix=...)` support. Centralized API client `baseURL` tracing (`axios.create({ baseURL })` → path joining). Match rate improved from 17.5% to 70.8%.
 - **Correction Feedback Loop** — Analyzes user corrections from AI sessions, groups by semantic similarity, auto-generates deviation rules when a pattern appears 3+ times across 2+ projects. Closes the loop between human feedback and agent behavior.
 - **Project Health Scores** — Per-project A-F grades with 0-100 scoring based on security findings, contract mismatches, import errors, and secret detections. Fleet-wide health summary in nightly reports. Trend tracking via `project_health_scores` table.
 - **Nightly Report Trends** — Enhanced nightly harvest pipeline with all new agents integrated. Reports now include secret guard findings, import errors, deviation violations, correction patterns, and fleet health scores.
 - **Path Validation** — All MCP tool endpoints validate `projectPath` against an allowlist, resolve the path, and verify it's a real directory. Prevents path traversal attacks.
 - **22 Total Tool Agents** — 12 Tier 1-3 (Build, Test, Deps, Port, Git, TypeCheck, Lint, Migration, Env, Lighthouse, Docker, Nginx) + 5 Tier 4 (Contract Check, Project Context, Security Scan Lite, Version Check, Session Recorder) + 5 new v5 agents (Secret Guard, Import Validator, Deviation Enforcer, Contract Check Enhanced, Query Corrections).
+
+</details>
 
 ```
 Connect from any IDE:
