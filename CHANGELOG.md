@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.3.0] - 2026-04-16
+
+### Hook-Based Workflow Enforcement — GateGuard, Config Protection, Session Quality
+
+Adds a production hook system that enforces coding discipline at the tool level. Inspired by patterns from `everything-claude-code`, adapted and integrated into SkillFoundry's existing settings architecture.
+
+#### GateGuard — Force-Read-Before-Edit
+- PreToolUse hook on Edit/Write blocks modifications to files the agent hasn't Read yet
+- Prevents "vibe coding" where agents modify files without understanding existing imports, data shapes, or patterns
+- Directly enforces the Frontend-Backend Contract Rule from CLAUDE.md at the hook level
+- New file creation (Write to non-existent path) is exempt
+- State tracked per-session in `.claude/hooks/state/gateguard-reads.log`
+
+#### Config Protection — Linter/Formatter Shield
+- PreToolUse hook on Edit/Write blocks changes to 30+ protected config files
+- Covers ESLint, Prettier, TypeScript (tsconfig), Biome, Stylelint, EditorConfig, Ruff, Flake8, MyPy, Pylint
+- Forces agents to fix code to satisfy rules instead of weakening rules to satisfy code
+- User can override by explicit approval when genuine config updates are needed
+
+#### Post-Edit Accumulator — Session Quality Report
+- PostToolUse hook on Edit/Write records every edited `.ts/.tsx/.js/.jsx/.py/.css/.json` file
+- Stop hook runs batch Prettier check + `tsc --noEmit` + Ruff on all accumulated files
+- Reports formatting issues, type errors, and lint violations as a session summary
+- Non-blocking: reports issues but doesn't prevent session end
+
+#### Session Lifecycle
+- SessionStart hook clears stale state from previous sessions
+- All state files ephemeral (`.claude/hooks/state/` added to `.gitignore`)
+- Hooks use `$CLAUDE_PROJECT_DIR` for portable paths across environments
+
+#### Infrastructure
+- 6 new hook scripts in `.claude/hooks/`
+- Updated `.claude/settings.json` with SessionStart, PreToolUse, PostToolUse, and Stop hook configurations
+- All hooks have 5-second timeouts (60s for batch-check at Stop)
+- Existing `validate-bash.sh` hook preserved and upgraded to use `$CLAUDE_PROJECT_DIR` paths
+
+---
+
 ## [5.2.0] - 2026-04-02
 
 ### Multi-Tenant Security Enforcement — PRD-to-Code Traceability

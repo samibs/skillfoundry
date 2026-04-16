@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.2.0-blue)
+![Version](https://img.shields.io/badge/version-5.3.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,17 +24,20 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.2.0
+### What's New in v5.3.0
 
-**Multi-Tenant Security Enforcement — PRD-to-Code Traceability**
+**Hook-Based Workflow Enforcement — GateGuard, Config Protection, Session Quality**
 
-v5.2.0 closes the #1 gap in AI-generated multi-tenant apps: the PRD says "multi-tenant" but the agent builds flat storage, unprotected downloads, and no tenant scoping. Three layers of defense now prevent this.
+v5.3.0 adds a production hook system that enforces coding discipline at the tool level, preventing agents from modifying files they haven't read, weakening linter configs, or shipping unchecked code.
 
-- **Auto-Injected Security Stories** — When a PRD mentions "multi-tenant" or "multi-user", the story generator automatically injects 4-6 mandatory security stories (SEC-001 through SEC-006) covering tenant data models, scoped queries, tenant-scoped file storage, auth on every endpoint, and cross-tenant isolation tests. These stories **block** all endpoint/model/storage stories until tenant isolation is in place.
-- **Multi-Tenant Isolation Gate** — The Gate Keeper now cross-references PRD claims against actual code. 7 mandatory checks: tenant_id on models, scoped queries, tenant-scoped storage, auth on all endpoints, ownership on downloads, no hardcoded credentials, cross-tenant tests. BLOCK on any failure.
-- **10 New Deviation Patterns (MT-001–MT-010)** — Flat storage, unscoped queries, PRD-to-code drift, existing security bypass, path traversal, hardcoded credentials, tenant ID from request body. Every agent is now aware of these patterns.
-- **PRD Template §4.2.1** — New Multi-Tenant Isolation section forces developers to specify tenancy model, scoping strategy, and file storage isolation before implementation begins.
-- **MCP Install for VS Code** — Installer now creates `.vscode/mcp.json` and `.github/copilot-instructions.md` so VS Code Copilot Chat discovers SkillFoundry tools without manual setup.
+- **GateGuard** — Blocks Edit/Write on any file the agent hasn't Read yet. Prevents "vibe coding" where agents modify files without understanding existing imports, data shapes, or patterns. Directly enforces the Frontend-Backend Contract Rule at the hook level.
+- **Config Protection** — Blocks changes to 30+ linter/formatter configs (ESLint, Prettier, tsconfig, Biome, Ruff, MyPy, Pylint). Forces agents to fix code instead of weakening rules.
+- **Session Quality Report** — Accumulates all edited files during a session, then batch-runs Prettier + `tsc --noEmit` + Ruff at session end. Reports formatting, type, and lint issues before you commit.
+- **Session Lifecycle** — SessionStart hook clears stale state; all hook state is ephemeral and gitignored.
+
+#### Previous: Multi-Tenant Security (v5.2.0)
+
+- Auto-injected security stories (SEC-001–SEC-006), Multi-Tenant Isolation Gate (7 checks), 10 deviation patterns (MT-001–MT-010), PRD Template §4.2.1, MCP Install for VS Code.
 
 #### Previous: Harness Engineering (v5.1.0)
 
