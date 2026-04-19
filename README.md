@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.3.0-blue)
+![Version](https://img.shields.io/badge/version-5.4.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,16 +24,20 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.3.0
+### What's New in v5.4.0
 
-**Hook-Based Workflow Enforcement — GateGuard, Config Protection, Session Quality**
+**Token Optimization Engine — Response Compression, Concise Mode, Usage Tracking**
 
-v5.3.0 adds a production hook system that enforces coding discipline at the tool level, preventing agents from modifying files they haven't read, weakening linter configs, or shipping unchecked code.
+v5.4.0 addresses the #1 hidden cost in AI-assisted development: every tool response becomes part of the conversation history and gets re-read on every subsequent turn. The new token optimization engine reduces the framework's token footprint across all 124+ tools.
 
-- **GateGuard** — Blocks Edit/Write on any file the agent hasn't Read yet. Prevents "vibe coding" where agents modify files without understanding existing imports, data shapes, or patterns. Directly enforces the Frontend-Backend Contract Rule at the hook level.
-- **Config Protection** — Blocks changes to 30+ linter/formatter configs (ESLint, Prettier, tsconfig, Biome, Ruff, MyPy, Pylint). Forces agents to fix code instead of weakening rules.
-- **Session Quality Report** — Accumulates all edited files during a session, then batch-runs Prettier + `tsc --noEmit` + Ruff at session end. Reports formatting, type, and lint issues before you commit.
-- **Session Lifecycle** — SessionStart hook clears stale state; all hook state is ephemeral and gitignored.
+- **Response Optimizer** — All JSON tool responses now go through smart compaction: null/empty field stripping, size-aware formatting (pretty for small, minimal for large), array truncation at 50 items, and hard cap at ~8.5K tokens with summary headers.
+- **Concise Mode** — Every LLM skill tool now accepts `concise: true` to strip examples, large tables, blockquotes, and verbose sections. Reduces skill prompt tokens by 40-65%. Use on repeated/familiar skills.
+- **Token Tracker** — SQLite-persisted per-session and daily token usage tracking with budget warnings at 100K/200K/500K thresholds. Estimated cost calculation at Sonnet input pricing.
+- **`sf_token_report`** — New MCP tool for real-time token usage visibility. Shows per-tool breakdown, session totals, daily aggregates, and cost estimates.
+
+#### Previous: Hook Enforcement (v5.3.0)
+
+- GateGuard (force-read-before-edit), Config Protection (30+ linter/formatter configs), Session Quality Report, Session Lifecycle hooks.
 
 #### Previous: Multi-Tenant Security (v5.2.0)
 

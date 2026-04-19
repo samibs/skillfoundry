@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.4.0] - 2026-04-19
+
+### Token Optimization Engine — Response Compression, Concise Mode, Usage Tracking
+
+Addresses the #1 hidden cost in AI-assisted development: tool responses become conversation history and get re-tokenized on every subsequent turn. 98.5% of tokens go to rereading old context — this release cuts the framework's contribution to that cost.
+
+#### Response Optimizer (`response-optimizer.ts`)
+- All JSON tool responses now go through smart compaction before returning to the LLM
+- Strips null/undefined/empty fields from JSON payloads
+- Size-aware formatting: pretty-print for <2KB, single-indent for <8KB, minimal for larger
+- Array truncation at 50 items with count summary
+- Hard output cap at ~30K chars (~8.5K tokens) with truncation summary header
+- Applied to all tool agents (handler.ts) and dispatch agents (tool-dispatch.ts)
+
+#### Concise Mode — Skill Prompt Compression
+- Every LLM skill tool now accepts `concise: true` parameter
+- Strips code examples, large table rows (keeps header + 3 rows), blockquotes, and verbose sections
+- Collapses consecutive blank lines
+- Typical reduction: 40-65% fewer tokens per skill invocation
+- Use on repeated/familiar skills where full instruction set isn't needed
+
+#### Token Tracker (`token-tracker.ts`) — Persistent Usage Tracking
+- SQLite-persisted per-session and daily token usage (survives server restarts)
+- Tracks output tokens and character count per tool invocation
+- Per-session ID with automatic session management
+- Budget warnings at 100K (note), 200K (warning), 500K (critical) token thresholds
+- Estimated cost calculation at Sonnet input pricing (tool outputs become input on re-read)
+- New `token_usage` table with indexes on session_id, created_at, tool_name
+
+#### `sf_token_report` — New MCP Tool
+- Real-time token usage visibility for current session or daily aggregate
+- Per-tool breakdown: invocations, total output tokens, average output tokens
+- Session duration tracking
+- Daily reports via `date` parameter (e.g., `"2026-04-19"`)
+- Cost estimates and actionable budget warnings
+
+#### Infrastructure
+- `handler.ts`: All 15+ inline JSON responses replaced with `optimizeJsonResponse()` calls
+- `tool-dispatch.ts`: `jsonResult()` helper now routes through response optimizer
+- `server.ts`: Token tracking table initialized at startup alongside metrics
+- `handler.ts`: MCP server version updated from 5.2.0 to 5.4.0
+- `routes.ts`: API version corrected from 5.2.0 to 5.4.0
+- `server.ts`: Boot log version corrected from 5.2.0 to 5.4.0
+
+---
+
 ## [5.3.0] - 2026-04-16
 
 ### Hook-Based Workflow Enforcement — GateGuard, Config Protection, Session Quality
