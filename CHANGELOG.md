@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.5.0] - 2026-04-19
+
+### Hermes-Inspired Intelligence — Context Summarization, Memory Nudges, Session Search
+
+Three features adapted from NousResearch's Hermes Agent framework, closing gaps in context preservation, selective memory, and history search.
+
+#### LLM Context Summarizer (`context-summarizer.ts`)
+- Replaces mechanical "[N messages omitted]" with Haiku-generated semantic summaries
+- Preserves decisions, tool results, file changes, and error resolutions from pruned messages
+- Cost: ~$0.0003 per summarization call (200 input + 200 output tokens on Haiku)
+- Graceful fallback to mechanical summary if no API key or LLM call fails
+- Input capped at ~2000 tokens to keep summarization fast and cheap
+- Only triggers when 4+ messages are pruned (small compactions use mechanical summary)
+
+#### Memory Nudge System (`memory-nudge.ts`)
+- Monitors 13 nudge-worthy tools (security scans, builds, tests, linters, contract checks)
+- After error results, generates contextual suggestions for patterns worth recording
+- Each nudge includes: pattern description, why it matters, suggested entry type, scope, and tags
+- Capped at 10 nudges per session to avoid noise
+- Nudges appended to tool responses so the LLM can decide whether to record
+- Directly references `sf_session_record` with pre-filled parameters for easy recording
+
+#### Full-Text Session Search (`session-search.ts`)
+- SQLite FTS5 virtual tables for tool response history and session recordings
+- Porter stemming + unicode61 tokenizer for intelligent matching
+- FTS5 query syntax: quoted phrases, AND/OR/NOT operators, prefix* matching
+- Combined search across tool responses and knowledge base with relevance ranking
+- Snippet extraction with highlight markers for context
+- New `tool_response_log` table stores truncated (2KB) summaries of all tool responses
+- Auto-sync triggers keep FTS indexes updated on every INSERT
+- `rebuildSearchIndexes()` for bulk re-indexing after data imports
+
+#### New MCP Tool: `sf_memory_search`
+- Full-text search across ALL session history — tool responses and session recordings
+- Filter by scope (tools/recordings/all), tool name, or app name
+- Returns ranked results with snippets, timestamps, and metadata
+- Addresses the "I fixed this before but can't find where" problem
+
+#### Infrastructure
+- `server.ts`: FTS5 tables initialized at startup via `ensureSearchTables()`
+- `handler.ts`: Every tool response now indexed via `indexToolResponse()` in the `tracked()` wrapper
+- `handler.ts`: Memory nudges injected after tool error results
+- All version references bumped to 5.5.0 (server, API, MCP protocol, packages)
+
+---
+
 ## [5.4.0] - 2026-04-19
 
 ### Token Optimization Engine — Response Compression, Concise Mode, Usage Tracking

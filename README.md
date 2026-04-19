@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.4.0-blue)
+![Version](https://img.shields.io/badge/version-5.5.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,16 +24,19 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.4.0
+### What's New in v5.5.0
 
-**Token Optimization Engine — Response Compression, Concise Mode, Usage Tracking**
+**Hermes-Inspired Intelligence — Context Summarization, Memory Nudges, Session Search**
 
-v5.4.0 addresses the #1 hidden cost in AI-assisted development: every tool response becomes part of the conversation history and gets re-read on every subsequent turn. The new token optimization engine reduces the framework's token footprint across all 124+ tools.
+v5.5.0 brings three features inspired by NousResearch's Hermes Agent framework, adapted for SkillFoundry's MCP architecture:
 
-- **Response Optimizer** — All JSON tool responses now go through smart compaction: null/empty field stripping, size-aware formatting (pretty for small, minimal for large), array truncation at 50 items, and hard cap at ~8.5K tokens with summary headers.
-- **Concise Mode** — Every LLM skill tool now accepts `concise: true` to strip examples, large tables, blockquotes, and verbose sections. Reduces skill prompt tokens by 40-65%. Use on repeated/familiar skills.
-- **Token Tracker** — SQLite-persisted per-session and daily token usage tracking with budget warnings at 100K/200K/500K thresholds. Estimated cost calculation at Sonnet input pricing.
-- **`sf_token_report`** — New MCP tool for real-time token usage visibility. Shows per-tool breakdown, session totals, daily aggregates, and cost estimates.
+- **LLM Context Summarizer** — When conversation context is compacted, pruned messages are summarized by Haiku (~$0.0003/call) instead of replaced with a mechanical placeholder. Preserves decisions, tool results, and key findings that the sliding window would discard.
+- **Memory Nudge System** — After tool invocations that find issues (security scans, build failures, contract mismatches), the framework suggests patterns worth recording. Reduces memory bloat by prompting selective recording instead of saving everything.
+- **Full-Text Session Search** (`sf_memory_search`) — SQLite FTS5-powered search across all tool responses and session recordings. Supports quoted phrases, boolean operators (AND/OR/NOT), and prefix matching. Addresses "I fixed this before but can't find where."
+
+#### Previous: Token Optimization (v5.4.0)
+
+- Response Optimizer (JSON compaction, concise mode, output truncation), Token Tracker (SQLite-persisted), sf_token_report tool.
 
 #### Previous: Hook Enforcement (v5.3.0)
 
@@ -41,15 +44,11 @@ v5.4.0 addresses the #1 hidden cost in AI-assisted development: every tool respo
 
 #### Previous: Multi-Tenant Security (v5.2.0)
 
-- Auto-injected security stories (SEC-001–SEC-006), Multi-Tenant Isolation Gate (7 checks), 10 deviation patterns (MT-001–MT-010), PRD Template §4.2.1, MCP Install for VS Code.
+- Auto-injected security stories (SEC-001–SEC-006), Multi-Tenant Isolation Gate (7 checks), 10 deviation patterns (MT-001–MT-010).
 
-#### Previous: Harness Engineering (v5.1.0)
+#### Previous: Harness Engineering + Learning Intelligence (v5.0–5.1)
 
-- Self-contained tool modules (15 folders, auto-discovered), permission engine, streaming protocol, session intelligence, 7-stage bootstrap, verification agent, command graph, enhanced health.
-
-#### Previous: Learning-Driven Intelligence (v5.0.0)
-
-- Secret Guard, Import Validator, Deviation Enforcer (161 rules), Enhanced Contracts, Correction Loop, Health Scores, 22 tool agents.
+- 22 tool agents, Secret Guard, Deviation Enforcer (161 rules), Import Validator, Correction Loop, Health Scores, harness engineering upgrade.
 
 ```
 Connect from any IDE:
