@@ -28,6 +28,16 @@ import {
   getDailyTokenReport,
   type TokenTracker,
 } from "./token-tracker.js";
+import {
+  analyzeForNudge,
+  formatNudge,
+} from "./memory-nudge.js";
+import {
+  indexToolResponse,
+  searchHistory,
+  rebuildSearchIndexes,
+} from "./session-search.js";
+import { getSessionId } from "./token-tracker.js";
 import { stat } from "fs/promises";
 import pathMod from "path";
 
@@ -250,7 +260,7 @@ export function createMcpServer(
   skills: Map<string, SkillDefinition>
 ): Server {
   const server = new Server(
-    { name: "skillfoundry", version: "5.4.0" },
+    { name: "skillfoundry", version: "5.5.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -305,6 +315,41 @@ export function createMcpServer(
       },
     });
 
+    tools.push({
+      name: "sf_memory_search",
+      description:
+        "Full-text search across ALL session history — tool responses, session recordings, and knowledge base. " +
+        "Supports FTS5 query syntax: quotes for exact phrases, AND/OR/NOT, prefix* matching. " +
+        "Use to find past fixes, decisions, patterns, and errors across all projects.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          query: {
+            type: "string",
+            description: 'FTS5 search query (e.g., "prisma migration", "auth* AND error", "contract mismatch")',
+          },
+          scope: {
+            type: "string",
+            enum: ["all", "tools", "recordings"],
+            description: "Search scope: all (default), tools (tool responses only), recordings (knowledge base only)",
+          },
+          toolName: {
+            type: "string",
+            description: "Filter by tool name (e.g., sf_build, sf_security_scan)",
+          },
+          appName: {
+            type: "string",
+            description: "Filter by project/app name",
+          },
+          limit: {
+            type: "number",
+            description: "Max results (default: 20)",
+          },
+        },
+        required: ["query"],
+      },
+    });
+
     return { tools };
   });
 
@@ -319,10 +364,21 @@ export function createMcpServer(
       concise: typedArgs.concise === true,
     };
 
-    // Helper: wrap tool result with token tracking
+    // Helper: wrap tool result with token tracking, FTS indexing, and memory nudges
     function tracked(result: { content: Array<{ type: string; text: string }>; isError?: boolean }) {
       const text = result.content.map((c) => c.text).join("");
       trackToolInvocation(name, text, Date.now() - startTime);
+
+      // Index for full-text search
+      indexToolResponse(getSessionId(), name, text, result.isError === true);
+
+      // Memory nudge: analyze noteworthy tool results for patterns worth recording
+      const nudge = analyzeForNudge(name, text, result.isError === true);
+      if (nudge) {
+        const nudgeText = formatNudge(nudge);
+        result.content.push({ type: "text" as const, text: nudgeText });
+      }
+
       return result;
     }
 
@@ -539,6 +595,26 @@ export function createMcpServer(
         ? getDailyTokenReport(reportDate)
         : getSessionTokenReport();
       return tracked(optimizeJsonResponse(report, false, optimizeOpts));
+    }
+
+    // ─── Session Search (FTS5) ───────────────────────────────
+    if (name === "sf_memory_search") {
+      const query = typedArgs.query as string;
+      if (!query || query.trim().length === 0) {
+        return tracked(optimizeJsonResponse({ error: "query is required" }, true, optimizeOpts));
+      }
+      const results = searchHistory({
+        query,
+        scope: (typedArgs.scope as "all" | "tools" | "recordings") || "all",
+        toolName: typedArgs.toolName as string | undefined,
+        appName: typedArgs.appName as string | undefined,
+        limit: (typedArgs.limit as number) || 20,
+      });
+      return tracked(optimizeJsonResponse({
+        query,
+        results,
+        meta: { total: results.length, scope: typedArgs.scope || "all" },
+      }, false, optimizeOpts));
     }
 
     // ─── LLM Skills (prompt context) ────────────────────────────

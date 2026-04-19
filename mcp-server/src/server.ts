@@ -6,6 +6,7 @@ import { createApiRouter, setBootstrapState, setRegisteredTools } from "./api/ro
 import { initDatabase, getCertifiedSkills } from "./state/db.js";
 import { ensureMetricsTable } from "./state/metrics.js";
 import { ensureTokenTrackingTable } from "./mcp/token-tracker.js";
+import { ensureSearchTables } from "./mcp/session-search.js";
 import { createBootstrapPipeline } from "./bootstrap/index.js";
 import { ToolRegistry } from "./tools/registry.js";
 import path from "path";
@@ -24,7 +25,7 @@ const SKILL_DIRS = [
 ];
 
 async function main(): Promise<void> {
-  console.log("SkillFoundry MCP Server v5.4.0");
+  console.log("SkillFoundry MCP Server v5.5.0");
   console.log(`Framework root: ${FRAMEWORK_ROOT}`);
   console.log(`Skill directories: ${SKILL_DIRS.join(", ")}`);
 
@@ -32,7 +33,8 @@ async function main(): Promise<void> {
   await initDatabase();
   ensureMetricsTable();
   ensureTokenTrackingTable();
-  console.log("Database initialized (with token tracking)");
+  ensureSearchTables();
+  console.log("Database initialized (with token tracking + FTS5 search)");
 
   // Load all skills (static .md files)
   const skills = await loadSkills(SKILL_DIRS);
