@@ -1,5 +1,6 @@
 /**
  * Tool Dispatch — routes MCP tool calls to the appropriate agent.
+ * Uses response optimizer for token-efficient JSON serialization.
  */
 
 import { runBuild } from "../agents/build-agent.js";
@@ -19,15 +20,13 @@ import { generateProjectContext } from "../agents/project-context-agent.js";
 import { runSecurityScanLite } from "../agents/security-scan-lite-agent.js";
 import { checkVersions } from "../agents/version-check-agent.js";
 import { handleSessionRecording } from "../agents/session-recorder-agent.js";
+import { optimizeJsonResponse } from "./response-optimizer.js";
 
 type McpContent = { type: "text"; text: string };
 type McpResult = { content: McpContent[]; isError?: boolean };
 
 function jsonResult(data: unknown, isError = false): McpResult {
-  return {
-    content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
-    isError,
-  };
+  return optimizeJsonResponse(data, isError);
 }
 
 /**

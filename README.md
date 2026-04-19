@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.1.0-blue)
+![Version](https://img.shields.io/badge/version-5.4.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,34 +24,32 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.1.0
+### What's New in v5.4.0
 
-**Karpathy-Inspired Agent Intelligence — Goal Reframing, Assumption Surfacing, Traceability Gate**
+**Token Optimization Engine — Response Compression, Concise Mode, Usage Tracking**
 
-Inspired by [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (16.2k stars). Three improvements that close gaps in LLM self-discipline.
+v5.4.0 addresses the #1 hidden cost in AI-assisted development: every tool response becomes part of the conversation history and gets re-read on every subsequent turn. The new token optimization engine reduces the framework's token footprint across all 124+ tools.
 
-- **Pre-Execution Verification Protocol** — Agents must reframe imperative requests into verifiable success criteria before implementation. Surfaces assumptions explicitly, presents multiple interpretations when ambiguous. Mandatory for moderate/complex tasks.
-- **Anvil T4b: Traceability Test** — Line-level validation that every changed line traces to the user's request. Categorizes lines as Direct/Supporting/Orthogonal/Suspicious. Orthogonal changes in security files auto-block. Prevents drive-by refactoring.
-- **3 New LLM Deviation Patterns** — LLM-019 (silent assumption-making), LLM-020 (orthogonal changes), LLM-021 (not pushing back on complexity). Total deviation patterns: 164.
+- **Response Optimizer** — All JSON tool responses now go through smart compaction: null/empty field stripping, size-aware formatting (pretty for small, minimal for large), array truncation at 50 items, and hard cap at ~8.5K tokens with summary headers.
+- **Concise Mode** — Every LLM skill tool now accepts `concise: true` to strip examples, large tables, blockquotes, and verbose sections. Reduces skill prompt tokens by 40-65%. Use on repeated/familiar skills.
+- **Token Tracker** — SQLite-persisted per-session and daily token usage tracking with budget warnings at 100K/200K/500K thresholds. Estimated cost calculation at Sonnet input pricing.
+- **`sf_token_report`** — New MCP tool for real-time token usage visibility. Shows per-tool breakdown, session totals, daily aggregates, and cost estimates.
 
-<details>
-<summary><strong>What was in v5.0.0</strong></summary>
+#### Previous: Hook Enforcement (v5.3.0)
 
-**Major: Learning-Driven Intelligence — Secret Guard, Deviation Enforcer, Import Validator, Correction Feedback Loop, Health Scores**
+- GateGuard (force-read-before-edit), Config Protection (30+ linter/formatter configs), Session Quality Report, Session Lifecycle hooks.
 
-Built from analysis of 2,792 harvested artifacts, 115 AI session transcripts, and 267 extracted insights across 49 projects. Every feature addresses a real, recurring problem measured from production data.
+#### Previous: Multi-Tenant Security (v5.2.0)
 
-- **Secret Guard Agent** (`sf_secret_guard`) — Pre-commit secret detection: 11 rules for API keys, passwords, tokens, DB URLs, JWT secrets, AWS keys, Stripe keys. False-positive filtering (validation messages, localhost, test fixtures, comments). Cross-references `process.env.*` against `.env.example` for completeness.
-- **Import Resolution Validator** (`sf_import_validator`) — Validates every `import`/`require` resolves to an actual package or local file. Detects missing npm packages, broken local imports, native module dependencies (better-sqlite3, sharp, bcrypt). Supports JS/TS/Python.
-- **Deviation Enforcement Engine** (`sf_deviation_enforcer`) — Programmatic enforcement of 164 known LLM failure patterns across 16 categories (Frontend, Backend, Database, TypeScript, Security, Auth, Error Handling, LLM-Specific). Regex-based detection stored in SQLite, queryable, extensible.
-- **Enhanced Contract Resolution** (`sf_contract_check`) — NestJS `@Controller` prefix + `@Get/@Post` route resolution. FastAPI `APIRouter(prefix=...)` support. Centralized API client `baseURL` tracing (`axios.create({ baseURL })` → path joining). Match rate improved from 17.5% to 70.8%.
-- **Correction Feedback Loop** — Analyzes user corrections from AI sessions, groups by semantic similarity, auto-generates deviation rules when a pattern appears 3+ times across 2+ projects. Closes the loop between human feedback and agent behavior.
-- **Project Health Scores** — Per-project A-F grades with 0-100 scoring based on security findings, contract mismatches, import errors, and secret detections. Fleet-wide health summary in nightly reports. Trend tracking via `project_health_scores` table.
-- **Nightly Report Trends** — Enhanced nightly harvest pipeline with all new agents integrated. Reports now include secret guard findings, import errors, deviation violations, correction patterns, and fleet health scores.
-- **Path Validation** — All MCP tool endpoints validate `projectPath` against an allowlist, resolve the path, and verify it's a real directory. Prevents path traversal attacks.
-- **22 Total Tool Agents** — 12 Tier 1-3 (Build, Test, Deps, Port, Git, TypeCheck, Lint, Migration, Env, Lighthouse, Docker, Nginx) + 5 Tier 4 (Contract Check, Project Context, Security Scan Lite, Version Check, Session Recorder) + 5 new v5 agents (Secret Guard, Import Validator, Deviation Enforcer, Contract Check Enhanced, Query Corrections).
+- Auto-injected security stories (SEC-001–SEC-006), Multi-Tenant Isolation Gate (7 checks), 10 deviation patterns (MT-001–MT-010), PRD Template §4.2.1, MCP Install for VS Code.
 
-</details>
+#### Previous: Harness Engineering (v5.1.0)
+
+- Self-contained tool modules (15 folders, auto-discovered), permission engine, streaming protocol, session intelligence, 7-stage bootstrap, verification agent, command graph, enhanced health.
+
+#### Previous: Learning-Driven Intelligence (v5.0.0)
+
+- Secret Guard, Import Validator, Deviation Enforcer (161 rules), Enhanced Contracts, Correction Loop, Health Scores, 22 tool agents.
 
 ```
 Connect from any IDE:

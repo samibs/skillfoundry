@@ -17,6 +17,17 @@ import { validateImports } from "../agents/import-validator-agent.js";
 import { enforceDeviations, loadDeviationCatalog } from "../agents/deviation-enforcer-agent.js";
 import { analyzeCorrections, queryProjectCorrections, getCorrectionTrend } from "../knowledge/correction-analyzer.js";
 import { checkContracts } from "../agents/contract-check-agent.js";
+import {
+  optimizeJsonResponse,
+  optimizeSkillResponse,
+  type OptimizeOptions,
+} from "./response-optimizer.js";
+import {
+  trackToolInvocation,
+  getSessionTokenReport,
+  getDailyTokenReport,
+  type TokenTracker,
+} from "./token-tracker.js";
 import { stat } from "fs/promises";
 import pathMod from "path";
 
@@ -239,7 +250,7 @@ export function createMcpServer(
   skills: Map<string, SkillDefinition>
 ): Server {
   const server = new Server(
-    { name: "skillfoundry", version: "5.0.0" },
+    { name: "skillfoundry", version: "5.4.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -263,6 +274,10 @@ export function createMcpServer(
               type: "string",
               description: "Optional arguments for the skill",
             },
+            concise: {
+              type: "boolean",
+              description: "Return compressed skill content (strips examples, tables, verbose sections). Reduces tokens by 40-65%. Use for repeated/familiar skills.",
+            },
           },
           required: ["projectPath"],
         },
@@ -273,6 +288,23 @@ export function createMcpServer(
     tools.push(...TOOL_AGENTS);
     tools.push(...ALL_TOOL_AGENTS);
 
+    // Token optimization tools
+    tools.push({
+      name: "sf_token_report",
+      description:
+        "Get token usage report for the current session or daily summary. " +
+        "Shows which tools consume the most output tokens, estimated cost, and budget warnings.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          date: {
+            type: "string",
+            description: "Date for daily report (YYYY-MM-DD). Omit for current session report.",
+          },
+        },
+      },
+    });
+
     return { tools };
   });
 
@@ -280,6 +312,19 @@ export function createMcpServer(
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
     const typedArgs = args as Record<string, unknown>;
+    const startTime = Date.now();
+
+    // Extract optimization options from args (available on all tools)
+    const optimizeOpts: OptimizeOptions = {
+      concise: typedArgs.concise === true,
+    };
+
+    // Helper: wrap tool result with token tracking
+    function tracked(result: { content: Array<{ type: string; text: string }>; isError?: boolean }) {
+      const text = result.content.map((c) => c.text).join("");
+      trackToolInvocation(name, text, Date.now() - startTime);
+      return result;
+    }
 
     // ─── Tool Agents (real execution) ───────────────────────────
     if (name === "sf_verify_auth") {
@@ -293,13 +338,7 @@ export function createMcpServer(
       };
 
       const result = await verifyAuthFlow(input);
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify(result, null, 2),
-        }],
-        isError: !result.passed,
-      };
+      return tracked(optimizeJsonResponse(result, !result.passed, optimizeOpts));
     }
 
     if (name === "sf_security_scan") {
@@ -310,13 +349,7 @@ export function createMcpServer(
       };
 
       const result = await runSemgrepScan(input);
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify(result, null, 2),
-        }],
-        isError: !result.passed,
-      };
+      return tracked(optimizeJsonResponse(result, !result.passed, optimizeOpts));
     }
 
     if (name === "sf_memory_gate") {
@@ -338,12 +371,7 @@ export function createMcpServer(
           evidenceSource
         );
 
-        return {
-          content: [{
-            type: "text" as const,
-            text: JSON.stringify({ entry, decision }, null, 2),
-          }],
-        };
+        return tracked(optimizeJsonResponse({ entry, decision }, false, optimizeOpts));
       }
 
       if (action === "promote") {
@@ -361,82 +389,54 @@ export function createMcpServer(
           evidenceSource
         );
 
-        return {
-          content: [{
-            type: "text" as const,
-            text: JSON.stringify(decision, null, 2),
-          }],
-        };
+        return tracked(optimizeJsonResponse(decision, false, optimizeOpts));
       }
 
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify({ error: `Unknown action: ${action}` }),
-        }],
-        isError: true,
-      };
+      return tracked(optimizeJsonResponse({ error: `Unknown action: ${action}` }, true, optimizeOpts));
     }
 
     // ─── Knowledge Harvester ──────────────────────────────────
     if (name === "sf_harvest_knowledge") {
       const appsRoot = typedArgs.appsRoot as string;
       const result = await runHarvest(appsRoot);
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify({
-            runId: result.runId,
-            appsScanned: result.aggregation.appsScanned,
-            appsWithData: result.aggregation.appsWithData,
-            totalForgeLogs: result.aggregation.totalForgeLogs,
-            failurePatterns: result.aggregation.failurePatterns.length,
-            newQuirksInserted: result.newQuirksInserted,
-            duplicatesSkipped: result.duplicatesSkipped,
-            topEvents: result.aggregation.stats.topEvents.slice(0, 5),
-            platformDistribution: result.aggregation.stats.platformDistribution,
-            duration: result.duration,
-          }, null, 2),
-        }],
-      };
+      return tracked(optimizeJsonResponse({
+        runId: result.runId,
+        appsScanned: result.aggregation.appsScanned,
+        appsWithData: result.aggregation.appsWithData,
+        totalForgeLogs: result.aggregation.totalForgeLogs,
+        failurePatterns: result.aggregation.failurePatterns.length,
+        newQuirksInserted: result.newQuirksInserted,
+        duplicatesSkipped: result.duplicatesSkipped,
+        topEvents: result.aggregation.stats.topEvents.slice(0, 5),
+        platformDistribution: result.aggregation.stats.platformDistribution,
+        duration: result.duration,
+      }, false, optimizeOpts));
     }
 
     if (name === "sf_query_quirks") {
       const framework = typedArgs.framework as string | undefined;
       const quirks = await getQuirks(framework);
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify({
-            data: quirks,
-            meta: { total: quirks.length, framework: framework || "all" },
-          }, null, 2),
-        }],
-      };
+      return tracked(optimizeJsonResponse({
+        data: quirks,
+        meta: { total: quirks.length, framework: framework || "all" },
+      }, false, optimizeOpts));
     }
 
     // ─── Secret Guard ────────────────────────────────────────
     if (name === "sf_secret_guard") {
       const pp = await validateProjectPath(typedArgs.projectPath);
       const result = await guardSecrets(pp);
-      // Redact matched content to prevent secret exfiltration
       for (const f of result.findings) {
         f.matchedContent = f.matchedContent.slice(0, 20) + "****[REDACTED]";
       }
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        isError: result.summary.total > 0,
-      };
+      return tracked(optimizeJsonResponse(result, result.summary.total > 0, optimizeOpts));
     }
 
     // ─── Import Validator ────────────────────────────────────
     if (name === "sf_import_validator") {
       const pp = await validateProjectPath(typedArgs.projectPath);
       const result = await validateImports(pp);
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        isError: result.summary.total > 0,
-      };
+      return tracked(optimizeJsonResponse(result, result.summary.total > 0, optimizeOpts));
     }
 
     // ─── Deviation Enforcer ──────────────────────────────────
@@ -446,20 +446,14 @@ export function createMcpServer(
       const maxV = typeof typedArgs.maxViolations === "number" && typedArgs.maxViolations > 0
         ? Math.min(typedArgs.maxViolations, 500) : 200;
       const result = await enforceDeviations(pp, undefined, { maxViolations: maxV });
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        isError: result.totalViolations > 0,
-      };
+      return tracked(optimizeJsonResponse(result, result.totalViolations > 0, optimizeOpts));
     }
 
     // ─── Contract Check ──────────────────────────────────────
     if (name === "sf_contract_check") {
       const pp = await validateProjectPath(typedArgs.projectPath);
       const result = await checkContracts(pp);
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
-        isError: !result.passed,
-      };
+      return tracked(optimizeJsonResponse(result, !result.passed, optimizeOpts));
     }
 
     // ─── Query Corrections ───────────────────────────────────
@@ -467,19 +461,15 @@ export function createMcpServer(
       const appName = typedArgs.appName as string | undefined;
       if (appName) {
         const patterns = queryProjectCorrections(appName);
-        return {
-          content: [{ type: "text" as const, text: JSON.stringify({ appName, patterns }, null, 2) }],
-        };
+        return tracked(optimizeJsonResponse({ appName, patterns }, false, optimizeOpts));
       }
       const trend = getCorrectionTrend();
-      return {
-        content: [{ type: "text" as const, text: JSON.stringify(trend, null, 2) }],
-      };
+      return tracked(optimizeJsonResponse(trend, false, optimizeOpts));
     }
 
     // ─── Tier 1/2/3 Tool Agents ─────────────────────────────
     const toolResult = await dispatchToolAgent(name, typedArgs);
-    if (toolResult) return toolResult;
+    if (toolResult) return tracked(toolResult);
 
     // ─── Skill Factory ────────────────────────────────────────
     if (name === "sf_create_skill") {
@@ -487,11 +477,8 @@ export function createMcpServer(
 
       try {
         const newSkill = await createSkill(description);
-
-        // Persist to SQLite
         insertDynamicSkill(newSkill);
 
-        // If certified, register as a live MCP tool
         if (newSkill.status === "certified" && newSkill.exportedContent) {
           skills.set(newSkill.name.toLowerCase().replace(/\s+/g, "-"), {
             name: newSkill.name.toLowerCase().replace(/\s+/g, "-"),
@@ -502,62 +489,56 @@ export function createMcpServer(
           });
         }
 
-        return {
-          content: [{
-            type: "text" as const,
-            text: JSON.stringify({
-              status: newSkill.status,
-              name: newSkill.name,
-              domain: newSkill.domain,
-              riskLevel: newSkill.riskLevel,
-              guardrails: newSkill.guardrails.length,
-              testScore: newSkill.testResults?.score,
-              certified: newSkill.status === "certified",
-              registeredAsMcpTool: newSkill.status === "certified",
-              mcpToolName: newSkill.status === "certified"
-                ? `sf_${newSkill.name.toLowerCase().replace(/\s+/g, "-")}`
-                : null,
-              tags: newSkill.tags,
-            }, null, 2),
-          }],
-          isError: newSkill.status === "failed",
-        };
+        return tracked(optimizeJsonResponse({
+          status: newSkill.status,
+          name: newSkill.name,
+          domain: newSkill.domain,
+          riskLevel: newSkill.riskLevel,
+          guardrails: newSkill.guardrails.length,
+          testScore: newSkill.testResults?.score,
+          certified: newSkill.status === "certified",
+          registeredAsMcpTool: newSkill.status === "certified",
+          mcpToolName: newSkill.status === "certified"
+            ? `sf_${newSkill.name.toLowerCase().replace(/\s+/g, "-")}`
+            : null,
+          tags: newSkill.tags,
+        }, newSkill.status === "failed", optimizeOpts));
       } catch (err) {
-        return {
-          content: [{
-            type: "text" as const,
-            text: JSON.stringify({
-              error: `Skill creation failed: ${(err as Error).message}`,
-            }),
-          }],
-          isError: true,
-        };
+        return tracked(optimizeJsonResponse(
+          { error: `Skill creation failed: ${(err as Error).message}` },
+          true,
+          optimizeOpts,
+        ));
       }
     }
 
     if (name === "sf_list_dynamic_skills") {
       const allSkills = listDynamicSkills();
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify({
-            data: allSkills.map((s) => ({
-              name: s.name,
-              status: s.status,
-              domain: s.domain,
-              riskLevel: s.riskLevel,
-              testScore: s.testResults?.score,
-              certified: s.status === "certified",
-              createdAt: s.createdAt,
-            })),
-            meta: {
-              total: allSkills.length,
-              certified: allSkills.filter((s) => s.status === "certified").length,
-              failed: allSkills.filter((s) => s.status === "failed").length,
-            },
-          }, null, 2),
-        }],
-      };
+      return tracked(optimizeJsonResponse({
+        data: allSkills.map((s) => ({
+          name: s.name,
+          status: s.status,
+          domain: s.domain,
+          riskLevel: s.riskLevel,
+          testScore: s.testResults?.score,
+          certified: s.status === "certified",
+          createdAt: s.createdAt,
+        })),
+        meta: {
+          total: allSkills.length,
+          certified: allSkills.filter((s) => s.status === "certified").length,
+          failed: allSkills.filter((s) => s.status === "failed").length,
+        },
+      }, false, optimizeOpts));
+    }
+
+    // ─── Token Budget Report ─────────────────────────────────
+    if (name === "sf_token_report") {
+      const reportDate = typedArgs.date as string | undefined;
+      const report = reportDate
+        ? getDailyTokenReport(reportDate)
+        : getSessionTokenReport();
+      return tracked(optimizeJsonResponse(report, false, optimizeOpts));
     }
 
     // ─── LLM Skills (prompt context) ────────────────────────────
@@ -565,37 +546,22 @@ export function createMcpServer(
     const skill = skills.get(skillName);
 
     if (!skill) {
-      return {
-        content: [{
-          type: "text" as const,
-          text: JSON.stringify({
-            error: `Unknown tool: ${name}`,
-            available: [...Array.from(skills.keys()).map(k => `sf_${k}`), ...TOOL_AGENTS.map(t => t.name)],
-          }),
-        }],
-        isError: true,
-      };
+      return tracked(optimizeJsonResponse({
+        error: `Unknown tool: ${name}`,
+        available: [...Array.from(skills.keys()).map(k => `sf_${k}`), ...TOOL_AGENTS.map(t => t.name)],
+      }, true, optimizeOpts));
     }
 
     const projectPath = typedArgs?.projectPath as string;
     const skillArgs = typedArgs?.args as string | undefined;
 
-    return {
-      content: [{
-        type: "text" as const,
-        text: [
-          `# Executing SkillFoundry skill: ${skill.name}`,
-          `**Project:** ${projectPath}`,
-          skillArgs ? `**Arguments:** ${skillArgs}` : "",
-          "",
-          "---",
-          "",
-          skill.content,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      }],
-    };
+    return tracked(optimizeSkillResponse(
+      skill.name,
+      skill.content,
+      projectPath,
+      skillArgs,
+      optimizeOpts,
+    ));
   });
 
   return server;

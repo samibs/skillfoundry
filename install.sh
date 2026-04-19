@@ -956,6 +956,69 @@ for plat in "${PLATFORMS[@]}"; do
 done
 
 # ═══════════════════════════════════════════════════════════════
+# PHASE 2.5: MCP Server Configuration (all platforms)
+# ═══════════════════════════════════════════════════════════════
+step "Configuring MCP Server connection..."
+
+MCP_PORT="${SKILLFOUNDRY_PORT:-9877}"
+MCP_URL="http://localhost:${MCP_PORT}/mcp/sse"
+
+# VS Code MCP config (.vscode/mcp.json) — works with Copilot Chat, Claude Code extension
+mkdir -p "$TARGET_DIR/.vscode"
+if [ ! -f "$TARGET_DIR/.vscode/mcp.json" ]; then
+    cat > "$TARGET_DIR/.vscode/mcp.json" << MCPEOF
+{
+  "servers": {
+    "skillfoundry": {
+      "type": "sse",
+      "url": "${MCP_URL}"
+    }
+  }
+}
+MCPEOF
+    echo -e "${GREEN}    ✓ VS Code MCP config installed (.vscode/mcp.json)${NC}"
+else
+    echo -e "${YELLOW}    ⚠ .vscode/mcp.json already exists — skipping${NC}"
+fi
+
+# GitHub Copilot instructions (.github/copilot-instructions.md)
+mkdir -p "$TARGET_DIR/.github"
+if [ ! -f "$TARGET_DIR/.github/copilot-instructions.md" ]; then
+    cat > "$TARGET_DIR/.github/copilot-instructions.md" << 'CPEOF'
+# Copilot Instructions — SkillFoundry Integration
+
+This project uses SkillFoundry via an MCP server. When the user asks you to forge, build, test, or run any SkillFoundry workflow, use the MCP tools. Do NOT try to run these as shell commands.
+
+## Key MCP Tools
+
+| User Says | MCP Tool | Description |
+|-----------|----------|-------------|
+| `/forge <prd>` | `sf_forge` | Full pipeline: validate, implement, test, audit |
+| `/go <prd>` | `sf_go` | PRD-first orchestrator |
+| `/prd "idea"` | `sf_prd` | Generate Product Requirements Document |
+| `/review` | `sf_review` | Code review |
+| `/architect` | `sf_architect` | Architecture design |
+| `/tester` | `sf_tester` | Test generation |
+| `/security` | `sf_security` | Security audit |
+
+## Tool Agents
+
+`sf_build`, `sf_run_tests`, `sf_typecheck`, `sf_lint`, `sf_git_status`, `sf_git_commit`,
+`sf_check_deps`, `sf_check_env`, `sf_migrate`, `sf_verify`, `sf_verify_auth`,
+`sf_security_scan`, `sf_lighthouse`, `sf_docker_build`, `sf_nginx_config`, `sf_assign_port`
+
+All tools require `projectPath` (use workspace root). Workflow tools accept optional `args`.
+If MCP server is down, tell the user: `pm2 start skillfoundry-mcp`
+CPEOF
+    echo -e "${GREEN}    ✓ Copilot instructions installed (.github/copilot-instructions.md)${NC}"
+else
+    echo -e "${YELLOW}    ⚠ .github/copilot-instructions.md already exists — skipping${NC}"
+fi
+
+echo -e "${GREEN}    ✓ MCP Server: ${MCP_URL}${NC}"
+echo -e "${BLUE}    ℹ  Start server: cd ${SCRIPT_DIR}/mcp-server && pm2 start ecosystem.config.cjs${NC}"
+
+# ═══════════════════════════════════════════════════════════════
 # PHASE 3: Build and deploy SkillFoundry CLI (sf command)
 # ═══════════════════════════════════════════════════════════════
 step "Building SkillFoundry CLI..."
