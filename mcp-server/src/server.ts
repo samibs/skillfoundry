@@ -2,9 +2,12 @@ import express from "express";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { loadSkills } from "./skills/loader.js";
 import { createMcpServer } from "./mcp/handler.js";
-import { createApiRouter } from "./api/routes.js";
+import { createApiRouter, setBootstrapState, setRegisteredTools } from "./api/routes.js";
 import { initDatabase, getCertifiedSkills } from "./state/db.js";
 import { ensureMetricsTable } from "./state/metrics.js";
+import { ensureTokenTrackingTable } from "./mcp/token-tracker.js";
+import { createBootstrapPipeline } from "./bootstrap/index.js";
+import { ToolRegistry } from "./tools/registry.js";
 import path from "path";
 
 const PORT = parseInt(process.env.SKILLFOUNDRY_PORT || "9877", 10);
@@ -21,14 +24,15 @@ const SKILL_DIRS = [
 ];
 
 async function main(): Promise<void> {
-  console.log("SkillFoundry MCP Server v5.0.0");
+  console.log("SkillFoundry MCP Server v5.4.0");
   console.log(`Framework root: ${FRAMEWORK_ROOT}`);
   console.log(`Skill directories: ${SKILL_DIRS.join(", ")}`);
 
-  // Initialize SQLite (knowledge store + metrics)
+  // Initialize SQLite (knowledge store + metrics + token tracking)
   await initDatabase();
   ensureMetricsTable();
-  console.log("Database initialized");
+  ensureTokenTrackingTable();
+  console.log("Database initialized (with token tracking)");
 
   // Load all skills (static .md files)
   const skills = await loadSkills(SKILL_DIRS);
@@ -48,6 +52,13 @@ async function main(): Promise<void> {
   }
 
   console.log(`Loaded ${skills.size} skills (${dynamicSkills.length} dynamic)`);
+
+  // Discover tool modules (compiled agents in src/tools/)
+  const toolRegistry = new ToolRegistry();
+  const toolsDir = path.join(import.meta.dirname, "tools");
+  await toolRegistry.discover(toolsDir);
+  setRegisteredTools(toolRegistry.list());
+  console.log(`Discovered ${toolRegistry.size} tool modules`);
 
   // Create MCP server
   const mcpServer = createMcpServer(skills);
@@ -104,6 +115,7 @@ async function main(): Promise<void> {
   app.listen(PORT, () => {
     console.log(`\nServer running on port ${PORT}`);
     console.log(`  Health:   http://localhost:${PORT}/health`);
+    console.log(`  Ready:    http://localhost:${PORT}/ready`);
     console.log(`  Agents:   http://localhost:${PORT}/api/v1/agents`);
     console.log(`  MCP SSE:  http://localhost:${PORT}/mcp/sse`);
     console.log(`\nTo connect from Claude Code, add to settings.json:`);
@@ -111,6 +123,15 @@ async function main(): Promise<void> {
       `  "mcpServers": { "skillfoundry": { "url": "http://localhost:${PORT}/mcp/sse" } }`
     );
   });
+
+  // Run bootstrap pipeline and publish state to health/ready endpoints
+  const pipeline = createBootstrapPipeline();
+  try {
+    await pipeline.run();
+  } catch (err) {
+    console.error("[bootstrap] Pipeline failed:", (err as Error).message);
+  }
+  setBootstrapState(pipeline.getState());
 }
 
 main().catch((err) => {

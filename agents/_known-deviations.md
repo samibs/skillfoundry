@@ -154,6 +154,23 @@
 | AUTH-007 | Missing CSRF protection on state-changing endpoints | POST/PUT/DELETE endpoints need CSRF tokens or SameSite cookie policy | security |
 | AUTH-008 | Token refresh doesn't rotate refresh token | Issue new refresh token on each use. Detect and block reuse of old refresh tokens | security |
 
+## CATEGORY 10b: Multi-Tenant Isolation Failures
+
+> THE silent data breach generator. The PRD says "multi-tenant" but the agent builds flat storage, unscoped queries, and unprotected downloads. Every pattern here was found in production AI-generated code. AutoKYC incident (2026-04-02).
+
+| ID | Pattern | Prevention | Agent |
+|----|---------|------------|-------|
+| MT-001 | Flat file storage without tenant directory | ALL file storage paths MUST include tenant: `tenants/{tenant_id}/...`. NEVER `uploads/{job_id}/` flat | security, data-architect |
+| MT-002 | Download/export endpoint without auth | EVERY file-serving route (FileResponse, sendFile, StreamingResponse) MUST have auth middleware | security, gate-keeper |
+| MT-003 | Unscoped database queries (returns all records) | EVERY query on user-data tables MUST filter by `tenant_id` or `user_id`. No `.all()` without scope | security, coder |
+| MT-004 | PRD says multi-tenant but code ignores it | Story generator MUST inject SEC stories. Gate keeper MUST cross-reference PRD claims vs code | gate-keeper, stories |
+| MT-005 | Existing security service bypassed by new code | Before adding storage/auth code, SEARCH for existing security patterns in the codebase and USE them | coder, architect |
+| MT-006 | Hardcoded default credentials in config | Config fields for passwords/secrets MUST have NO defaults. Require env vars | security, coder |
+| MT-007 | Download accepts user-supplied path (traversal) | NEVER pass raw user input to FileResponse/sendFile. Validate path belongs to requesting tenant | security, coder |
+| MT-008 | No cross-tenant isolation tests | Multi-tenant apps MUST have tests: User A cannot access User B's records/files. Not optional | tester, gate-keeper |
+| MT-009 | HTTPBasic auth on data endpoints | HTTPBasic is for internal/health endpoints only. User-facing data endpoints MUST use JWT/session auth | security |
+| MT-010 | Tenant ID from request body instead of auth token | Tenant scoping MUST derive from authenticated session, NEVER from request parameters | security, coder |
+
 ## CATEGORY 11: Frontend-Backend Contract Mismatches
 
 > THE quintessential vibe-coding failure. The LLM builds frontend and backend in the same session but they don't agree on data shapes, endpoints, or request formats. Each layer works in isolation but breaks when connected.

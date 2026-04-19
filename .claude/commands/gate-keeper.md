@@ -187,6 +187,32 @@ Every full-stack story must pass validation on ALL affected layers:
 | N+1 queries | BLOCK | → Data Architect |
 | Missing docs | BLOCK | → Documentation Codifier |
 | Accessibility violation | BLOCK | → Accessibility Specialist |
+| **Tenant isolation missing** | **BLOCK** | → Security Specialist |
+| **Unprotected download endpoint** | **BLOCK** | → Security Specialist |
+| **Flat file storage (no tenant path)** | **BLOCK** | → Data Architect |
+| **Hardcoded credentials** | **BLOCK** | → Security Specialist |
+
+### Multi-Tenant Isolation Gate (MANDATORY for multi-tenant PRDs)
+
+**Trigger:** PRD or CLAUDE.md mentions multi-tenant, multi-user, tenant_id, org_id, fiduciary
+
+When triggered, the Gate Keeper MUST verify ALL of the following before allowing passage:
+
+| Check | Evidence Required | Fail Action |
+|-------|-------------------|-------------|
+| **Every data model has tenant_id** | Grep models for tenant_id/org_id column | BLOCK: "Model {X} stores user data but has no tenant_id" |
+| **Every query is scoped** | Grep queries for WHERE tenant_id filter | BLOCK: "Query at {file}:{line} returns all records without tenant filter" |
+| **File storage is tenant-scoped** | Storage paths include tenant directory component | BLOCK: "Storage path '{path}' at {file}:{line} has no tenant isolation" |
+| **Every data endpoint has auth** | All routes have auth dependency/middleware | BLOCK: "Route {method} {path} at {file}:{line} has no auth middleware" |
+| **Download endpoints verify ownership** | File-serving routes check tenant before serving | BLOCK: "Download at {file}:{line} serves files without ownership check" |
+| **No hardcoded credentials** | Config files have no default passwords | BLOCK: "Default credential '{value}' at {file}:{line}" |
+| **Cross-tenant tests exist** | Test files contain tenant isolation assertions | BLOCK: "No cross-tenant isolation tests found" |
+
+**This gate is NON-NEGOTIABLE. A multi-tenant app that ships without these checks is a data breach waiting to happen.**
+
+The agent that wrote the code read the PRD. The PRD said multi-tenant. If the code doesn't enforce tenant isolation, the agent failed — and the Gate Keeper catches it.
+
+**PRD-to-Code Traceability:** If the PRD says "multi-tenant" or "multi-user", the Gate Keeper cross-references the PRD requirement against actual code. A PRD claim without matching implementation evidence is a BLOCK.
 
 ## ITERATION REQUIREMENTS
 

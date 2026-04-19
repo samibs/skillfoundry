@@ -7,40 +7,201 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [5.1.0] - 2026-04-14
+## [5.4.0] - 2026-04-19
 
-### Added — Karpathy-Inspired Agent Intelligence
+### Token Optimization Engine — Response Compression, Concise Mode, Usage Tracking
 
-**Derived from** [andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (16.2k stars) — three improvements that close gaps in LLM self-discipline: silent assumption-making, orthogonal code changes, and imperative-over-declarative task framing.
+Addresses the #1 hidden cost in AI-assisted development: tool responses become conversation history and get re-tokenized on every subsequent turn. 98.5% of tokens go to rereading old context — this release cuts the framework's contribution to that cost.
 
-#### Pre-Execution Verification Protocol (`_agent-protocol.md`)
-- New mandatory phase between Session Boot and task execution for moderate/complex tasks
-- **Goal Reframing**: Transforms imperative requests ("add caching") into verifiable success criteria ("repeated GET requests return cached response within <10ms")
-- **Assumption Surfacing**: Agents must list every assumption explicitly before proceeding — silent assumption-making is now a deviation violation (LLM-019)
-- **Interpretation Presentation**: When a request is ambiguous, agents present multiple interpretations instead of silently picking one
-- Skippable for simple tasks (<10 lines, unambiguous intent)
+#### Response Optimizer (`response-optimizer.ts`)
+- All JSON tool responses now go through smart compaction before returning to the LLM
+- Strips null/undefined/empty fields from JSON payloads
+- Size-aware formatting: pretty-print for <2KB, single-indent for <8KB, minimal for larger
+- Array truncation at 50 items with count summary
+- Hard output cap at ~30K chars (~8.5K tokens) with truncation summary header
+- Applied to all tool agents (handler.ts) and dispatch agents (tool-dispatch.ts)
 
-#### Anvil T4b: Traceability Test (`_scope-validation.md`, `_anvil-protocol.md`)
-- New sub-tier of T4 (Scope Validation) that validates at the **line level**, not just file level
-- Every changed line categorized as: Direct (PASS), Supporting (PASS), Orthogonal (WARN), Suspicious (BLOCK)
-- Orthogonal changes in security-sensitive files (auth, config, middleware) automatically BLOCK
-- >20% orthogonal lines triggers escalation regardless of file sensitivity
-- Prevents "while I'm here" drive-by refactoring (LLM-020)
-- Fixer Orchestrator generates surgical revert patches for flagged hunks only
+#### Concise Mode — Skill Prompt Compression
+- Every LLM skill tool now accepts `concise: true` parameter
+- Strips code examples, large table rows (keeps header + 3 rows), blockquotes, and verbose sections
+- Collapses consecutive blank lines
+- Typical reduction: 40-65% fewer tokens per skill invocation
+- Use on repeated/familiar skills where full instruction set isn't needed
 
-#### New LLM Deviation Patterns (LLM-019, LLM-020, LLM-021)
-- **LLM-019**: Silent assumption-making — picking one interpretation without asking when ambiguous
-- **LLM-020**: Orthogonal/drive-by changes — modifying unrelated code, unsolicited refactors, "while I'm here" cleanup
-- **LLM-021**: Not pushing back when a simpler alternative exists — decision complexity (distinct from LLM-014 code complexity)
-- All three patterns added to central deviation catalog and extracted `_deviations-llm.md`
-- Total deviation patterns: 164 (was 161)
+#### Token Tracker (`token-tracker.ts`) — Persistent Usage Tracking
+- SQLite-persisted per-session and daily token usage (survives server restarts)
+- Tracks output tokens and character count per tool invocation
+- Per-session ID with automatic session management
+- Budget warnings at 100K (note), 200K (warning), 500K (critical) token thresholds
+- Estimated cost calculation at Sonnet input pricing (tool outputs become input on re-read)
+- New `token_usage` table with indexes on session_id, created_at, tool_name
 
-#### Cross-References
-- Pre-Execution Verification references LLM-019 and LLM-020
-- T4b references LLM-020 and LLM-016
-- LLM-019 prevention references Pre-Execution Verification protocol
-- LLM-020 prevention references Anvil T4b traceability check
-- All references are bidirectional
+#### `sf_token_report` — New MCP Tool
+- Real-time token usage visibility for current session or daily aggregate
+- Per-tool breakdown: invocations, total output tokens, average output tokens
+- Session duration tracking
+- Daily reports via `date` parameter (e.g., `"2026-04-19"`)
+- Cost estimates and actionable budget warnings
+
+#### Infrastructure
+- `handler.ts`: All 15+ inline JSON responses replaced with `optimizeJsonResponse()` calls
+- `tool-dispatch.ts`: `jsonResult()` helper now routes through response optimizer
+- `server.ts`: Token tracking table initialized at startup alongside metrics
+- `handler.ts`: MCP server version updated from 5.2.0 to 5.4.0
+- `routes.ts`: API version corrected from 5.2.0 to 5.4.0
+- `server.ts`: Boot log version corrected from 5.2.0 to 5.4.0
+
+---
+
+## [5.3.0] - 2026-04-16
+
+### Hook-Based Workflow Enforcement — GateGuard, Config Protection, Session Quality
+
+Adds a production hook system that enforces coding discipline at the tool level. Inspired by patterns from `everything-claude-code`, adapted and integrated into SkillFoundry's existing settings architecture.
+
+#### GateGuard — Force-Read-Before-Edit
+- PreToolUse hook on Edit/Write blocks modifications to files the agent hasn't Read yet
+- Prevents "vibe coding" where agents modify files without understanding existing imports, data shapes, or patterns
+- Directly enforces the Frontend-Backend Contract Rule from CLAUDE.md at the hook level
+- New file creation (Write to non-existent path) is exempt
+- State tracked per-session in `.claude/hooks/state/gateguard-reads.log`
+
+#### Config Protection — Linter/Formatter Shield
+- PreToolUse hook on Edit/Write blocks changes to 30+ protected config files
+- Covers ESLint, Prettier, TypeScript (tsconfig), Biome, Stylelint, EditorConfig, Ruff, Flake8, MyPy, Pylint
+- Forces agents to fix code to satisfy rules instead of weakening rules to satisfy code
+- User can override by explicit approval when genuine config updates are needed
+
+#### Post-Edit Accumulator — Session Quality Report
+- PostToolUse hook on Edit/Write records every edited `.ts/.tsx/.js/.jsx/.py/.css/.json` file
+- Stop hook runs batch Prettier check + `tsc --noEmit` + Ruff on all accumulated files
+- Reports formatting issues, type errors, and lint violations as a session summary
+- Non-blocking: reports issues but doesn't prevent session end
+
+#### Session Lifecycle
+- SessionStart hook clears stale state from previous sessions
+- All state files ephemeral (`.claude/hooks/state/` added to `.gitignore`)
+- Hooks use `$CLAUDE_PROJECT_DIR` for portable paths across environments
+
+#### Infrastructure
+- 6 new hook scripts in `.claude/hooks/`
+- Updated `.claude/settings.json` with SessionStart, PreToolUse, PostToolUse, and Stop hook configurations
+- All hooks have 5-second timeouts (60s for batch-check at Stop)
+- Existing `validate-bash.sh` hook preserved and upgraded to use `$CLAUDE_PROJECT_DIR` paths
+
+---
+
+## [5.2.0] - 2026-04-02
+
+### Multi-Tenant Security Enforcement — PRD-to-Code Traceability
+
+Closes the #1 gap in AI-generated multi-tenant apps: PRD says "multi-tenant" but the agent builds flat storage, unprotected downloads, and no tenant scoping. Triggered by the AutoKYC incident (2026-04-02).
+
+#### Story Generator — Security Trait Detection
+- Scans PRDs for multi-tenant/multi-user/file-upload/auth trigger words
+- Auto-injects mandatory security stories (SEC-001 through SEC-006):
+  - SEC-001: Tenant data model with scoped queries (every table, every query)
+  - SEC-002: Tenant-scoped file storage (no flat `uploads/{id}/`)
+  - SEC-003: Auth on every endpoint (no unprotected downloads)
+  - SEC-004: Cross-tenant isolation tests (User A cannot access User B's data)
+  - SEC-005: Secure file handling (path traversal prevention, type validation)
+  - SEC-006: No hardcoded credentials (no defaults in config)
+- Security stories are MUST priority and block all endpoint/model/storage stories
+
+#### Gate Keeper — Multi-Tenant Isolation Gate
+- 7 mandatory checks when PRD mentions multi-tenant:
+  - Every data model has tenant_id column
+  - Every query scoped by tenant
+  - File storage paths include tenant directory
+  - Every data endpoint has auth middleware
+  - Download endpoints verify tenant ownership
+  - No hardcoded credentials in config
+  - Cross-tenant isolation tests exist
+- PRD-to-Code Traceability: cross-references PRD claims against actual implementation
+- NON-NEGOTIABLE: BLOCK on any failure
+
+#### Known Deviations — Category 10b: Multi-Tenant Isolation Failures
+- 10 new patterns (MT-001 through MT-010):
+  - MT-001: Flat file storage without tenant directory
+  - MT-002: Download/export endpoint without auth
+  - MT-003: Unscoped database queries
+  - MT-004: PRD says multi-tenant but code ignores it
+  - MT-005: Existing security service bypassed by new code
+  - MT-006: Hardcoded default credentials
+  - MT-007: Download accepts user-supplied path (traversal)
+  - MT-008: No cross-tenant isolation tests
+  - MT-009: HTTPBasic auth on data endpoints
+  - MT-010: Tenant ID from request body instead of auth token
+
+#### PRD Template
+- New §4.2.1 Multi-Tenant Isolation section with tenancy model, scoping strategy, file storage isolation, cross-tenant testing requirements
+- Empty section on multi-tenant PRD is a BLOCKING issue during validation
+
+#### Install Flow
+- Installer creates `.vscode/mcp.json` for VS Code MCP server auto-discovery
+- Installer creates `.github/copilot-instructions.md` for Copilot Chat tool awareness
+- Works with any MCP-compatible IDE (VS Code, Cursor, Claude Code extension)
+
+---
+
+## [5.1.0] - 2026-04-02
+
+### Harness Engineering Upgrade — Claude Code Architecture Parity
+
+Architectural patterns extracted from Claude Code's production harness (1,902 TypeScript files, 207 commands, 184 tool entries) applied to SkillFoundry's MCP server.
+
+#### Tool Module System
+- Self-contained tool folders: each of 15 tools lives in `mcp-server/src/tools/{ToolName}/` with dedicated execution logic, prompt, constants, and permissions
+- Auto-discovery registry scans `src/tools/` at startup — add a folder, get an MCP tool
+- 20 MCP tools across 15 modules: BuildAgent, TestRunner, GitAgent, DependencyAgent, PortAgent, TypecheckAgent, LintAgent, MigrationAgent, EnvAgent, LighthouseAgent, DockerAgent, NginxAgent, PlaywrightAgent, SemgrepAgent, VerificationAgent
+
+#### Permission Engine
+- `ToolPermissionContext` with deny-list (by name), prefix-blocking, simple-mode (core tools only), and workspace trust gates
+- Trust-required tools (sf_verify_auth, sf_security_scan, sf_harvest_knowledge, sf_create_skill, sf_memory_gate) blocked in untrusted workspaces
+- Simple mode restricts to sf_build, sf_run_tests, sf_git_status only
+- All denials logged with tool name, reason, and timestamp
+
+#### Streaming Event Protocol
+- SSE event types: `message_start`, `tool_match`, `message_delta`, `message_stop`, `permission_denial`
+- `StreamEmitter` class manages connected SSE clients
+- Fire-and-forget — no overhead if no clients are listening
+
+#### Session Intelligence
+- `SessionConfig` with configurable max turns, token budget, compaction threshold
+- `UsageSummary` with functional (immutable) updates — `addTurn()` returns new object
+- `TranscriptStore` with automatic compaction when turn threshold exceeded
+- File-based session persistence (`.sf_sessions/{id}.json`) with load/save/list
+- `SessionEngine` orchestrates budget enforcement + auto-compaction
+- REST API: `GET /api/v1/sessions`, `GET /api/v1/sessions/:id`
+
+#### Bootstrap Pipeline
+- 7-stage startup: prefetch -> guards -> tool-registry -> skill-load -> deferred-init -> permissions -> transport
+- Stage 2 (guards): fail-fast on Node < 20, missing git/npm
+- Stage 5 (deferred-init): trust-gated — checks Playwright/Semgrep binaries, skips in untrusted workspaces
+- Non-required stages log warnings and continue instead of crashing
+
+#### Verification Agent
+- New `sf_verify` MCP tool validates other agents' output with tool evidence
+- Strategies: build, test, typecheck, lint — each runs the real tool and compares against claimed output
+- Returns structured `VerificationReport` with per-check evidence
+- Optional auto-verify hook after any tool execution (`SKILLFOUNDRY_AUTO_VERIFY=true`)
+
+#### Command Graph & Enhanced Health
+- Tools categorized as builtin/plugin/skill/dynamic via `CommandGraph`
+- `GET /api/v1/agents?category=builtin` for filtered listing
+- `/health` reports bootstrap stage, completion progress, duration, session metrics, and permission state
+- `/ready` returns 503 until all 7 bootstrap stages complete
+
+#### Environment Variables (New)
+- `SKILLFOUNDRY_DENY_TOOLS` — comma-separated tool deny list
+- `SKILLFOUNDRY_DENY_PREFIXES` — comma-separated prefix deny list
+- `SKILLFOUNDRY_SIMPLE_MODE` — restrict to core tools
+- `SKILLFOUNDRY_TRUST` — workspace trust level (default: true)
+- `SKILLFOUNDRY_MAX_TURNS` — session turn limit (default: 50)
+- `SKILLFOUNDRY_MAX_BUDGET_TOKENS` — session token budget (default: 100000)
+- `SKILLFOUNDRY_COMPACT_AFTER` — compaction threshold (default: 30)
+- `SKILLFOUNDRY_SESSION_DIR` — session persistence directory (default: .sf_sessions)
+- `SKILLFOUNDRY_AUTO_VERIFY` — auto-verify after tool execution (default: false)
 
 ---
 
@@ -73,7 +234,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Enhanced Contract Resolution (`sf_contract_check` upgrade)
 - **NestJS support**: `@Controller('/api/users')` + `@Get('/:id')` = `/api/users/:id` full path resolution
 - **FastAPI support**: `APIRouter(prefix="/api/v1")` + `@router.get("/users")` = `/api/v1/users`
-- **Centralized API client tracing**: `axios.create({ baseURL: '/api/v1' })` → `api.get('/users')` = `/api/v1/users`
+- **Centralized API client tracing**: `axios.create({ baseURL: '/api/v1' })` -> `api.get('/users')` = `/api/v1/users`
 - Contract match rate improved from 17.5% to 70.8% on tested projects
 
 #### Correction Feedback Loop

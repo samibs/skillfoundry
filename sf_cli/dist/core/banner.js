@@ -32,7 +32,7 @@ export function printBanner() {
         console.log(line);
     }
     console.log('');
-    console.log(chalk.hex(colors.textSecondary)(`  56 Agents  ${symbols.bullet}  63 Skills  ${symbols.bullet}  The Forge  ${symbols.bullet}  5 Platforms`) +
+    console.log(chalk.hex(colors.textSecondary)(`  56 Agents  ${symbols.bullet}  63 Skills  ${symbols.bullet}  The Forge  ${symbols.bullet}  6 Hooks  ${symbols.bullet}  5 Platforms`) +
         '  ' +
         chalk.hex(colors.warning)(`v${version}`));
     console.log(chalk.hex(colors.borderDim)(' ' + symbols.lineHeavy.repeat(96)));
