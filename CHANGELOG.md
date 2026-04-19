@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.6.0] - 2026-04-19
+
+### Parallel Dispatch Engine + Natural Language Cron
+
+Two execution infrastructure features that reduce pipeline time and simplify scheduling.
+
+#### Parallel Dispatch Engine (`parallel-dispatch.ts`)
+- DAG-based dependency graph analysis for multi-story pipelines
+- Topological sort generates execution waves of independent tasks
+- File conflict detection prevents parallel execution of stories modifying overlapping files
+- Migration ordering enforcement serializes stories with database migrations
+- Cycle detection with clear error reporting
+- Wave execution via `Promise.allSettled` with configurable max concurrency (default: 5)
+- Error isolation: failed task dependents are automatically skipped
+- Parallel speedup calculation comparing wave vs sequential execution time
+- Critical path analysis identifies the longest dependency chain
+- New MCP tool `sf_parallel_analyze`: analyze stories and preview wave structure before execution
+
+#### Natural Language Cron Compiler (`nl-cron.ts`)
+- 20+ pattern matchers covering common scheduling descriptions
+- Time parsing: "9am", "2:30pm", "14:00", "midnight", "noon"
+- Day parsing: full names, abbreviations, weekday/weekend groups
+- Interval patterns: "every N minutes/hours/days"
+- Named patterns: "every morning/evening/night", "daily", "weekly", "monthly"
+- Day-specific: "every Monday at 9am", "weekdays at 2:30pm"
+- Monthly: "first day of every month", "on the 15th of every month at 3pm"
+- Compound: "twice a day at 9am and 5pm"
+- Confidence levels: exact/high/medium/low based on pattern match quality
+- Cron validator: checks field ranges, step values, lists, and ranges
+- Next-run calculator: returns next 5 execution times for any cron expression
+- New MCP tool `sf_cron_compile`: compile NL to cron or validate existing expressions
+
+#### Infrastructure
+- Both tools wired into handler.ts with optimized JSON responses
+- All version references bumped to 5.6.0
+
+---
+
 ## [5.5.0] - 2026-04-19
 
 ### Hermes-Inspired Intelligence — Context Summarization, Memory Nudges, Session Search
