@@ -38,6 +38,14 @@ import {
   rebuildSearchIndexes,
 } from "./session-search.js";
 import { getSessionId } from "./token-tracker.js";
+import {
+  analyzeWaves,
+  type StoryTask,
+} from "./parallel-dispatch.js";
+import {
+  compileCron,
+  validateCron,
+} from "./nl-cron.js";
 import { stat } from "fs/promises";
 import pathMod from "path";
 
@@ -260,7 +268,7 @@ export function createMcpServer(
   skills: Map<string, SkillDefinition>
 ): Server {
   const server = new Server(
-    { name: "skillfoundry", version: "5.5.0" },
+    { name: "skillfoundry", version: "5.6.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -347,6 +355,59 @@ export function createMcpServer(
           },
         },
         required: ["query"],
+      },
+    });
+
+    tools.push({
+      name: "sf_parallel_analyze",
+      description:
+        "Analyze story tasks for parallel execution. Takes a list of stories with dependencies " +
+        "and returns wave structure, critical path, max parallelism, and estimated speedup. " +
+        "Use before /go or /forge to plan parallel pipeline execution.",
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          tasks: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "Story ID (e.g., STORY-001)" },
+                title: { type: "string", description: "Story title" },
+                dependsOn: { type: "array", items: { type: "string" }, description: "Story IDs that must complete first" },
+                blocks: { type: "array", items: { type: "string" }, description: "Story IDs blocked by this one" },
+                layers: { type: "array", items: { type: "string" }, description: "Affected layers (database, backend, frontend)" },
+                complexity: { type: "string", enum: ["simple", "medium", "complex"] },
+                files: { type: "array", items: { type: "string" }, description: "Files this story modifies (for conflict detection)" },
+                hasMigration: { type: "boolean", description: "Whether this story includes DB migrations" },
+              },
+              required: ["id", "title"],
+            },
+            description: "Array of story tasks with dependency metadata",
+          },
+        },
+        required: ["tasks"],
+      },
+    });
+
+    tools.push({
+      name: "sf_cron_compile",
+      description:
+        "Compile natural language schedule descriptions into cron expressions. " +
+        'Examples: "every morning at 9am", "weekdays at 2:30pm", "every 30 minutes", ' +
+        '"first day of every month". Returns cron expression, description, and next 5 run times.',
+      inputSchema: {
+        type: "object" as const,
+        properties: {
+          schedule: {
+            type: "string",
+            description: 'Natural language schedule (e.g., "every weekday at 9am")',
+          },
+          validate: {
+            type: "string",
+            description: "Validate an existing cron expression instead of compiling",
+          },
+        },
       },
     });
 
@@ -615,6 +676,58 @@ export function createMcpServer(
         results,
         meta: { total: results.length, scope: typedArgs.scope || "all" },
       }, false, optimizeOpts));
+    }
+
+    // ─── Parallel Dispatch Analysis ─────────────────────────────
+    if (name === "sf_parallel_analyze") {
+      const rawTasks = typedArgs.tasks as Array<Record<string, unknown>>;
+      if (!Array.isArray(rawTasks) || rawTasks.length === 0) {
+        return tracked(optimizeJsonResponse({ error: "tasks array is required" }, true, optimizeOpts));
+      }
+      const tasks: StoryTask[] = rawTasks.map((t) => ({
+        id: (t.id as string) || "unknown",
+        title: (t.title as string) || "",
+        dependsOn: (t.dependsOn as string[]) || [],
+        prefers: (t.prefers as string[]) || [],
+        blocks: (t.blocks as string[]) || [],
+        layers: (t.layers as string[]) || [],
+        complexity: (t.complexity as "simple" | "medium" | "complex") || "medium",
+        files: (t.files as string[]) || [],
+        hasMigration: (t.hasMigration as boolean) || false,
+        payload: t.payload || null,
+      }));
+      try {
+        const analysis = analyzeWaves(tasks);
+        return tracked(optimizeJsonResponse(analysis, false, optimizeOpts));
+      } catch (err) {
+        return tracked(optimizeJsonResponse(
+          { error: (err as Error).message },
+          true,
+          optimizeOpts,
+        ));
+      }
+    }
+
+    // ─── Natural Language Cron ─────────────────────────────────
+    if (name === "sf_cron_compile") {
+      const schedule = typedArgs.schedule as string | undefined;
+      const validateExpr = typedArgs.validate as string | undefined;
+
+      if (validateExpr) {
+        const result = validateCron(validateExpr);
+        return tracked(optimizeJsonResponse({ expression: validateExpr, ...result }, false, optimizeOpts));
+      }
+
+      if (!schedule || schedule.trim().length === 0) {
+        return tracked(optimizeJsonResponse(
+          { error: "schedule (natural language) or validate (cron expression) is required" },
+          true,
+          optimizeOpts,
+        ));
+      }
+
+      const result = compileCron(schedule);
+      return tracked(optimizeJsonResponse(result, false, optimizeOpts));
     }
 
     // ─── LLM Skills (prompt context) ────────────────────────────

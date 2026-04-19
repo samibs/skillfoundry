@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.5.0-blue)
+![Version](https://img.shields.io/badge/version-5.6.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,15 +24,18 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.5.0
+### What's New in v5.6.0
 
-**Hermes-Inspired Intelligence — Context Summarization, Memory Nudges, Session Search**
+**Parallel Dispatch Engine + Natural Language Cron**
 
-v5.5.0 brings three features inspired by NousResearch's Hermes Agent framework, adapted for SkillFoundry's MCP architecture:
+v5.6.0 adds two execution infrastructure features:
 
-- **LLM Context Summarizer** — When conversation context is compacted, pruned messages are summarized by Haiku (~$0.0003/call) instead of replaced with a mechanical placeholder. Preserves decisions, tool results, and key findings that the sliding window would discard.
-- **Memory Nudge System** — After tool invocations that find issues (security scans, build failures, contract mismatches), the framework suggests patterns worth recording. Reduces memory bloat by prompting selective recording instead of saving everything.
-- **Full-Text Session Search** (`sf_memory_search`) — SQLite FTS5-powered search across all tool responses and session recordings. Supports quoted phrases, boolean operators (AND/OR/NOT), and prefix matching. Addresses "I fixed this before but can't find where."
+- **Parallel Dispatch Engine** (`sf_parallel_analyze`) — DAG-based dependency analysis for multi-story pipelines. Detects independent stories, generates execution waves, calculates critical path and estimated speedup. File conflict and migration ordering detection prevents parallel execution when it would cause merge issues. Typical speedup: 2-5x on multi-story PRDs.
+- **Natural Language Cron** (`sf_cron_compile`) — Converts English scheduling descriptions into cron expressions. Supports 20+ patterns: "every morning at 9am", "weekdays at 2:30pm", "every 30 minutes", "first day of every month". Returns cron expression, human description, next 5 run times, and confidence level. Includes cron validator.
+
+#### Previous: Hermes Intelligence (v5.5.0)
+
+- LLM Context Summarizer (Haiku-powered), Memory Nudge System (13 tools monitored), FTS5 Session Search (sf_memory_search).
 
 #### Previous: Token Optimization (v5.4.0)
 
