@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.8.0] - 2026-05-06
+
+### VS Code Extension v1.3.0 — Native IDE Shell
+
+Completes the VS Code extension as a fully standalone product shell. Three blocking gaps closed.
+
+#### Setup Wizard (`SkillFoundry: Setup — Configure API Key`)
+
+- Provider quick-pick (Anthropic Claude / OpenAI) on first activation when no config is detected
+- API key stored in VS Code SecretStorage — never written to disk, never in config.toml
+- `.skillfoundry/config.toml` created with provider name only
+- Reload-window prompt offered immediately after setup
+- `onCommand:skillfoundry.setup` activation event added so the command is reachable from the command palette even without a `.skillfoundry/config.toml` present
+
+#### sf CLI Installation Check
+
+- At activation, checks whether `sf` is available on PATH via `execFile('sf', ['--version'])`
+- If `sf` not on PATH **and** `sf-runner.mjs` is also missing, shows a warning with "Install via npm" option
+- "Install via npm" opens an integrated terminal and runs `npm install -g skillfoundry`
+
+#### Forge Progress Notification
+
+- `vscode.window.withProgress` notification wraps the entire forge terminal lifetime
+- Notification is cancellable — cancellation kills the terminal
+- ForgeMonitor sidebar continues to update live from `forge-state.json` file watcher
+- Forge terminal receives stored API key as env var (via `bridge.getCredentials()`)
+
+#### Credential Injection (`SfBridge`)
+
+- `setCredential(envVar, value)` / `getCredentials()` added to `SfBridge`
+- API key loaded from SecretStorage on activation and injected into all `execFile` runner calls
+- All terminals (forge, prd, benchmark, hooks) receive credentials via `env:` option
+- Keys never touch the filesystem
+
+#### Infrastructure
+
+- Extension version: 1.2.0 → 1.3.0
+- All framework version references bumped to 5.8.0
+
+---
+
 ## [5.7.0] - 2026-05-06
 
 ### Local Vector Memory + Specter Security Engine + Red Team Researcher Skill
