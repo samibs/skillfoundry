@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.6.0-blue)
+![Version](https://img.shields.io/badge/version-5.7.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -24,14 +24,19 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
 - **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
 
-### What's New in v5.6.0
+### What's New in v5.7.0
 
-**Parallel Dispatch Engine + Natural Language Cron**
+**Local Vector Memory + Specter Security Engine + Red Team Researcher Skill**
 
-v5.6.0 adds two execution infrastructure features:
+v5.7.0 adds adversarial intelligence, semantic memory, and a specialist security research skill:
 
-- **Parallel Dispatch Engine** (`sf_parallel_analyze`) — DAG-based dependency analysis for multi-story pipelines. Detects independent stories, generates execution waves, calculates critical path and estimated speedup. File conflict and migration ordering detection prevents parallel execution when it would cause merge issues. Typical speedup: 2-5x on multi-story PRDs.
-- **Natural Language Cron** (`sf_cron_compile`) — Converts English scheduling descriptions into cron expressions. Supports 20+ patterns: "every morning at 9am", "weekdays at 2:30pm", "every 30 minutes", "first day of every month". Returns cron expression, human description, next 5 run times, and confidence level. Includes cron validator.
+- **Local Vector Memory** — File-based cosine-similarity vector store with multi-provider embedding (Ollama → Transformers → OpenAI). `TransformersEmbeddingProvider` (@xenova/transformers) is always available as a zero-dependency local fallback. `harvestRunMemory` now semantically indexes every pipeline run. Hybrid recall combines keyword + semantic search.
+- **Specter Security Engine** — Adversarial threat modeling phase injected into every pipeline between INSPECT and DEBRIEF (now 9 phases). `SpecterEngine` runs an agentic red-team loop, generates attack vectors with severity/CVSS metadata, and executes safe simulations against an allowlisted command set. Registered as the 62nd agent (`specter`, FULL category).
+- **Red Team Researcher Skill** (`/red-team-researcher`) — Senior offensive/defensive security researcher persona. Thinks in attacker primitives (source → sink → impact), grades severity by reachability, uses structured finding format. Ships with 6 domain reference files: code review, web/API, cloud infrastructure, threat modeling, reporting, and blue team/incident triage.
+
+#### Previous: Parallel Dispatch + NL Cron (v5.6.0)
+
+- Parallel Dispatch Engine (`sf_parallel_analyze`), Natural Language Cron (`sf_cron_compile`).
 
 #### Previous: Hermes Intelligence (v5.5.0)
 
