@@ -10,7 +10,7 @@
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework with a centralized MCP server, 22 real tool agents, and a skill factory. v5 adds learning-driven intelligence: secret guard, deviation enforcement (161 rules), import validation, correction feedback loops, and per-project health scores — all derived from analysis of 2,792 artifacts across 49 projects. One server serves 124+ skills to any IDE via MCP with Playwright, Semgrep, a knowledge base that learns from every failure, and an iznir-powered skill factory.
+SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 22 real tool agents, 125+ skills, 6 AI providers, Specter adversarial threat modeling, and a knowledge base built from 2,792 artifacts across 49 projects.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -18,11 +18,12 @@ SkillFoundry is an AI engineering framework with a centralized MCP server, 22 re
 
 ### Why SkillFoundry?
 
-- **Works where you already code** — Claude Code, Cursor, GitHub Copilot, OpenAI Codex, Google Gemini. No new IDE to learn.
+- **Standalone or IDE — your choice** — Run `sf` as an independent CLI with your own API key, no IDE required. Or install the skills into Claude Code, Cursor, Copilot, Codex, or Gemini and work inside the tool you already use. Same agents, same gates, same pipeline either way.
 - **Quality gates your AI can't bypass** — The Anvil runs 8 tiers of checks (correctness contracts, banned patterns, type checking, tests, security, build, scope, deploy pre-flight) between every agent handoff. Code that fails doesn't ship.
-- **Persistent memory across sessions** — Decisions, errors, and patterns are stored in `memory_bank/` and recalled automatically. Your AI doesn't repeat the same mistakes.
+- **Adversarial threat modeling built in** — The Specter engine runs a red-team loop on every pipeline. It generates attack vectors with CVSS metadata and simulates exploits before your code leaves the pipeline.
 - **PRD-first, not vibe-coding** — Every feature starts with a Product Requirements Document. The framework validates it before writing a single line of code.
-- **6 AI providers, one workflow** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Switch providers without changing how you work.
+- **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
+- **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
 ### What's New in v5.7.0
 
@@ -66,41 +67,47 @@ Connect from any IDE:
 ### Quick Install
 
 ```bash
-# npm (recommended)
+# Standalone CLI — no IDE needed
 npm install -g skillfoundry
+sf setup                           # interactive: choose provider, paste API key
+sf forge                           # run the full pipeline from your terminal
+
+# Or add skills to your existing IDE
+npx skillfoundry init              # installs skills into Claude Code / Cursor / Copilot
 
 # Homebrew (macOS)
 brew install samibs/tap/skillfoundry
 
 # One-liner (Linux/macOS)
 curl -fsSL https://raw.githubusercontent.com/samibs/skillfoundry/main/scripts/install-global.sh | bash
-
-# npx (no install needed)
-npx skillfoundry init
 ```
 
 ### Quick Start (5 Minutes)
 
-Five ways to install — pick what fits your workflow:
+**Option 1 — Standalone (no IDE):**
 
 ```bash
-# Option A: npx (quickest — no clone needed)
-cd ~/my-project
-npx skillfoundry init
-
-# Option B: npm global install (persistent CLI)
 npm install -g skillfoundry
-cd ~/my-project && skillfoundry init
+cd ~/my-project
+sf setup                           # guided setup: pick provider, enter API key
+sf forge                           # PRD → agents → Anvil gates → production code
+```
 
-# Option C: Homebrew (macOS)
-brew install samibs/tap/skillfoundry
-cd ~/my-project && skillfoundry init
+First run with no API key detected, `sf setup` launches an interactive wizard — choose your provider (Anthropic, OpenAI, xAI, Google, Ollama, LM Studio) and paste your key. That's it.
 
-# Option D: curl one-liner (Linux/macOS — installs via npm)
-curl -fsSL https://raw.githubusercontent.com/samibs/skillfoundry/main/scripts/install-global.sh | bash
-cd ~/my-project && skillfoundry init
+**Option 2 — Inside your IDE:**
 
-# Option E: git clone (full source — for contributors and power users)
+```bash
+# npx (quickest — no clone needed)
+cd ~/my-project && npx skillfoundry init
+
+# npm global
+npm install -g skillfoundry && cd ~/my-project && skillfoundry init
+
+# Homebrew (macOS)
+brew install samibs/tap/skillfoundry && cd ~/my-project && skillfoundry init
+
+# git clone (contributors and power users)
 git clone https://github.com/samibs/skillfoundry.git ~/dev-tools/skillfoundry
 cd ~/my-project && ~/dev-tools/skillfoundry/install.sh
 ```
@@ -112,7 +119,7 @@ Then use it in your AI IDE:
 /forge                             # build everything with quality gates
 ```
 
-That's it. The installer copies agents and skills into your project, builds the CLI, and adds `sf` to your PATH.
+The installer copies agents and skills into your project, builds the CLI, and adds `sf` to your PATH.
 
 <details>
 <summary><strong>Windows (PowerShell)</strong></summary>
@@ -172,18 +179,19 @@ Or use autonomous mode — just type what you want in plain English:
 
 SkillFoundry has two independent systems. They share the same agents and philosophy, but work differently:
 
-| | **IDE Skills** (64 skills) | **Standalone CLI** (`sf`) |
+| | **Standalone CLI** (`sf`) | **IDE Skills** (62 skills) |
 |---|---|---|
-| **What it is** | Markdown instruction files your AI reads | Terminal app with its own AI connection |
-| **Runs inside** | Claude Code, Copilot, Cursor, Codex, Gemini | Your terminal (any OS) |
-| **Full pipeline** | `/forge`, `/go`, `/goma` (all 64 skills) | `/forge`, `/plan`, `/gates` (23 commands) |
-| **Autonomous mode** | `/goma` — full autonomous with safety gates | Not available |
-| **Provider switching** | Uses your IDE's provider | Built-in: 6 providers, switch at runtime |
-| **Budget controls** | Not available | Per-run and monthly cost caps |
-| **Persistent memory** | `/memory`, `/gohm` | `/memory`, `/lessons` |
-| **Requires** | An AI coding tool | Node.js v20+ |
+| **What it is** | Terminal app with its own AI connection | Markdown instruction files your AI reads |
+| **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini |
+| **Setup** | `sf setup` — interactive wizard, paste API key | `skillfoundry init` — copies skills into your project |
+| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (23 commands) | `/forge`, `/go`, `/goma` (all 62 skills) |
+| **Autonomous mode** | Not available | `/goma` — full autonomous with safety gates |
+| **Provider switching** | Built-in: 6 providers, switch at runtime | Uses your IDE's provider |
+| **Budget controls** | Per-run and monthly cost caps | Not available |
+| **Persistent memory** | `/memory`, `/lessons` | `/memory`, `/gohm` |
+| **Requires** | Node.js v20+ | An AI coding tool |
 
-**Most users should start with IDE skills.** The CLI is for standalone use or when you want provider switching and budget controls.
+**No IDE? Start with `sf`.** `npm install -g skillfoundry && sf setup` and you're running the full pipeline in under a minute. Already using Cursor or Claude Code? Install the skills on top and get the extra 39 skills, autonomous mode, and full orchestration.
 
 ### 1. Inside Your IDE (Recommended)
 
