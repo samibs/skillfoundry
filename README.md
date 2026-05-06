@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.7.0-blue)
+![Version](https://img.shields.io/badge/version-5.8.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,11 +25,19 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.7.0
+### What's New in v5.8.0
+
+**VS Code Extension v1.3.0 — Native IDE Shell**
+
+v5.8.0 completes the VS Code extension as a fully standalone product shell. Three blocking gaps closed:
+
+- **Setup wizard** (`SkillFoundry: Setup`) — Provider quick-pick → API key input → stored in VS Code SecretStorage (never written to disk) → `.skillfoundry/config.toml` written → reload prompt. Triggers automatically when no SkillFoundry install is detected in the workspace.
+- **sf CLI installation check** — At activation, detects whether `sf` is on PATH. If missing alongside `sf-runner.mjs`, offers `npm install -g skillfoundry` via an integrated terminal with one click.
+- **Forge progress notification** — `withProgress` notification wraps the forge terminal lifetime, cancellable from the notification. ForgeMonitor sidebar continues tracking phases live via `forge-state.json`. Stored API key is injected as an env var into every terminal and subprocess.
+
+#### Previous: Adversarial Intelligence (v5.7.0)
 
 **Local Vector Memory + Specter Security Engine + Red Team Researcher Skill**
-
-v5.7.0 adds adversarial intelligence, semantic memory, and a specialist security research skill:
 
 - **Local Vector Memory** — File-based cosine-similarity vector store with multi-provider embedding (Ollama → Transformers → OpenAI). `TransformersEmbeddingProvider` (@xenova/transformers) is always available as a zero-dependency local fallback. `harvestRunMemory` now semantically indexes every pipeline run. Hybrid recall combines keyword + semantic search.
 - **Specter Security Engine** — Adversarial threat modeling phase injected into every pipeline between INSPECT and DEBRIEF (now 9 phases). `SpecterEngine` runs an agentic red-team loop, generates attack vectors with severity/CVSS metadata, and executes safe simulations against an allowlisted command set. Registered as the 62nd agent (`specter`, FULL category).
@@ -538,9 +546,9 @@ Complex features automatically get a PRD generated in `genesis/`, stories broken
 /autonomous status                         Check if autonomous mode is active
 ```
 
-### VS Code Extension
+### VS Code Extension (v1.3.0)
 
-SkillFoundry ships a native VS Code extension that brings quality gates, telemetry, and forge runs directly into your editor — no terminal switching required.
+SkillFoundry ships a native VS Code extension that works as a complete standalone shell — setup wizard, CLI check, quality gates, telemetry, and forge runs directly in your editor.
 
 ```
 ┌──────────┬──────────────────────────────┬───────────────┐
@@ -555,19 +563,21 @@ SkillFoundry ships a native VS Code extension that brings quality gates, telemet
 │          │                              │  T0-T7 results│
 │          │                              │               │
 │          │                              │ ◆ Forge       │
-│          │                              │  Phase: TEMPER│
+│          │                              │  Phase: SPECTER│
 │          │                              │  Story: 5/8   │
 ├──────────┴──────────────────────────────┴───────────────┤
 │ SF: 94% gates │ sf:coder │ $0.12               Output   │
 └─────────────────────────────────────────────────────────┘
 ```
 
-**Features:**
+**Features (v1.3.0):**
+- **Setup wizard** (`SkillFoundry: Setup`) — On first open, prompts for provider and API key. Key stored in VS Code SecretStorage; never written to disk. Auto-detects missing install and offers setup.
+- **sf CLI check** — Detects whether `sf` is on PATH at activation. If missing, offers `npm install -g skillfoundry` via integrated terminal in one click.
+- **Forge progress** — `withProgress` notification stays open for the duration of the forge run, cancellable. ForgeMonitor sidebar tracks phases live via `forge-state.json`.
 - **Sidebar dashboard** — gate pass rate, security findings, telemetry trends, dependency CVEs
 - **Inline diagnostics** — gate findings appear as squiggly underlines (like ESLint)
 - **CodeLens** — "Run T3 (Tests)" above test files, "Run T1/T4" above source files
-- **Command palette** — 12 commands: gate, forge, metrics, report, memory recall, PRD, hooks, benchmark
-- **Forge monitor** — real-time phase progress in sidebar, runs in integrated terminal
+- **Command palette** — 13 commands: setup, gate, forge, metrics, report, memory recall, PRD, hooks, benchmark
 - **Status bar** — gate pass rate with color coding, click to open metrics
 - **File watcher** — auto-refreshes dashboard when telemetry updates
 
@@ -578,7 +588,7 @@ code --install-extension skillfoundry.skillfoundry
 
 # Or build from source
 cd skillfoundry-vscode && npm install && npm run build
-code --install-extension skillfoundry-0.1.0.vsix
+code --install-extension skillfoundry-1.3.0.vsix
 ```
 
 ### Agent Evolution
