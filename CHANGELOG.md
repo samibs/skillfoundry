@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.7.0] - 2026-05-06
+
+### Local Vector Memory + Specter Security Engine + Red Team Researcher Skill
+
+Three features that add adversarial intelligence, semantic memory, and a deep security research skill.
+
+#### Local Vector Memory
+
+- `EmbeddingService`: multi-provider embedding with priority chain per `preferredProvider`
+  - `preferredProvider: 'ollama'` → [ollama, transformers, openai]
+  - `preferredProvider: 'openai'` → [openai, transformers, ollama]
+  - `TransformersEmbeddingProvider` (@xenova/transformers, Xenova/all-MiniLM-L6-v2, 384 dims) always-available local fallback
+  - Returns `EmbeddingResult { vector, provider, dimensions, cached }`
+- `VectorStore`: file-based cosine-similarity store with `initialize()` / `add(MemoryDocument[])` / `search(query)` / `delete(ids[])` API
+- `harvestRunMemory` upgraded to async with best-effort semantic indexing on every pipeline run
+- Hybrid layered recall: keyword index + semantic vector search with score fusion
+
+#### Specter Security Engine
+
+- `SpecterEngine` agent: adversarial red-team loop; generates attack vectors, runs allowlisted simulations
+- Pipeline phase `SPECTER` inserted between `INSPECT` and `DEBRIEF` (9 phases total)
+- Simulation allowlist blocks `curl`, `wget`, `rm`, `dd`, `mkfs`, and all network exfil tools
+- Agent registered as `specter` (FULL/implementer); circular import resolved by removing static import from registry
+- Agent count: 61 → 62
+
+#### Red Team Researcher Skill (`/red-team-researcher`)
+
+- Senior offensive/defensive security researcher persona installed as a slash command
+- Structured finding format: SEV / Location / Class / Reachability / Exploit sketch / Fix
+- 6 domain reference files: code_review, web_api, cloud_infra, threat_modeling, reporting, blue_team
+- Hard guardrails: no weaponized exploits, no C2/ransomware/stalkerware, no credential attacks on named orgs
+
+#### Infrastructure
+
+- `layered-recall.ts`, `memory-search.ts`: async-ified for `await recallIndex()` callers
+- Test suite: 2328/2330 pass (2 pre-existing Ollama env failures in health-check.test.ts)
+- All version references bumped to 5.7.0
+
+---
+
 ## [5.6.0] - 2026-04-19
 
 ### Parallel Dispatch Engine + Natural Language Cron

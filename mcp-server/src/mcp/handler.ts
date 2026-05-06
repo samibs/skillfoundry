@@ -268,7 +268,7 @@ export function createMcpServer(
   skills: Map<string, SkillDefinition>
 ): Server {
   const server = new Server(
-    { name: "skillfoundry", version: "5.6.0" },
+    { name: "skillfoundry", version: "5.7.0" },
     { capabilities: { tools: {} } }
   );
 
