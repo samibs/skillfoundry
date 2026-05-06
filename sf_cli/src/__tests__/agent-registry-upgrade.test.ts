@@ -133,9 +133,9 @@ describe('createAgentInstance', () => {
     expect(agent.name).toBe('totally-unknown');
   });
 
-  it('creates all 60 agents without errors', () => {
+  it('creates all 61 agents without errors', () => {
     const names = getAllAgentNames();
-    expect(names.length).toBe(60);
+    expect(names.length).toBe(61);
 
     for (const name of names) {
       const agent = createAgentInstance(name);

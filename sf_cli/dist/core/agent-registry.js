@@ -109,6 +109,10 @@ export const AGENT_REGISTRY = {
         name: 'ship', displayName: 'Ship It', toolCategory: 'FULL',
         systemPrompt: implementerPrompt('Ship It', 'Pre-release pipeline validator ensuring deployment readiness', 'pre-release checks, deployment validation, final audit'),
     },
+    specter: {
+        name: 'specter', displayName: 'Specter Security Engine', toolCategory: 'FULL',
+        systemPrompt: implementerPrompt('Specter Security Engine', 'Red Team agent performing speculative threat modeling and adversarial simulation', 'security hardening, attack vector generation, exploit simulation'),
+    },
     swarm: {
         name: 'swarm', displayName: 'Swarm Coordinator', toolCategory: 'FULL',
         systemPrompt: implementerPrompt('Swarm Coordinator', 'Multi-agent parallel task coordinator', 'parallel dispatch, conflict detection, swarm orchestration'),
@@ -342,6 +346,7 @@ export const AGENT_ARCHETYPE_MAP = {
     refactor: 'implementer',
     release: 'implementer',
     ship: 'implementer',
+    specter: 'implementer',
     swarm: 'implementer',
     undo: 'implementer',
     workflow: 'implementer',
@@ -403,6 +408,8 @@ import { createAgent, } from './agent.js';
 /**
  * Create a real Agent class instance from the registry.
  * This is the bridge between the old flat registry and the new Agent system.
+ * Note: SpecterEngine uses a dynamic import to avoid circular dependency
+ * (agent-registry → specter → agent → agent-registry).
  */
 export function createAgentInstance(name) {
     const def = AGENT_REGISTRY[name];

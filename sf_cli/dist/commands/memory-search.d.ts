@@ -110,7 +110,7 @@ export declare function runSemanticSearch(query: string, topK: number, scope: st
  * @param workDir - Project root directory.
  * @returns Array of FormattedSearchResult.
  */
-export declare function runKeywordSearch(query: string, topK: number, mode: SearchMode, scope: string | undefined, workDir: string): FormattedSearchResult[];
+export declare function runKeywordSearch(query: string, topK: number, mode: SearchMode, scope: string | undefined, workDir: string): Promise<FormattedSearchResult[]>;
 /**
  * Convert VectorStore SearchResult array to FormattedSearchResult array.
  *

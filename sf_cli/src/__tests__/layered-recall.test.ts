@@ -43,52 +43,52 @@ afterEach(() => {
 // ── Index Mode ──────────────────────────────────────────────────
 
 describe('recallIndex', () => {
-  it('returns empty array when no knowledge exists', () => {
-    const results = recallIndex('auth', TEST_DIR);
+  it('returns empty array when no knowledge exists', async () => {
+    const results = await recallIndex('auth', TEST_DIR);
     expect(results).toEqual([]);
   });
 
-  it('matches entries by content keywords', () => {
+  it('matches entries by content keywords', async () => {
     writeEntry('facts.jsonl', makeEntry({ id: 'auth-fact', content: 'Authentication uses JWT with RS256' }));
     writeEntry('facts.jsonl', makeEntry({ id: 'other-fact', content: 'Database uses PostgreSQL' }));
 
-    const results = recallIndex('authentication JWT', TEST_DIR);
+    const results = await recallIndex('authentication JWT', TEST_DIR);
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].id).toBe('auth-fact');
     expect(results[0].score).toBeGreaterThan(0);
   });
 
-  it('ranks exact phrase matches higher', () => {
+  it('ranks exact phrase matches higher', async () => {
     writeEntry('facts.jsonl', makeEntry({ id: 'exact-match', content: 'database migration pattern for PostgreSQL' }));
     writeEntry('facts.jsonl', makeEntry({ id: 'partial-match', content: 'the database was migrated' }));
 
-    const results = recallIndex('database migration', TEST_DIR);
+    const results = await recallIndex('database migration', TEST_DIR);
     expect(results[0].id).toBe('exact-match');
     expect(results[0].scoreBreakdown.exactMatch).toBe(100);
   });
 
-  it('boosts by weight', () => {
+  it('boosts by weight', async () => {
     writeEntry('facts.jsonl', makeEntry({ id: 'heavy', content: 'auth decision', weight: 0.9 }));
     writeEntry('facts.jsonl', makeEntry({ id: 'light', content: 'auth decision', weight: 0.1 }));
 
-    const results = recallIndex('auth', TEST_DIR);
+    const results = await recallIndex('auth', TEST_DIR);
     expect(results[0].id).toBe('heavy');
     expect(results[0].scoreBreakdown.weightBonus).toBeGreaterThan(results[1].scoreBreakdown.weightBonus);
   });
 
-  it('respects limit filter', () => {
+  it('respects limit filter', async () => {
     for (let i = 0; i < 10; i++) {
       writeEntry('facts.jsonl', makeEntry({ content: `auth entry ${i}` }));
     }
 
-    const results = recallIndex('auth', TEST_DIR, { limit: 3 });
+    const results = await recallIndex('auth', TEST_DIR, { limit: 3 });
     expect(results.length).toBe(3);
   });
 
-  it('provides score breakdown', () => {
+  it('provides score breakdown', async () => {
     writeEntry('facts.jsonl', makeEntry({ content: 'auth service handling', tags: ['auth'] }));
 
-    const results = recallIndex('auth', TEST_DIR);
+    const results = await recallIndex('auth', TEST_DIR);
     expect(results[0].scoreBreakdown).toHaveProperty('exactMatch');
     expect(results[0].scoreBreakdown).toHaveProperty('wordMatches');
     expect(results[0].scoreBreakdown).toHaveProperty('typeBonus');
@@ -96,11 +96,11 @@ describe('recallIndex', () => {
     expect(results[0].scoreBreakdown).toHaveProperty('tagBonus');
   });
 
-  it('returns snippet not full content', () => {
+  it('returns snippet not full content', async () => {
     const longContent = 'A very detailed entry about authentication that spans many words and contains lots of information about JWT tokens and session management with refresh tokens and cookie security';
     writeEntry('facts.jsonl', makeEntry({ content: longContent }));
 
-    const results = recallIndex('authentication', TEST_DIR);
+    const results = await recallIndex('authentication', TEST_DIR);
     expect(results[0].snippet.length).toBeLessThanOrEqual(63); // 60 + "..."
   });
 });
@@ -108,41 +108,41 @@ describe('recallIndex', () => {
 // ── Filters ─────────────────────────────────────────────────────
 
 describe('recallIndex filters', () => {
-  it('filters by type', () => {
+  it('filters by type', async () => {
     writeEntry('decisions.jsonl', makeEntry({ id: 'dec-1', type: 'decision', content: 'auth decision' }));
     writeEntry('errors.jsonl', makeEntry({ id: 'err-1', type: 'error', content: 'auth error' }));
 
-    const results = recallIndex('auth', TEST_DIR, { type: 'decision' });
+    const results = await recallIndex('auth', TEST_DIR, { type: 'decision' });
     expect(results.length).toBe(1);
     expect(results[0].id).toBe('dec-1');
   });
 
-  it('filters by minimum weight', () => {
+  it('filters by minimum weight', async () => {
     writeEntry('facts.jsonl', makeEntry({ id: 'heavy', content: 'auth fact', weight: 0.8 }));
     writeEntry('facts.jsonl', makeEntry({ id: 'light', content: 'auth fact', weight: 0.2 }));
 
-    const results = recallIndex('auth', TEST_DIR, { minWeight: 0.5 });
+    const results = await recallIndex('auth', TEST_DIR, { minWeight: 0.5 });
     expect(results.length).toBe(1);
     expect(results[0].id).toBe('heavy');
   });
 
-  it('filters by since (relative days)', () => {
+  it('filters by since (relative days)', async () => {
     const recent = new Date().toISOString();
     const old = new Date(Date.now() - 30 * 86400000).toISOString(); // 30 days ago
 
     writeEntry('facts.jsonl', makeEntry({ id: 'recent', content: 'auth fact', created_at: recent }));
     writeEntry('facts.jsonl', makeEntry({ id: 'old', content: 'auth fact', created_at: old }));
 
-    const results = recallIndex('auth', TEST_DIR, { since: '7d' });
+    const results = await recallIndex('auth', TEST_DIR, { since: '7d' });
     expect(results.length).toBe(1);
     expect(results[0].id).toBe('recent');
   });
 
-  it('filters by tags', () => {
+  it('filters by tags', async () => {
     writeEntry('facts.jsonl', makeEntry({ id: 'tagged', content: 'some fact', tags: ['auth', 'security'] }));
     writeEntry('facts.jsonl', makeEntry({ id: 'untagged', content: 'some fact', tags: ['database'] }));
 
-    const results = recallIndex('fact', TEST_DIR, { tags: ['auth'] });
+    const results = await recallIndex('fact', TEST_DIR, { tags: ['auth'] });
     expect(results.length).toBe(1);
     expect(results[0].id).toBe('tagged');
   });

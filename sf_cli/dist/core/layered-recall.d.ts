@@ -57,12 +57,13 @@ interface ScoreBreakdown {
     typeBonus: number;
     weightBonus: number;
     tagBonus: number;
+    semanticScore?: number;
 }
 /**
  * Search knowledge and return a compact index of matches.
  * Returns: id, type, snippet (60 chars), score, weight.
  */
-export declare function recallIndex(query: string, workDir: string, filters?: RecallFilters): IndexResult[];
+export declare function recallIndex(query: string, workDir: string, filters?: RecallFilters): Promise<IndexResult[]>;
 /**
  * Load specific entries by ID and return content previews (200 chars).
  */

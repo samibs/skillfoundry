@@ -46,8 +46,8 @@ afterEach(() => {
 });
 
 describe('harvestRunMemory', () => {
-  it('writes run summary fact to facts.jsonl', () => {
-    const result = harvestRunMemory(baseInput());
+  it('writes run summary fact to facts.jsonl', async () => {
+    const result = await harvestRunMemory(baseInput());
 
     const facts = readJsonlEntries(join(KNOWLEDGE_DIR, 'facts.jsonl'));
     const summary = facts.find((f) => (f.content as string).startsWith('Forge run:'));
@@ -59,7 +59,7 @@ describe('harvestRunMemory', () => {
     expect(result.entriesWritten).toBeGreaterThanOrEqual(1);
   });
 
-  it('writes error entries for failed stories to errors.jsonl', () => {
+  it('writes error entries for failed stories to errors.jsonl', async () => {
     const input = baseInput({
       storiesCompleted: 2,
       storiesFailed: 1,
@@ -70,7 +70,7 @@ describe('harvestRunMemory', () => {
       },
     });
 
-    harvestRunMemory(input);
+    await harvestRunMemory(input);
 
     const errors = readJsonlEntries(join(KNOWLEDGE_DIR, 'errors.jsonl'));
     const storyError = errors.find((e) => (e.content as string).includes('STORY-003-ui.md'));
@@ -80,7 +80,7 @@ describe('harvestRunMemory', () => {
     expect(storyError!.type).toBe('error');
   });
 
-  it('writes error entries for MG FAIL findings', () => {
+  it('writes error entries for MG FAIL findings', async () => {
     const input = baseInput({
       microGateResults: [
         {
@@ -97,7 +97,7 @@ describe('harvestRunMemory', () => {
       ],
     });
 
-    harvestRunMemory(input);
+    await harvestRunMemory(input);
 
     const errors = readJsonlEntries(join(KNOWLEDGE_DIR, 'errors.jsonl'));
     const mgError = errors.find((e) => (e.content as string).includes('SQL injection'));
@@ -106,7 +106,7 @@ describe('harvestRunMemory', () => {
     expect(mgError!.content).toContain('in src/db.ts:10');
   });
 
-  it('skips MG findings that were skippedDueToError', () => {
+  it('skips MG findings that were skippedDueToError', async () => {
     const input = baseInput({
       microGateResults: [
         {
@@ -118,7 +118,7 @@ describe('harvestRunMemory', () => {
       ],
     });
 
-    const result = harvestRunMemory(input);
+    const result = await harvestRunMemory(input);
 
     const errors = readJsonlEntries(join(KNOWLEDGE_DIR, 'errors.jsonl'));
     const providerError = errors.find((e) => (e.content as string).includes('Provider error'));
@@ -127,8 +127,8 @@ describe('harvestRunMemory', () => {
     expect(result.entriesWritten).toBe(2);
   });
 
-  it('writes gate verdict fact', () => {
-    harvestRunMemory(baseInput());
+  it('writes gate verdict fact', async () => {
+    await harvestRunMemory(baseInput());
 
     const facts = readJsonlEntries(join(KNOWLEDGE_DIR, 'facts.jsonl'));
     const verdict = facts.find((f) => (f.content as string).startsWith('TEMPER:'));
@@ -137,10 +137,10 @@ describe('harvestRunMemory', () => {
     expect(verdict!.content).toContain('verdict PASS');
   });
 
-  it('skips gate verdict when gateSummary is null', () => {
+  it('skips gate verdict when gateSummary is null', async () => {
     const input = baseInput({ gateSummary: null, gateVerdict: 'UNKNOWN' });
 
-    const result = harvestRunMemory(input);
+    const result = await harvestRunMemory(input);
 
     const facts = readJsonlEntries(join(KNOWLEDGE_DIR, 'facts.jsonl'));
     const verdict = facts.find((f) => (f.content as string).startsWith('TEMPER:'));
@@ -149,28 +149,28 @@ describe('harvestRunMemory', () => {
     expect(result.entriesWritten).toBe(1);
   });
 
-  it('creates memory_bank/knowledge/ dir if missing', () => {
+  it('creates memory_bank/knowledge/ dir if missing', async () => {
     expect(existsSync(KNOWLEDGE_DIR)).toBe(false);
 
-    harvestRunMemory(baseInput());
+    await harvestRunMemory(baseInput());
 
     expect(existsSync(KNOWLEDGE_DIR)).toBe(true);
   });
 
-  it('deduplicates — no duplicate content on re-run', () => {
+  it('deduplicates — no duplicate content on re-run', async () => {
     const input = baseInput();
 
-    harvestRunMemory(input);
+    await harvestRunMemory(input);
     const firstRunFacts = readJsonlEntries(join(KNOWLEDGE_DIR, 'facts.jsonl'));
 
-    harvestRunMemory(input);
+    await harvestRunMemory(input);
     const secondRunFacts = readJsonlEntries(join(KNOWLEDGE_DIR, 'facts.jsonl'));
 
     expect(secondRunFacts.length).toBe(firstRunFacts.length);
   });
 
-  it('entries follow full JSONL schema (all required fields present)', () => {
-    harvestRunMemory(baseInput());
+  it('entries follow full JSONL schema (all required fields present)', async () => {
+    await harvestRunMemory(baseInput());
 
     const facts = readJsonlEntries(join(KNOWLEDGE_DIR, 'facts.jsonl'));
     expect(facts.length).toBeGreaterThan(0);
@@ -207,7 +207,7 @@ describe('harvestRunMemory', () => {
     }
   });
 
-  it('returns correct entriesWritten count', () => {
+  it('returns correct entriesWritten count', async () => {
     const input = baseInput({
       storiesCompleted: 2,
       storiesFailed: 1,
@@ -225,13 +225,13 @@ describe('harvestRunMemory', () => {
       ],
     });
 
-    const result = harvestRunMemory(input);
+    const result = await harvestRunMemory(input);
 
     // 1 run summary fact + 1 failed story error + 1 MG FAIL error + 1 gate verdict fact = 4
     expect(result.entriesWritten).toBe(4);
   });
 
-  it('handles zero-story runs without crashing', () => {
+  it('handles zero-story runs without crashing', async () => {
     const input = baseInput({
       storiesCompleted: 0,
       storiesFailed: 0,
@@ -241,7 +241,7 @@ describe('harvestRunMemory', () => {
       microGateResults: [],
     });
 
-    const result = harvestRunMemory(input);
+    const result = await harvestRunMemory(input);
 
     // Run summary fact + gate verdict fact = 2
     expect(result.entriesWritten).toBe(2);
@@ -250,7 +250,7 @@ describe('harvestRunMemory', () => {
     expect((facts[0].content as string)).toContain('0/0 stories');
   });
 
-  it('sets context.story_id for failed story entries', () => {
+  it('sets context.story_id for failed story entries', async () => {
     const input = baseInput({
       storiesFailed: 1,
       storyExecutions: {
@@ -258,7 +258,7 @@ describe('harvestRunMemory', () => {
       },
     });
 
-    harvestRunMemory(input);
+    await harvestRunMemory(input);
 
     const errors = readJsonlEntries(join(KNOWLEDGE_DIR, 'errors.jsonl'));
     expect(errors.length).toBeGreaterThan(0);
@@ -266,8 +266,8 @@ describe('harvestRunMemory', () => {
     expect(ctx.story_id).toBe('STORY-001.md');
   });
 
-  it('sets context.prd_id from first PRD file', () => {
-    harvestRunMemory(baseInput());
+  it('sets context.prd_id from first PRD file', async () => {
+    await harvestRunMemory(baseInput());
 
     const facts = readJsonlEntries(join(KNOWLEDGE_DIR, 'facts.jsonl'));
     const ctx = facts[0].context as Record<string, unknown>;

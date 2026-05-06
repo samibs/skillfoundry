@@ -14,13 +14,13 @@ import type { ToolCategory } from '../core/agent-registry.js';
 const VALID_CATEGORIES: ToolCategory[] = ['FULL', 'CODE', 'REVIEW', 'OPS', 'INSPECT', 'NONE', 'DEBUG'];
 
 describe('agent-registry', () => {
-  it('registers exactly 60 agents', () => {
-    expect(Object.keys(AGENT_REGISTRY)).toHaveLength(60);
+  it('registers exactly 61 agents', () => {
+    expect(Object.keys(AGENT_REGISTRY)).toHaveLength(61);
   });
 
-  it('getAllAgentNames returns 60 sorted names', () => {
+  it('getAllAgentNames returns 61 sorted names', () => {
     const names = getAllAgentNames();
-    expect(names).toHaveLength(60);
+    expect(names).toHaveLength(61);
     // Verify sorted
     const sorted = [...names].sort();
     expect(names).toEqual(sorted);
@@ -142,7 +142,7 @@ describe('getAgent', () => {
 describe('getAgentsByCategory', () => {
   it('returns agents for FULL category', () => {
     const agents = getAgentsByCategory('FULL');
-    expect(agents.length).toBe(21);
+    expect(agents.length).toBe(22);
     expect(agents).toContain('coder');
     expect(agents).toContain('forge');
   });
@@ -152,11 +152,11 @@ describe('getAgentsByCategory', () => {
     expect(agents).toEqual(['bpsbs', 'learn']);
   });
 
-  it('category counts add up to 60', () => {
+  it('category counts add up to 61', () => {
     let total = 0;
     for (const cat of VALID_CATEGORIES) {
       total += getAgentsByCategory(cat).length;
     }
-    expect(total).toBe(60);
+    expect(total).toBe(61);
   });
 });

@@ -11,6 +11,7 @@
  */
 import { createHash } from 'node:crypto';
 import OpenAI from 'openai';
+import { pipeline } from '@xenova/transformers';
 import { getLogger } from '../utils/logger.js';
 // ── Custom error ────────────────────────────────────────────────────────────
 /**
@@ -123,6 +124,41 @@ function preprocessText(text, maxChunkLength) {
  */
 function hashText(text) {
     return createHash('sha256').update(text, 'utf8').digest('hex');
+}
+// ── Transformers provider ───────────────────────────────────────────────────
+/**
+ * Embedding provider using Transformers.js for zero-dependency local execution.
+ *
+ * Uses Xenova/all-MiniLM-L6-v2 (384 dimensions).
+ */
+export class TransformersEmbeddingProvider {
+    name = 'transformers';
+    dimensions = 384;
+    model = null;
+    /**
+     * Always available if the package is installed.
+     */
+    async isAvailable() {
+        return true;
+    }
+    async ensureModel() {
+        if (!this.model) {
+            this.model = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        }
+    }
+    async embed(text) {
+        await this.ensureModel();
+        const output = await this.model(text, { pooling: 'mean', normalize: true });
+        return Array.from(output.data);
+    }
+    async embedBatch(texts) {
+        await this.ensureModel();
+        const results = [];
+        for (const text of texts) {
+            results.push(await this.embed(text));
+        }
+        return results;
+    }
 }
 // ── Ollama provider ─────────────────────────────────────────────────────────
 /**
@@ -316,8 +352,7 @@ const DEFAULT_OPTIONS = {
  * ```
  */
 export class EmbeddingService {
-    primary;
-    fallback;
+    providers;
     cache;
     options;
     /**
@@ -326,15 +361,17 @@ export class EmbeddingService {
      */
     constructor(options = {}) {
         this.options = { ...DEFAULT_OPTIONS, ...options };
+        const transformers = new TransformersEmbeddingProvider();
         const ollama = new OllamaEmbeddingProvider(this.options.ollamaUrl, this.options.ollamaModel);
         const openai = new OpenAIEmbeddingProvider(this.options.openaiApiKey, this.options.openaiModel);
-        if (this.options.preferredProvider === 'ollama') {
-            this.primary = ollama;
-            this.fallback = openai;
+        // Transformers is always first as it's the zero-dependency local option
+        this.providers = [transformers, ollama, openai];
+        // Respect preferredProvider if it's not transformers
+        if (this.options.preferredProvider === 'openai') {
+            this.providers = [openai, transformers, ollama];
         }
-        else {
-            this.primary = openai;
-            this.fallback = ollama;
+        else if (this.options.preferredProvider === 'ollama') {
+            this.providers = [ollama, transformers, openai];
         }
         this.cache = new LruCache(this.options.maxCacheSize, this.options.cacheTtlMs);
     }
@@ -345,14 +382,13 @@ export class EmbeddingService {
      *   1. Pre-process (trim, NFC normalise, truncate).
      *   2. Compute SHA-256 cache key.
      *   3. Return cached result if present and not expired.
-     *   4. Try primary provider.
-     *   5. On failure, warn and try fallback provider.
-     *   6. If both fail, throw EmbeddingUnavailableError.
-     *   7. Cache successful result.
+     *   4. Try providers in priority order.
+     *   5. If all fail, throw EmbeddingUnavailableError.
+     *   6. Cache successful result.
      *
      * @param text - Raw text to embed.
      * @returns EmbeddingResult with vector, provider name, dimensions, and cache flag.
-     * @throws EmbeddingUnavailableError when both providers fail.
+     * @throws EmbeddingUnavailableError when all providers fail.
      */
     async embed(text) {
         const logger = getLogger();
@@ -370,69 +406,34 @@ export class EmbeddingService {
             };
         }
         const failures = {};
-        // Try primary provider
-        const primaryAvailable = await this.primary.isAvailable();
-        if (primaryAvailable) {
-            try {
-                const vector = await this.primary.embed(normalised);
-                this.cache.set(cacheKey, vector, this.primary.name, this.primary.dimensions);
-                logger.debug('embedding', 'embed_success', {
-                    provider: this.primary.name,
-                    dims: vector.length,
-                });
-                return {
-                    vector,
-                    provider: this.primary.name,
-                    dimensions: this.primary.dimensions,
-                    cached: false,
-                };
+        for (const provider of this.providers) {
+            if (await provider.isAvailable()) {
+                try {
+                    const vector = await provider.embed(normalised);
+                    this.cache.set(cacheKey, vector, provider.name, provider.dimensions);
+                    logger.debug('embedding', 'embed_success', {
+                        provider: provider.name,
+                        dims: vector.length,
+                    });
+                    return {
+                        vector,
+                        provider: provider.name,
+                        dimensions: provider.dimensions,
+                        cached: false,
+                    };
+                }
+                catch (err) {
+                    const reason = err instanceof Error ? err.message : String(err);
+                    failures[provider.name] = reason;
+                    logger.warn('embedding', 'provider_embed_failed', {
+                        provider: provider.name,
+                        reason,
+                    });
+                }
             }
-            catch (err) {
-                const reason = err instanceof Error ? err.message : String(err);
-                failures[this.primary.name] = reason;
-                logger.warn('embedding', 'primary_embed_failed', {
-                    provider: this.primary.name,
-                    reason,
-                });
+            else {
+                failures[provider.name] = 'provider unavailable';
             }
-        }
-        else {
-            failures[this.primary.name] = 'provider unavailable';
-            logger.warn('embedding', 'provider_unavailable', {
-                provider: this.primary.name,
-                fallback: this.fallback.name,
-                message: `${this.primary.name === 'ollama' ? 'Ollama unavailable' : this.primary.name + ' unavailable'}, using ${this.fallback.name} fallback`,
-            });
-        }
-        // Try fallback provider
-        const fallbackAvailable = await this.fallback.isAvailable();
-        if (fallbackAvailable) {
-            try {
-                const vector = await this.fallback.embed(normalised);
-                this.cache.set(cacheKey, vector, this.fallback.name, this.fallback.dimensions);
-                logger.debug('embedding', 'embed_success', {
-                    provider: this.fallback.name,
-                    dims: vector.length,
-                    viafallback: true,
-                });
-                return {
-                    vector,
-                    provider: this.fallback.name,
-                    dimensions: this.fallback.dimensions,
-                    cached: false,
-                };
-            }
-            catch (err) {
-                const reason = err instanceof Error ? err.message : String(err);
-                failures[this.fallback.name] = reason;
-                logger.error('embedding', 'fallback_embed_failed', {
-                    provider: this.fallback.name,
-                    reason,
-                });
-            }
-        }
-        else {
-            failures[this.fallback.name] = 'provider unavailable';
         }
         throw new EmbeddingUnavailableError(failures);
     }
@@ -474,36 +475,21 @@ export class EmbeddingService {
         const failures = {};
         let batchVectors = null;
         let usedProvider = null;
-        const primaryAvailable = await this.primary.isAvailable();
-        if (primaryAvailable) {
-            try {
-                batchVectors = await this.primary.embedBatch(uncachedTexts);
-                usedProvider = this.primary;
-            }
-            catch (err) {
-                const reason = err instanceof Error ? err.message : String(err);
-                failures[this.primary.name] = reason;
-                logger.warn('embedding', 'batch_primary_failed', { reason });
-            }
-        }
-        else {
-            failures[this.primary.name] = 'provider unavailable';
-        }
-        if (!batchVectors) {
-            const fallbackAvailable = await this.fallback.isAvailable();
-            if (fallbackAvailable) {
+        for (const provider of this.providers) {
+            if (await provider.isAvailable()) {
                 try {
-                    batchVectors = await this.fallback.embedBatch(uncachedTexts);
-                    usedProvider = this.fallback;
+                    batchVectors = await provider.embedBatch(uncachedTexts);
+                    usedProvider = provider;
+                    break; // Found working provider
                 }
                 catch (err) {
                     const reason = err instanceof Error ? err.message : String(err);
-                    failures[this.fallback.name] = reason;
-                    logger.error('embedding', 'batch_fallback_failed', { reason });
+                    failures[provider.name] = reason;
+                    logger.warn('embedding', 'batch_provider_failed', { provider: provider.name, reason });
                 }
             }
             else {
-                failures[this.fallback.name] = 'provider unavailable';
+                failures[provider.name] = 'provider unavailable';
             }
         }
         if (!batchVectors || !usedProvider) {
@@ -525,28 +511,27 @@ export class EmbeddingService {
     }
     /**
      * Return the currently preferred active provider by checking availability.
-     * Falls back to the secondary provider if the primary is unavailable.
+     * Falls back sequentially if the primary is unavailable.
      *
      * @returns The first available EmbeddingProvider.
-     * @throws EmbeddingUnavailableError when neither provider is available.
+     * @throws EmbeddingUnavailableError when no provider is available.
      */
     async getActiveProvider() {
-        if (await this.primary.isAvailable())
-            return this.primary;
-        if (await this.fallback.isAvailable())
-            return this.fallback;
-        throw new EmbeddingUnavailableError({
-            [this.primary.name]: 'provider unavailable',
-            [this.fallback.name]: 'provider unavailable',
-        });
+        const failures = {};
+        for (const provider of this.providers) {
+            if (await provider.isAvailable())
+                return provider;
+            failures[provider.name] = 'provider unavailable';
+        }
+        throw new EmbeddingUnavailableError(failures);
     }
     /**
      * Return the vector dimensionality of the currently active provider.
      * Used by ChromaDB collection setup (STORY-006) to configure the collection
      * for the right number of dimensions.
      *
-     * @returns 768 (Ollama) or 1536 (OpenAI) of the active provider.
-     * @throws EmbeddingUnavailableError when neither provider is available.
+     * @returns dimensionality of the active provider.
+     * @throws EmbeddingUnavailableError when no provider is available.
      */
     async getDimensions() {
         const provider = await this.getActiveProvider();

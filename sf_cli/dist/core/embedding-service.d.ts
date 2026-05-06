@@ -20,6 +20,23 @@ export declare class EmbeddingUnavailableError extends Error {
     constructor(failures: Record<string, string>);
 }
 /**
+ * Embedding provider using Transformers.js for zero-dependency local execution.
+ *
+ * Uses Xenova/all-MiniLM-L6-v2 (384 dimensions).
+ */
+export declare class TransformersEmbeddingProvider implements EmbeddingProvider {
+    readonly name = "transformers";
+    readonly dimensions = 384;
+    private model;
+    /**
+     * Always available if the package is installed.
+     */
+    isAvailable(): Promise<boolean>;
+    private ensureModel;
+    embed(text: string): Promise<number[]>;
+    embedBatch(texts: string[]): Promise<number[][]>;
+}
+/**
  * Embedding provider backed by a locally-running Ollama instance.
  *
  * Uses the nomic-embed-text model which outputs 768-dimensional vectors.
@@ -117,8 +134,7 @@ export declare class OpenAIEmbeddingProvider implements EmbeddingProvider {
  * ```
  */
 export declare class EmbeddingService {
-    private readonly primary;
-    private readonly fallback;
+    private readonly providers;
     private readonly cache;
     private readonly options;
     /**
@@ -133,14 +149,13 @@ export declare class EmbeddingService {
      *   1. Pre-process (trim, NFC normalise, truncate).
      *   2. Compute SHA-256 cache key.
      *   3. Return cached result if present and not expired.
-     *   4. Try primary provider.
-     *   5. On failure, warn and try fallback provider.
-     *   6. If both fail, throw EmbeddingUnavailableError.
-     *   7. Cache successful result.
+     *   4. Try providers in priority order.
+     *   5. If all fail, throw EmbeddingUnavailableError.
+     *   6. Cache successful result.
      *
      * @param text - Raw text to embed.
      * @returns EmbeddingResult with vector, provider name, dimensions, and cache flag.
-     * @throws EmbeddingUnavailableError when both providers fail.
+     * @throws EmbeddingUnavailableError when all providers fail.
      */
     embed(text: string): Promise<EmbeddingResult>;
     /**
@@ -155,10 +170,10 @@ export declare class EmbeddingService {
     embedBatch(texts: string[]): Promise<EmbeddingResult[]>;
     /**
      * Return the currently preferred active provider by checking availability.
-     * Falls back to the secondary provider if the primary is unavailable.
+     * Falls back sequentially if the primary is unavailable.
      *
      * @returns The first available EmbeddingProvider.
-     * @throws EmbeddingUnavailableError when neither provider is available.
+     * @throws EmbeddingUnavailableError when no provider is available.
      */
     getActiveProvider(): Promise<EmbeddingProvider>;
     /**
@@ -166,8 +181,8 @@ export declare class EmbeddingService {
      * Used by ChromaDB collection setup (STORY-006) to configure the collection
      * for the right number of dimensions.
      *
-     * @returns 768 (Ollama) or 1536 (OpenAI) of the active provider.
-     * @throws EmbeddingUnavailableError when neither provider is available.
+     * @returns dimensionality of the active provider.
+     * @throws EmbeddingUnavailableError when no provider is available.
      */
     getDimensions(): Promise<number>;
     /**
