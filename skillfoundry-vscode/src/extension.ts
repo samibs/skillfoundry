@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { execFile } from 'child_process';
 import { SfBridge } from './bridge';
 import { DashboardProvider } from './providers/dashboard';
 import { GateTimelineProvider } from './providers/gate-timeline';
@@ -16,11 +17,16 @@ import { StatusBarManager } from './providers/statusbar';
 import { registerGateCommands } from './commands/gate';
 import { registerForgeCommands } from './commands/forge';
 import { registerMemoryCommands } from './commands/memory';
+import { registerSetupCommand, runSetupWizard, secretKeyFor, envVarFor } from './commands/setup';
 
 export function activate(context: vscode.ExtensionContext): void {
   const workDir = getWorkDir();
+
+  // Output channel available even when no workspace/install detected
+  const outputChannel = vscode.window.createOutputChannel('SkillFoundry');
+  context.subscriptions.push(outputChannel);
+
   if (!workDir) {
-    // No workspace — register placeholder commands that show a message
     registerPlaceholderCommands(context);
     return;
   }
@@ -39,10 +45,17 @@ export function activate(context: vscode.ExtensionContext): void {
   ) && fs.existsSync(path.join(workDir, 'agents'));
 
   if (!hasConfigToml && !hasLegacyInstall) {
-    vscode.window.showInformationMessage(
-      'SkillFoundry not detected in this workspace. Run the install script or `skillfoundry init` to set up.',
-    );
     registerPlaceholderCommands(context);
+    registerSetupCommand(context, workDir, outputChannel);
+
+    vscode.window.showInformationMessage(
+      'SkillFoundry not detected. Run Setup to configure your API key and workspace.',
+      'Setup Now',
+    ).then((action) => {
+      if (action === 'Setup Now') {
+        vscode.commands.executeCommand('skillfoundry.setup');
+      }
+    });
     return;
   }
 
@@ -56,14 +69,16 @@ export function activate(context: vscode.ExtensionContext): void {
   // Initialize bridge
   const bridge = new SfBridge(workDir);
 
-  // Output channel for all SF logs
-  const outputChannel = vscode.window.createOutputChannel('SkillFoundry');
-  context.subscriptions.push(outputChannel);
-
   outputChannel.appendLine(`[${new Date().toISOString()}] SkillFoundry extension activated`);
   outputChannel.appendLine(`  Workspace: ${workDir}`);
   outputChannel.appendLine(`  sf_cli path: ${bridge.getSfCliPath()}`);
   outputChannel.appendLine(`  sf_cli available: ${bridge.isAvailable()}`);
+
+  // Load stored API key and inject into bridge subprocess env
+  loadAndInjectCredentials(context, configPath, bridge, outputChannel);
+
+  // Check sf CLI on PATH; offer npm install if missing
+  checkAndOfferSfCli(bridge, outputChannel);
 
   // ── Providers ──────────────────────────────────────────────
 
@@ -118,6 +133,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // ── Commands ───────────────────────────────────────────────
 
+  registerSetupCommand(context, workDir, outputChannel);
   registerGateCommands(context, bridge, gateTimelineProvider, diagnosticsManager, outputChannel);
   registerForgeCommands(context, bridge, forgeMonitorProvider, outputChannel);
   registerMemoryCommands(context, bridge, outputChannel);
@@ -155,8 +171,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const telemetryPattern = new vscode.RelativePattern(workDir, '.skillfoundry/telemetry.jsonl');
     const watcher = vscode.workspace.createFileSystemWatcher(telemetryPattern);
 
-    // Debounce refresh to avoid rapid updates
-    let refreshTimeout: NodeJS.Timeout | null = null;
+    let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
     const debouncedRefresh = () => {
       if (refreshTimeout) clearTimeout(refreshTimeout);
       refreshTimeout = setTimeout(() => {
@@ -185,6 +200,8 @@ function getWorkDir(): string | null {
 }
 
 function registerPlaceholderCommands(context: vscode.ExtensionContext): void {
+  // Note: skillfoundry.setup is NOT in this list — it is registered separately
+  // so the wizard runs even when no SkillFoundry install is detected.
   const commands = [
     'skillfoundry.gateAll', 'skillfoundry.gate', 'skillfoundry.gateFile',
     'skillfoundry.forge', 'skillfoundry.metrics', 'skillfoundry.report',
@@ -196,9 +213,69 @@ function registerPlaceholderCommands(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
       vscode.commands.registerCommand(cmd, () => {
         vscode.window.showInformationMessage(
-          'SkillFoundry not detected. Run the install script or `npx skillfoundry init` in this workspace first.',
+          'SkillFoundry not detected. Run SkillFoundry: Setup or `npx skillfoundry init` first.',
         );
       }),
     );
   }
+}
+
+/**
+ * Read provider from config.toml, load stored key from SecretStorage,
+ * and inject into bridge subprocess env so `sf` commands have credentials.
+ */
+function loadAndInjectCredentials(
+  context: vscode.ExtensionContext,
+  configPath: string,
+  bridge: SfBridge,
+  outputChannel: vscode.OutputChannel,
+): void {
+  let providerId = 'anthropic';
+  try {
+    const raw = fs.readFileSync(configPath, 'utf-8');
+    const match = raw.match(/provider\s*=\s*"([^"]+)"/);
+    if (match) providerId = match[1];
+  } catch {
+    // config.toml missing or unreadable — default to anthropic
+  }
+
+  context.secrets.get(secretKeyFor(providerId)).then((key) => {
+    if (key) {
+      bridge.setCredential(envVarFor(providerId), key);
+      outputChannel.appendLine(
+        `[${new Date().toISOString()}] Credentials loaded for provider: ${providerId}`,
+      );
+    } else {
+      outputChannel.appendLine(
+        `[${new Date().toISOString()}] No stored key for ${providerId}. Run SkillFoundry: Setup to add one.`,
+      );
+    }
+  });
+}
+
+/**
+ * Check if the `sf` binary is on PATH.
+ * If not, and the bridge runner is also missing, offer npm install.
+ */
+function checkAndOfferSfCli(bridge: SfBridge, outputChannel: vscode.OutputChannel): void {
+  execFile('sf', ['--version'], { timeout: 5000 }, (err) => {
+    const sfOnPath = !err;
+    outputChannel.appendLine(
+      `[${new Date().toISOString()}] sf CLI on PATH: ${sfOnPath}`,
+    );
+
+    if (!sfOnPath && !bridge.isAvailable()) {
+      vscode.window.showWarningMessage(
+        'SkillFoundry CLI (sf) not found. Gate runs and forge require it.',
+        'Install via npm',
+        'Not Now',
+      ).then((action) => {
+        if (action === 'Install via npm') {
+          const terminal = vscode.window.createTerminal({ name: 'SkillFoundry Install' });
+          terminal.show();
+          terminal.sendText('npm install -g skillfoundry');
+        }
+      });
+    }
+  });
 }
