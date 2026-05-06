@@ -21,6 +21,17 @@ fi
 BASENAME=$(basename "$FILE_PATH")
 DIRNAME=$(dirname "$FILE_PATH")
 
+# First-time creation exemption.
+# The hook's purpose is to prevent agents from *loosening* established
+# linter/formatter/build rules to dodge errors. On a greenfield project
+# where the config file does not yet exist, there are no rules to loosen
+# and a Next.js/TS/etc. project literally cannot build without these
+# files. Allow creation; subsequent Edit/Write operations on the same
+# path will hit the protected branch below because the file then exists.
+if [ ! -e "$FILE_PATH" ]; then
+    exit 0
+fi
+
 # Protected config file patterns
 PROTECTED_CONFIGS=(
     # ESLint
