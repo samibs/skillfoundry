@@ -214,6 +214,21 @@ const BUILTIN_PLAYBOOKS: PlaybookRecord[] = [
     ]),
     auto_applicable: 1,
   },
+  {
+    id: 'pb-security-logic',
+    name: 'Specter Logic Vulnerability',
+    description: 'Address speculative logic flaws identified by Specter Red Team',
+    category: 'SECURITY',
+    trigger_pattern: 'specter:exploited',
+    steps: JSON.stringify([
+      'Review the exploit trace and simulation output provided by Specter',
+      'Identify the logical flaw (e.g., missing auth check, state bypass)',
+      'Implement defensive guards and validation logic',
+      'Verify the fix by re-running the Specter simulation',
+      'Add a regression test covering the specific attack vector',
+    ]),
+    auto_applicable: 0,
+  },
 ];
 
 // ── Engine ──────────────────────────────────────────────────────
@@ -604,7 +619,7 @@ function matchByCategoryHeuristic(signature: string): string | null {
   const lower = signature.toLowerCase();
   if (lower.startsWith('build:')) return 'BUILD_FAILURE';
   if (lower.startsWith('test:')) return 'TEST_GAP';
-  if (lower.startsWith('security')) return 'SECURITY';
+  if (lower.startsWith('security') || lower.startsWith('specter:')) return 'SECURITY';
   if (lower.startsWith('gate:')) return 'GATE_FAILURE';
   if (lower.startsWith('pipeline:')) return 'PIPELINE';
   if (lower.includes('circuit_breaker')) return 'CIRCUIT_BREAKER';

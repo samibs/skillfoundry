@@ -257,14 +257,14 @@ const TFIDF_MAX_SCORE = 200;
  * @param workDir - Project root directory.
  * @returns Array of FormattedSearchResult.
  */
-export function runKeywordSearch(
+export async function runKeywordSearch(
   query: string,
   topK: number,
   mode: SearchMode,
   scope: string | undefined,
   workDir: string,
-): FormattedSearchResult[] {
-  const indexResults = recallIndex(query, workDir, { limit: topK });
+): Promise<FormattedSearchResult[]> {
+  const indexResults = await recallIndex(query, workDir, { limit: topK });
 
   // For full mode, load complete content; for preview/index, use recall layering
   const ids = indexResults.map((r) => r.id);
@@ -553,7 +553,7 @@ export async function executeMemorySearch(
         fallback: 'keyword',
       });
       usedFallback = true;
-      formattedResults = runKeywordSearch(query, topK, mode, scope, session.workDir);
+      formattedResults = await runKeywordSearch(query, topK, mode, scope, session.workDir);
     } else {
       const reason = err instanceof Error ? err.message : String(err);
       log.error('memory-search', 'search_error', { query, reason });

@@ -31,5 +31,7 @@ import { type Agent } from './agent.js';
 /**
  * Create a real Agent class instance from the registry.
  * This is the bridge between the old flat registry and the new Agent system.
+ * Note: SpecterEngine uses a dynamic import to avoid circular dependency
+ * (agent-registry → specter → agent → agent-registry).
  */
 export declare function createAgentInstance(name: string): Agent;

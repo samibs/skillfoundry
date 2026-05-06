@@ -47,7 +47,7 @@ describe('agentCommand', () => {
     const session = makeSession(null);
     const result = await agentCommand.execute('', session);
     expect(result).toContain('No agent active');
-    expect(result).toContain('60 agents available');
+    expect(result).toContain('61 agents available');
   });
 
   it('shows active agent when one is set', async () => {
@@ -87,7 +87,7 @@ describe('agentCommand', () => {
     expect(result).toContain('OPS');
     expect(result).toContain('INSPECT');
     expect(result).toContain('NONE');
-    expect(result).toContain('Total: 60 agents');
+    expect(result).toContain('Total: 61 agents');
   });
 
   it('shows agent info', async () => {

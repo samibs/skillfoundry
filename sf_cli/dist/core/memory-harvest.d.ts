@@ -26,4 +26,4 @@ export interface HarvestResult {
  * @param input - Run data collected during the pipeline DEBRIEF phase
  * @returns The number of entries written
  */
-export declare function harvestRunMemory(input: HarvestInput): HarvestResult;
+export declare function harvestRunMemory(input: HarvestInput): Promise<HarvestResult>;

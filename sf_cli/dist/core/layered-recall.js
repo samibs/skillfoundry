@@ -13,11 +13,44 @@ const PREVIEW_SNIPPET_LENGTH = 200;
  * Search knowledge and return a compact index of matches.
  * Returns: id, type, snippet (60 chars), score, weight.
  */
-export function recallIndex(query, workDir, filters) {
+export async function recallIndex(query, workDir, filters) {
     const log = getLogger();
     const entries = loadAllEntries(workDir);
     const filtered = applyFilters(entries, filters);
     const scored = scoreEntries(filtered, query);
+    // Semantic search integration
+    try {
+        const { EmbeddingService } = await import('./embedding-service.js');
+        const { VectorStore } = await import('./vector-store.js');
+        const svc = new EmbeddingService();
+        const store = new VectorStore(svc, workDir);
+        await store.initialize();
+        const semanticResults = await store.search(query, 20);
+        for (const match of semanticResults) {
+            const existing = scored.find(s => s.entry.id === match.id);
+            if (existing) {
+                // Boost existing keyword match
+                const semanticBoost = Math.round(match.score * 50);
+                existing.score += semanticBoost;
+                existing.breakdown.semanticScore = semanticBoost;
+            }
+            else {
+                // Add new entry from semantic search if it wasn't caught by keyword
+                const entry = entries.find(e => e.id === match.id);
+                if (entry) {
+                    const semanticScore = Math.round(match.score * 50);
+                    scored.push({
+                        entry,
+                        score: semanticScore,
+                        breakdown: { exactMatch: 0, wordMatches: 0, typeBonus: 0, weightBonus: 0, tagBonus: 0, semanticScore }
+                    });
+                }
+            }
+        }
+    }
+    catch (err) {
+        log.debug('memory', 'semantic_recall_skipped', { reason: String(err) });
+    }
     const limit = filters?.limit ?? DEFAULT_LIMIT;
     const results = scored
         .filter((s) => s.score > 0)

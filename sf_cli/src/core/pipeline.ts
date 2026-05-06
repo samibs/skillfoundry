@@ -561,6 +561,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
     makePhase('POLISH'),
     makePhase('TEMPER'),
     makePhase('INSPECT'),
+    makePhase('SPECTER'),
     makePhase('DEBRIEF'),
     makePhase('FINISH'),
   ];
@@ -1207,7 +1208,92 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   updatePhase('INSPECT', inspectStatus, Date.now() - inspectStart, inspectDetail);
   callbacks?.onPhaseComplete?.('INSPECT', inspectStatus);
 
-  // ── Phase 6: DEBRIEF ───────────────────────────────────
+  // ── Phase 6: SPECTER ───────────────────────────────────
+
+  callbacks?.onPhaseStart?.('SPECTER', 'Adversarial hardening review');
+  const specterStart = Date.now();
+
+  let specterStatus: PipelinePhaseStatus = 'skipped';
+  let specterDetail = 'Infrastructure only';
+
+  try {
+    const { createAgentInstance } = await import('./agent-registry.js');
+    const specterAgent = createAgentInstance('specter');
+    
+    // For now, run in analysis mode (Infrastructure check)
+    const specterTask = `Analyze implemented features for speculative attack vectors.\nPRDs: ${prds.map(p => p.file).join(', ')}`;
+    const specterContext: any = {
+      workDir,
+      config,
+      policy,
+      parentAgent: null,
+      budgetUsd: 1.0, // Minimal budget for initial scan
+      abortSignal: { aborted: false },
+      delegationDepth: 0,
+    };
+
+    const specterResult = await specterAgent.execute(specterTask, specterContext);
+    
+    totalCostUsd += specterResult.tokenUsage.cost;
+    totalInputTokens += specterResult.tokenUsage.input;
+    totalOutputTokens += specterResult.tokenUsage.output;
+
+    if (specterResult.status === 'failed') {
+      log.warn('pipeline', 'specter_findings_detected', { detail: 'Proved vulnerabilities exist. Triggering hardening loop.' });
+      
+      // Fixer loop: harden code against Specter exploits (max 2 attempts)
+      let hardened = false;
+      for (let attempt = 0; attempt < MAX_FIXER_ATTEMPTS && !hardened; attempt++) {
+        log.info('pipeline', 'hardening_attempt', { attempt: attempt + 1 });
+        
+        const fixerMessages: AnthropicMessage[] = [
+          {
+            role: 'user',
+            content: `The Specter security engine proved the following vulnerabilities exist in your implementation:\n\n${specterResult.output}\n\nHarden the code to mitigate these speculative attack vectors.`,
+          },
+        ];
+
+        const fixerResult = await runAgentLoop(fixerMessages, {
+          config,
+          policy,
+          systemPrompt: FIXER_PROMPT,
+          tools: ALL_TOOLS,
+          maxTurns: 15,
+          workDir,
+        }, {
+          requestPermission: callbacks?.requestPermission,
+        });
+
+        totalCostUsd += fixerResult.totalCostUsd;
+        totalInputTokens += fixerResult.totalInputTokens;
+        totalOutputTokens += fixerResult.totalOutputTokens;
+
+        // Re-run Specter to verify fixes
+        const recheckResult = await specterAgent.execute(specterTask, specterContext);
+        totalCostUsd += recheckResult.tokenUsage.cost;
+        
+        if (recheckResult.status === 'completed') {
+          hardened = true;
+          log.info('pipeline', 'hardening_success', { detail: 'All Specter vulnerabilities mitigated.' });
+        }
+      }
+
+      specterStatus = hardened ? 'passed' : 'failed';
+      specterDetail = hardened ? 'Hardened successfully' : 'Failed to mitigate vulnerabilities';
+    } else {
+      specterStatus = 'passed';
+      specterDetail = 'No vulnerabilities found';
+    }
+  } catch (err) {
+    log.warn('pipeline', 'specter_failed', { error: String(err) });
+    specterStatus = 'failed';
+    specterDetail = String(err).slice(0, 80);
+  }
+
+  updatePhase('SPECTER', specterStatus, Date.now() - specterStart, specterDetail);
+  callbacks?.onPhaseComplete?.('SPECTER', specterStatus);
+
+  // ── Phase 7: DEBRIEF ───────────────────────────────────
 
   callbacks?.onPhaseStart?.('DEBRIEF', 'Persisting run metadata');
   const debriefStart = Date.now();
@@ -1264,7 +1350,7 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   writeFileSync(join(runsDir, `${runId}.json`), JSON.stringify(runBundle, null, 2), 'utf-8');
 
   // Harvest knowledge entries to memory_bank/knowledge/*.jsonl
-  const harvestResult = harvestRunMemory({
+  const harvestResult = await harvestRunMemory({
     runId,
     workDir,
     storiesCompleted,

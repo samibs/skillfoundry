@@ -5,6 +5,8 @@ import { existsSync, mkdirSync, readFileSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { MicroGateResult, StoryExecution } from '../types.js';
+import { VectorStore } from './vector-store.js';
+import { EmbeddingService } from './embedding-service.js';
 
 const KNOWLEDGE_DIR = join('memory_bank', 'knowledge');
 const DEDUP_TAIL_LINES = 50;
@@ -66,7 +68,7 @@ interface KnowledgeEntry {
  * @param input - Run data collected during the pipeline DEBRIEF phase
  * @returns The number of entries written
  */
-export function harvestRunMemory(input: HarvestInput): HarvestResult {
+export async function harvestRunMemory(input: HarvestInput): Promise<HarvestResult> {
   const knowledgeDir = join(input.workDir, KNOWLEDGE_DIR);
   if (!existsSync(knowledgeDir)) {
     mkdirSync(knowledgeDir, { recursive: true });
@@ -123,6 +125,16 @@ export function harvestRunMemory(input: HarvestInput): HarvestResult {
   let written = 0;
   const entriesByFile = groupBy(entries, (e) => e.file);
 
+  // Initialize semantic index (best-effort — failure silently skipped)
+  let vectorStore: InstanceType<typeof VectorStore> | null = null;
+  try {
+    const embeddingService = new EmbeddingService();
+    vectorStore = new VectorStore(embeddingService, input.workDir);
+    await vectorStore.initialize();
+  } catch {
+    vectorStore = null;
+  }
+
   for (const [file, fileEntries] of Object.entries(entriesByFile)) {
     const filePath = join(knowledgeDir, file);
     const existingContent = loadTailContent(filePath, DEDUP_TAIL_LINES);
@@ -132,6 +144,25 @@ export function harvestRunMemory(input: HarvestInput): HarvestResult {
 
       appendFileSync(filePath, JSON.stringify(entry) + '\n', 'utf-8');
       written++;
+
+      // Semantic indexing (best-effort)
+      if (vectorStore) {
+        try {
+          await vectorStore.add([{
+            id: entry.id,
+            text: entry.content,
+            metadata: {
+              source: filePath,
+              scope: 'project',
+              tags: [],
+              timestamp: Date.now(),
+              type: mapToDocType(entry.type),
+            },
+          }]);
+        } catch {
+          // Skip if embedding unavailable
+        }
+      }
     }
   }
 
@@ -198,4 +229,11 @@ function groupBy<T>(items: T[], keyFn: (item: T) => string): Record<string, T[]>
     result[key].push(item);
   }
   return result;
+}
+
+function mapToDocType(type: string): 'decision' | 'error' | 'pattern' | 'fact' | 'lesson' {
+  const valid = ['decision', 'error', 'pattern', 'fact', 'lesson'] as const;
+  return (valid as readonly string[]).includes(type)
+    ? (type as 'decision' | 'error' | 'pattern' | 'fact' | 'lesson')
+    : 'fact';
 }

@@ -428,12 +428,12 @@ describe('formatJsonOutput', () => {
 // ── runKeywordSearch ──────────────────────────────────────────────────────────
 
 describe('runKeywordSearch', () => {
-  it('returns empty array when no knowledge exists', () => {
-    const results = runKeywordSearch('auth', 5, 'preview', undefined, TEST_DIR);
+  it('returns empty array when no knowledge exists', async () => {
+    const results = await runKeywordSearch('auth', 5, 'preview', undefined, TEST_DIR);
     expect(results).toEqual([]);
   });
 
-  it('returns matched entries from knowledge files', () => {
+  it('returns matched entries from knowledge files', async () => {
     writeKnowledgeEntry({
       id: 'know-1',
       type: 'decision',
@@ -443,12 +443,12 @@ describe('runKeywordSearch', () => {
       tags: ['auth', 'jwt'],
     });
 
-    const results = runKeywordSearch('authentication JWT', 5, 'preview', undefined, TEST_DIR);
+    const results = await runKeywordSearch('authentication JWT', 5, 'preview', undefined, TEST_DIR);
     expect(results.length).toBeGreaterThanOrEqual(1);
     expect(results[0].id).toBe('know-1');
   });
 
-  it('respects top-k limit', () => {
+  it('respects top-k limit', async () => {
     for (let i = 0; i < 10; i++) {
       writeKnowledgeEntry({
         id: `entry-${i}`,
@@ -460,11 +460,11 @@ describe('runKeywordSearch', () => {
       });
     }
 
-    const results = runKeywordSearch('authentication token', 3, 'preview', undefined, TEST_DIR);
+    const results = await runKeywordSearch('authentication token', 3, 'preview', undefined, TEST_DIR);
     expect(results.length).toBeLessThanOrEqual(3);
   });
 
-  it('normalises scores to [0, 1]', () => {
+  it('normalises scores to [0, 1]', async () => {
     writeKnowledgeEntry({
       id: 'score-test',
       type: 'fact',
@@ -474,7 +474,7 @@ describe('runKeywordSearch', () => {
       tags: [],
     });
 
-    const results = runKeywordSearch('authentication', 5, 'preview', undefined, TEST_DIR);
+    const results = await runKeywordSearch('authentication', 5, 'preview', undefined, TEST_DIR);
     for (const r of results) {
       expect(r.score).toBeGreaterThanOrEqual(0);
       expect(r.score).toBeLessThanOrEqual(1);

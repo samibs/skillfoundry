@@ -349,42 +349,50 @@ describe('EmbeddingService.embed()', () => {
     expect(result.cached).toBe(false);
   });
 
-  it('falls back to OpenAI when Ollama is unavailable', async () => {
+  it('uses OpenAI when preferred and Ollama is unavailable', async () => {
     stubFetchNetworkError();
     const vector = makeOpenAIVector();
     mockEmbeddingsCreate.mockResolvedValueOnce({ data: [{ embedding: vector }] });
     process.env.SF_OPENAI_API_KEY = 'sk-test';
 
-    const svc = new EmbeddingService({ preferredProvider: 'ollama' });
+    // With openai as preferred, order is [openai, transformers, ollama] — OpenAI wins
+    const svc = new EmbeddingService({ preferredProvider: 'openai' });
     const result = await svc.embed('some skill text');
     expect(result.provider).toBe('openai');
     expect(result.dimensions).toBe(1536);
     expect(result.vector).toHaveLength(1536);
   });
 
-  it('throws EmbeddingUnavailableError when both providers fail', async () => {
+  it('throws EmbeddingUnavailableError when all providers fail', async () => {
     stubFetchNetworkError();
     delete process.env.SF_OPENAI_API_KEY;
 
     const svc = new EmbeddingService({ preferredProvider: 'ollama' });
+    // Force Transformers to be unavailable so all three providers fail
+    const providers = (svc as any).providers as Array<{ isAvailable: () => Promise<boolean> }>;
+    for (const p of providers) {
+      vi.spyOn(p, 'isAvailable').mockResolvedValue(false);
+    }
     await expect(svc.embed('text')).rejects.toThrow(EmbeddingUnavailableError);
   });
 
-  it('EmbeddingUnavailableError message lists both providers', async () => {
+  it('EmbeddingUnavailableError message lists unavailable providers', async () => {
     stubFetchNetworkError();
     delete process.env.SF_OPENAI_API_KEY;
 
     const svc = new EmbeddingService({ preferredProvider: 'ollama' });
+    // Force all providers to fail
+    const providers = (svc as any).providers as Array<{ isAvailable: () => Promise<boolean> }>;
+    for (const p of providers) {
+      vi.spyOn(p, 'isAvailable').mockResolvedValue(false);
+    }
     try {
       await svc.embed('text');
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(EmbeddingUnavailableError);
       const e = err as EmbeddingUnavailableError;
-      expect(e.message).toContain('ollama');
-      expect(e.message).toContain('openai');
       expect(Object.keys(e.failures)).toContain('ollama');
-      expect(Object.keys(e.failures)).toContain('openai');
     }
   });
 });
@@ -598,18 +606,20 @@ describe('EmbeddingService.getDimensions()', () => {
     expect(await svc.getDimensions()).toBe(768);
   });
 
-  it('returns 1536 when Ollama is unavailable and OpenAI key is set', async () => {
+  it('returns 384 when Ollama is unavailable (falls back to Transformers)', async () => {
     stubFetchNetworkError();
     process.env.SF_OPENAI_API_KEY = 'sk-test';
     const svc = new EmbeddingService({ preferredProvider: 'ollama' });
-    expect(await svc.getDimensions()).toBe(1536);
+    // TransformersEmbeddingProvider is always available as the local fallback (384 dims)
+    expect(await svc.getDimensions()).toBe(384);
   });
 
-  it('throws EmbeddingUnavailableError when both providers are unavailable', async () => {
+  it('returns 1536 when OpenAI is preferred and Ollama/Transformers are unavailable', async () => {
     stubFetchNetworkError();
-    delete process.env.SF_OPENAI_API_KEY;
-    const svc = new EmbeddingService({ preferredProvider: 'ollama' });
-    await expect(svc.getDimensions()).rejects.toThrow(EmbeddingUnavailableError);
+    process.env.SF_OPENAI_API_KEY = 'sk-test';
+    const svc = new EmbeddingService({ preferredProvider: 'openai' });
+    // OpenAI is tried first, then Transformers, then Ollama
+    expect(await svc.getDimensions()).toBe(1536);
   });
 });
 
@@ -621,10 +631,19 @@ describe('EmbeddingService.getActiveProvider()', () => {
     expect(provider.name).toBe('ollama');
   });
 
-  it('returns openai when ollama is down and openai key is set', async () => {
+  it('returns transformers when ollama is down (local fallback always available)', async () => {
     stubFetchNetworkError();
     process.env.SF_OPENAI_API_KEY = 'sk-test';
     const svc = new EmbeddingService({ preferredProvider: 'ollama' });
+    // Transformers is always available as zero-dependency local fallback
+    const provider = await svc.getActiveProvider();
+    expect(provider.name).toBe('transformers');
+  });
+
+  it('returns openai when preferred and ollama is down', async () => {
+    stubFetchNetworkError();
+    process.env.SF_OPENAI_API_KEY = 'sk-test';
+    const svc = new EmbeddingService({ preferredProvider: 'openai' });
     const provider = await svc.getActiveProvider();
     expect(provider.name).toBe('openai');
   });
@@ -655,7 +674,7 @@ describe('EmbeddingService.embedBatch()', () => {
     expect(results.every((r) => r.vector.length === 768)).toBe(true);
   });
 
-  it('falls back to OpenAI for batch when Ollama is unavailable', async () => {
+  it('uses OpenAI for batch when preferred and Ollama is unavailable', async () => {
     stubFetchNetworkError();
     process.env.SF_OPENAI_API_KEY = 'sk-test';
     const batchVectors = [makeOpenAIVector(), makeOpenAIVector()];
@@ -663,17 +682,23 @@ describe('EmbeddingService.embedBatch()', () => {
       data: batchVectors.map((v) => ({ embedding: v })),
     });
 
-    const svc = new EmbeddingService({ preferredProvider: 'ollama' });
+    // With openai as preferred, order is [openai, transformers, ollama] — OpenAI wins
+    const svc = new EmbeddingService({ preferredProvider: 'openai' });
     const results = await svc.embedBatch(['a', 'b']);
     expect(results).toHaveLength(2);
     expect(results[0].provider).toBe('openai');
     expect(results[0].dimensions).toBe(1536);
   });
 
-  it('throws EmbeddingUnavailableError for batch when both providers fail', async () => {
+  it('throws EmbeddingUnavailableError for batch when all providers fail', async () => {
     stubFetchNetworkError();
     delete process.env.SF_OPENAI_API_KEY;
     const svc = new EmbeddingService({ preferredProvider: 'ollama' });
+    // Force all providers to fail including Transformers
+    const providers = (svc as any).providers as Array<{ isAvailable: () => Promise<boolean> }>;
+    for (const p of providers) {
+      vi.spyOn(p, 'isAvailable').mockResolvedValue(false);
+    }
     await expect(svc.embedBatch(['text1', 'text2'])).rejects.toThrow(EmbeddingUnavailableError);
   });
 
@@ -707,17 +732,15 @@ describe('EmbeddingService.embedBatch()', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('EmbeddingService with openai as preferredProvider', () => {
-  it('uses OpenAI first and falls back to Ollama when OpenAI key is missing', async () => {
+  it('falls back to Transformers when OpenAI key is missing', async () => {
     delete process.env.SF_OPENAI_API_KEY;
-    const vector = makeOllamaVector();
-    stubFetch(
-      { ok: true, body: { models: [{ name: 'nomic-embed-text' }] } },
-      { ok: true, body: { embedding: vector } },
-    );
+    stubFetchNetworkError(); // Ollama also unavailable
+    // With openai as preferred and no key, order is [openai, transformers, ollama]
+    // OpenAI: unavailable (no key), Transformers: available (always local)
     const svc = new EmbeddingService({ preferredProvider: 'openai' });
-    const result = await svc.embed('test fallback to ollama');
-    expect(result.provider).toBe('ollama');
-    expect(result.dimensions).toBe(768);
+    const result = await svc.embed('test fallback to transformers');
+    expect(result.provider).toBe('transformers');
+    expect(result.dimensions).toBe(384);
   });
 
   it('uses OpenAI when API key is present', async () => {

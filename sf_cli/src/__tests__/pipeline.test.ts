@@ -219,8 +219,8 @@ describe('runPipeline', () => {
     expect(result.phases[1].status).toBe('passed'); // PLAN (reused existing)
     expect(result.storiesTotal).toBe(1);
     expect(result.storiesCompleted).toBe(1);
-    // 1 story execution + 1 tester remediation (no test files in temp dir)
-    expect(runAgentLoop).toHaveBeenCalledTimes(2);
+    // 1 story execution + 1 tester remediation (no test files in temp dir) + 1 SPECTER
+    expect(runAgentLoop).toHaveBeenCalledTimes(3);
   });
 
   it('generates stories from PRD when none exist', async () => {
@@ -339,8 +339,8 @@ describe('runPipeline', () => {
     // T2/T5 pass — story should complete, no fixer triggered during FORGE
     expect(result.storiesCompleted).toBe(1);
     expect(result.storiesFailed).toBe(0);
-    // 1 story execution + 1 tester remediation (no test files in temp dir)
-    expect(runAgentLoop).toHaveBeenCalledTimes(2);
+    // 1 story execution + 1 tester remediation (no test files in temp dir) + 1 SPECTER
+    expect(runAgentLoop).toHaveBeenCalledTimes(3);
   });
 
   it('marks story as failed when T2/T5 fixer retries exhausted', async () => {
@@ -392,8 +392,8 @@ describe('runPipeline', () => {
 
     expect(result.storiesCompleted).toBe(0);
     expect(result.storiesFailed).toBe(1);
-    // 1 story + 2 fixer attempts = 3
-    expect(runAgentLoop).toHaveBeenCalledTimes(3);
+    // 1 story + 2 fixer attempts + 1 SPECTER = 4
+    expect(runAgentLoop).toHaveBeenCalledTimes(4);
   });
 
   it('persists run metadata to .skillfoundry/runs/', async () => {
@@ -540,7 +540,7 @@ describe('runPipeline', () => {
       },
     });
 
-    // Should fire for all 8 phases (IGNITE, PLAN, FORGE, POLISH, TEMPER, INSPECT, DEBRIEF, FINISH)
+    // Should fire for all 9 phases (IGNITE, PLAN, FORGE, POLISH, TEMPER, INSPECT, SPECTER, DEBRIEF, FINISH)
     expect(onPhaseStart).toHaveBeenCalledWith('IGNITE', expect.any(String));
     expect(onPhaseStart).toHaveBeenCalledWith('FORGE', expect.any(String));
     expect(onPhaseStart).toHaveBeenCalledWith('POLISH', expect.any(String));
@@ -620,8 +620,8 @@ describe('runPipeline', () => {
     expect(result.storiesCompleted).toBe(2); // 1 already done + 1 newly completed
     expect(onStoryStart).toHaveBeenCalledTimes(1); // Only STORY-002
     expect(onStoryStart).toHaveBeenCalledWith('STORY-002-pending.md', 0, 1);
-    // 1 story execution + 1 tester remediation (no test files in temp dir)
-    expect(runAgentLoop).toHaveBeenCalledTimes(2);
+    // 1 story execution + 1 tester remediation (no test files in temp dir) + 1 SPECTER
+    expect(runAgentLoop).toHaveBeenCalledTimes(3);
   });
 
   // ── Micro-gate integration tests ──────────────────────────
@@ -705,8 +705,8 @@ describe('runPipeline', () => {
       config: mockConfig, policy: mockPolicy, workDir: TEST_DIR,
     });
 
-    // 1 story execution + 1 tester remediation + 1 POLISH fixer
-    expect(runAgentLoop).toHaveBeenCalledTimes(3);
+    // 1 story execution + 1 tester remediation + 1 POLISH fixer + 1 SPECTER
+    expect(runAgentLoop).toHaveBeenCalledTimes(4);
     expect(result.storiesCompleted).toBe(1);
     // Story was NOT failed — POLISH doesn't block stories
     expect(result.storiesFailed).toBe(0);
@@ -820,7 +820,7 @@ describe('runPipeline', () => {
     });
 
     const phaseNames = result.phases.map((p) => p.name);
-    expect(phaseNames).toEqual(['IGNITE', 'PLAN', 'FORGE', 'POLISH', 'TEMPER', 'INSPECT', 'DEBRIEF', 'FINISH']);
+    expect(phaseNames).toEqual(['IGNITE', 'PLAN', 'FORGE', 'POLISH', 'TEMPER', 'INSPECT', 'SPECTER', 'DEBRIEF', 'FINISH']);
     const polishPhase = result.phases.find((p) => p.name === 'POLISH');
     expect(polishPhase).toBeDefined();
     expect(polishPhase!.status).toBe('passed');
