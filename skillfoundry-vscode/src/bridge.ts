@@ -191,10 +191,21 @@ function percentile(sorted: number[], p: number): number {
 export class SfBridge {
   private sfDir: string;
   private runnerPath: string | null;
+  private credentials: Record<string, string> = {};
 
   constructor(private workDir: string) {
     this.sfDir = path.join(workDir, '.skillfoundry');
     this.runnerPath = this.findRunner();
+  }
+
+  /** Store an API key for injection into subprocess env and terminal env */
+  setCredential(envVar: string, value: string): void {
+    this.credentials[envVar] = value;
+  }
+
+  /** Return stored credentials for terminal env injection */
+  getCredentials(): Record<string, string> {
+    return { ...this.credentials };
   }
 
   /** Find sf-runner.mjs — the ESM wrapper for sf_cli core modules */
@@ -235,6 +246,7 @@ export class SfBridge {
         timeout: timeoutMs,
         maxBuffer: 10 * 1024 * 1024,
         encoding: 'utf-8',
+        env: { ...process.env, ...this.credentials },
       }, (error, stdout, stderr) => {
         if (error) {
           const msg = stderr?.trim() || error.message || 'Runner failed';
