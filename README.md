@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.8.0-blue)
+![Version](https://img.shields.io/badge/version-5.9.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,15 +25,24 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.8.0
+### What's New in v5.9.0
 
-**VS Code Extension v1.3.0 — Native IDE Shell**
+**Self-Validate — Output Verification Loop**
 
-v5.8.0 completes the VS Code extension as a fully standalone product shell. Three blocking gaps closed:
+v5.9.0 adds the `/self-validate` skill across all 5 platforms and wires it into the forge pipeline as Phase 2.75. The core insight: tests verify code behavior in isolation; this verifies the running system produces the exact output your acceptance criteria describe.
 
-- **Setup wizard** (`SkillFoundry: Setup`) — Provider quick-pick → API key input → stored in VS Code SecretStorage (never written to disk) → `.skillfoundry/config.toml` written → reload prompt. Triggers automatically when no SkillFoundry install is detected in the workspace.
-- **sf CLI installation check** — At activation, detects whether `sf` is on PATH. If missing alongside `sf-runner.mjs`, offers `npm install -g skillfoundry` via an integrated terminal with one click.
-- **Forge progress notification** — `withProgress` notification wraps the forge terminal lifetime, cancellable from the notification. ForgeMonitor sidebar continues tracking phases live via `forge-state.json`. Stored API key is injected as an env var into every terminal and subprocess.
+- **`/self-validate` skill** — Classifies each AC by type (API, logic, DB, UI, CLI, file, integration), generates and runs a concrete verification command for each, diffs actual vs expected output, routes failures to fixer with the exact delta. Max 3 fix-verify iterations per AC before escalating to user.
+- **Phase 2.75: VERIFY** — New forge phase between Delivery Audit and Temper. Runs `/self-validate --all` on every DONE story before layer validation begins.
+- **Safeguard 6** — Per-story output verification gate in Phase 2 (Claude Code, Gemini, Codex platforms). A story is not marked DONE until all its ACs produce the expected output from a live run.
+- **Browser validation** — Uses Puppeteer/Playwright MCP for UI stories when available; falls back to `curl + grep` DOM inspection.
+
+#### Previous: Native IDE Shell (v5.8.0)
+
+**VS Code Extension v1.3.0**
+
+- **Setup wizard** (`SkillFoundry: Setup`) — Provider quick-pick → API key input → stored in VS Code SecretStorage (never written to disk) → `.skillfoundry/config.toml` written → reload prompt.
+- **sf CLI installation check** — At activation, detects whether `sf` is on PATH. Offers `npm install -g skillfoundry` via an integrated terminal with one click.
+- **Forge progress notification** — `withProgress` notification wraps the forge terminal lifetime, cancellable from the notification. ForgeMonitor sidebar continues tracking phases live via `forge-state.json`.
 
 #### Previous: Adversarial Intelligence (v5.7.0)
 

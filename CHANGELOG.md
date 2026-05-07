@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.9.0] - 2026-05-07
+
+### Self-Validate Skill — Output Verification Loop
+
+New `/self-validate` skill implementing the "agent validates its own work" pattern. Added to all 5 platforms (Claude Code, Copilot, Cursor, Gemini, Codex/Agents).
+
+#### `/self-validate` Skill
+
+- **7 AC types classified**: API endpoint, business logic, database, UI/frontend, CLI command, file output, integration — each mapped to a concrete verification command (`curl`, unit test, DB query, DOM grep, etc.)
+- **Core loop**: LOAD story → CLASSIFY ACs → GENERATE commands → EXECUTE → COMPARE actual vs expected → REPORT ✓/✗ → FIX & RETRY (max 3 iterations per AC)
+- **Browser validation**: Puppeteer/Playwright MCP for UI stories when available; falls back to `curl + grep` DOM inspection
+- **Server startup check**: Verifies dev server is up before API/UI ACs; reports startup failures rather than faking passes
+- **Fix routing**: Failed ACs auto-routed to `/fixer` with exact actual-vs-expected delta; re-verified after each fix
+- **Strict rules**: Never declare verified without running. Never fake a pass. Actual output wins over code inspection.
+
+#### Forge Pipeline Integration
+
+- **Safeguard 6** added to Phase 2 (Claude Code, Gemini, Codex/Agents): per-story output verification loop runs after Test Existence Gate (Safeguard 2), before DONE is marked
+- **Phase 2.75: VERIFY** added to all 5 platforms between Phase 2.5 (Delivery Audit) and Phase 3 (Temper): runs `/self-validate --all` across all DONE stories before layer validation begins
+- Both output format blocks updated on all platforms to include Phase 2.75
+
+---
+
 ## [Unreleased]
 
 ### Fixed
