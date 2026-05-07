@@ -108,6 +108,46 @@ IF EITHER FAILS:
    → This is a FAIL, not a PASS
 ```
 
+#### Safeguard 6: Output Verification Loop (Per Story)
+
+**AFTER each story passes the Test Existence Gate (Safeguard 2)**, before marking it DONE:
+
+```
+1. Extract all acceptance criteria from the story file (Gherkin: Given/When/Then)
+
+2. For each AC, generate and run a concrete verification command:
+   - API story:   curl the running endpoint, check HTTP status + response body
+   - Logic story: run the specific unit test for that function, check output
+   - DB story:    query the database directly, check schema/constraints
+   - UI story:    if browser MCP available → navigate + screenshot; else → curl + grep DOM
+   - CLI story:   run the exact command from the AC, grep for expected output
+   - File story:  cat/tail the output file, assert expected fields present
+
+3. Compare actual output to expected output from AC text
+
+4. IF actual matches expected:
+   → AC: VERIFIED ✓
+
+5. IF mismatch:
+   → Record: { ac_text, expected, actual, exit_code }
+   → Route to Fixer with the exact delta: "AC failed: [text]. Expected: [X]. Got: [Y]."
+   → Re-run verification after fix (max 3 iterations)
+   → If still failing after 3 iterations: mark AC as VERIFY_FAILED, escalate to user
+
+6. ONLY mark story as DONE when ALL ACs are VERIFIED (or VERIFY_FAILED with user escalation)
+
+7. NEVER declare a story done by reading the code and reasoning it should work.
+   Run the code. Observe the output. Compare to expected.
+   "Tests pass" ≠ "Output matches spec."
+```
+
+**Server startup check** (run once before first API/UI AC in a story):
+```
+curl -sf http://localhost:{PORT}/health || curl -sf http://localhost:{PORT}/api/health
+→ If not running: npm run dev & → wait up to 15s → retry
+→ If startup fails: report clearly, do NOT fake AC passes
+```
+
 #### Safeguard 3: Circuit Breaker (Blocker Detection)
 
 **Track error patterns across stories.** If the same error repeats, STOP.
@@ -215,6 +255,21 @@ IF ANY anomalies detected:
 - If completion < 100%, mark status as PARTIAL and include resume instructions
 - This audit is MANDATORY — never skip it, even on partial completion
 
+**PHASE 2.75: VERIFY** — Output verification across all stories
+```
+/self-validate --all
+```
+- Runs the output verification loop on every story marked DONE in Phase 2
+- For each story: executes the actual ACs against the running system
+- Not "did tests pass?" — "does the running code produce the exact expected output?"
+- **API stories**: curl endpoints, verify status codes + response bodies
+- **Logic stories**: run targeted tests, verify specific function outputs
+- **DB stories**: query the database directly, verify schema and data constraints
+- **UI stories**: if browser MCP configured → navigate + screenshot + DOM inspect; else → curl + grep
+- **Fix loop**: stories with failing ACs are routed to fixer with actual-vs-expected delta, re-verified (max 3 iterations)
+- Only stories that pass ALL ACs (or have VERIFY_FAILED escalated to user) proceed to Phase 3
+- If 0 browser MCP tools are configured: note "Browser validation skipped" for UI stories
+
 **PHASE 3: TEMPER** — Validate all layers
 ```
 /layer-check
@@ -263,6 +318,7 @@ The Forge — Complete
   Phase 1 (Ignite):    ✓ PRDs validated
   Phase 2 (Forge):     ✓ Stories implemented (batched, state persisted)
   Phase 2.5 (Audit):   ✓ Delivery audit — [X]/[Y] files delivered ([Z]%)
+  Phase 2.75 (Verify): ✓ Output verified — [N]/[M] ACs passed, [K] stories clean
   Phase 3 (Temper):    ✓ All layers passing
   Phase 4 (Inspect):   ✓ Security audit clean
   Phase 5 (Remember):  ✓ Knowledge harvested
@@ -396,6 +452,10 @@ The Forge — Complete
     ├── Auto-fixes:    [N] applied
     ├── Retries:       [N] attempts
     └── Escalations:   [N] to user
+  Phase 2.75 (Verify): ✓/✗ Output verification
+    ├── ACs verified:  [N]/[M]
+    ├── Fix iterations: [N]
+    └── Escalated:     [N] to user
   Phase 3 (Temper):    ✓/✗ Layer validation
     ├── Database:      ✓/✗
     ├── Backend:       ✓/✗

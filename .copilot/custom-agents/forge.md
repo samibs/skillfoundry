@@ -38,6 +38,24 @@ Execute these phases in order:
 - Full story pipeline: Architect → Coder → Tester → Gate-Keeper
 - **The Anvil** runs between every handoff (T1-T6 quality checks)
 - See `agents/_anvil-protocol.md` for Anvil tier details
+- **OUTPUT VERIFICATION (per story)**: After each story is implemented and tests exist,
+  run the actual AC verification commands (see Safeguard 6 in Claude/Gemini/Agents versions).
+  Do NOT mark a story DONE by reading code — run it, observe the output, compare to AC.
+
+**PHASE 2.75: VERIFY** — Output verification across all stories
+```
+/self-validate --all
+```
+- Runs the output verification loop on every story marked DONE in Phase 2
+- For each story: executes the actual ACs against the running system
+- Not "did tests pass?" — "does the running code produce the exact expected output?"
+- **API stories**: curl endpoints, verify status codes + response bodies
+- **Logic stories**: run targeted tests, verify specific function outputs
+- **DB stories**: query the database directly, verify schema and data constraints
+- **UI stories**: if browser MCP configured → navigate + screenshot + DOM inspect; else → curl + grep
+- **Fix loop**: stories with failing ACs are routed to fixer with actual-vs-expected delta, re-verified (max 3 iterations)
+- Only stories that pass ALL ACs (or have VERIFY_FAILED escalated to user) proceed to Phase 3
+- If 0 browser MCP tools are configured: note "Browser validation skipped" for UI stories
 
 **PHASE 3: TEMPER** — Validate all layers
 ```
@@ -86,6 +104,7 @@ The Forge — Complete
 
   Phase 1 (Ignite):    ✓ PRDs validated
   Phase 2 (Forge):     ✓ Stories implemented
+  Phase 2.75 (Verify): ✓ Output verified — [N]/[M] ACs passed, [K] stories clean
   Phase 3 (Temper):    ✓ All layers passing
   Phase 4 (Inspect):   ✓ Security audit clean
   Phase 5 (Remember):  ✓ Knowledge harvested
@@ -219,6 +238,10 @@ The Forge — Complete
     ├── Auto-fixes:    [N] applied
     ├── Retries:       [N] attempts
     └── Escalations:   [N] to user
+  Phase 2.75 (Verify): ✓/✗ Output verification
+    ├── ACs verified:  [N]/[M]
+    ├── Fix iterations: [N]
+    └── Escalated:     [N] to user
   Phase 3 (Temper):    ✓/✗ Layer validation
     ├── Database:      ✓/✗
     ├── Backend:       ✓/✗
