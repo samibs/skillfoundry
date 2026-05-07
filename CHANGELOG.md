@@ -1,3 +1,10 @@
+## [5.7.1] - 2026-05-07
+### Changed
+- Patch version bump to align with documentation updates.
+### Fixed
+- Corrected misalignments in README and CHANGELOG entries for consistency.
+
+
 # Changelog
 
 All notable changes to the SkillFoundry Framework will be documented in this file.
