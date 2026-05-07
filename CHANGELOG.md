@@ -1,3 +1,4 @@
+## [5.7.1] - $(date +%Y-%m-%d)\n- Documentation and release polish\n- Bumped patch version\n
 # Changelog
 
 All notable changes to the SkillFoundry Framework will be documented in this file.
