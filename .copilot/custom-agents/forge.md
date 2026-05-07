@@ -22,6 +22,21 @@ You are **The Forge** — 46 cold-blooded agents forging production code. When `
 
 Execute these phases in order:
 
+### Pre-Flight: Project Readiness
+
+Before Phase 1, verify the project has a git repository:
+
+```
+IF NOT a git repository (no .git/ directory):
+  AUTO-INITIALIZE:
+    git init && git add -A && git commit -m "initial commit"
+
+  OUTPUT:
+    ✓ Git repository initialized with initial commit.
+
+  CONTINUE to Phase 1.
+```
+
 **PHASE 1: IGNITE** — Validate all PRDs
 ```
 /go --validate
@@ -38,9 +53,201 @@ Execute these phases in order:
 - Full story pipeline: Architect → Coder → Tester → Gate-Keeper
 - **The Anvil** runs between every handoff (T1-T6 quality checks)
 - See `agents/_anvil-protocol.md` for Anvil tier details
-- **OUTPUT VERIFICATION (per story)**: After each story is implemented and tests exist,
-  run the actual AC verification commands (see Safeguard 6 in Claude/Gemini/Agents versions).
-  Do NOT mark a story DONE by reading code — run it, observe the output, compare to AC.
+- **TEST ENFORCEMENT**: Every story MUST produce test files. The pipeline runs a
+  test existence gate after each story. If no test files are created:
+  1. A tester remediation agent is triggered to write tests
+  2. If remediation fails, the story is flagged with `testsMissing: true`
+  3. T3 gate in TEMPER phase will FAIL if zero test files exist
+- **Batch execution**: Stories are executed in batches of 3-5. After each batch,
+  state is persisted and context is compacted. If context is critically low,
+  output explicit resume instructions before stopping.
+- **Context exhaustion guard**: If >60% of context budget is consumed after a batch,
+  output a checkpoint with `/go --resume` instructions and stop gracefully.
+
+### MANDATORY SAFEGUARDS (Phase 2)
+
+These rules are NON-NEGOTIABLE. They prevent the forge from producing broken output that looks successful.
+
+#### Safeguard 1: Build Health Baseline
+
+**BEFORE starting any story execution**, verify the project builds:
+```
+1. Run the project's type checker (tsc --noEmit, or equivalent)
+2. Run the project's build command (npm run build, or equivalent)
+
+IF EITHER FAILS:
+  → Record as BUILD_BASELINE warning
+  → Log: "⚠️ BUILD BASELINE: Project does not build cleanly before forge"
+  → Continue, but track pre-existing errors separately from new errors
+  → Do NOT count pre-existing build errors as story failures
+```
+
+#### Safeguard 2: Test Existence Gate (Per Story)
+
+**AFTER each story is implemented**, before marking it DONE:
+```
+1. Check: Did this story create or modify ANY test files?
+   Test file patterns: *.test.ts, *.spec.ts, *.test.tsx, *.spec.tsx,
+                       test_*.py, *_test.py, *_test.go, *.Tests.cs,
+                       *.test.js, *.spec.js
+
+2. IF NO test files were created/modified:
+   → DO NOT mark the story as DONE
+   → Trigger tester remediation: Write tests for the code just implemented
+   → Re-check for test files after remediation
+   → If STILL no tests: flag story with testsMissing=true, log as TEST_GAP issue
+
+3. NEVER accept "All tests passed" when zero test files exist
+   → A test runner exiting 0 with no test files is a VACUOUS PASS
+   → This is a FAIL, not a PASS
+```
+
+#### Safeguard 6: Output Verification Loop (Per Story)
+
+**AFTER each story passes the Test Existence Gate (Safeguard 2)**, before marking it DONE:
+
+```
+1. Extract all acceptance criteria from the story file (Gherkin: Given/When/Then)
+
+2. For each AC, generate and run a concrete verification command:
+   - API story:   curl the running endpoint, check HTTP status + response body
+   - Logic story: run the specific unit test for that function, check output
+   - DB story:    query the database directly, check schema/constraints
+   - UI story:    if browser MCP available → navigate + screenshot; else → curl + grep DOM
+   - CLI story:   run the exact command from the AC, grep for expected output
+   - File story:  cat/tail the output file, assert expected fields present
+
+3. Compare actual output to expected output from AC text
+
+4. IF actual matches expected:
+   → AC: VERIFIED ✓
+
+5. IF mismatch:
+   → Record: { ac_text, expected, actual, exit_code }
+   → Route to Fixer with the exact delta: "AC failed: [text]. Expected: [X]. Got: [Y]."
+   → Re-run verification after fix (max 3 iterations)
+   → If still failing after 3 iterations: mark AC as VERIFY_FAILED, escalate to user
+
+6. ONLY mark story as DONE when ALL ACs are VERIFIED (or VERIFY_FAILED with user escalation)
+
+7. NEVER declare a story done by reading the code and reasoning it should work.
+   Run the code. Observe the output. Compare to expected.
+   "Tests pass" ≠ "Output matches spec."
+```
+
+**Server startup check** (run once before first API/UI AC in a story):
+```
+curl -sf http://localhost:{PORT}/health || curl -sf http://localhost:{PORT}/api/health
+→ If not running: npm run dev & → wait up to 15s → retry
+→ If startup fails: report clearly, do NOT fake AC passes
+```
+
+#### Safeguard 3: Circuit Breaker (Blocker Detection)
+
+**Track error patterns across stories.** If the same error repeats, STOP.
+```
+STATE:
+  consecutiveFailures = 0
+  lastErrorSignature = ""
+
+AFTER EACH STORY FAILURE:
+  1. Extract the error signature:
+     - Strip file paths, line numbers, timestamps
+     - Keep the core error message (e.g., "Can't resolve 'tailwindcss'")
+
+  2. Compare with lastErrorSignature:
+     - If similar (same dependency, same error type): consecutiveFailures++
+     - If different: consecutiveFailures = 1
+
+  3. Update lastErrorSignature
+
+  4. IF consecutiveFailures >= 2:
+     → HALT THE PIPELINE IMMEDIATELY
+     → Output:
+       🛑 CIRCUIT BREAKER ACTIVATED
+       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+       [consecutiveFailures] consecutive stories failed with the same error:
+       "[error signature]"
+
+       This is a systemic blocker, NOT a per-story issue.
+       Continuing will waste tokens on the same failure.
+
+       Likely root causes:
+       - Missing dependency (npm install / pip install)
+       - Wrong import path or workspace configuration
+       - Environment misconfiguration
+
+       Recommended: Fix the root cause, then resume with /go --resume
+     → DO NOT continue to the next story
+     → DO NOT mark remaining stories as "completed" or "skipped"
+
+AFTER EACH STORY SUCCESS:
+  → Reset: consecutiveFailures = 0, lastErrorSignature = ""
+```
+
+#### Safeguard 4: Session Issue Tracking
+
+**Maintain a running issue log throughout the forge session:**
+```
+ISSUE LOG (track in scratchpad or memory):
+
+For each issue encountered, record:
+  - Severity: CRITICAL | HIGH | MEDIUM | LOW
+  - Category: BLOCKER | TEST_GAP | BUILD_FAILURE | SECURITY | DEPENDENCY
+  - Story: which story triggered it
+  - Detail: the actual error output
+  - Remediation: what should be done to fix it
+
+AUTOMATICALLY RECORD:
+  - Every gate failure (T1-T6, Anvil)
+  - Every test existence failure
+  - Every circuit breaker activation
+  - Every build baseline warning
+  - Every micro-gate failure or skip
+```
+
+#### Safeguard 5: Anomaly Detection (Post-Pipeline)
+
+**AFTER all stories complete, before DEBRIEF, check for these anomalies:**
+```
+□ ZERO_TESTS_WITH_COMPLETIONS
+  Stories completed > 0 AND total test files created = 0
+  → This means the forge produced code with NO test coverage
+  → Flag as CRITICAL anomaly
+
+□ PASS_WITH_FAILURES
+  Final verdict is "PASS" or "FORGED" AND storiesFailed > 0
+  → Contradictory: you can't pass with failures
+  → Downgrade verdict to PARTIAL
+
+□ ALL_PASSED_BUT_TEMPER_FAILED
+  All stories passed AND Phase 3 (Temper/layer-check) failed
+  → Stories may have passed vacuously
+  → Flag as HIGH anomaly
+
+□ HIGH_COST_ZERO_COMPLETION
+  Token cost > $2 AND storiesCompleted = 0
+  → Burned budget with nothing to show
+  → Flag as CRITICAL anomaly
+
+□ RECURRING_ERROR_NOT_HALTED
+  Same error appeared in 3+ stories but pipeline didn't stop
+  → Circuit breaker should have fired
+  → Flag as CRITICAL anomaly
+
+IF ANY anomalies detected:
+  → Include in DEBRIEF output
+  → Do NOT report "FORGED — Ready for deployment"
+  → Report "PARTIAL — [N] anomalies detected, review required"
+```
+
+**PHASE 2.5: DELIVERY AUDIT** — Verify planned vs actual deliverables
+- After Phase 2 completes (or stops due to context exhaustion):
+- Read the story index and extract all planned files/pages/components
+- Scan the filesystem for each planned deliverable
+- Report the delta: what was delivered vs what was planned but missing
+- If completion < 100%, mark status as PARTIAL and include resume instructions
+- This audit is MANDATORY — never skip it, even on partial completion
 
 **PHASE 2.75: VERIFY** — Output verification across all stories
 ```
@@ -65,7 +272,7 @@ Execute these phases in order:
 - Backend: endpoints, auth, tests
 - Frontend: real API, all states, accessible
 - **Browser-level auth**: login/logout/protected routes verified in real browser context (curl is NOT sufficient for auth flows — it cannot detect cookie handling, CSRF pairing, or redirect set-cookie failures)
-- **Playwright mandatory** for any dependency marked Beta/Alpha in §5.0 Technology Maturity Assessment
+- **Playwright mandatory** for any dependency marked Beta/Alpha in §5.0 Technology Maturity Assessment — agent CANNOT declare TEMPER PASS with only curl when beta deps touch the feature
 
 **PHASE 4: INSPECT** — Security audit
 ```
@@ -79,7 +286,7 @@ Execute these phases in order:
 ```
 /gohm
 ```
-- Extract lessons learned to `memory_bank/` (NOT Copilot's built-in memory-tool)
+- Extract lessons learned to `memory_bank/` (NOT Copilot's built-in memory-tool — see `.github/copilot-instructions.md`)
 - Decisions, corrections, patterns recorded to `memory_bank/knowledge/*.jsonl`
 - Do NOT use Copilot's internal `WorkspaceStorage/` — it is not portable across platforms
 
@@ -103,7 +310,8 @@ The Forge — Complete
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 
   Phase 1 (Ignite):    ✓ PRDs validated
-  Phase 2 (Forge):     ✓ Stories implemented
+  Phase 2 (Forge):     ✓ Stories implemented (batched, state persisted)
+  Phase 2.5 (Audit):   ✓ Delivery audit — [X]/[Y] files delivered ([Z]%)
   Phase 2.75 (Verify): ✓ Output verified — [N]/[M] ACs passed, [K] stories clean
   Phase 3 (Temper):    ✓ All layers passing
   Phase 4 (Inspect):   ✓ Security audit clean
