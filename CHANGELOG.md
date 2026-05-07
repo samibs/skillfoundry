@@ -1,16 +1,66 @@
-## [5.7.1] - 2026-05-07
-### Changed
-- Patch version bump to align with documentation updates.
-### Fixed
-- Corrected misalignments in README and CHANGELOG entries for consistency.
-
-
 # Changelog
 
 All notable changes to the SkillFoundry Framework will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## [5.10.0] - 2026-05-07
+
+### /test-map Skill — Test Cases Documentation Generator
+
+New `/test-map` skill that reads every test file in a project, classifies tests by business value tier, and produces a deliverable-grade HTML report. Added to all 5 platforms.
+
+#### Classification Engine
+
+- **Tier 1 (HIGH VALUE)** — Tests asserting conditional rendering, state transitions, data transformation rules, business rules, field exposure/hiding, exact payload shapes, multi-step flows. Signal: multiple `expect()` with specific values, `toHaveBeenCalledWith(...)`.
+- **Tier 2 (MEDIUM-HIGH VALUE)** — DI wiring with real providers, `HttpTestingController` HTTP contract tests, lifecycle-triggered behavior.
+- **Tier 3 (BASELINE VALUE)** — Pure `should create` / `toBeTruthy()` smoke tests with zero behavioral assertions.
+
+One Tier 1 test in a file classifies the entire file as Tier 1.
+
+#### Report Output
+
+- Per-file deep analysis for Tier 1/2: test case table (name + plain-English description), why-it-exists context, added value breakdown, "Is It Useful?" verdict
+- Grouped module table for Tier 3 files
+- Assessment summary: value distribution + 5-dimension coverage quality score (breadth, depth, business rules, edge cases, API contracts — each scored 1-10)
+- Recommendations section: ordered by impact, with specific code examples and exact target files
+- Self-contained HTML output (`docs/test-map-YYYY-MM-DD.html`) with inline CSS matching the deliverable format (tier color classes, verdict classes, TOC, score table)
+
+---
+
+### GitHub Copilot + Claude Optimization
+
+Two targeted changes that bring GitHub Copilot with Claude model to full parity with the Claude Code experience.
+
+#### `.github/copilot-instructions.md` — Full Claude System Prompt
+
+Expanded from a 50-line memory-policy stub to a complete Claude-optimized system prompt:
+- **Identity block** — SkillFoundry persona, role as cold-blooded senior engineer + agent orchestrator
+- **Constitutional rules** — Non-negotiable code quality (no stubs, no nullable array methods), security (no localStorage tokens, HttpOnly cookies), three-layer completeness (DATABASE → BACKEND → FRONTEND), honesty (no vacuous test passes, no inferred verification)
+- **Memory policy** — `memory_bank/` usage, schema reference, explicit prohibition on Copilot's `WorkspaceStorage/`
+- **Agent invocation table** — All key agents with triggers and purposes
+- **Project structure map** — `genesis/`, `docs/stories/`, `memory_bank/`, platform dirs
+- **Development workflow** — PRD-first, forge pipeline, verify before done
+
+#### Copilot `forge.md` — Full Parity with Claude Version
+
+Synced to the canonical Claude version (was 222 lines behind). Restores:
+- Safeguards 3-6 (Circuit Breaker, Session Issue Tracking, Anomaly Detection, Output Verification Loop)
+- Phase 2.5 (Delivery Audit) and Phase 2.75 (Verify)
+- Full error handling tables per phase
+- Reflection protocol (pre/post execution, self-score)
+- Complete OUTPUT FORMAT block with all phase metrics
+
+---
+
+### Fixed
+
+- **Config Protection hook — greenfield false positive.** `.claude/hooks/config-protect.sh` was blocking first-time creation of protected config files (`tsconfig.json`, `.eslintrc.json`, etc.) on greenfield projects, preventing `/go` from scaffolding the first story. The hook now exits 0 when the target path does not yet exist — there are no rules to loosen if no rules exist yet. Subsequent edits still hit the deny branch.
+
+- **Version alignment.** A forge orchestrator job merged a PR that reset version references to 5.7.1 across `sf_cli/package.json`, `mcp-server`, `README.md`, and site files, and injected a spurious `[5.7.1]` entry before the CHANGELOG header. All references corrected to 5.10.0.
 
 ---
 
