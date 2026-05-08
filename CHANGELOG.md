@@ -219,14 +219,6 @@ New `/self-validate` skill implementing the "agent validates its own work" patte
 
 ---
 
-## [Unreleased]
-
-### Fixed
-
-- **Config Protection hook — greenfield false positive.** `.claude/hooks/config-protect.sh` was blocking first-time creation of protected config files (`tsconfig.json`, `.eslintrc.json`, etc.) on greenfield projects, which prevented `/go` from scaffolding STORY-001 (a Next.js + TS app cannot `npm run build`, `npm run lint`, or `tsc --noEmit` without these files). The hook now exits 0 when the target path does not yet exist on disk — there are no rules to "loosen" if no rules exist yet. Subsequent Edit/Write operations on the same path still hit the deny branch, preserving the original threat model (agents must fix code, not weaken established lint/format/build rules).
-
----
-
 ## [5.8.0] - 2026-05-06
 
 ### VS Code Extension v1.3.0 — Native IDE Shell
