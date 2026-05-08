@@ -324,7 +324,8 @@ ANY MATCH = BLOCKED (except in test files where mocks are allowed)
 │ ITERATION GATES:                                            │
 │ ├─ Documentation: [✓/✗]                                     │
 │ ├─ Security Scan: [✓/✗]                                     │
-│ └─ Audit Log: [✓/✗]                                         │
+│ ├─ Audit Log: [✓/✗]                                         │
+│ └─ Checkbox Reconcile: [✓/✗]                                │
 │                                                             │
 │ BANNED PATTERN SCAN: [CLEAN/VIOLATIONS]                     │
 │                                                             │
@@ -340,6 +341,83 @@ ANY MATCH = BLOCKED (except in test files where mocks are allowed)
 
 ---
 
+## STORY CHECKBOX RECONCILIATION (final step)
+
+After all layer gates and the audit log entry, run the story checkbox reconciler.
+It updates `- [ ]` → `- [x]` based on artifact pointers in the story file
+(`<!-- artifact: handler:args -->`), so the checkbox state in `docs/stories/`
+matches the gate results that just ran. The reconciler is non-destructive
+(it never un-checks a box) and idempotent (no change on a second run with
+no new artifacts).
+
+```bash
+# Reconcile checkboxes for a single story (after gates pass)
+scripts/reconcile-story-checkboxes.sh docs/stories/<feature>/STORY-XXX.md
+
+# Strict mode: fail if any artifact-tagged box remains unchecked.
+# Use this for the final validation pass on a "done" story.
+scripts/reconcile-story-checkboxes.sh --strict docs/stories/<feature>/STORY-XXX.md
+
+# Reconcile every story under a feature
+scripts/reconcile-story-checkboxes.sh docs/stories/<feature>/
+```
+
+Exit codes (relevant to /layer-check):
+| Code | Meaning |
+|------|---------|
+| 0 | All artifact-tagged boxes resolved (or none present) |
+| 1 | `--strict` mode and at least one tagged box remained unchecked |
+| 3 | I/O error (target story file unreadable) |
+
+If the reconciler exits non-zero in strict mode, the verdict is REJECTED:
+the gate result and the checkbox state disagree — that is a story-level
+audit failure, not a code failure.
+
+Phase-1 install: only the `file-exists` and `grep` handlers are wired.
+Tagged checkboxes referencing reserved Phase-3 handlers (`test:`, `lint:`,
+`layer-check:`) are explicitly NOT silently flipped — they remain unchecked
+until Phase 3 ships.
+
+See: `genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`
+
+---
+
+## STORY STATE FOLDERS (Phase 2)
+
+When a story lives under `docs/stories/<feature>/{todo,in-progress,blocked,done}/`,
+`/layer-check`'s verdict drives the folder transition. Use
+`scripts/move-story.sh` so the move is atomic (`git mv`), the INDEX.md is
+regenerated, and the strict-reconcile precondition is enforced before any
+story can land in `done/`.
+
+```bash
+# After verdict APPROVED:
+scripts/move-story.sh docs/stories/<feature>/in-progress/STORY-XXX.md done
+
+# After verdict REJECTED at a specific gate:
+scripts/move-story.sh docs/stories/<feature>/in-progress/STORY-XXX.md blocked \
+    --blocked-gate "T3-security" \
+    --reason "STRIDE-S identified missing auth check on /api/v1/x"
+```
+
+Properties:
+- `→ done` runs `scripts/reconcile-story-checkboxes.sh --strict` first; if
+  any artifact-tagged `- [ ]` remains, the move is **refused** (rc=3) — the
+  gate said "approved" but the checkbox state disagrees, which is itself
+  an audit failure.
+- `→ blocked` writes a sibling `STORY-XXX.BLOCKED.md` with the failing gate
+  and reason. Leaving `blocked/` automatically removes the sibling.
+- `git mv` is preferred so the audit trail (`git log --follow`) survives.
+- INDEX.md is regenerated automatically; pass `--no-index` for batch ops.
+
+Features still on the flat (pre-migration) layout are **not** affected.
+Run `scripts/migrate-stories-to-folders.sh <feature-dir>` once when you're
+ready to adopt the folder layout for that feature.
+
+See `docs/story-state-folders.md` for the full workflow.
+
+---
+
 ## INVOCATION
 
 ```
@@ -349,6 +427,7 @@ ANY MATCH = BLOCKED (except in test files where mocks are allowed)
 /layer-check frontend     - Frontend layer only
 /layer-check scan         - Banned pattern scan only
 /layer-check audit        - Generate audit log entry
+/layer-check reconcile    - Run story checkbox reconciler only
 ```
 
 ---

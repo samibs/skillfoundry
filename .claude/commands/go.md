@@ -1015,6 +1015,84 @@ Default: All tiers enabled. In supervised mode, T1 always runs.
 
 ---
 
+## STORY STATE FOLDERS (Phase 2 of FolderFlow PRD)
+
+When a feature's story directory uses the migrated folder layout
+(`docs/stories/<feature>/{todo,in-progress,blocked,done}/`), `/go` makes
+story state explicit by physically moving files between those folders as
+the pipeline progresses. State is determined by `ls`, not by parsing
+markdown.
+
+### When to move
+
+```
+PRD decomposed
+    └── stories generated → land in docs/stories/<feature>/todo/
+
+Story selected for execution
+    └── scripts/move-story.sh <story> in-progress
+
+Architect → Coder → Tester → Gate-Keeper
+
+Gate-Keeper APPROVED + reconciler --strict passes
+    └── scripts/move-story.sh <story> done
+
+Any gate FAILED / story BLOCKED
+    └── scripts/move-story.sh <story> blocked \
+            --blocked-gate "<failing-gate>" \
+            --reason "<short reason>"
+
+Story unblocked (root cause fixed)
+    └── scripts/move-story.sh <story> in-progress
+```
+
+### Detecting layout
+
+Before invoking `move-story.sh`, check whether the feature has been migrated:
+
+```bash
+if [ -d "docs/stories/<feature>/todo" ]; then
+    # Migrated layout — use move-story.sh
+    scripts/move-story.sh "$STORY_PATH" in-progress
+else
+    # Pre-migration flat layout — skip moves, just track state in scratchpad
+    :
+fi
+```
+
+If the feature is unmigrated, `/go` MUST NOT auto-migrate it mid-run —
+that would mix scope. Suggest `scripts/migrate-stories-to-folders.sh
+<feature-dir>` to the user as a separate housekeeping step.
+
+### Skip story when already done
+
+When iterating through a feature's stories, **skip any story already in
+`done/`**. This is the explicit fix for the "/go re-runs already-complete
+work" failure described in the PRD's §1.1.
+
+```bash
+for story in docs/stories/<feature>/todo/STORY-*.md; do
+    [ -e "$story" ] || continue   # glob expanded literally if folder empty
+    # process this story
+done
+```
+
+Stories in `done/` are not iterated. Stories in `blocked/` are surfaced
+to the user as part of the run summary, not silently retried.
+
+### Refused transitions
+
+`scripts/move-story.sh` will refuse `→ done` (exit code 3) if any
+artifact-tagged `- [ ]` checkbox remains in the story. This is the
+intended behaviour: the gate said "pass" but the artifact-backed
+acceptance criteria say otherwise. Treat rc=3 as an audit failure, not
+a script bug — fix the underlying gap (missing artifact, incorrect
+checkbox tag, or premature gate verdict) and retry.
+
+See `docs/story-state-folders.md` for the full workflow.
+
+---
+
 ## CONTEXT DISCIPLINE
 
 ### Token Conservation Rules

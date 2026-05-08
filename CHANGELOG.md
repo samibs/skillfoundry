@@ -7,6 +7,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added — Story Checkbox Reconciler (Phase 1 of FolderFlow PRD)
+
+Phase 1 of `genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`: a deterministic
+reconciler that flips `- [ ]` → `- [x]` in story markdown based on artifact pointers, so
+checkbox state always matches what the gates have actually verified.
+
+- `scripts/reconcile-story-checkboxes.sh` — main reconciler. Walks story files, finds
+  checkboxes tagged with `<!-- artifact: handler:args -->`, dispatches to the named
+  handler, and rewrites passing checkboxes in place. Atomic via temp-file + rename.
+- `scripts/lib/reconcile-handlers.sh` — handler library. Phase 1 ships the
+  `file-exists` and `grep` handlers; reserved Phase-3 names (`test:`, `lint:`,
+  `layer-check:`) return a "deferred" code rather than silently misbehaving.
+- `tests/scripts/test-reconciler.sh` — 26-case shell test suite covering every
+  handler, path-safety rejection (absolute paths, traversal, symlink escape),
+  CLI behavior, and strict-mode exit codes.
+- Self-test mode: `scripts/reconcile-story-checkboxes.sh --self-test` builds throwaway
+  fixtures, asserts FR-005 (untagged boxes never modified), FR-007 (idempotency),
+  FR-008 (non-destructive — never un-checks), and `--strict` failure semantics.
+- `/layer-check` integration: new `STORY CHECKBOX RECONCILIATION` section and a
+  `/layer-check reconcile` invocation. The verdict box gained a `Checkbox Reconcile`
+  iteration-gate row.
+- `docs/story-checkbox-reconciler.md` — usage, artifact-pointer syntax, exit codes,
+  and the FR-008 non-destruction contract.
+
+Properties enforced:
+- **Non-destructive**: a previously-checked box is never reverted; if its artifact
+  has since vanished, a regression warning is logged but the box stays checked.
+- **Idempotent**: a second invocation with no new artifacts produces zero diff.
+- **Path-safe**: absolute paths, `..` traversal, and symlinks resolving outside
+  the repo root are all rejected before any handler runs.
+- **No artifact contents in logs**: only paths and pass/fail booleans are logged,
+  so artifact files containing secrets cannot leak through reconciler output.
+
+Phase 3 (rich JSON handlers) is explicitly deferred per the PRD's §9.1 — it ships
+when Anvil gates emit standardized JSON artifacts.
+
+### Added — Story Folder State Machine (Phase 2 of FolderFlow PRD)
+
+Phase 2 of `genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`: makes
+story state explicit and Git-visible by physically moving story files between
+`todo/`, `in-progress/`, `blocked/`, `done/` subfolders under each feature.
+
+- `scripts/lib/story-index.sh` — INDEX.md regeneration library. Deterministic
+  output (no timestamps, sorted by ID). Parses `# STORY-XXX — Title` headings
+  and YAML `depends_on:` frontmatter (inline + block list). Only re-writes
+  INDEX.md when content actually changes (mitigation for noisy diffs, R-003).
+- `scripts/move-story.sh` — atomic state transitions. Uses `git mv` so
+  `git log --follow` keeps working across renames. Refuses `→ done` (rc=3)
+  unless `reconcile-story-checkboxes.sh --strict` passes — gate verdict and
+  artifact-backed checkbox state must agree before a story can be marked done.
+- `scripts/migrate-stories-to-folders.sh` — one-time, idempotent migration of
+  flat `docs/stories/<feature>/STORY-*.md` trees into the new layout.
+  Classifies each story by checkbox state: all-checked-tagged → `done/`,
+  any-unchecked-tagged → `todo/`, no-tags → `todo/` (ambiguous, printed in a
+  manual-review list at the end).
+- `tests/scripts/test-folder-state.sh` — 40-case test suite covering INDEX
+  regeneration, state-transition validation, BLOCKED sibling lifecycle,
+  migrator classification, idempotency, dry-run, and a regression check
+  that Phase 1's `--self-test` still passes.
+- BLOCKED sibling files: `STORY-XXX.BLOCKED.md` is auto-generated when a
+  story enters `blocked/` (failing gate + ISO timestamp + free-text reason)
+  and auto-removed when the story leaves.
+- `/layer-check` integration: new "STORY STATE FOLDERS (Phase 2)" section
+  documenting how an APPROVED verdict drives `→ done/` and a REJECTED
+  verdict drives `→ blocked/`.
+- `/go` integration: new "STORY STATE FOLDERS (Phase 2)" section instructing
+  the orchestrator to call `move-story.sh` at gate transitions and to **skip
+  any story already in `done/`** — the explicit fix for the "re-runs
+  completed work" failure described in the PRD's §1.1.
+- `docs/story-state-folders.md` — full workflow documentation: layout, CLI
+  reference, exit codes, manual override, concurrency, and what is still
+  out of scope (file watchers, web UI, regression detection).
+
+Sourced libraries (`scripts/lib/*.sh`) deliberately do **not** enable `set -u`
+or `set -e` — those leak into the caller's shell. Entry-point scripts set
+their own strict modes.
+
+### Deviation from PRD
+
+PRD §10.1 specified `bats` for unit tests; `bats` is not installed and is not in
+the project's existing test toolchain. Substituted plain-shell tests under
+`tests/scripts/` matching the project's existing pattern (`tests/run-tests.sh`).
+No new system dependency added.
+
+PRD §9.1 stated Phase 2 should ship only "after Phase 1 proves valuable on at
+least one feature." This prerequisite was waived at the user's explicit
+direction; Phase 2 ships back-to-back with Phase 1 in the same release.
+
+---
+
 ## [5.10.0] - 2026-05-07
 
 ### /test-map Skill — Test Cases Documentation Generator
