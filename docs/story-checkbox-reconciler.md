@@ -1,7 +1,7 @@
 # Story Checkbox Reconciler
 
-> Phase 1 of [`genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`](../genesis/2026-05-08-folder-state-and-checkbox-reconciler.md).
-> Phases 2 (folder state machine) and 3 (rich JSON handlers) are deferred — see the PRD's §9.1.
+> Phases 1 + 3 of [`genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`](../genesis/2026-05-08-folder-state-and-checkbox-reconciler.md).
+> See also [Story State Folders](story-state-folders.md) (Phase 2).
 
 ## Why
 
@@ -46,7 +46,27 @@ set them to.
 |---------|------|-------------|
 | `file-exists` | `<repo-relative-path>` | The path resolves to an existing file or directory inside the repo. |
 | `grep` | `<repo-relative-path>:<extended-regex>` | The file exists and `grep -E -q` matches the regex. The first `:` separates path and pattern; later `:` characters are part of the pattern. |
-| `test`, `lint`, `layer-check` | reserved | **Phase-3 handlers**, not yet installed. Tagged checkboxes referencing these names will *not* be flipped (they return a "deferred" code) — they remain unchecked until Phase 3 ships. |
+| `test` | `<repo-relative-path>` | JSON file with shape `{"passed": <bool>, "failed": <number>, "total": <number>}`. Pass when `passed == true && failed == 0`. |
+| `lint` | `<repo-relative-path>` | JSON file with shape `{"violations": <number>, "files_scanned": <number>}`. Pass when `violations == 0`. |
+| `layer-check` | `<repo-relative-path>` | JSON file with shape `{"status": "pass"\|"fail", "database": ..., "backend": ..., "frontend": ...}`. Pass when `status == "pass"`. |
+
+### JSON-handler examples
+
+Anvil gates and CI tools emit standardized JSON artifacts that the
+reconciler parses. Frozen schemas live in PRD §5.2.
+
+```markdown
+- [ ] Unit tests pass     <!-- artifact: test:.artifacts/STORY-042/test.json -->
+- [ ] Lint clean          <!-- artifact: lint:.artifacts/STORY-042/lint.json -->
+- [ ] Layer-check pass    <!-- artifact: layer-check:.artifacts/STORY-042/layer-check.json -->
+```
+
+Schema enforcement is strict: malformed JSON, missing required fields, or
+required fields with the wrong type all cause the handler to return
+**invalid** (rc=2). The checkbox stays unchecked and a clear error is
+logged. This is the explicit defense against a half-broken gate
+producing a vacuous pass — fix the gate's output before the reconciler
+will trust it.
 
 ### Path safety
 
@@ -115,24 +135,24 @@ See [`.claude/commands/layer-check.md`](../.claude/commands/layer-check.md)'s
 # In-script self-test (10+ assertions, runs in a temp git repo)
 scripts/reconcile-story-checkboxes.sh --self-test
 
-# Shell-based test suite (26 cases covering handlers, path-safety, CLI semantics)
+# Shell-based test suite (43 cases covering handlers, path-safety, CLI semantics)
 tests/scripts/test-reconciler.sh
 ```
 
 Both run in `< 1 s` on a typical machine.
 
-## What this is not (yet)
+## What this is not
 
-Phase 1 is intentionally minimal. It does **not**:
+The reconciler is intentionally minimal. It does **not**:
 
-- Move stories between `todo/`, `in-progress/`, `blocked/`, `done/` folders
-  (that's Phase 2).
-- Parse JSON artifacts from Anvil gates (that's Phase 3 — handlers `test:`,
-  `lint:`, `layer-check:` are reserved but not wired).
-- Auto-generate or auto-update `INDEX.md` (Phase 2).
-- Run as a daemon or watcher. The reconciler is invoked synchronously by
-  `/layer-check` and `/go`. Folder watchers are explicitly out of scope per
-  the PRD's §7.3.
+- Run as a daemon or watcher. It is invoked synchronously by `/layer-check`
+  and `/go`. Folder watchers are explicitly out of scope per the PRD's §7.3.
+- Auto-detect regressions. A previously-checked box whose artifact has
+  vanished stays checked, with a warning logged to stderr (FR-008). The
+  orchestrator decides what to do about regressions — the reconciler does
+  not.
+- Modify untagged checkboxes. Stories with `- [ ]` lines that have no
+  `<!-- artifact: ... -->` tag are sacred — humans own those.
 
-If Phase 1 proves valuable in practice, Phase 2 ships next; until then the
-reconciler stands alone as a deterministic checkbox-syncing tool.
+For folder state transitions (`todo/ ↔ in-progress/ ↔ blocked/ ↔ done/`)
+see [Story State Folders](story-state-folders.md).
