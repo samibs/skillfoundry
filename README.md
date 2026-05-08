@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.10.0-blue)
+![Version](https://img.shields.io/badge/version-5.11.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,16 +25,25 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.10.0
+### What's New in v5.11.0
 
-**Test Cartographer — `/test-map` Skill + GitHub Copilot + Claude Optimization**
+**FolderFlow — Deterministic Story State via the Filesystem**
 
-v5.10.0 ships the `/test-map` skill for automated test documentation across all 5 platforms, deep optimization for GitHub Copilot with the Claude model, and a fix for version corruption caused by forge orchestrator jobs running on stale Docker containers.
+v5.11.0 ships the FolderFlow PRD end-to-end (Phases 1–3). Story state is now a function of the filesystem, not LLM memory: checkbox state is reconciled against real artifacts, and stories physically move between `todo/`, `in-progress/`, `blocked/`, `done/` folders as gates pass and fail. No daemons, no watchers — synchronous and Git-visible.
 
-- **`/test-map` skill** — Scans all spec files in a project, classifies every test into three value tiers (HIGH: conditional logic/state transitions, MEDIUM: DI wiring/HTTP mocking, BASELINE: smoke tests), generates client-presentable HTML with per-file analysis, quality scores, and actionable recommendations. Output matches the eTech4All documentation format used in production audits.
-- **GitHub Copilot + Claude optimization** — `.github/copilot-instructions.md` expanded to ~160 lines of constitutional rules, agent invocation table, project structure map, and development workflow protocol. Copilot forge.md synced to full Claude parity (Safeguards 1–6, Phase 2.5, Phase 2.75). Claude handles long, dense instructions better than any other model — this maximizes that.
-- **Config-protect fix** — `config-protect.ts` now silently skips `.claude/` directory entries in the allowlist rather than throwing on missing files.
-- **Version alignment** — Corrected all version references corrupted by a forge orchestrator PR (#17) that ran from a stale Docker container.
+- **Story Checkbox Reconciler** (`scripts/reconcile-story-checkboxes.sh`) — Tag a checkbox with `<!-- artifact: <handler>:<args> -->` and the reconciler flips `- [ ]` → `- [x]` based on what's true on disk. Idempotent. Non-destructive — never un-checks a box. Untagged checkboxes are sacred. `--strict` mode wires into `/layer-check` so a green verdict whose checkboxes don't match the artifacts is itself an audit failure.
+- **5 built-in artifact handlers** — `file-exists`, `grep`, `test`, `lint`, `layer-check`. The three JSON handlers parse standardized schemas (frozen in PRD §5.2). Malformed JSON or missing required fields produce `invalid` (rc=2), so a half-broken gate cannot generate a vacuous pass.
+- **Story Folder State Machine** (`scripts/move-story.sh`) — Atomic state transitions via `git mv`, so `git log --follow` keeps working across renames. Refuses `→ done` (rc=3) unless the reconciler in `--strict` mode passes. Auto-generates `STORY-XXX.BLOCKED.md` siblings on entry to `blocked/` (failing gate, ISO timestamp, free-text reason) and auto-removes them on exit.
+- **One-time idempotent migrator** (`scripts/migrate-stories-to-folders.sh`) — Walks `docs/stories/<feature>/`, classifies each flat story by its checkbox state, and `git mv`s into the right folder. Re-run safely; only re-writes `INDEX.md` when content changes (no noisy diffs).
+- **Deterministic INDEX.md** (`scripts/lib/story-index.sh`) — Per-feature index parsed from headings and YAML `depends_on:` frontmatter. Sorted by ID, no timestamps, regenerated on every move.
+- **`/go` and `/layer-check` integration** — `/go` now skips any story already in `done/` (the explicit fix for the "re-runs completed work" failure). `/layer-check` runs the reconciler as its final iteration gate; APPROVED drives `→ done/`, REJECTED drives `→ blocked/`.
+- **83-case shell test suite** — 43 reconciler cases + 40 folder-state cases. No new system dependency (substituted plain shell for the PRD's bats spec to match the project's existing test pattern).
+
+See: [`docs/story-checkbox-reconciler.md`](docs/story-checkbox-reconciler.md), [`docs/story-state-folders.md`](docs/story-state-folders.md), [`docs/V5.11.0-RELEASE-NOTES.md`](docs/V5.11.0-RELEASE-NOTES.md).
+
+#### Previous: Test Cartographer — `/test-map` Skill (v5.10.0)
+
+- `/test-map` skill for automated test documentation across all 5 platforms with three-tier classification (HIGH/MEDIUM/BASELINE), deep optimization for GitHub Copilot with the Claude model (~160 lines of constitutional rules), and config-protect fix for `.claude/` allowlist entries.
 
 #### Previous: Self-Validate — Output Verification Loop (v5.9.0)
 

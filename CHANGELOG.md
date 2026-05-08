@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [5.11.0] - 2026-05-08
+
+### FolderFlow — Deterministic Story State via the Filesystem
+
+Ships the FolderFlow PRD (`genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`)
+end-to-end. Story state is now a function of the filesystem, not LLM memory:
+checkbox state is reconciled against real artifacts, and stories physically
+move between `todo/`, `in-progress/`, `blocked/`, `done/` folders as gates
+pass and fail. No daemons, no watchers — synchronous and Git-visible.
 
 ### Added — Story Checkbox Reconciler (Phase 1 of FolderFlow PRD)
 
