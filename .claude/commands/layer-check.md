@@ -373,12 +373,15 @@ If the reconciler exits non-zero in strict mode, the verdict is REJECTED:
 the gate result and the checkbox state disagree — that is a story-level
 audit failure, not a code failure.
 
-Phase-1 install: only the `file-exists` and `grep` handlers are wired.
-Tagged checkboxes referencing reserved Phase-3 handlers (`test:`, `lint:`,
-`layer-check:`) are explicitly NOT silently flipped — they remain unchecked
-until Phase 3 ships.
+Available handlers: `file-exists`, `grep`, `test`, `lint`, `layer-check`.
+The JSON-based handlers (`test`, `lint`, `layer-check`) parse artifacts
+emitted by Anvil gates and CI tools using the schemas frozen in PRD §5.2.
+Malformed JSON or missing required fields cause the handler to return
+**invalid** — the checkbox stays unchecked and a clear error is logged,
+so a half-broken gate cannot produce a vacuous pass.
 
-See: `genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`
+See: `genesis/2026-05-08-folder-state-and-checkbox-reconciler.md` and
+`docs/story-checkbox-reconciler.md`.
 
 ---
 

@@ -175,15 +175,102 @@ rc=$?
 set -e
 t_assert "dispatch: unknown handler returns 3" "$rc" "3"
 
-# Phase-3 reserved names must NOT silently fall through to file-exists or
-# similar — they must return the documented "deferred" code (4) so a Phase-1
-# install does not pretend to validate JSON-based gates.
-for reserved in test lint layer-check; do
+# ---------- Phase 3: JSON artifact handler unit tests ----------
+
+t_section "handler_test (JSON)"
+
+# Pass: passed=true, failed=0
+mkdir -p "$TMP/.artifacts/STORY-test"
+printf '{"passed": true, "failed": 0, "total": 5}\n' > "$TMP/.artifacts/STORY-test/ok.json"
+set +e; handler_test ".artifacts/STORY-test/ok.json" "$TMP" "STORY-test" 2>/dev/null; rc=$?; set -e
+t_assert "test: pass when passed=true and failed=0" "$rc" "0"
+
+# Fail: passed=false
+printf '{"passed": false, "failed": 0, "total": 5}\n' > "$TMP/.artifacts/STORY-test/notpassed.json"
+set +e; handler_test ".artifacts/STORY-test/notpassed.json" "$TMP" "STORY-test" 2>/dev/null; rc=$?; set -e
+t_assert "test: fail when passed=false" "$rc" "1"
+
+# Fail: failed > 0
+printf '{"passed": true, "failed": 3, "total": 5}\n' > "$TMP/.artifacts/STORY-test/somefail.json"
+set +e; handler_test ".artifacts/STORY-test/somefail.json" "$TMP" "STORY-test" 2>/dev/null; rc=$?; set -e
+t_assert "test: fail when failed > 0 (even if passed=true)" "$rc" "1"
+
+# Missing file
+set +e; handler_test ".artifacts/STORY-test/nope.json" "$TMP" "STORY-test" 2>/dev/null; rc=$?; set -e
+t_assert "test: missing file returns 1" "$rc" "1"
+
+# Malformed JSON
+printf 'not json {{' > "$TMP/.artifacts/STORY-test/bad.json"
+set +e; handler_test ".artifacts/STORY-test/bad.json" "$TMP" "STORY-test" 2>/dev/null; rc=$?; set -e
+t_assert "test: malformed JSON returns 2" "$rc" "2"
+
+# Missing required field
+printf '{"total": 5}\n' > "$TMP/.artifacts/STORY-test/missingfields.json"
+set +e; handler_test ".artifacts/STORY-test/missingfields.json" "$TMP" "STORY-test" 2>/dev/null; rc=$?; set -e
+t_assert "test: missing required fields returns 2" "$rc" "2"
+
+# Wrong type (passed is a string, not bool)
+printf '{"passed": "yes", "failed": 0}\n' > "$TMP/.artifacts/STORY-test/wrongtype.json"
+set +e; handler_test ".artifacts/STORY-test/wrongtype.json" "$TMP" "STORY-test" 2>/dev/null; rc=$?; set -e
+t_assert "test: wrong type for required field returns 2" "$rc" "2"
+
+t_section "handler_lint (JSON)"
+
+mkdir -p "$TMP/.artifacts/STORY-lint"
+printf '{"violations": 0, "files_scanned": 17}\n' > "$TMP/.artifacts/STORY-lint/clean.json"
+set +e; handler_lint ".artifacts/STORY-lint/clean.json" "$TMP" "STORY-lint" 2>/dev/null; rc=$?; set -e
+t_assert "lint: pass when violations == 0" "$rc" "0"
+
+printf '{"violations": 4, "files_scanned": 17}\n' > "$TMP/.artifacts/STORY-lint/dirty.json"
+set +e; handler_lint ".artifacts/STORY-lint/dirty.json" "$TMP" "STORY-lint" 2>/dev/null; rc=$?; set -e
+t_assert "lint: fail when violations > 0" "$rc" "1"
+
+set +e; handler_lint ".artifacts/STORY-lint/missing.json" "$TMP" "STORY-lint" 2>/dev/null; rc=$?; set -e
+t_assert "lint: missing file returns 1" "$rc" "1"
+
+printf '{"files_scanned": 5}\n' > "$TMP/.artifacts/STORY-lint/no-violations-field.json"
+set +e; handler_lint ".artifacts/STORY-lint/no-violations-field.json" "$TMP" "STORY-lint" 2>/dev/null; rc=$?; set -e
+t_assert "lint: missing 'violations' field returns 2" "$rc" "2"
+
+printf 'not json' > "$TMP/.artifacts/STORY-lint/bad.json"
+set +e; handler_lint ".artifacts/STORY-lint/bad.json" "$TMP" "STORY-lint" 2>/dev/null; rc=$?; set -e
+t_assert "lint: malformed JSON returns 2" "$rc" "2"
+
+t_section "handler_layer_check (JSON)"
+
+mkdir -p "$TMP/.artifacts/STORY-lc"
+printf '{"status": "pass", "database": "pass", "backend": "pass", "frontend": "n/a"}\n' \
+    > "$TMP/.artifacts/STORY-lc/pass.json"
+set +e; handler_layer_check ".artifacts/STORY-lc/pass.json" "$TMP" "STORY-lc" 2>/dev/null; rc=$?; set -e
+t_assert "layer-check: pass when status == \"pass\"" "$rc" "0"
+
+printf '{"status": "fail", "database": "fail", "backend": "pass", "frontend": "pass"}\n' \
+    > "$TMP/.artifacts/STORY-lc/fail.json"
+set +e; handler_layer_check ".artifacts/STORY-lc/fail.json" "$TMP" "STORY-lc" 2>/dev/null; rc=$?; set -e
+t_assert "layer-check: fail when status != \"pass\"" "$rc" "1"
+
+set +e; handler_layer_check ".artifacts/STORY-lc/missing.json" "$TMP" "STORY-lc" 2>/dev/null; rc=$?; set -e
+t_assert "layer-check: missing file returns 1" "$rc" "1"
+
+printf '{"database": "pass"}\n' > "$TMP/.artifacts/STORY-lc/no-status.json"
+set +e; handler_layer_check ".artifacts/STORY-lc/no-status.json" "$TMP" "STORY-lc" 2>/dev/null; rc=$?; set -e
+t_assert "layer-check: missing 'status' field returns 2" "$rc" "2"
+
+printf 'totally not json' > "$TMP/.artifacts/STORY-lc/bad.json"
+set +e; handler_layer_check ".artifacts/STORY-lc/bad.json" "$TMP" "STORY-lc" 2>/dev/null; rc=$?; set -e
+t_assert "layer-check: malformed JSON returns 2" "$rc" "2"
+
+t_section "dispatch: Phase-3 names route to real handlers (no longer deferred)"
+
+# These names previously returned 4 (deferred). Phase 3 routes them to real
+# handlers — using a non-existent artifact, the JSON handlers return 1 (fail),
+# never 4 (deferred).
+for name in test lint layer-check; do
     set +e
-    reconcile_dispatch_handler "$reserved" ".artifacts/STORY-001/build.ok" "$TMP" "STORY-001" 2>/dev/null
+    reconcile_dispatch_handler "$name" ".artifacts/STORY-test/no-such.json" "$TMP" "STORY-test" 2>/dev/null
     rc=$?
     set -e
-    t_assert "dispatch: reserved Phase-3 handler '$reserved' returns 4 (deferred)" "$rc" "4"
+    t_assert "dispatch: '$name' is wired (rc != 4)" "$([ "$rc" -ne 4 ] && echo ok || echo "still-deferred-rc=$rc")" "ok"
 done
 
 # ---------- End-to-end CLI tests ----------

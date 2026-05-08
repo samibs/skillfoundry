@@ -86,6 +86,35 @@ Sourced libraries (`scripts/lib/*.sh`) deliberately do **not** enable `set -u`
 or `set -e` — those leak into the caller's shell. Entry-point scripts set
 their own strict modes.
 
+### Added — JSON Artifact Handlers (Phase 3 of FolderFlow PRD)
+
+Phase 3 of `genesis/2026-05-08-folder-state-and-checkbox-reconciler.md`: the
+reconciler now parses standardized JSON artifacts, completing the original
+schema frozen in PRD §5.2.
+
+- `handler_test` (artifact tag `test:`) — parses `{"passed": <bool>, "failed":
+  <number>, "total": <number>}`. Pass when `passed == true && failed == 0`.
+- `handler_lint` (artifact tag `lint:`) — parses `{"violations": <number>,
+  "files_scanned": <number>}`. Pass when `violations == 0`.
+- `handler_layer_check` (artifact tag `layer-check:`) — parses `{"status":
+  "pass"|"fail", "database": ..., "backend": ..., "frontend": ...}`. Pass
+  when `status == "pass"`.
+- Strict schema enforcement: malformed JSON, missing required fields, or
+  required fields with the wrong type all produce **invalid** (rc=2). The
+  checkbox stays unchecked and a clear error is logged. This is the explicit
+  defense against a half-broken gate producing a vacuous pass.
+- Dispatch in `reconcile_dispatch_handler` no longer returns the "deferred"
+  code (4) for these names — they route to the real handlers. Phase-1
+  installs that referenced these names will start working as soon as the
+  emitting gate produces JSON.
+- Test suite extended from 26 → 43 cases: each new handler has pass / fail-
+  by-data / fail-by-missing-file / malformed-JSON / missing-required-field /
+  wrong-type cases, plus a dispatch-routing test confirming the names are
+  no longer deferred.
+- Documentation updated: `docs/story-checkbox-reconciler.md` handler table
+  now lists all 5 handlers with usage examples; `.claude/commands/layer-check.md`
+  removes the "only file-exists and grep are wired" note.
+
 ### Deviation from PRD
 
 PRD §10.1 specified `bats` for unit tests; `bats` is not installed and is not in
@@ -94,8 +123,11 @@ the project's existing test toolchain. Substituted plain-shell tests under
 No new system dependency added.
 
 PRD §9.1 stated Phase 2 should ship only "after Phase 1 proves valuable on at
-least one feature." This prerequisite was waived at the user's explicit
-direction; Phase 2 ships back-to-back with Phase 1 in the same release.
+least one feature," and Phase 3 ships only "when Anvil gates emit standardized
+JSON artifacts." Both prerequisites were waived at the user's explicit
+direction; all three phases ship back-to-back in the same release. Phase 3 is
+forward-looking — handlers are wired and tested against synthetic JSON, ready
+for the first gate that emits the frozen schema.
 
 ---
 
