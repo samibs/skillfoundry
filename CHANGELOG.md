@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.14.0] - 2026-05-13
+
+### MCP Server Security Hardening
+
+v5.14.0 closes every security gap in the MCP server identified by a full BPSBS audit. All 11 BPSBS controls now pass. No functional changes — this is a hardening-only release.
+
+#### Added
+
+- **Bearer token auth** — Auto-generated `sf_*` token on first run (saved to `data/.api-token`, mode `0o600`). Always enforced on `/mcp` and `/api/v1`. Token and ready-to-paste MCP config snippet printed to console on startup. Override with `SKILLFOUNDRY_API_TOKEN` env var.
+- **Rate limiting** — `express-rate-limit`: 300 req/min on MCP transports (`/mcp`), 500 req/min on REST API (`/api`).
+- **CORS** — Explicit `cors()` middleware. Default origin: `http://localhost:3666`. Override with `SKILLFOUNDRY_CORS_ORIGIN`.
+- **`MAX_PAGE_SIZE = 500`** — Enforced on all list queries in `db.ts`. Applies to `queryQuirks`, `getCertifiedSkills`, `listDynamicSkills`, `getFleetHealth`, `querySessionRecordings`, `getSessionTranscripts`, `queryPlatformInsights`, `queryProjectArtifacts`, `getDeviationRules`, `getCorrectionPatterns`.
+- **`rowToSessionTranscript()` mapper** — `getSessionTranscripts` previously cast raw DB rows directly (`as SessionTranscriptRecord[]`), leaking `id` and `parsed_at` columns to callers. Now uses an explicit mapper that strips DB-internal columns.
+- **Atomic session writes** — `saveSession` now writes to `.tmp` then `renameSync`. Prevents partial-write file corruption on concurrent saves.
+- **`handleRouteError()` utility** — Centralises all 8 route catch blocks. Returns generic `"An internal error occurred"` in production; returns the real `err.message` only when `NODE_ENV=development`.
+- **Negative auth tests** — 3 new test cases: no token → 401, wrong token → 401, `/health` public → 200. All 64 tests pass.
+
+#### Breaking Change
+
+MCP clients must include an `Authorization` header. On first boot the server prints the ready-to-paste config:
+
+```json
+"mcpServers": {
+  "skillfoundry": {
+    "url": "http://localhost:9877/mcp/sse",
+    "headers": { "Authorization": "Bearer <token>" }
+  }
+}
+```
+
+The token is stable across restarts (read from `data/.api-token`). Rotate it by deleting the file or setting `SKILLFOUNDRY_API_TOKEN`.
+
+#### Dependencies Added
+
+- `cors@^2.8.6`
+- `express-rate-limit@^8.5.1`
+- `@types/cors@^2.8.x` (devDependency)
+
+---
+
 ## [5.13.0] - 2026-05-13
 
 ### Pipeline Quality — 11 Framework Enhancements

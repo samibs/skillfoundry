@@ -1,4 +1,5 @@
 import { Router } from "express";
+import type { Response } from "express";
 import type { SkillDefinition } from "../skills/loader.js";
 import type { BootstrapState } from "../bootstrap/pipeline.js";
 import type { ToolModule, ToolCategory } from "../tools/types.js";
@@ -10,7 +11,13 @@ import { getFleetHealth, querySessionRecordings } from "../state/db.js";
 import { listSessions, loadSession } from "../session/persistence.js";
 import { createSessionConfig } from "../session/config.js";
 
-const VERSION = "5.13.0";
+function handleRouteError(res: Response, err: unknown): void {
+  const isDev = process.env.NODE_ENV === "development";
+  const message = isDev ? (err as Error).message : "An internal error occurred";
+  res.status(500).json({ error: { code: "INTERNAL_ERROR", message } });
+}
+
+const VERSION = "5.14.0";
 const startTime = Date.now();
 
 let storedBootstrapState: BootstrapState | null = null;
@@ -191,9 +198,7 @@ export function createApiRouter(
       const quirks = await getQuirks(framework);
       res.json({ data: quirks, meta: { total: quirks.length } });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 
@@ -238,9 +243,7 @@ export function createApiRouter(
         },
       });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 
@@ -311,9 +314,7 @@ export function createApiRouter(
         },
       });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 
@@ -325,16 +326,14 @@ export function createApiRouter(
         appName: req.query.app as string | undefined,
         entryType: req.query.type as string | undefined,
         scope: req.query.scope as "project" | "universal" | undefined,
-        limit: parseInt(req.query.limit as string, 10) || 50,
+        limit: Math.min(parseInt(req.query.limit as string, 10) || 50, 500),
       });
       res.json({
         data: recordings,
         meta: { total: recordings.length },
       });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 
@@ -355,9 +354,7 @@ export function createApiRouter(
       const summary = getMetricsSummary(since);
       res.json({ data: summary });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 
@@ -372,9 +369,7 @@ export function createApiRouter(
       }
       res.json({ data: metrics[0] });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 
@@ -389,9 +384,7 @@ export function createApiRouter(
         meta: { total: sessionIds.length },
       });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 
@@ -417,9 +410,7 @@ export function createApiRouter(
         },
       });
     } catch (err) {
-      res.status(500).json({
-        error: { code: "INTERNAL_ERROR", message: (err as Error).message },
-      });
+      handleRouteError(res, err);
     }
   });
 

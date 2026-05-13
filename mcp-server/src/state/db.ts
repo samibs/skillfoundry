@@ -5,6 +5,8 @@ import type { Confidence, EvidenceSource, KnowledgeEntry, KnowledgeScope } from 
 
 let db: Database.Database | null = null;
 
+const MAX_PAGE_SIZE = 500;
+
 /**
  * Initialize SQLite database with schema.
  */
@@ -326,10 +328,8 @@ export function queryQuirks(filters?: {
 
   sql += " ORDER BY created_at DESC";
 
-  if (filters?.limit) {
-    sql += " LIMIT ?";
-    params.push(filters.limit);
-  }
+  sql += " LIMIT ?";
+  params.push(Math.min(filters?.limit ?? MAX_PAGE_SIZE, MAX_PAGE_SIZE));
 
   const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
   return rows.map(rowToEntry);
@@ -458,8 +458,8 @@ export function insertDynamicSkill(skill: DynamicSkill): void {
 export function getCertifiedSkills(): DynamicSkill[] {
   const db = getDatabase();
   const rows = db.prepare(
-    "SELECT * FROM dynamic_skills WHERE status = 'certified' ORDER BY created_at DESC"
-  ).all() as Array<Record<string, unknown>>;
+    "SELECT * FROM dynamic_skills WHERE status = 'certified' ORDER BY created_at DESC LIMIT ?"
+  ).all(MAX_PAGE_SIZE) as Array<Record<string, unknown>>;
   return rows.map(rowToDynamicSkill);
 }
 
@@ -474,8 +474,8 @@ export function getDynamicSkill(nameOrId: string): DynamicSkill | null {
 export function listDynamicSkills(): DynamicSkill[] {
   const db = getDatabase();
   const rows = db.prepare(
-    "SELECT * FROM dynamic_skills ORDER BY created_at DESC"
-  ).all() as Array<Record<string, unknown>>;
+    "SELECT * FROM dynamic_skills ORDER BY created_at DESC LIMIT ?"
+  ).all(MAX_PAGE_SIZE) as Array<Record<string, unknown>>;
   return rows.map(rowToDynamicSkill);
 }
 
@@ -552,7 +552,7 @@ export function upsertFleetHealth(record: FleetHealthRecord): void {
 
 export function getFleetHealth(): FleetHealthRecord[] {
   const db = getDatabase();
-  const rows = db.prepare("SELECT * FROM fleet_health ORDER BY app_name").all() as Array<Record<string, unknown>>;
+  const rows = db.prepare("SELECT * FROM fleet_health ORDER BY app_name LIMIT ?").all(MAX_PAGE_SIZE) as Array<Record<string, unknown>>;
   return rows.map((r) => ({
     appName: r.app_name as string,
     appPath: r.app_path as string,
@@ -616,7 +616,8 @@ export function querySessionRecordings(filters?: {
   if (filters?.scope) { sql += " AND scope = ?"; params.push(filters.scope); }
 
   sql += " ORDER BY recorded_at DESC";
-  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
+  sql += " LIMIT ?";
+  params.push(Math.min(filters?.limit ?? MAX_PAGE_SIZE, MAX_PAGE_SIZE));
 
   const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
   return rows.map((r) => ({
@@ -686,8 +687,10 @@ export function getSessionTranscripts(filters?: {
   if (filters?.appName) { sql += " AND app_name = ?"; params.push(filters.appName); }
   if (filters?.platform) { sql += " AND platform = ?"; params.push(filters.platform); }
   sql += " ORDER BY session_date DESC";
-  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
-  return db.prepare(sql).all(...params) as SessionTranscriptRecord[];
+  sql += " LIMIT ?";
+  params.push(Math.min(filters?.limit ?? MAX_PAGE_SIZE, MAX_PAGE_SIZE));
+  const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
+  return rows.map(rowToSessionTranscript);
 }
 
 export function transcriptExists(appPath: string, sessionId: string): boolean {
@@ -696,6 +699,24 @@ export function transcriptExists(appPath: string, sessionId: string): boolean {
     "SELECT 1 FROM session_transcripts WHERE app_path = ? AND session_id = ? LIMIT 1"
   ).get(appPath, sessionId);
   return !!row;
+}
+
+function rowToSessionTranscript(r: Record<string, unknown>): SessionTranscriptRecord {
+  return {
+    appName: r.app_name as string,
+    appPath: r.app_path as string,
+    platform: r.platform as string,
+    sessionId: r.session_id as string,
+    sessionDate: r.session_date as string | null,
+    messageCount: r.message_count as number,
+    userMessageCount: r.user_message_count as number,
+    assistantMessageCount: r.assistant_message_count as number,
+    toolUseCount: r.tool_use_count as number,
+    errorCount: r.error_count as number,
+    durationMinutes: r.duration_minutes as number | null,
+    filePath: r.file_path as string,
+    fileSizeBytes: r.file_size_bytes as number,
+  };
 }
 
 // ─── Platform Insight Operations ──────────────────────────────────────────
@@ -747,7 +768,8 @@ export function queryPlatformInsights(filters?: {
   if (filters?.insightType) { sql += " AND insight_type = ?"; params.push(filters.insightType); }
   if (filters?.severity) { sql += " AND severity = ?"; params.push(filters.severity); }
   sql += " ORDER BY discovered_at DESC";
-  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
+  sql += " LIMIT ?";
+  params.push(Math.min(filters?.limit ?? MAX_PAGE_SIZE, MAX_PAGE_SIZE));
   const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
   return rows.map((r) => ({
     appName: r.app_name as string,
@@ -815,7 +837,8 @@ export function queryProjectArtifacts(filters?: {
   if (filters?.appName) { sql += " AND app_name = ?"; params.push(filters.appName); }
   if (filters?.artifactType) { sql += " AND artifact_type = ?"; params.push(filters.artifactType); }
   sql += " ORDER BY harvested_at DESC";
-  if (filters?.limit) { sql += " LIMIT ?"; params.push(filters.limit); }
+  sql += " LIMIT ?";
+  params.push(Math.min(filters?.limit ?? MAX_PAGE_SIZE, MAX_PAGE_SIZE));
   const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
   return rows.map((r) => ({
     appName: r.app_name as string,
@@ -935,7 +958,8 @@ export function getDeviationRules(filters?: {
   if (filters?.category) { sql += " AND category = ?"; params.push(filters.category); }
   if (filters?.severity) { sql += " AND severity = ?"; params.push(filters.severity); }
   if (filters?.active !== undefined) { sql += " AND active = ?"; params.push(filters.active ? 1 : 0); }
-  sql += " ORDER BY category, id";
+  sql += " ORDER BY category, id LIMIT ?";
+  params.push(MAX_PAGE_SIZE);
   const rows = db.prepare(sql).all(...params) as Array<Record<string, unknown>>;
   return rows.map((r) => ({
     id: r.id as string,
@@ -991,8 +1015,8 @@ export function upsertCorrectionPattern(pattern: CorrectionPattern): void {
 export function getCorrectionPatterns(minOccurrences = 1): CorrectionPattern[] {
   const db = getDatabase();
   const rows = db.prepare(
-    "SELECT * FROM correction_patterns WHERE occurrence_count >= ? ORDER BY occurrence_count DESC"
-  ).all(minOccurrences) as Array<Record<string, unknown>>;
+    "SELECT * FROM correction_patterns WHERE occurrence_count >= ? ORDER BY occurrence_count DESC LIMIT ?"
+  ).all(minOccurrences, MAX_PAGE_SIZE) as Array<Record<string, unknown>>;
   return rows.map((r) => ({
     patternHash: r.pattern_hash as string,
     description: r.description as string,

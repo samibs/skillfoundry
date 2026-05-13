@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/mcp-server",
-  "version": "5.7.0",
+  "version": "5.14.0",
   "description": "SkillFoundry MCP Server — centralized agent server serving skills to all IDEs",
   "type": "module",
   "main": "dist/server.js",
@@ -18,13 +18,16 @@
     "@anthropic-ai/sdk": "^0.80.0",
     "@modelcontextprotocol/sdk": "^1.28.0",
     "better-sqlite3": "^12.8.0",
+    "cors": "^2.8.6",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.5.1",
     "glob": "^11.0.2",
     "gray-matter": "^4.0.3",
     "playwright": "^1.58.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.2",
     "@types/node": "^20.0.0",
     "tsx": "^4.19.0",

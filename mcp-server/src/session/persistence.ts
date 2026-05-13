@@ -3,8 +3,7 @@
  * All sessions are stored as JSON files in a configurable directory.
  */
 
-import { mkdirSync, readFileSync, readdirSync, existsSync } from 'node:fs';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, existsSync, writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 
 /**
@@ -39,7 +38,9 @@ export interface StoredSession {
 export function saveSession(session: StoredSession, directory: string): string {
   mkdirSync(directory, { recursive: true });
   const filePath = join(directory, `${session.sessionId}.json`);
-  writeFileSync(filePath, JSON.stringify(session, null, 2), 'utf-8');
+  const tmpPath = `${filePath}.tmp`;
+  writeFileSync(tmpPath, JSON.stringify(session, null, 2), 'utf-8');
+  renameSync(tmpPath, filePath);
   return filePath;
 }
 
