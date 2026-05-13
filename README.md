@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.10.0-blue)
+![Version](https://img.shields.io/badge/version-5.11.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,16 +25,21 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.10.0
+### What's New in v5.11.0
 
-**Test Cartographer — `/test-map` Skill + GitHub Copilot + Claude Optimization**
+**GuardLoop — Self-Improving AI Governance Hooks**
 
-v5.10.0 ships the `/test-map` skill for automated test documentation across all 5 platforms, deep optimization for GitHub Copilot with the Claude model, and a fix for version corruption caused by forge orchestrator jobs running on stale Docker containers.
+v5.11.0 integrates [GuardLoop](https://github.com/samibs/guardloop.dev) — a self-learning AI governance engine — as live Claude Code hooks and a `/guardloop` skill. The framework now detects its own failure patterns and promotes them into enforced rules automatically.
 
-- **`/test-map` skill** — Scans all spec files in a project, classifies every test into three value tiers (HIGH: conditional logic/state transitions, MEDIUM: DI wiring/HTTP mocking, BASELINE: smoke tests), generates client-presentable HTML with per-file analysis, quality scores, and actionable recommendations. Output matches the eTech4All documentation format used in production audits.
-- **GitHub Copilot + Claude optimization** — `.github/copilot-instructions.md` expanded to ~160 lines of constitutional rules, agent invocation table, project structure map, and development workflow protocol. Copilot forge.md synced to full Claude parity (Safeguards 1–6, Phase 2.5, Phase 2.75). Claude handles long, dense instructions better than any other model — this maximizes that.
-- **Config-protect fix** — `config-protect.ts` now silently skips `.claude/` directory entries in the allowlist rather than throwing on missing files.
-- **Version alignment** — Corrected all version references corrupted by a forge orchestrator PR (#17) that ran from a stale Docker container.
+- **`/guardloop` skill** — 5 subcommands: `analyze` (pattern frequency report), `promote` (write patterns as enforced rules), `scan` (live codebase scan), `status` (hook health + counts), `reset` (clear counters). Reads `memory_bank/` for session-level learning.
+- **`failure-scan.sh` hook** — PostToolUse hook wired to every Edit/Write. Scans written files for 3 CRITICAL patterns instantly: hardcoded secrets, localStorage token storage, AI file corruption artifacts. Non-blocking, warns inline.
+- **`guardloop-harvest.sh` hook** — Stop hook that runs the full 10-pattern scan across every file edited during the session. Logs detections to `memory_bank/knowledge/errors-universal.jsonl` and updates pattern frequency counters in `guardloop-patterns.json`.
+- **`agents/_guardloop-rules.md`** — Adaptive rules file that self-populates. When a pattern hits 3+ occurrences, `/guardloop promote` writes it as an enforced guardrail read by all code-generating agents.
+- **The learning loop** — Every session feeds failures into the knowledge base. Three occurrences = promotion. Promoted rules are enforced in all future sessions. The framework gets harder to fool over time.
+
+#### Previous: Test Cartographer (v5.10.0)
+
+- `/test-map` skill across all 5 platforms, GitHub Copilot + Claude deep optimization, config-protect fix.
 
 #### Previous: Self-Validate — Output Verification Loop (v5.9.0)
 

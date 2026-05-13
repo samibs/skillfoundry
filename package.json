@@ -1,7 +1,7 @@
 {
   "name": "skillfoundry",
-  "version": "5.7.1",
-  "description": "AI engineering framework — turn requirements into tested, production-ready code with quality gates your AI can't skip",
+  "version": "5.11.0",
+  "description": "AI engineering framework \u2014 turn requirements into tested, production-ready code with quality gates your AI can't skip",
   "type": "module",
   "bin": {
     "skillfoundry": "./bin/skillfoundry.js"

@@ -7,6 +7,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.11.0] - 2026-05-13
+
+### GuardLoop × SkillFoundry — Self-Improving AI Governance
+
+Integration of [GuardLoop](https://github.com/samibs/guardloop.dev) as live Claude Code hooks and a `/guardloop` skill. The framework now tracks its own failure patterns across sessions and promotes them into enforced rules automatically.
+
+#### New Skill: `/guardloop`
+
+Five subcommands for the adaptive governance engine:
+
+- **`/guardloop`** (default) — Pattern frequency report. Reads `guardloop-patterns.json` + recent `memory_bank/` entries. Shows counts, promotion candidates, last harvest time.
+- **`/guardloop promote`** — Writes patterns at threshold (3+ hits) as enforced rules to `agents/_guardloop-rules.md`. Marks promoted patterns so they don't re-promote on next run.
+- **`/guardloop scan`** — Live scan of the current codebase against all 10 patterns. Reports findings by severity.
+- **`/guardloop status`** — Hook health check + pattern summary table.
+- **`/guardloop reset`** — Resets pattern counters (preserved promoted rules).
+
+#### New Hooks
+
+- **`failure-scan.sh`** (PostToolUse: Edit|Write) — Scans every written code file for 3 CRITICAL patterns: hardcoded secrets, localStorage token storage, AI file corruption artifacts. Non-blocking. Appends file to `guardloop-files.log` for end-of-session harvest.
+- **`guardloop-harvest.sh`** (Stop, runs before `batch-check.sh`) — Full 10-pattern scan of every code file edited during the session. Logs JSON entries to `memory_bank/knowledge/errors-universal.jsonl`. Updates `guardloop-patterns.json` frequency counters.
+
+#### New Scripts
+
+- `scripts/guardloop-analyze.sh` — Reads pattern state and outputs a formatted frequency table. Called by `/guardloop` skill.
+- `scripts/guardloop-promote.sh` — Promotes threshold-meeting patterns to `agents/_guardloop-rules.md`. Supports `--dry-run` and `--reset`.
+
+#### New Agent Files
+
+- `agents/_guardloop-rules.md` — Adaptive rules file. Self-populates when patterns hit 3+ occurrences. All code-generating agents enforce rules written here.
+
+#### Pattern Catalog (10 patterns tracked)
+
+| ID | Pattern | Severity |
+|----|---------|----------|
+| GL-01 | `hardcoded-secret` | critical |
+| GL-02 | `localstorage-token` | critical |
+| GL-03 | `file-corruption` | critical |
+| GL-04 | `empty-catch` | high |
+| GL-05 | `placeholder-code` | high |
+| GL-06 | `nullable-array-method` | high |
+| GL-07 | `ts-ignore-no-comment` | medium |
+| GL-08 | `console-log-unguarded` | medium |
+| GL-09 | `hardcoded-path` | medium |
+| GL-10 | `select-star-query` | medium |
+
+#### The Learning Loop
+
+```
+Code edited
+  ↓ failure-scan.sh (PostToolUse)     ← CRITICAL patterns + file tracking
+Session ends
+  ↓ guardloop-harvest.sh (Stop)       ← Full 10-pattern scan + knowledge logging
+Pattern hits 3+ occurrences
+  ↓ /guardloop promote                ← Writes rule to agents/_guardloop-rules.md
+All future sessions enforce the rule  ← Framework self-improves
+```
+
+---
+
 ## [5.10.0] - 2026-05-07
 
 ### /test-map Skill — Test Cases Documentation Generator
