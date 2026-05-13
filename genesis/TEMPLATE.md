@@ -1,5 +1,3 @@
-# PRD: [Feature Name]
-
 ---
 prd_id: [kebab-case-identifier]
 title: [Feature Name]
@@ -20,6 +18,8 @@ tags: []              # Categorization: [auth, security, core, feature, etc.]
 priority: medium      # high | medium | low
 layers: []            # Affected layers: [database, backend, frontend]
 ---
+
+# PRD: [Feature Name]
 
 ---
 
@@ -49,17 +49,17 @@ layers: []            # Affected layers: [database, backend, frontend]
 
 ### Primary User: [Role Name]
 
-| ID | As a... | I want to... | So that... | Priority |
-|----|---------|--------------|------------|----------|
-| US-001 | [role] | [action] | [benefit] | MUST |
-| US-002 | [role] | [action] | [benefit] | SHOULD |
-| US-003 | [role] | [action] | [benefit] | COULD |
+| ID | As a... | I want to... | So that... | Priority | FR-IDs |
+|----|---------|--------------|------------|----------|--------|
+| US-001 | [role] | [action] | [benefit] | MUST | FR-001, FR-002 |
+| US-002 | [role] | [action] | [benefit] | SHOULD | FR-003 |
+| US-003 | [role] | [action] | [benefit] | COULD | FR-004 |
 
 ### Secondary Users (if applicable)
 
-| ID | As a... | I want to... | So that... | Priority |
-|----|---------|--------------|------------|----------|
-| US-010 | [role] | [action] | [benefit] | [priority] |
+| ID | As a... | I want to... | So that... | Priority | FR-IDs |
+|----|---------|--------------|------------|----------|--------|
+| US-010 | [role] | [action] | [benefit] | [priority] | [FR-IDs] |
 
 ---
 
@@ -83,10 +83,12 @@ layers: []            # Affected layers: [database, backend, frontend]
 
 ### 3.3 API Requirements (if applicable)
 
-| Endpoint | Method | Purpose | Auth | Request Body | Response |
-|----------|--------|---------|------|--------------|----------|
-| `/api/v1/[resource]` | GET | [purpose] | [JWT/None] | N/A | `{ data: [...] }` |
-| `/api/v1/[resource]` | POST | [purpose] | [JWT/None] | `{ field: value }` | `{ id: ... }` |
+> → API endpoints are defined and frozen in **§6.4 API Contract** — the single source of truth. Do not duplicate endpoint definitions here.
+> List any high-level API constraints not captured in §6.4 (e.g., "all endpoints must support idempotency keys", "pagination required on all list endpoints").
+
+| High-Level Constraint | Notes |
+|-----------------------|-------|
+| [e.g., All list endpoints must be paginated] | [max pageSize, default pageSize] |
 
 ---
 
@@ -135,9 +137,14 @@ layers: []            # Affected layers: [database, backend, frontend]
 
 ### 4.3 Scalability
 
-<!-- How should this scale? Horizontal/vertical? Auto-scaling triggers? -->
-
-[Describe scaling expectations]
+| Dimension | Specification |
+|-----------|--------------|
+| Scaling Model | [Horizontal / Vertical / Both] |
+| Auto-Scale Trigger | [CPU > X% / Request queue > Y / Memory > Z%] |
+| Max Concurrent Users | [X] |
+| Expected Data Volume | [X records/day, Y GB/month] |
+| Stateless Services | [Yes / No — if No, explain session affinity requirement] |
+| CDN / Edge Caching | [Yes / No — if Yes, note what is cached and TTL] |
 
 ### 4.4 Reliability
 
@@ -185,6 +192,7 @@ layers: []            # Affected layers: [database, backend, frontend]
 
 <!-- Fill this for EVERY major dependency. The "Known Quirks in KB" column checks -->
 <!-- the framework's knowledge base (memory_bank/, deployment quirks from prior projects). -->
+<!-- To populate "Known Quirks in KB": run `/recall <dependency>` before filling this table. -->
 <!-- 0 known quirks on a Beta dep = you are the first to hit the problems. Plan accordingly. -->
 
 | Dependency | Version | Maturity | API Stability | Breaking Changes From Prior | Known Quirks in KB | Verification Required |
@@ -361,6 +369,10 @@ curl -sf http://localhost:<port>/api/health
 ---
 
 ## 6. Contract Specification (Required for API Features)
+
+> **Skip if:** This PRD has no REST API — e.g., CLI tools, background jobs, cron scripts, or pure frontend config changes. Note reason here: ______
+>
+> **Required if:** any of the following: adding/modifying API endpoints, changing data shapes consumed by frontend, changing auth flows, or adding new entities.
 
 <!-- This section MUST be completed and FROZEN before backend implementation begins -->
 <!-- Contract freeze = no changes without explicit approval and version bump -->
@@ -614,13 +626,26 @@ Authorization: Bearer <token>
 
 <!-- Explicitly excluded from this PRD - prevents scope creep -->
 
-- [ ] [Feature/capability explicitly NOT included]
-- [ ] [Another exclusion]
-- [ ] [Another exclusion]
+- [Feature/capability explicitly NOT included]
+- [Another exclusion]
+- [Another exclusion]
 
 ---
 
-## 8. Risks & Mitigations
+## 8. Regression Surface
+
+<!-- List every existing feature that this PRD's changes could break. -->
+<!-- The /forge pipeline uses this table to scope regression tests before shipping. -->
+<!-- "Unknown" coverage = mandatory test story in the implementation plan. -->
+
+| Feature at Risk | Affected Layers | Current Test Coverage | Regression Test Required |
+|-----------------|-----------------|-----------------------|--------------------------|
+| [e.g., User login flow] | [Backend, Frontend] | [Unit + Integration] | [Yes — smoke test post-deploy] |
+| [e.g., File upload pipeline] | [Backend] | [Unknown] | [Yes — add test story before implementing] |
+
+---
+
+## 9. Risks & Mitigations
 
 | ID | Risk | Likelihood | Impact | Mitigation Strategy |
 |----|------|------------|--------|---------------------|
@@ -629,9 +654,9 @@ Authorization: Bearer <token>
 
 ---
 
-## 9. Implementation Plan
+## 10. Implementation Plan
 
-### 9.1 Phases
+### 10.1 Phases
 
 | Phase | Name | Scope | Prerequisites |
 |-------|------|-------|---------------|
@@ -639,20 +664,20 @@ Authorization: Bearer <token>
 | 2 | Enhancement | [additional features] | Phase 1 complete |
 | 3 | Polish | [refinements, edge cases] | Phase 2 complete |
 
-### 9.2 Effort Estimate
+### 10.2 Effort Estimate
 
 <!-- T-shirt sizing only - NO time estimates -->
 
-| Phase | Effort | Complexity | Risk |
-|-------|--------|------------|------|
-| 1 | S/M/L/XL | Low/Med/High | Low/Med/High |
-| 2 | S/M/L/XL | Low/Med/High | Low/Med/High |
+| Phase | Effort | Complexity | Risk | Estimated Story Count |
+|-------|--------|------------|------|-----------------------|
+| 1 | S/M/L/XL | Low/Med/High | Low/Med/High | [X stories] |
+| 2 | S/M/L/XL | Low/Med/High | Low/Med/High | [X stories] |
 
 ---
 
-## 10. Acceptance Criteria
+## 11. Acceptance Criteria
 
-### 10.1 Definition of Done
+### 11.1 Definition of Done
 
 - [ ] All MUST-priority user stories implemented
 - [ ] All functional requirements pass acceptance criteria
@@ -663,8 +688,11 @@ Authorization: Bearer <token>
 - [ ] Documentation updated
 - [ ] Code reviewed and approved
 - [ ] No critical/high severity bugs open
+- [ ] Three-layer validation complete: schema migrated, all endpoints returning real data, frontend connected to real API (no mocks)
+- [ ] All implementation stories moved to `docs/stories/[feature]/done/` folder
+- [ ] No new CRITICAL GuardLoop patterns detected (`/guardloop scan` clean)
 
-### 10.2 Sign-off Required
+### 11.2 Sign-off Required
 
 | Role | Name | Status | Date |
 |------|------|--------|------|
@@ -674,9 +702,9 @@ Authorization: Bearer <token>
 
 ---
 
-## 11. Appendix
+## 12. Appendix
 
-### 11.1 Glossary
+### 12.1 Glossary
 
 <!-- CRITICAL: This is the naming authority. Field names in code MUST match exactly. -->
 <!-- No synonyms allowed. If glossary says "userId", never use "user_id" or "uid". -->
@@ -685,13 +713,13 @@ Authorization: Bearer <token>
 |------|------------|-----------|
 | [term] | [definition] | [exact_field_name] |
 
-### 11.2 References
+### 12.2 References
 
 - [Link to related documentation]
 - [Link to design mockups]
 - [Link to technical specs]
 
-### 11.3 Change Log
+### 12.3 Change Log
 
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
@@ -709,6 +737,7 @@ COMPLETENESS:
 [ ] Observability requirements defined (logging, health checks, monitoring)
 [ ] Out of scope explicitly listed
 [ ] Risks identified with mitigations
+[ ] Regression surface documented (§8 — existing features at risk identified)
 
 CLARITY:
 [ ] No TBD or TODO markers remain
@@ -746,4 +775,5 @@ READY FOR IMPLEMENTATION:
 [ ] Data model defined
 [ ] API contracts specified and FROZEN
 [ ] Phases broken down appropriately
+[ ] Regression tests planned for all features at risk in §8
 -->

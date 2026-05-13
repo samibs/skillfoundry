@@ -4,13 +4,13 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.12.0-blue)
+![Version](https://img.shields.io/badge/version-5.13.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 22 real tool agents, 125+ skills, 6 AI providers, Specter adversarial threat modeling, and a knowledge base built from 2,792 artifacts across 49 projects.
+SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 22 real tool agents, 127+ skills, 6 AI providers, Semgrep SAST, PRD linting, cross-platform parity detection, and a knowledge base built from 2,792 artifacts across 49 projects.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -25,21 +25,28 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.11.0
+### What's New in v5.13.0
 
-**GuardLoop — Self-Improving AI Governance Hooks**
+**Pipeline Quality — 11 Framework Enhancements**
 
-v5.12.0 integrates [GuardLoop](https://github.com/samibs/guardloop.dev) — a self-learning AI governance engine — as live Claude Code hooks and a `/guardloop` skill. The framework now detects its own failure patterns and promotes them into enforced rules automatically.
+v5.13.0 hardens every layer of the pipeline: validate PRDs before they enter implementation, execute them in dependency order, block done/ promotion on CRITICAL patterns, forecast your token budget, detect platform drift, hot-reload skills without restart, and ship with rollback capability baked in.
 
-- **`/guardloop` skill** — 5 subcommands: `analyze` (pattern frequency report), `promote` (write patterns as enforced rules), `scan` (live codebase scan), `status` (hook health + counts), `reset` (clear counters). Reads `memory_bank/` for session-level learning.
-- **`failure-scan.sh` hook** — PostToolUse hook wired to every Edit/Write. Scans written files for 3 CRITICAL patterns instantly: hardcoded secrets, localStorage token storage, AI file corruption artifacts. Non-blocking, warns inline.
-- **`guardloop-harvest.sh` hook** — Stop hook that runs the full 10-pattern scan across every file edited during the session. Logs detections to `memory_bank/knowledge/errors-universal.jsonl` and updates pattern frequency counters in `guardloop-patterns.json`.
-- **`agents/_guardloop-rules.md`** — Adaptive rules file that self-populates. When a pattern hits 3+ occurrences, `/guardloop promote` writes it as an enforced guardrail read by all code-generating agents.
-- **The learning loop** — Every session feeds failures into the knowledge base. Three occurrences = promotion. Promoted rules are enforced in all future sessions. The framework gets harder to fool over time.
+- **`/prd-lint`** — New skill + script with 12 structural checks. Validates front matter, required sections §1–§11, no TBD/TODO markers, vague language, GuardLoop DoD item, FR-IDs column. `/go` runs it as Phase 1.5 before any implementation.
+- **PRD dependency ordering** — `/go` Phase 2.5 computes execution waves via topological sort of `dependencies.requires` front matter. `scripts/prd-wave-plan.sh` standalone tool. Cycle detection included.
+- **GuardLoop × done/ gate** — `move-story.sh` now refuses `→ done` transitions when CRITICAL GuardLoop patterns (hardcoded secrets, localStorage tokens, file corruption) have non-zero hits. Exit code 6. Override with `--no-guardloop-gate`.
+- **Token budget forecasting** — `SessionTokenReport` gains `forecast.tokensPerMinute`, `projectedAt60min`/`120min`, `minutesUntilWarning`/`Critical`, and `budgetHealthPct`. Available after 2+ minutes of session data.
+- **`/parity`** — New `scripts/parity-check.sh` + skill. Compares Claude reference skills against Copilot, Cursor, Codex, and Gemini. Reports presence gaps + H1 title drift with parity % per platform.
+- **Skill hot-reload** — MCP server watches skill directories with `fs.watch` (400ms debounce). Saves, additions, and deletions update the live skills map with no server restart.
+- **Secret scan in harvester** — `harvester.ts` redacts 7 credential patterns (AWS keys, JWTs, Bearer tokens, API/password/secret assignments, private key headers) before knowledge is written to SQLite. `HarvestResult.secretsRedacted` tracks the count.
+- **Model tier declarations** — Skills declare `min_model: haiku|sonnet|opus` in front matter. MCP server appends `[min-model: opus]` to tool descriptions and prepends an advisory when the active tier is below the declared minimum. `forge`, `go`, `architect` tagged `min_model: opus`.
+- **`update.sh` checkpoint/rollback** — `--checkpoint`, `--checkpoints`, `--rollback` subcommands with full `MANIFEST.json`-backed file restoration and automatic pre-rollback safety snapshot.
+- **Semgrep SAST in Anvil T4** — `anvil.sh sast` runs `semgrep --config p/owasp-top-ten --config p/secrets`. HIGH blocks, MEDIUM warns, absent semgrep skips gracefully.
+- **MCP Streamable HTTP** — `/mcp/http` endpoint (GET/POST/DELETE) using `StreamableHTTPServerTransport` (MCP 2025-03-26 spec) alongside existing `/mcp/sse`.
 
-#### Previous: Test Cartographer (v5.10.0)
+#### Previous: GuardLoop — Self-Improving AI Governance (v5.12.0)
 
-- `/test-map` skill across all 5 platforms, GitHub Copilot + Claude deep optimization, config-protect fix.
+- `/guardloop` skill, `failure-scan.sh` + `guardloop-harvest.sh` hooks, `agents/_guardloop-rules.md` adaptive rules file. 10 patterns tracked, CRITICAL patterns auto-promoted after 3 hits.
+
 #### Previous: FolderFlow — Story State Machine (v5.11.0)
 
 - `/go` + `/layer-check` integration, story checkbox reconciler, folder state machine (todo/in-progress/blocked/done), JSON artifact handlers. 83-case test suite.
@@ -47,17 +54,6 @@ v5.12.0 integrates [GuardLoop](https://github.com/samibs/guardloop.dev) — a se
 #### Previous: Test Cartographer — `/test-map` Skill (v5.10.0)
 
 - `/test-map` skill for automated test documentation across all 5 platforms with three-tier classification (HIGH/MEDIUM/BASELINE), deep optimization for GitHub Copilot with the Claude model (~160 lines of constitutional rules), and config-protect fix for `.claude/` allowlist entries.
-
-#### Previous: Self-Validate — Output Verification Loop (v5.9.0)
-
-- `/self-validate` skill across all 5 platforms, Phase 2.75 VERIFY in forge pipeline, Safeguard 6 per-story output gate, browser validation via Puppeteer/Playwright MCP.
-
-#### Previous: Native IDE Shell (v5.8.0)
-
-**VS Code Extension v1.3.0**
-
-- **Setup wizard** (`SkillFoundry: Setup`) — Provider quick-pick → API key input → stored in VS Code SecretStorage (never written to disk) → `.skillfoundry/config.toml` written → reload prompt.
-- **sf CLI installation check** — At activation, detects whether `sf` is on PATH. Offers `npm install -g skillfoundry` via an integrated terminal with one click.
 - **Forge progress notification** — `withProgress` notification wraps the forge terminal lifetime, cancellable from the notification. ForgeMonitor sidebar continues tracking phases live via `forge-state.json`.
 
 #### Previous: Adversarial Intelligence (v5.7.0)

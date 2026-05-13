@@ -1,7 +1,10 @@
 import { glob } from "glob";
 import { readFile } from "fs/promises";
+import { existsSync } from "fs";
 import path from "path";
 import matter from "gray-matter";
+
+export type SkillModelTier = "haiku" | "sonnet" | "opus";
 
 export interface SkillDefinition {
   name: string;
@@ -9,6 +12,7 @@ export interface SkillDefinition {
   filePath: string;
   content: string;
   metadata: Record<string, unknown>;
+  minModel: SkillModelTier | null;
 }
 
 /**
@@ -110,17 +114,75 @@ export async function loadSkills(
       if (seen.has(name)) continue;
       seen.add(name);
 
+      const rawMinModel = metadata.min_model;
+      const minModel: SkillModelTier | null =
+        rawMinModel === "haiku" || rawMinModel === "sonnet" || rawMinModel === "opus"
+          ? rawMinModel
+          : null;
+
       skills.set(name, {
         name,
         description: extractDescription(content),
         filePath,
         content: raw,
         metadata,
+        minModel,
       });
     }
   }
 
   return skills;
+}
+
+const SKIP_BASENAMES = new Set([
+  "TEMPLATE.md", "README.md", "CHANGELOG.md", "INDEX.md", "MEMORY.md",
+]);
+
+/**
+ * Reload a single skill file into an existing skills map.
+ * - If the file no longer exists, removes the skill from the map.
+ * - If present, re-parses and updates (or inserts) the entry.
+ * Returns the skill name affected, or null if the file should be skipped.
+ */
+export async function reloadSkill(
+  filePath: string,
+  skills: Map<string, SkillDefinition>,
+): Promise<string | null> {
+  const basename = path.basename(filePath);
+  if (!basename.endsWith(".md") || SKIP_BASENAMES.has(basename) || basename.startsWith("_")) {
+    return null;
+  }
+
+  if (!existsSync(filePath)) {
+    // File deleted — remove from map by finding the entry with this filePath
+    for (const [name, skill] of skills) {
+      if (skill.filePath === filePath) {
+        skills.delete(name);
+        return name;
+      }
+    }
+    return null;
+  }
+
+  const raw = await readFile(filePath, "utf-8");
+  let metadata: Record<string, unknown> = {};
+  let content: string = raw;
+  try {
+    const parsed = matter(raw);
+    metadata = parsed.data;
+    content = parsed.content;
+  } catch {
+    // malformed YAML — use raw
+  }
+
+  const name = extractSkillName(filePath, content);
+  const rawMinModel = metadata.min_model;
+  const minModel: SkillModelTier | null =
+    rawMinModel === "haiku" || rawMinModel === "sonnet" || rawMinModel === "opus"
+      ? rawMinModel
+      : null;
+  skills.set(name, { name, description: extractDescription(content), filePath, content: raw, metadata, minModel });
+  return name;
 }
 
 /**
@@ -140,9 +202,10 @@ export function skillsToMcpTools(
   }> = [];
 
   for (const [name, skill] of skills) {
+    const tierSuffix = skill.minModel ? ` [min-model: ${skill.minModel}]` : "";
     tools.push({
       name: `sf_${name}`,
-      description: skill.description,
+      description: skill.description + tierSuffix,
       inputSchema: {
         type: "object",
         properties: {

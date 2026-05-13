@@ -10,7 +10,7 @@ import { getFleetHealth, querySessionRecordings } from "../state/db.js";
 import { listSessions, loadSession } from "../session/persistence.js";
 import { createSessionConfig } from "../session/config.js";
 
-const VERSION = "5.12.0";
+const VERSION = "5.13.0";
 const startTime = Date.now();
 
 let storedBootstrapState: BootstrapState | null = null;

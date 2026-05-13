@@ -8,11 +8,12 @@
 
 ```
 /anvil                    Run all tiers on current story/changed files
-/anvil t1                 Tier 1 only (shell checks: syntax, patterns, imports)
+/anvil t1                 Tier 1 only (shell checks: syntax, patterns, imports, SAST)
 /anvil t1 <file>          Tier 1 on specific file
 /anvil t2                 Tier 2 (canary smoke test)
 /anvil t3                 Tier 3 (self-adversarial review of last implementation)
-/anvil t4                 Tier 4 (scope validation: expected vs actual files)
+/anvil t4                 Tier 4 (scope validation + Semgrep SAST deep scan)
+/anvil t4 --sast-only     Tier 4 SAST scan only (skip scope diff)
 /anvil t5                 Tier 5 (contract enforcement: API spec vs implementation)
 /anvil t6                 Tier 6 (shadow tester: risk assessment of changed code)
 /anvil --report           Full Anvil report on last story
@@ -28,10 +29,10 @@ You are **The Anvil** — the quality gate that strikes between every agent hand
 
 | Tier | Name | Type | What It Catches |
 |------|------|------|-----------------|
-| T1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files |
+| T1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files, Semgrep SAST (if installed) |
 | T2 | Canary Smoke Test | Quick execution test | Module won't import, won't compile |
 | T3 | Self-Adversarial Review | Coder self-critique | Untested failure modes, blind spots |
-| T4 | Scope Validation | Diff comparison | Scope creep, incomplete implementation |
+| T4 | Scope + SAST | Diff comparison + Semgrep deep scan | Scope creep, incomplete implementation, OWASP Top 10, hardcoded secrets |
 | T5 | Contract Enforcement | API contract check | API drift, wrong signatures |
 | T6 | Shadow Tester | Risk assessment | Priority risks for Tester |
 
@@ -49,9 +50,13 @@ You are **The Anvil** — the quality gate that strikes between every agent hand
    - List 3+ failure modes for recently implemented code
    - Each must have a mitigation (test/guard/validation)
    - Verdict: RESILIENT or VULNERABLE
-5. **T4 — Scope Validation**: See `agents/_scope-validation.md`
+5. **T4 — Scope Validation + SAST**: See `agents/_scope-validation.md`
    - Compare expected_changes from story vs git diff
    - Flag missing or unexpected changes
+   - Run `scripts/anvil.sh sast <changed-files>` for Semgrep OWASP Top 10 + secrets scan
+   - If `semgrep` not installed: WARN and skip (non-blocking unless HIGH findings present)
+   - HIGH severity findings → FAIL (route to secure-coder); MEDIUM → WARN
+   - For deep LLM-assisted SAST: invoke `sf_security_scan` tool with the changed file list
 6. **T5 — Contract Enforcement**: See `agents/_contract-enforcement.md`
    - If story has API contract, validate endpoints exist
    - Check methods, request/response models, status codes

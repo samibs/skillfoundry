@@ -268,7 +268,7 @@ export function createMcpServer(
   skills: Map<string, SkillDefinition>
 ): Server {
   const server = new Server(
-    { name: "skillfoundry", version: "5.12.0" },
+    { name: "skillfoundry", version: "5.13.0" },
     { capabilities: { tools: {} } }
   );
 
@@ -603,6 +603,7 @@ export function createMcpServer(
             filePath: `factory://${newSkill.id}`,
             content: newSkill.exportedContent,
             metadata: { dynamic: true, domain: newSkill.domain, riskLevel: newSkill.riskLevel },
+            minModel: null,
           });
         }
 
@@ -744,9 +745,21 @@ export function createMcpServer(
     const projectPath = typedArgs?.projectPath as string;
     const skillArgs = typedArgs?.args as string | undefined;
 
+    // Prepend model tier advisory for skills that declare a minimum model
+    const MODEL_TIER_ORDER: Record<string, number> = { haiku: 0, sonnet: 1, opus: 2 };
+    const currentTier = (process.env.SKILLFOUNDRY_MODEL_TIER || "sonnet").toLowerCase();
+    let skillContent = skill.content;
+    if (skill.minModel && (MODEL_TIER_ORDER[currentTier] ?? 1) < (MODEL_TIER_ORDER[skill.minModel] ?? 2)) {
+      skillContent =
+        `> **Model advisory**: This skill declares \`min_model: ${skill.minModel}\`. ` +
+        `Running on a lower-tier model may produce incomplete or lower-quality output. ` +
+        `Switch to Claude ${skill.minModel.charAt(0).toUpperCase() + skill.minModel.slice(1)} for best results.\n\n` +
+        skillContent;
+    }
+
     return tracked(optimizeSkillResponse(
       skill.name,
-      skill.content,
+      skillContent,
       projectPath,
       skillArgs,
       optimizeOpts,

@@ -19,6 +19,9 @@
 #   --no-strict-done         Skip the reconciler --strict precondition when
 #                            transitioning to done. NOT recommended — only use
 #                            when the reconciler isn't installed yet.
+#   --no-guardloop-gate      Skip the GuardLoop CRITICAL pattern check when
+#                            transitioning to done. NOT recommended — only use
+#                            when no GuardLoop state is available.
 #   --help                   Show this message.
 #
 # Exit codes:
@@ -28,6 +31,7 @@
 #   3  refused transition to done — reconciler --strict failed
 #   4  I/O or git error
 #   5  concurrent move detected (source vanished mid-flight)
+#   6  refused transition to done — CRITICAL GuardLoop patterns detected
 
 set -u
 set -o pipefail
@@ -63,7 +67,7 @@ usage() {
 main() {
     local story_path="" target_state=""
     local reason="" blocked_gate=""
-    local skip_index=0 skip_strict_done=0
+    local skip_index=0 skip_strict_done=0 skip_guardloop_gate=0
 
     while [ "$#" -gt 0 ]; do
         case "$1" in
@@ -72,6 +76,7 @@ main() {
             --blocked-gate) blocked_gate="${2:-}"; shift 2 ;;
             --no-index) skip_index=1; shift ;;
             --no-strict-done) skip_strict_done=1; shift ;;
+            --no-guardloop-gate) skip_guardloop_gate=1; shift ;;
             --) shift; break ;;
             -*) _log error "unknown-flag:$1"; usage; return 1 ;;
             *)
@@ -153,6 +158,39 @@ main() {
             fi
         else
             _log warn "reconciler-not-found path=$reconciler proceeding-without-strict-check"
+        fi
+    fi
+
+    # ----- Precondition: transitions to done require no CRITICAL GuardLoop patterns -----
+    if [ "$target_state" = "done" ] && [ "$skip_guardloop_gate" -eq 0 ]; then
+        local gl_state_file
+        gl_state_file="${CLAUDE_PROJECT_DIR:-$(git -C "$(dirname -- "$abs_path")" rev-parse --show-toplevel 2>/dev/null || echo ".")}/.claude/hooks/state/guardloop-patterns.json"
+        if [ -f "$gl_state_file" ] && command -v python3 &>/dev/null; then
+            local gl_result
+            gl_result=$(python3 - "$gl_state_file" <<'PYEOF'
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        state = json.load(f)
+except Exception:
+    sys.exit(0)
+patterns = state.get("patterns", {})
+critical = [(name, d) for name, d in patterns.items()
+            if d.get("severity") == "critical" and d.get("count", 0) > 0]
+if critical:
+    names = ", ".join(n for n, _ in critical)
+    print(f"CRITICAL_DETECTED:{names}")
+PYEOF
+            )
+            if [[ "$gl_result" == CRITICAL_DETECTED:* ]]; then
+                local pattern_names="${gl_result#CRITICAL_DETECTED:}"
+                _log error "refuse-done story=$story_basename detail=guardloop-critical-patterns patterns=$pattern_names"
+                printf 'GuardLoop gate BLOCKED: CRITICAL patterns detected in this session:\n  %s\n' "$pattern_names" >&2
+                printf 'Fix the patterns above, then retry. Override with --no-guardloop-gate (not recommended).\n' >&2
+                return 6
+            fi
+        else
+            _log warn "guardloop-state-not-found path=$gl_state_file proceeding-without-guardloop-check"
         fi
     fi
 
