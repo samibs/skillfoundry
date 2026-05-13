@@ -185,6 +185,12 @@
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/accumulate-edits.sh",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/failure-scan.sh",
+            "timeout": 5,
+            "statusMessage": "GuardLoop: scanning..."
           }
         ]
       }
@@ -193,6 +199,12 @@
       {
         "matcher": "",
         "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guardloop-harvest.sh",
+            "timeout": 30,
+            "statusMessage": "GuardLoop: harvesting failure patterns..."
+          },
           {
             "type": "command",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/batch-check.sh",
