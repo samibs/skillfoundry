@@ -5,11 +5,16 @@ import { spawn, type ChildProcess } from "child_process";
 
 let serverProcess: ChildProcess;
 const PORT = 9879;
+const TEST_TOKEN = "sf-test-token-abc123";
+const mkTransport = (port: number) => new SSEClientTransport(
+  new URL(`http://localhost:${port}/mcp/sse`),
+  { requestInit: { headers: { Authorization: `Bearer ${TEST_TOKEN}` } } }
+);
 
 beforeAll(async () => {
   serverProcess = spawn("tsx", ["src/server.ts"], {
     cwd: import.meta.dirname ? import.meta.dirname.replace("/tests", "") : process.cwd(),
-    env: { ...process.env, SKILLFOUNDRY_PORT: String(PORT) },
+    env: { ...process.env, SKILLFOUNDRY_PORT: String(PORT), SKILLFOUNDRY_API_TOKEN: TEST_TOKEN },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
@@ -36,9 +41,7 @@ afterAll(() => {
 
 describe("Tool Agents via MCP", () => {
   it("lists tool agent tools alongside skill tools", async () => {
-    const transport = new SSEClientTransport(
-      new URL(`http://localhost:${PORT}/mcp/sse`)
-    );
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test-client", version: "1.0.0" });
     await client.connect(transport);
 
@@ -57,9 +60,7 @@ describe("Tool Agents via MCP", () => {
   });
 
   it("memory gate evaluates LLM reasoning as observed", async () => {
-    const transport = new SSEClientTransport(
-      new URL(`http://localhost:${PORT}/mcp/sse`)
-    );
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test-client", version: "1.0.0" });
     await client.connect(transport);
 
@@ -86,9 +87,7 @@ describe("Tool Agents via MCP", () => {
   });
 
   it("memory gate evaluates Playwright evidence as verified", async () => {
-    const transport = new SSEClientTransport(
-      new URL(`http://localhost:${PORT}/mcp/sse`)
-    );
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test-client", version: "1.0.0" });
     await client.connect(transport);
 
@@ -113,9 +112,7 @@ describe("Tool Agents via MCP", () => {
   });
 
   it("semgrep scan runs against a real path", async () => {
-    const transport = new SSEClientTransport(
-      new URL(`http://localhost:${PORT}/mcp/sse`)
-    );
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test-client", version: "1.0.0" });
     await client.connect(transport);
 

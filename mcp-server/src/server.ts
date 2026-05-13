@@ -1,6 +1,8 @@
 import express from "express";
-import { watch } from "fs";
-import { randomUUID } from "crypto";
+import cors from "cors";
+import rateLimit from "express-rate-limit";
+import { watch, existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { randomUUID, randomBytes } from "crypto";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { loadSkills, reloadSkill } from "./skills/loader.js";
@@ -27,8 +29,24 @@ const SKILL_DIRS = [
     path.join(FRAMEWORK_ROOT, "agents"),
 ];
 
+const TOKEN_FILE = path.join(FRAMEWORK_ROOT, "data", ".api-token");
+
+function resolveApiToken(): string {
+  if (process.env.SKILLFOUNDRY_API_TOKEN) {
+    return process.env.SKILLFOUNDRY_API_TOKEN;
+  }
+  if (existsSync(TOKEN_FILE)) {
+    return readFileSync(TOKEN_FILE, "utf8").trim();
+  }
+  const token = `sf_${randomBytes(32).toString("hex")}`;
+  mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
+  writeFileSync(TOKEN_FILE, token, { mode: 0o600 });
+  console.log(`\n[auth] New API token generated and saved to: ${TOKEN_FILE}`);
+  return token;
+}
+
 async function main(): Promise<void> {
-  console.log("SkillFoundry MCP Server v5.13.0");
+  console.log("SkillFoundry MCP Server v5.14.0");
   console.log(`Framework root: ${FRAMEWORK_ROOT}`);
   console.log(`Skill directories: ${SKILL_DIRS.join(", ")}`);
 
@@ -71,6 +89,28 @@ async function main(): Promise<void> {
 
   // Create Express app
   const app = express();
+
+  // CORS — default to localhost:3666; override with SKILLFOUNDRY_CORS_ORIGIN
+  app.use(cors({
+    origin: process.env.SKILLFOUNDRY_CORS_ORIGIN || "http://localhost:3666",
+    methods: ["GET", "POST", "DELETE"],
+  }));
+
+  // Rate limiting — MCP transports and REST API get separate buckets
+  const mcpLimiter = rateLimit({ windowMs: 60_000, max: 300, standardHeaders: true, legacyHeaders: false });
+  const apiLimiter = rateLimit({ windowMs: 60_000, max: 500, standardHeaders: true, legacyHeaders: false });
+  app.use("/mcp", mcpLimiter);
+  app.use("/api", apiLimiter);
+
+  // Bearer token auth — always active; token auto-generated on first run
+  const API_TOKEN = resolveApiToken();
+  const bearerAuth = (req: express.Request, res: express.Response, next: express.NextFunction): void => {
+    const auth = req.headers.authorization;
+    if (auth === `Bearer ${API_TOKEN}`) { next(); return; }
+    res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Invalid or missing API token" } });
+  };
+  app.use("/mcp", bearerAuth);
+  app.use("/api/v1", bearerAuth);
 
   // JSON parsing for REST API only — NOT for the SSE raw-body endpoint.
   // Streamable HTTP (/mcp/http) DOES need JSON parsing.
@@ -165,16 +205,21 @@ async function main(): Promise<void> {
 
   // Start HTTP server
   app.listen(PORT, () => {
-    console.log(`\nServer running on port ${PORT}`);
+    console.log(`\nSkillFoundry MCP Server running on port ${PORT}`);
     console.log(`  Health:       http://localhost:${PORT}/health`);
     console.log(`  Ready:        http://localhost:${PORT}/ready`);
     console.log(`  Agents:       http://localhost:${PORT}/api/v1/agents`);
     console.log(`  MCP SSE:      http://localhost:${PORT}/mcp/sse`);
-    console.log(`  MCP HTTP:     http://localhost:${PORT}/mcp/http  (Streamable HTTP, MCP 2025-03-26)`);
-    console.log(`\nTo connect from Claude Code (SSE), add to settings.json:`);
-    console.log(`  "mcpServers": { "skillfoundry": { "url": "http://localhost:${PORT}/mcp/sse" } }`);
-    console.log(`\nTo connect via Streamable HTTP, use endpoint:`);
-    console.log(`  http://localhost:${PORT}/mcp/http`);
+    console.log(`  MCP HTTP:     http://localhost:${PORT}/mcp/http`);
+    console.log(`\n[auth] API token: ${API_TOKEN}`);
+    console.log(`  Token file: ${TOKEN_FILE}`);
+    console.log(`\nTo connect from Claude Code, add to settings.json:`);
+    console.log(`  "mcpServers": {`);
+    console.log(`    "skillfoundry": {`);
+    console.log(`      "url": "http://localhost:${PORT}/mcp/sse",`);
+    console.log(`      "headers": { "Authorization": "Bearer ${API_TOKEN}" }`);
+    console.log(`    }`);
+    console.log(`  }`);
   });
 
   // Run bootstrap pipeline and publish state to health/ready endpoints

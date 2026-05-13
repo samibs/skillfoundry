@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.13.0-blue)
+![Version](https://img.shields.io/badge/version-5.14.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,25 +25,22 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.13.0
+### What's New in v5.14.0
 
-**Pipeline Quality — 11 Framework Enhancements**
+**MCP Server Security Hardening**
 
-v5.13.0 hardens every layer of the pipeline: validate PRDs before they enter implementation, execute them in dependency order, block done/ promotion on CRITICAL patterns, forecast your token budget, detect platform drift, hot-reload skills without restart, and ship with rollback capability baked in.
+v5.14.0 closes every gap in the MCP server's security posture. All 11 BPSBS controls now pass. No functional changes — hardening only.
 
-- **`/prd-lint`** — New skill + script with 12 structural checks. Validates front matter, required sections §1–§11, no TBD/TODO markers, vague language, GuardLoop DoD item, FR-IDs column. `/go` runs it as Phase 1.5 before any implementation.
-- **PRD dependency ordering** — `/go` Phase 2.5 computes execution waves via topological sort of `dependencies.requires` front matter. `scripts/prd-wave-plan.sh` standalone tool. Cycle detection included.
-- **GuardLoop × done/ gate** — `move-story.sh` now refuses `→ done` transitions when CRITICAL GuardLoop patterns (hardcoded secrets, localStorage tokens, file corruption) have non-zero hits. Exit code 6. Override with `--no-guardloop-gate`.
-- **Token budget forecasting** — `SessionTokenReport` gains `forecast.tokensPerMinute`, `projectedAt60min`/`120min`, `minutesUntilWarning`/`Critical`, and `budgetHealthPct`. Available after 2+ minutes of session data.
-- **`/parity`** — New `scripts/parity-check.sh` + skill. Compares Claude reference skills against Copilot, Cursor, Codex, and Gemini. Reports presence gaps + H1 title drift with parity % per platform.
-- **Skill hot-reload** — MCP server watches skill directories with `fs.watch` (400ms debounce). Saves, additions, and deletions update the live skills map with no server restart.
-- **Secret scan in harvester** — `harvester.ts` redacts 7 credential patterns (AWS keys, JWTs, Bearer tokens, API/password/secret assignments, private key headers) before knowledge is written to SQLite. `HarvestResult.secretsRedacted` tracks the count.
-- **Model tier declarations** — Skills declare `min_model: haiku|sonnet|opus` in front matter. MCP server appends `[min-model: opus]` to tool descriptions and prepends an advisory when the active tier is below the declared minimum. `forge`, `go`, `architect` tagged `min_model: opus`.
-- **`update.sh` checkpoint/rollback** — `--checkpoint`, `--checkpoints`, `--rollback` subcommands with full `MANIFEST.json`-backed file restoration and automatic pre-rollback safety snapshot.
-- **Semgrep SAST in Anvil T4** — `anvil.sh sast` runs `semgrep --config p/owasp-top-ten --config p/secrets`. HIGH blocks, MEDIUM warns, absent semgrep skips gracefully.
-- **MCP Streamable HTTP** — `/mcp/http` endpoint (GET/POST/DELETE) using `StreamableHTTPServerTransport` (MCP 2025-03-26 spec) alongside existing `/mcp/sse`.
+- **Bearer token auth** — Auto-generated `sf_*` token on first run, saved to `data/.api-token` (mode `0o600`). Always enforced on `/mcp` and `/api/v1`. Token + ready-to-paste config printed to console on startup.
+- **Rate limiting** — `express-rate-limit`: 300 req/min on MCP transports, 500 req/min on REST API.
+- **CORS** — Default origin `http://localhost:3666`. Override with `SKILLFOUNDRY_CORS_ORIGIN`.
+- **Error sanitisation** — `handleRouteError()` — raw `err.message` never returned in production 500 responses.
+- **`MAX_PAGE_SIZE = 500`** — Enforced on all 10 list queries. Caller-supplied `limit` capped at 500.
+- **`getSessionTranscripts` mapper** — Strips `id`/`parsed_at` DB-internal columns before data reaches callers.
+- **Atomic session writes** — `saveSession` writes to `.tmp` then `renameSync`. No partial-write corruption.
+- **64/64 tests pass** — 3 new negative auth tests added; stale health assertions fixed.
 
-#### Previous: GuardLoop — Self-Improving AI Governance (v5.12.0)
+#### Previous: Pipeline Quality (v5.13.0)
 
 - `/guardloop` skill, `failure-scan.sh` + `guardloop-harvest.sh` hooks, `agents/_guardloop-rules.md` adaptive rules file. 10 patterns tracked, CRITICAL patterns auto-promoted after 3 hits.
 
@@ -88,9 +85,14 @@ v5.13.0 hardens every layer of the pipeline: validate PRDs before they enter imp
 
 - 22 tool agents, Secret Guard, Deviation Enforcer (161 rules), Import Validator, Correction Loop, Health Scores, harness engineering upgrade.
 
-```
-Connect from any IDE:
-"mcpServers": { "skillfoundry": { "url": "http://localhost:9877/mcp/sse" } }
+```jsonc
+// Token printed to console on first boot — also at data/.api-token
+"mcpServers": {
+  "skillfoundry": {
+    "url": "http://localhost:9877/mcp/sse",
+    "headers": { "Authorization": "Bearer <token>" }
+  }
+}
 ```
 
 ### Quick Install

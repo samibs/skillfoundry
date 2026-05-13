@@ -5,11 +5,16 @@ import { spawn, type ChildProcess } from "child_process";
 
 let serverProcess: ChildProcess;
 const PORT = 9880;
+const TEST_TOKEN = "sf-test-token-abc123";
+const mkTransport = (port: number) => new SSEClientTransport(
+  new URL(`http://localhost:${port}/mcp/sse`),
+  { requestInit: { headers: { Authorization: `Bearer ${TEST_TOKEN}` } } }
+);
 
 beforeAll(async () => {
   serverProcess = spawn("tsx", ["src/server.ts"], {
     cwd: import.meta.dirname ? import.meta.dirname.replace("/tests", "") : process.cwd(),
-    env: { ...process.env, SKILLFOUNDRY_PORT: String(PORT) },
+    env: { ...process.env, SKILLFOUNDRY_PORT: String(PORT), SKILLFOUNDRY_API_TOKEN: TEST_TOKEN },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
@@ -34,7 +39,7 @@ afterAll(() => {
 
 describe("Tier 1/2/3 Tool Agents via MCP", () => {
   it("lists all tool agents in MCP tools", async () => {
-    const transport = new SSEClientTransport(new URL(`http://localhost:${PORT}/mcp/sse`));
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test", version: "1.0.0" });
     await client.connect(transport);
 
@@ -72,7 +77,7 @@ describe("Tier 1/2/3 Tool Agents via MCP", () => {
   });
 
   it("sf_build runs on the MCP server itself", async () => {
-    const transport = new SSEClientTransport(new URL(`http://localhost:${PORT}/mcp/sse`));
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test", version: "1.0.0" });
     await client.connect(transport);
 
@@ -91,7 +96,7 @@ describe("Tier 1/2/3 Tool Agents via MCP", () => {
   });
 
   it("sf_typecheck runs on the MCP server itself", async () => {
-    const transport = new SSEClientTransport(new URL(`http://localhost:${PORT}/mcp/sse`));
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test", version: "1.0.0" });
     await client.connect(transport);
 
@@ -110,7 +115,7 @@ describe("Tier 1/2/3 Tool Agents via MCP", () => {
   });
 
   it("sf_check_port works", async () => {
-    const transport = new SSEClientTransport(new URL(`http://localhost:${PORT}/mcp/sse`));
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test", version: "1.0.0" });
     await client.connect(transport);
 
@@ -126,7 +131,7 @@ describe("Tier 1/2/3 Tool Agents via MCP", () => {
   });
 
   it("sf_git_status works", async () => {
-    const transport = new SSEClientTransport(new URL(`http://localhost:${PORT}/mcp/sse`));
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test", version: "1.0.0" });
     await client.connect(transport);
 
@@ -144,7 +149,7 @@ describe("Tier 1/2/3 Tool Agents via MCP", () => {
   });
 
   it("sf_nginx_config generates valid config", async () => {
-    const transport = new SSEClientTransport(new URL(`http://localhost:${PORT}/mcp/sse`));
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test", version: "1.0.0" });
     await client.connect(transport);
 
@@ -163,7 +168,7 @@ describe("Tier 1/2/3 Tool Agents via MCP", () => {
   });
 
   it("sf_check_env detects missing .env", async () => {
-    const transport = new SSEClientTransport(new URL(`http://localhost:${PORT}/mcp/sse`));
+    const transport = mkTransport(PORT);
     const client = new Client({ name: "test", version: "1.0.0" });
     await client.connect(transport);
 
