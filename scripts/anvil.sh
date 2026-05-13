@@ -362,6 +362,89 @@ check_scope() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# SAST — Semgrep Static Analysis (T4 Security Gate)
+# ═══════════════════════════════════════════════════════════════
+
+run_sast() {
+    local target="$1"
+    local sast_errors=0
+    local sast_warnings=0
+
+    if ! command -v semgrep &>/dev/null; then
+        echo -e "  ${YELLOW}[SKIP]${NC} semgrep not installed — install with: pip install semgrep"
+        WARNINGS=$((WARNINGS + 1))
+        return 0
+    fi
+
+    if [ ! -e "$target" ]; then
+        echo -e "  ${RED}[BLOCK]${NC} Target not found: $target"
+        ERRORS=$((ERRORS + 1))
+        return 1
+    fi
+
+    # Run semgrep OWASP Top 10 + security audit rule packs
+    local semgrep_out
+    semgrep_out=$(semgrep \
+        --config "p/owasp-top-ten" \
+        --config "p/secrets" \
+        --json \
+        --no-git-ignore \
+        --timeout 30 \
+        "$target" 2>/dev/null || true)
+
+    if [ -z "$semgrep_out" ]; then
+        echo -e "  ${YELLOW}[SKIP]${NC} Semgrep returned no output (network issue or offline mode)"
+        WARNINGS=$((WARNINGS + 1))
+        return 0
+    fi
+
+    # Parse findings by severity
+    local high_count medium_count low_count
+    high_count=$(echo "$semgrep_out" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print(sum(1 for r in d.get('results',[]) if r.get('extra',{}).get('severity','').upper() in ('ERROR','HIGH')))
+" 2>/dev/null || echo "0")
+    medium_count=$(echo "$semgrep_out" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print(sum(1 for r in d.get('results',[]) if r.get('extra',{}).get('severity','').upper() == 'WARNING'))
+" 2>/dev/null || echo "0")
+    low_count=$(echo "$semgrep_out" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print(sum(1 for r in d.get('results',[]) if r.get('extra',{}).get('severity','').upper() == 'INFO'))
+" 2>/dev/null || echo "0")
+
+    # Print findings
+    echo "$semgrep_out" | python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for r in d.get('results',[]):
+    sev = r.get('extra',{}).get('severity','INFO').upper()
+    path = r.get('path','?')
+    line = r.get('start',{}).get('line','?')
+    rule = r.get('check_id','?').split('.')[-1]
+    msg  = r.get('extra',{}).get('message','')[:120]
+    icon = '[BLOCK]' if sev in ('ERROR','HIGH') else '[WARN] ' if sev == 'WARNING' else '[INFO] '
+    print(f'  {icon} {path}:{line} — {rule}: {msg}')
+" 2>/dev/null || true
+
+    if [ "$high_count" -gt 0 ]; then
+        echo -e "  ${RED}SAST: $high_count HIGH, $medium_count MEDIUM, $low_count LOW findings${NC}"
+        ERRORS=$((ERRORS + high_count))
+    elif [ "$medium_count" -gt 0 ]; then
+        echo -e "  ${YELLOW}SAST: 0 HIGH, $medium_count MEDIUM, $low_count LOW findings${NC}"
+        WARNINGS=$((WARNINGS + medium_count))
+    else
+        echo -e "  ${GREEN}SAST: Clean (0 HIGH, 0 MEDIUM, $low_count LOW)${NC}"
+        PASSED=$((PASSED + 1))
+    fi
+
+    return 0
+}
+
+# ═══════════════════════════════════════════════════════════════
 # RUN ALL T1 CHECKS on a file or directory
 # ═══════════════════════════════════════════════════════════════
 
@@ -379,12 +462,12 @@ run_all_checks() {
     echo ""
 
     # Phase 1: Banned patterns
-    echo -e "${BLUE}[1/3]${NC} Scanning for banned patterns..."
+    echo -e "${BLUE}[1/4]${NC} Scanning for banned patterns..."
     check_banned_patterns "$target"
     echo ""
 
     # Phase 2: Syntax validation
-    echo -e "${BLUE}[2/3]${NC} Validating syntax..."
+    echo -e "${BLUE}[2/4]${NC} Validating syntax..."
     if [ -d "$target" ]; then
         while IFS= read -r -d '' file; do
             check_syntax "$file"
@@ -395,7 +478,7 @@ run_all_checks() {
     echo ""
 
     # Phase 3: Import resolution
-    echo -e "${BLUE}[3/3]${NC} Checking import resolution..."
+    echo -e "${BLUE}[3/4]${NC} Checking import resolution..."
     if [ -d "$target" ]; then
         while IFS= read -r -d '' file; do
             check_imports "$file"
@@ -403,6 +486,11 @@ run_all_checks() {
     else
         check_imports "$target"
     fi
+    echo ""
+
+    # Phase 4: SAST (Semgrep OWASP — runs if semgrep is installed)
+    echo -e "${BLUE}[4/4]${NC} Running SAST scan (Semgrep OWASP Top 10 + secrets)..."
+    run_sast "$target"
     echo ""
 
     # Summary
@@ -506,17 +594,31 @@ case "${1:-}" in
         [ "$WARNINGS" -gt 0 ] && exit 1
         exit 0
         ;;
+    sast)
+        if [ -z "${2:-}" ]; then
+            echo "Usage: $0 sast <file-or-dir>"
+            exit 1
+        fi
+        echo -e "${CYAN}ANVIL T4: SAST Security Scan (Semgrep OWASP + Secrets)${NC}"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        run_sast "$2"
+        print_summary
+        [ "$ERRORS" -gt 0 ] && exit 2
+        [ "$WARNINGS" -gt 0 ] && exit 1
+        exit 0
+        ;;
     --help|-h)
         echo "The Anvil — Tier 1 Shell Pre-Flight Validation"
         echo ""
         echo "Usage: $0 <command> [target]"
         echo ""
         echo "Commands:"
-        echo "  check <file-or-dir>     Run all T1 checks (syntax + patterns + imports)"
+        echo "  check <file-or-dir>     Run all T1+SAST checks (syntax + patterns + imports + Semgrep)"
         echo "  syntax <file>           Syntax validation only"
         echo "  patterns <file-or-dir>  Banned pattern scan only"
         echo "  imports <file>          Import resolution check"
         echo "  scope <story-file>      T4: Scope validation (expected vs actual changes)"
+        echo "  sast <file-or-dir>      T4: SAST security scan (Semgrep OWASP Top 10 + secrets)"
         echo ""
         echo "Exit codes:"
         echo "  0  All checks passed"
@@ -527,8 +629,9 @@ case "${1:-}" in
         echo "  Syntax:   Python, JavaScript, Shell, JSON"
         echo "  Imports:  Python, JavaScript/TypeScript"
         echo "  Patterns: All code files ($CODE_EXTENSIONS)"
+        echo "  SAST:     All semgrep-supported languages (requires: pip install semgrep)"
         echo ""
-        echo "Part of: SkillFoundry Framework - The Anvil (v1.9.0.13)"
+        echo "Part of: SkillFoundry Framework - The Anvil (v1.9.0.14)"
         ;;
     "")
         echo "Usage: $0 <command> [target]"

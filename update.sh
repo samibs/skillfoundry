@@ -1419,6 +1419,235 @@ update_all_projects() {
 }
 
 # ═══════════════════════════════════════════════════════════════
+# CHECKPOINT / ROLLBACK
+# ═══════════════════════════════════════════════════════════════
+
+# Create a named checkpoint of the current project state.
+# Captures all platform skill files managed by the update pipeline + CLAUDE.md.
+# Saves a MANIFEST.json so rollback knows the original path of each file.
+create_checkpoint() {
+    local project_dir="$1"
+    local label="${2:-manual}"
+
+    project_dir="$(resolve_path "$project_dir")"
+    if [ ! -d "$project_dir" ]; then
+        echo -e "${RED}Error: '$project_dir' is not a valid directory${NC}"
+        return 1
+    fi
+
+    local ts
+    ts="$(date +%Y%m%d_%H%M%S)"
+    local checkpoint_dir="$project_dir/.claude/backups/${ts}_${label}"
+    mkdir -p "$checkpoint_dir"
+
+    local manifest="$checkpoint_dir/MANIFEST.json"
+    local captured=0
+
+    # Helper: copy file and record in manifest accumulator
+    local manifest_entries=""
+    _cp_manifest() {
+        local src="$1"
+        local rel="$2"
+        if [ -f "$src" ]; then
+            local bname
+            bname="$(basename "$src")"
+            # Use a subdir structure to avoid collisions
+            local dest_dir="$checkpoint_dir/$(dirname "$rel")"
+            mkdir -p "$dest_dir"
+            cp "$src" "$checkpoint_dir/$rel"
+            manifest_entries="${manifest_entries}{\"backup\":\"${rel}\",\"original\":\"${rel}\"},"
+            captured=$((captured + 1))
+        fi
+    }
+
+    # Claude commands
+    if [ -d "$project_dir/.claude/commands" ]; then
+        for f in "$project_dir/.claude/commands/"*.md; do
+            [ -f "$f" ] && _cp_manifest "$f" ".claude/commands/$(basename "$f")"
+        done
+    fi
+
+    # Agents
+    if [ -d "$project_dir/agents" ]; then
+        for f in "$project_dir/agents/"*.md; do
+            [ -f "$f" ] && _cp_manifest "$f" "agents/$(basename "$f")"
+        done
+    fi
+
+    # Cursor rules
+    if [ -d "$project_dir/.cursor/rules" ]; then
+        for f in "$project_dir/.cursor/rules/"*.md; do
+            [ -f "$f" ] && _cp_manifest "$f" ".cursor/rules/$(basename "$f")"
+        done
+    fi
+
+    # Copilot agents
+    if [ -d "$project_dir/.copilot/custom-agents" ]; then
+        for f in "$project_dir/.copilot/custom-agents/"*.md; do
+            [ -f "$f" ] && _cp_manifest "$f" ".copilot/custom-agents/$(basename "$f")"
+        done
+    fi
+
+    # Gemini skills
+    if [ -d "$project_dir/.gemini/skills" ]; then
+        for f in "$project_dir/.gemini/skills/"*.md; do
+            [ -f "$f" ] && _cp_manifest "$f" ".gemini/skills/$(basename "$f")"
+        done
+    fi
+
+    # Core files
+    for rel in "CLAUDE.md" "AGENTS.md" "bpsbs.md" "genesis/TEMPLATE.md" \
+               "docs/ANTI_PATTERNS_BREADTH.md" "docs/ANTI_PATTERNS_DEPTH.md"; do
+        [ -f "$project_dir/$rel" ] && _cp_manifest "$project_dir/$rel" "$rel"
+    done
+
+    # Write manifest
+    local project_version="unknown"
+    [ -f "$project_dir/.claude/FRAMEWORK_VERSION" ] && \
+        project_version="$(cat "$project_dir/.claude/FRAMEWORK_VERSION" | tr -d '[:space:]')"
+    printf '{"timestamp":"%s","label":"%s","project":"%s","framework_version":"%s","files":[%s]}\n' \
+        "$ts" "$label" "$project_dir" "$project_version" \
+        "${manifest_entries%,}" > "$manifest"
+
+    echo -e "${GREEN}Checkpoint created:${NC} ${ts}_${label}"
+    echo -e "  ${BOLD}Location:${NC} $checkpoint_dir"
+    echo -e "  ${BOLD}Files:${NC}    $captured captured"
+    echo -e "  To rollback: $0 --rollback $project_dir ${ts}_${label}"
+}
+
+# List available checkpoints for a project.
+list_checkpoints() {
+    local project_dir="$1"
+    project_dir="$(resolve_path "$project_dir")"
+    local backups_dir="$project_dir/.claude/backups"
+
+    if [ ! -d "$backups_dir" ]; then
+        echo -e "${YELLOW}No checkpoints found. Run: $0 --checkpoint $project_dir${NC}"
+        return 0
+    fi
+
+    echo -e "${CYAN}Checkpoints for: $project_dir${NC}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+    local count=0
+    for cp_dir in "$backups_dir"/*/; do
+        [ -d "$cp_dir" ] || continue
+        local cp_name
+        cp_name="$(basename "$cp_dir")"
+        local manifest="$cp_dir/MANIFEST.json"
+        local file_count=0
+        local fw_version="unknown"
+        local has_manifest="no"
+        if [ -f "$manifest" ] && command -v python3 &>/dev/null; then
+            has_manifest="yes"
+            fw_version=$(python3 -c "import json,sys; d=json.load(open('$manifest')); print(d.get('framework_version','?'))" 2>/dev/null || echo "?")
+            file_count=$(python3 -c "import json,sys; d=json.load(open('$manifest')); print(len(d.get('files',[])))" 2>/dev/null || echo "?")
+        else
+            file_count=$(find "$cp_dir" -maxdepth 3 -type f ! -name 'MANIFEST.json' | wc -l)
+        fi
+        echo -e "  ${CYAN}$cp_name${NC}  [v${fw_version}]  ${file_count} files  manifest:${has_manifest}"
+        count=$((count + 1))
+    done
+
+    if [ "$count" -eq 0 ]; then
+        echo -e "${YELLOW}No checkpoints found.${NC}"
+    else
+        echo ""
+        echo "  To restore: $0 --rollback $project_dir <checkpoint-id>"
+        echo "  Latest:     $0 --rollback $project_dir"
+    fi
+}
+
+# Restore project files from a checkpoint.
+# If no checkpoint-id given, uses the most recent one.
+restore_checkpoint() {
+    local project_dir="$1"
+    local checkpoint_id="${2:-}"
+    project_dir="$(resolve_path "$project_dir")"
+    local backups_dir="$project_dir/.claude/backups"
+
+    if [ ! -d "$backups_dir" ]; then
+        echo -e "${RED}No checkpoints found for $project_dir${NC}"
+        return 1
+    fi
+
+    local cp_dir=""
+    if [ -n "$checkpoint_id" ]; then
+        cp_dir="$backups_dir/$checkpoint_id"
+    else
+        # Most recent checkpoint
+        cp_dir="$(find "$backups_dir" -maxdepth 1 -mindepth 1 -type d | sort | tail -1)"
+    fi
+
+    if [ -z "$cp_dir" ] || [ ! -d "$cp_dir" ]; then
+        echo -e "${RED}Checkpoint not found: ${checkpoint_id:-latest}${NC}"
+        echo "Available checkpoints:"
+        list_checkpoints "$project_dir"
+        return 1
+    fi
+
+    local cp_name
+    cp_name="$(basename "$cp_dir")"
+    echo -e "${CYAN}Restoring checkpoint: $cp_name${NC}"
+
+    # Safety: auto-checkpoint the current state before overwriting
+    echo -e "  ${YELLOW}Creating pre-rollback safety checkpoint...${NC}"
+    create_checkpoint "$project_dir" "pre-rollback" 2>/dev/null || true
+
+    local manifest="$cp_dir/MANIFEST.json"
+    local restored=0
+    local failed=0
+
+    if [ -f "$manifest" ] && command -v python3 &>/dev/null; then
+        # Manifest-based restore: precise path mapping
+        while IFS='|' read -r backup original; do
+            local src="$cp_dir/$backup"
+            local dest="$project_dir/$original"
+            if [ -f "$src" ]; then
+                mkdir -p "$(dirname "$dest")"
+                if cp "$src" "$dest"; then
+                    echo -e "  ${GREEN}✓${NC} $original"
+                    restored=$((restored + 1))
+                else
+                    echo -e "  ${RED}✗${NC} $original"
+                    failed=$((failed + 1))
+                fi
+            fi
+        done < <(python3 -c "
+import json, sys
+d = json.load(open('$manifest'))
+for f in d.get('files', []):
+    print(f['backup'] + '|' + f['original'])
+" 2>/dev/null)
+    else
+        # Legacy restore (no manifest): copy all .md files back to known locations
+        echo -e "  ${YELLOW}No manifest — attempting best-effort restore${NC}"
+        for f in "$cp_dir"/*.md; do
+            [ -f "$f" ] || continue
+            local fname
+            fname="$(basename "$f")"
+            # Best-effort: try .claude/commands first, then agents/
+            for dest_dir in ".claude/commands" "agents" ".cursor/rules" ".copilot/custom-agents" ".gemini/skills"; do
+                if [ -d "$project_dir/$dest_dir" ]; then
+                    cp "$f" "$project_dir/$dest_dir/$fname" 2>/dev/null && {
+                        echo -e "  ${GREEN}✓${NC} $dest_dir/$fname"
+                        restored=$((restored + 1))
+                        break
+                    }
+                fi
+            done
+        done
+    fi
+
+    echo ""
+    if [ "$failed" -eq 0 ]; then
+        echo -e "${GREEN}Rollback complete:${NC} $restored files restored from $cp_name"
+    else
+        echo -e "${YELLOW}Rollback partial:${NC} $restored restored, $failed failed"
+    fi
+}
+
+# ═══════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════
 
@@ -1449,17 +1678,23 @@ case "${1:-}" in
         echo "  --diff PATH              Show what would change"
         echo "  --force PATH             Force update even if same version"
         echo "  --sync PATH              Validate/regenerate CLAUDE-SUMMARY.md"
+        echo "  --checkpoint PATH [label]  Snapshot current state for rollback"
+        echo "  --checkpoints PATH       List available checkpoints"
+        echo "  --rollback PATH [id]     Restore from checkpoint (latest if no id)"
         echo "  --version                Show framework version"
         echo "  --help                   Show this help"
         echo ""
         echo "Examples:"
-        echo "  $0 .                        Update current directory"
-        echo "  $0 --yes .                  Update without prompts (CI/CD)"
-        echo "  $0 /path/to/project         Update single project"
-        echo "  $0 --register .             Register current directory"
-        echo "  $0 --scan ~/projects        Find and register projects"
-        echo "  $0 --all                    Update all registered projects"
-        echo "  $0 --diff /path/to/project  Preview changes"
+        echo "  $0 .                              Update current directory"
+        echo "  $0 --yes .                        Update without prompts (CI/CD)"
+        echo "  $0 /path/to/project               Update single project"
+        echo "  $0 --register .                   Register current directory"
+        echo "  $0 --scan ~/projects              Find and register projects"
+        echo "  $0 --all                          Update all registered projects"
+        echo "  $0 --diff /path/to/project        Preview changes"
+        echo "  $0 --checkpoint . before-v6       Snapshot before a major update"
+        echo "  $0 --checkpoints .                List all snapshots"
+        echo "  $0 --rollback . 20260513_before-v6  Restore a specific snapshot"
         echo ""
         ;;
     --version|-v)
@@ -1536,6 +1771,27 @@ case "${1:-}" in
             echo -e "${YELLOW}knowledge-sync.sh not found${NC}"
         fi
         shift
+        ;;
+    --checkpoint)
+        if [ -z "${2:-}" ]; then
+            echo -e "${RED}Error: Please provide project path${NC}"
+            exit 1
+        fi
+        create_checkpoint "$2" "${3:-manual}"
+        ;;
+    --checkpoints)
+        if [ -z "${2:-}" ]; then
+            echo -e "${RED}Error: Please provide project path${NC}"
+            exit 1
+        fi
+        list_checkpoints "$2"
+        ;;
+    --rollback)
+        if [ -z "${2:-}" ]; then
+            echo -e "${RED}Error: Please provide project path${NC}"
+            exit 1
+        fi
+        restore_checkpoint "$2" "${3:-}"
         ;;
     --all)
         update_all_projects

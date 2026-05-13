@@ -72,6 +72,7 @@ export function iznirResponseToSkill(
     filePath: `iznir://${response.name}`,
     content: response.content,
     metadata: { ...response.metadata, source: "iznir", dynamic: true },
+    minModel: null,
   };
 }
 

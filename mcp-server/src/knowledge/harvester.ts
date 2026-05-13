@@ -12,11 +12,46 @@ import {
   upsertFleetHealth,
 } from "../state/db.js";
 
+// ── Secret scan ──────────────────────────────────────────────────────────────
+
+const SECRET_PATTERNS: Array<{ name: string; pattern: RegExp }> = [
+  { name: "aws-access-key",    pattern: /AKIA[A-Z0-9]{16}/g },
+  { name: "jwt-token",         pattern: /eyJ[A-Za-z0-9_-]{20,}\.eyJ[A-Za-z0-9_-]{20,}/g },
+  { name: "bearer-token",      pattern: /Bearer\s+[A-Za-z0-9._\-/+]{20,}/gi },
+  { name: "api-key-assign",    pattern: /(api[_-]?key|apikey)\s*[:=]\s*['"][^'"]{10,}['"]/gi },
+  { name: "password-assign",   pattern: /(password|passwd|pwd)\s*[:=]\s*['"][^'"]{6,}['"]/gi },
+  { name: "secret-assign",     pattern: /(secret|token|credential)\s*[:=]\s*['"][^'"]{8,}['"]/gi },
+  { name: "private-key-header",pattern: /-----BEGIN (RSA |EC )?PRIVATE KEY-----/g },
+];
+
+const REDACT_PLACEHOLDER = "[REDACTED-BY-HARVESTER]";
+
+/**
+ * Scan text for credential patterns. Returns redacted text and a list of
+ * pattern names that were found. Logs a warning for each match.
+ */
+export function redactSecrets(text: string, context: string): { redacted: string; found: string[] } {
+  let result = text;
+  const found: string[] = [];
+
+  for (const { name, pattern } of SECRET_PATTERNS) {
+    const before = result;
+    result = result.replace(pattern, REDACT_PLACEHOLDER);
+    if (result !== before) {
+      found.push(name);
+      console.warn(`[harvester] Secret pattern '${name}' found and redacted in ${context}`);
+    }
+  }
+
+  return { redacted: result, found };
+}
+
 export interface HarvestResult {
   runId: number;
   aggregation: AggregationResult;
   newQuirksInserted: number;
   duplicatesSkipped: number;
+  secretsRedacted: number;
   duration: number;
 }
 
@@ -48,29 +83,46 @@ export async function runHarvest(
     // Step 2: Aggregate
     const aggregation = aggregateKnowledge(scanResults);
 
-    // Step 3+4: Insert new quirks (deduplicating)
+    // Step 3+4: Insert new quirks (deduplicating), with secret redaction
     let newQuirksInserted = 0;
     let duplicatesSkipped = 0;
+    let secretsRedacted = 0;
 
-    for (const candidate of aggregation.quirkCandidates) {
-      if (quirkExists(candidate.framework, candidate.quirk)) {
+    for (const rawCandidate of aggregation.quirkCandidates) {
+      if (quirkExists(rawCandidate.framework, rawCandidate.quirk)) {
         duplicatesSkipped++;
         continue;
       }
+      const { redacted, found } = redactSecrets(
+        rawCandidate.quirk,
+        `quirk:${rawCandidate.framework}`,
+      );
+      const candidate = found.length > 0
+        ? { ...rawCandidate, quirk: redacted }
+        : rawCandidate;
+      if (found.length > 0) secretsRedacted += found.length;
       insertQuirk(candidate);
       newQuirksInserted++;
     }
 
-    // Log session data + fleet health for each app
+    // Log session data + fleet health for each app (with secret redaction on error signatures)
     for (const app of scanResults) {
       const primaryPlatform = app.platforms[0] || "unknown";
+      let errorSignature = app.sessionMonitor?.lastErrorSignature;
+      if (errorSignature) {
+        const { redacted, found } = redactSecrets(errorSignature, `session:${app.appName}`);
+        if (found.length > 0) {
+          secretsRedacted += found.length;
+          errorSignature = redacted;
+        }
+      }
       insertSessionLog({
         appName: app.appName,
         platform: primaryPlatform,
         sessionDate: app.sessionMonitor?.startedAt,
         totalCommands: app.sessionMonitor?.totalCommands,
         totalFailures: app.sessionMonitor?.totalFailures,
-        errorSignature: app.sessionMonitor?.lastErrorSignature,
+        errorSignature,
         forgeLogCount: app.forgeLogs.length,
       });
 
@@ -103,6 +155,7 @@ export async function runHarvest(
       aggregation,
       newQuirksInserted,
       duplicatesSkipped,
+      secretsRedacted,
       duration: Date.now() - start,
     };
   } catch (err) {

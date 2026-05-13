@@ -1,3 +1,6 @@
+---
+min_model: opus
+---
 # /forge - Summon The Forge
 
 > The full pipeline: validate, implement, test, audit, and harvest — all in one command.

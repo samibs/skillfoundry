@@ -7,6 +7,103 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.13.0] - 2026-05-13
+
+### Pipeline Quality — 11 Framework Enhancements
+
+v5.13.0 hardens every layer of the SkillFoundry pipeline: PRD validation before implementation, dependency-ordered execution waves, GuardLoop blocking done/ promotion, token budget forecasting, cross-platform parity detection, skill hot-reload, secret scan in the knowledge harvester, model tier declarations, update.sh rollback capability, and MCP Streamable HTTP transport.
+
+#### Added — PRD Linter (`/prd-lint`)
+
+New skill + script that validates `genesis/*.md` files before `/go` or `/forge` runs on them. 12 structural checks:
+
+- Front matter starts with `---` on line 1
+- Required fields: `prd_id`, `title`, `status`, `created`, `author`
+- `layers:` not empty
+- Required sections: §1–§5, §7–§11
+- No `TBD`/`TODO` markers outside HTML comment blocks
+- No vague language (`might`/`maybe`/`possibly`/`somehow`)
+- Unchecked `[ ]` checkboxes (unverified dependencies)
+- §6 Contract Specification: if present, must not be empty
+- §8 Regression Surface: must have ≥1 data row
+- §11.1 DoD: must include `/guardloop` scan item
+- §2 User stories: must have `FR-IDs` column
+
+`/go` now runs `/prd-lint` as **Phase 1.5** (lint gate) before implementation. PRDs with errors are blocked; PRDs with only warnings proceed with caution.
+
+Exit codes: `0`=clean, `1`=warnings, `2`=errors. `--strict` flag treats warnings as errors.
+
+#### Added — PRD Dependency Ordering in `/go`
+
+`/go` gains **Phase 2.5: PRD Dependency Ordering** — topological sort of PRDs by their `dependencies.requires` front matter field into sequential execution waves. Foundation PRDs execute first; independent PRDs in the same wave execute in parallel.
+
+- `scripts/prd-wave-plan.sh` — standalone script (Python3 heredoc) that computes the wave plan. Outputs human-readable table or `--json` for pipeline use.
+- Cycle detection with clear error message and the affected PRD IDs.
+- Already-`COMPLETED`/`DONE` PRDs are skipped automatically.
+- `--ignore-deps` flag bypasses wave ordering when needed.
+
+#### Added — GuardLoop Gate on `done/` Promotion
+
+`scripts/move-story.sh` now runs a GuardLoop pattern check before transitioning any story to `done/`. If any CRITICAL-severity pattern (hardcoded secret, localStorage token, file corruption) has a non-zero count in `guardloop-patterns.json`, the transition is refused with exit code 6 and a clear message listing the offending patterns. Override with `--no-guardloop-gate`.
+
+#### Added — Token Budget Forecasting
+
+`token-tracker.ts` extends `SessionTokenReport` with a `TokenForecast` field (populated after ≥2 minutes of session data):
+
+- `tokensPerMinute` — current burn rate
+- `projectedAt60min` / `projectedAt120min` — extrapolated totals at 1h and 2h
+- `minutesUntilWarning` / `minutesUntilCritical` — time to 200K/500K thresholds
+- `budgetHealthPct` — percentage of the 500K critical budget remaining
+
+#### Added — Cross-Platform Parity Detector (`/parity`)
+
+New `scripts/parity-check.sh` + `.claude/commands/parity.md` skill. Compares `.claude/commands/` (reference) against Copilot, Cursor, Codex (`.agents/skills/`), and Gemini. Reports:
+
+- Presence gaps per platform (missing skills)
+- H1 title drift (content divergence between platforms)
+- Parity % score per platform
+
+Flags: `--missing`, `--drift`, `--json`, `--skill <name>`.
+
+#### Added — Skill Hot-Reload in MCP Server
+
+The MCP server now watches skill directories (`SKILL_DIRS`) with `fs.watch` and a 400ms debounce. When a `.md` file is saved, added, or deleted, the live `skills` map updates in place — no restart required. `loader.ts` gains `reloadSkill(filePath, skills)` for incremental reload.
+
+#### Added — Secret Scan in Knowledge Harvester
+
+`harvester.ts` now runs a 7-pattern secret scan on all content before inserting it into the SQLite knowledge store. Patterns: AWS access keys, JWTs, Bearer tokens, API key assignments, password assignments, secret/token/credential assignments, private key headers. Matches are redacted to `[REDACTED-BY-HARVESTER]` and logged as warnings. `HarvestResult` gains `secretsRedacted` count.
+
+#### Added — Model Tier Declarations per Skill
+
+Skills can now declare `min_model: haiku | sonnet | opus` in their YAML front matter. The MCP server:
+- Surfaces the tier in the tool description: `[min-model: opus]` suffix visible in `ListTools`
+- Prepends a model advisory to the skill content when the active tier (from `SKILLFOUNDRY_MODEL_TIER` env var) is below the declared minimum
+
+`forge.md`, `go.md`, and `architect.md` tagged with `min_model: opus`.
+
+#### Added — `update.sh` Checkpoint & Rollback
+
+Three new subcommands for safe framework updates:
+
+- `./update.sh --checkpoint <path> [label]` — snapshots all managed files (skills, agents, rules, CLAUDE.md, etc.) with a `MANIFEST.json` mapping backup filenames to original paths.
+- `./update.sh --checkpoints <path>` — lists all available checkpoints with framework version, file count, and manifest status.
+- `./update.sh --rollback <path> [checkpoint-id]` — restores from a checkpoint (latest if no ID). Automatically creates a `pre-rollback` safety checkpoint before overwriting anything.
+
+#### Added — MCP Streamable HTTP Transport
+
+The MCP server now exposes **`/mcp/http`** (GET/POST/DELETE) alongside the existing `/mcp/sse`. Uses `StreamableHTTPServerTransport` from `@modelcontextprotocol/sdk` (MCP 2025-03-26 spec). Per-session transport instances keyed by `mcp-session-id` header. New sessions are initialized on the first POST (no header required); subsequent requests include the header returned in the response.
+
+### Changed
+
+- `anvil.sh` gains Phase 4 `sast` subcommand — runs `semgrep --config p/owasp-top-ten --config p/secrets`. HIGH findings block; MEDIUM warn; absent semgrep skips non-fatally.
+- `anvil.md` T1 description updated to mention Semgrep SAST; T4 renamed to "Scope + SAST" with `sf_security_scan` tool invocation for deep LLM-assisted scanning.
+- `genesis/TEMPLATE.md` gains 10 structural improvements (applied in prior session): required front matter block, §3.3 security constraints table, §4.3 scalability table, §6 skip gate, §8 Regression Surface table, §11.1 three-layer DoD items, FR-IDs column in §2 user stories.
+- `SkillDefinition` interface gains `minModel: SkillModelTier | null` field; all inline skill object literals updated.
+- `move-story.sh` exit code `6` added: refused transition to `done/` due to CRITICAL GuardLoop patterns.
+- MCP server startup log now shows both `/mcp/sse` and `/mcp/http` endpoints.
+
+---
+
 ## [5.12.0] - 2026-05-13
 
 ### GuardLoop × SkillFoundry — Self-Improving AI Governance

@@ -20,8 +20,10 @@ Start here for installation and basic usage:
 | **[docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)** | 8 KB | Quick reference card |
 | **[docs/ESCALATION-CRITERIA.md](docs/ESCALATION-CRITERIA.md)** | 18 KB | **NEW v1.7.0** - Auto-fix vs. escalation decision matrix |
 | **[docs/AUTONOMOUS-EXECUTION.md](docs/AUTONOMOUS-EXECUTION.md)** | 10 KB | **NEW v1.7.0.2** - Autonomous execution setup, permission profiles, safety hooks |
-| **[V1.1.0-RELEASE-NOTES.md](docs/V1.1.0-RELEASE-NOTES.md)** | 10 KB | What's new in this version |
-| **[CHANGELOG.md](CHANGELOG.md)** | - | Version history |
+| **[V5.13.0-RELEASE-NOTES.md](docs/V5.13.0-RELEASE-NOTES.md)** | - | What's new in v5.13.0 — Pipeline Quality (11 enhancements) |
+| **[V5.12.0-RELEASE-NOTES.md](docs/V5.12.0-RELEASE-NOTES.md)** | - | GuardLoop × SkillFoundry self-improving AI governance |
+| **[V1.1.0-RELEASE-NOTES.md](docs/V1.1.0-RELEASE-NOTES.md)** | 10 KB | Earlier version release notes |
+| **[CHANGELOG.md](CHANGELOG.md)** | - | Full version history |
 
 ---
 

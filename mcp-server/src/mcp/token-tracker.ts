@@ -85,6 +85,15 @@ export function trackToolInvocation(
 
 // ── Queries ───────────────────────────────────────────────────────────
 
+export interface TokenForecast {
+  tokensPerMinute: number;
+  projectedAt60min: number;
+  projectedAt120min: number;
+  minutesUntilWarning: number | null;
+  minutesUntilCritical: number | null;
+  budgetHealthPct: number;
+}
+
 export interface SessionTokenReport {
   sessionId: string;
   sessionDurationMinutes: number;
@@ -98,6 +107,7 @@ export interface SessionTokenReport {
     avgOutputTokens: number;
   }>;
   budgetWarning: string | null;
+  forecast: TokenForecast | null;
 }
 
 /**
@@ -149,6 +159,42 @@ export function getSessionTokenReport(): SessionTokenReport {
     budgetWarning = "NOTE: Session at 100K+ tokens. Use concise:true on familiar skills to reduce context bloat.";
   }
 
+  // Burn-rate forecast — requires at least 2 minutes of session data
+  let forecast: TokenForecast | null = null;
+  if (sessionMinutes >= 2 && totalTokens > 0) {
+    const tokensPerMinute = totalTokens / sessionMinutes;
+    const remaining60 = Math.max(0, 60 - sessionMinutes);
+    const remaining120 = Math.max(0, 120 - sessionMinutes);
+    const projectedAt60min = Math.round(totalTokens + tokensPerMinute * remaining60);
+    const projectedAt120min = Math.round(totalTokens + tokensPerMinute * remaining120);
+
+    const WARNING_THRESHOLD = 200_000;
+    const CRITICAL_THRESHOLD = 500_000;
+    const minutesUntilWarning =
+      totalTokens < WARNING_THRESHOLD
+        ? Math.round((WARNING_THRESHOLD - totalTokens) / tokensPerMinute)
+        : null;
+    const minutesUntilCritical =
+      totalTokens < CRITICAL_THRESHOLD
+        ? Math.round((CRITICAL_THRESHOLD - totalTokens) / tokensPerMinute)
+        : null;
+
+    // Health as % of critical budget remaining (100% = fresh, 0% = at critical)
+    const budgetHealthPct = Math.max(
+      0,
+      Math.round(((CRITICAL_THRESHOLD - totalTokens) / CRITICAL_THRESHOLD) * 100),
+    );
+
+    forecast = {
+      tokensPerMinute: Math.round(tokensPerMinute),
+      projectedAt60min,
+      projectedAt120min,
+      minutesUntilWarning,
+      minutesUntilCritical,
+      budgetHealthPct,
+    };
+  }
+
   return {
     sessionId: currentSessionId,
     sessionDurationMinutes: sessionMinutes,
@@ -157,6 +203,7 @@ export function getSessionTokenReport(): SessionTokenReport {
     estimatedCostUsd: Math.round(estimatedCostUsd * 10000) / 10000,
     byTool,
     budgetWarning,
+    forecast,
   };
 }
 
