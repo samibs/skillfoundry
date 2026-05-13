@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.11.0-blue)
+![Version](https://img.shields.io/badge/version-5.12.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -29,7 +29,7 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 
 **GuardLoop — Self-Improving AI Governance Hooks**
 
-v5.11.0 integrates [GuardLoop](https://github.com/samibs/guardloop.dev) — a self-learning AI governance engine — as live Claude Code hooks and a `/guardloop` skill. The framework now detects its own failure patterns and promotes them into enforced rules automatically.
+v5.12.0 integrates [GuardLoop](https://github.com/samibs/guardloop.dev) — a self-learning AI governance engine — as live Claude Code hooks and a `/guardloop` skill. The framework now detects its own failure patterns and promotes them into enforced rules automatically.
 
 - **`/guardloop` skill** — 5 subcommands: `analyze` (pattern frequency report), `promote` (write patterns as enforced rules), `scan` (live codebase scan), `status` (hook health + counts), `reset` (clear counters). Reads `memory_bank/` for session-level learning.
 - **`failure-scan.sh` hook** — PostToolUse hook wired to every Edit/Write. Scans written files for 3 CRITICAL patterns instantly: hardcoded secrets, localStorage token storage, AI file corruption artifacts. Non-blocking, warns inline.
@@ -40,6 +40,13 @@ v5.11.0 integrates [GuardLoop](https://github.com/samibs/guardloop.dev) — a se
 #### Previous: Test Cartographer (v5.10.0)
 
 - `/test-map` skill across all 5 platforms, GitHub Copilot + Claude deep optimization, config-protect fix.
+#### Previous: FolderFlow — Story State Machine (v5.11.0)
+
+- `/go` + `/layer-check` integration, story checkbox reconciler, folder state machine (todo/in-progress/blocked/done), JSON artifact handlers. 83-case test suite.
+
+#### Previous: Test Cartographer — `/test-map` Skill (v5.10.0)
+
+- `/test-map` skill for automated test documentation across all 5 platforms with three-tier classification (HIGH/MEDIUM/BASELINE), deep optimization for GitHub Copilot with the Claude model (~160 lines of constitutional rules), and config-protect fix for `.claude/` allowlist entries.
 
 #### Previous: Self-Validate — Output Verification Loop (v5.9.0)
 
