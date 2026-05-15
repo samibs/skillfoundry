@@ -20,6 +20,7 @@ Start here for installation and basic usage:
 | **[docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)** | 8 KB | Quick reference card |
 | **[docs/ESCALATION-CRITERIA.md](docs/ESCALATION-CRITERIA.md)** | 18 KB | **NEW v1.7.0** - Auto-fix vs. escalation decision matrix |
 | **[docs/AUTONOMOUS-EXECUTION.md](docs/AUTONOMOUS-EXECUTION.md)** | 10 KB | **NEW v1.7.0.2** - Autonomous execution setup, permission profiles, safety hooks |
+| **[V5.15.0-RELEASE-NOTES.md](docs/V5.15.0-RELEASE-NOTES.md)** | - | What's new in v5.15.0 — Coding Discipline Protocol |
 | **[V5.14.0-RELEASE-NOTES.md](docs/V5.14.0-RELEASE-NOTES.md)** | - | What's new in v5.14.0 — MCP Server Security Hardening |
 | **[V5.13.0-RELEASE-NOTES.md](docs/V5.13.0-RELEASE-NOTES.md)** | - | What's new in v5.13.0 — Pipeline Quality (11 enhancements) |
 | **[V5.12.0-RELEASE-NOTES.md](docs/V5.12.0-RELEASE-NOTES.md)** | - | GuardLoop × SkillFoundry self-improving AI governance |
