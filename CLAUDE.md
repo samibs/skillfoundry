@@ -4,6 +4,7 @@
 > For production operations (PM2, caching, APM, migrations, incident response): see `docs/enterprise-standards.md`
 > For AI-specific security anti-patterns: see `docs/ANTI_PATTERNS_DEPTH.md` and `docs/ANTI_PATTERNS_BREADTH.md`
 > For environment pre-flight discipline (interpreter pinning, .env safety, diagnostic mode): see `agents/_env-preflight-protocol.md`
+> For coding discipline (think-before-code, simplicity, surgical changes, goal-driven execution): see `agents/_coding-discipline.md`
 
 This file contains **framework-specific** rules only. General agent behavior is inherited from the global CLAUDE.md.
 

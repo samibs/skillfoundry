@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.15.0] - 2026-05-16
+
+### Coding Discipline Protocol
+
+v5.15.0 adds a framework-wide behavioral guardrail file — `agents/_coding-discipline.md` — referenced from the project `CLAUDE.md` header alongside the existing protocol pointers. The protocol layers on top of the existing *Philosophy*, *Mandatory Production Rules*, and *Three-Layer Enforcement* sections without overriding them. Where the protocol and the project rules differ, the stricter rule wins.
+
+#### Added
+
+- **`agents/_coding-discipline.md`** — Four-section behavioral guardrail applied on every implementation task:
+  1. *Think Before Coding* — surface assumptions, ask before silent reinterpretation, present alternatives.
+  2. *Simplicity First (scoped)* — minimum code for the request; explicitly does **not** override Three-Layer Enforcement, boundary validation, or the project's mandatory production guards.
+  3. *Surgical Changes* — touch only what the request requires; clean up only orphans your changes created.
+  4. *Goal-Driven Execution* — define verifiable success criteria, loop until verified.
+- **Header reference in `CLAUDE.md`** — new pointer line next to `_env-preflight-protocol.md` so all agents pick up the protocol on session start.
+- **Skip list** — trivial edits (typo, single-line config, version bump), read-only investigation, and mechanical housekeeping are exempt from the protocol; matches the existing *Skill Scope Boundaries* / *Complexity-Based Scope* rules.
+
+#### Why
+
+Karpathy-style behavioral guidelines were available as a standalone skill but had no always-on home in the project. Adding them as a referenced protocol file (matching the `_env-preflight-protocol.md` pattern) makes the rules active on every implementation task without bloating `CLAUDE.md` itself and without needing the user to invoke a skill.
+
+#### Not Changed
+
+No code paths, no MCP server logic, no pipeline phases, no agent registry. Documentation/behavior only.
+
+---
+
 ## [5.14.0] - 2026-05-13
 
 ### MCP Server Security Hardening

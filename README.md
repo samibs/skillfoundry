@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.14.0-blue)
+![Version](https://img.shields.io/badge/version-5.15.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-5-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,20 +25,21 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.14.0
+### What's New in v5.15.0
 
-**MCP Server Security Hardening**
+**Coding Discipline Protocol**
 
-v5.14.0 closes every gap in the MCP server's security posture. All 11 BPSBS controls now pass. No functional changes — hardening only.
+v5.15.0 adds a framework-wide behavioral guardrail — `agents/_coding-discipline.md` — referenced from `CLAUDE.md` so it activates on every implementation task. Documentation/behavior only, no code paths changed.
 
-- **Bearer token auth** — Auto-generated `sf_*` token on first run, saved to `data/.api-token` (mode `0o600`). Always enforced on `/mcp` and `/api/v1`. Token + ready-to-paste config printed to console on startup.
-- **Rate limiting** — `express-rate-limit`: 300 req/min on MCP transports, 500 req/min on REST API.
-- **CORS** — Default origin `http://localhost:3666`. Override with `SKILLFOUNDRY_CORS_ORIGIN`.
-- **Error sanitisation** — `handleRouteError()` — raw `err.message` never returned in production 500 responses.
-- **`MAX_PAGE_SIZE = 500`** — Enforced on all 10 list queries. Caller-supplied `limit` capped at 500.
-- **`getSessionTranscripts` mapper** — Strips `id`/`parsed_at` DB-internal columns before data reaches callers.
-- **Atomic session writes** — `saveSession` writes to `.tmp` then `renameSync`. No partial-write corruption.
-- **64/64 tests pass** — 3 new negative auth tests added; stale health assertions fixed.
+- **Think Before Coding** — surface assumptions, ask before silent reinterpretation, present alternatives.
+- **Simplicity First (scoped)** — minimum code for the request; explicitly does **not** override Three-Layer Enforcement, boundary validation, or mandatory production guards.
+- **Surgical Changes** — touch only what the request requires; clean up only orphans your changes created.
+- **Goal-Driven Execution** — define verifiable success criteria, loop until verified.
+- **Stricter-rule-wins clause** — where the protocol differs from the project's existing rules, the stricter rule wins. Section 2 cannot be used to skip required production guards.
+
+#### Previous: MCP Server Security Hardening (v5.14.0)
+
+- Bearer token auth, rate limiting, CORS, `handleRouteError()`, `MAX_PAGE_SIZE = 500`, atomic session writes. All 11 BPSBS controls pass.
 
 #### Previous: Pipeline Quality (v5.13.0)
 

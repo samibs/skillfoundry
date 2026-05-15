@@ -17,7 +17,7 @@ function handleRouteError(res: Response, err: unknown): void {
   res.status(500).json({ error: { code: "INTERNAL_ERROR", message } });
 }
 
-const VERSION = "5.14.0";
+const VERSION = "5.15.0";
 const startTime = Date.now();
 
 let storedBootstrapState: BootstrapState | null = null;
