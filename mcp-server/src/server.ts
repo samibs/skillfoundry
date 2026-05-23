@@ -128,6 +128,13 @@ async function main(): Promise<void> {
   const transports = new Map<string, SSEServerTransport>();
 
   // MCP SSE endpoint — client connects here for the event stream
+  //
+  // IMPORTANT: instantiate a NEW Server per connection. The MCP SDK's
+  // Protocol enforces 1:1 between a Server and its transport — sharing a
+  // single mcpServer across SSE requests throws "Already connected to a
+  // transport" on the second client and returns HTTP 500. The boot-time
+  // `mcpServer` is retained for backwards-compat with any code path that
+  // still references it, but new connections get their own instance.
   app.get("/mcp/sse", async (req, res) => {
     console.log("[MCP] New SSE connection");
     const transport = new SSEServerTransport("/mcp/messages", res);
@@ -139,7 +146,8 @@ async function main(): Promise<void> {
       transports.delete(sessionId);
     });
 
-    await mcpServer.connect(transport);
+    const sessionServer = createMcpServer(skills);
+    await sessionServer.connect(transport);
   });
 
   // MCP message endpoint — client POSTs messages here
@@ -176,11 +184,12 @@ async function main(): Promise<void> {
     }
 
     if (!sessionId && req.method === "POST") {
-      // New session — initialize transport and connect to shared MCP server
+      // New session — per-connection Server instance (see SSE handler note).
       const transport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
       });
-      await mcpServer.connect(transport);
+      const sessionServer = createMcpServer(skills);
+      await sessionServer.connect(transport);
       const sid = transport.sessionId!;
       streamableTransports.set(sid, transport);
       transport.onclose = () => {
