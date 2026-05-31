@@ -429,8 +429,8 @@ timer_start
 
 echo ""
 echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
-echo -e "${CYAN}│${NC}  ${BOLD}SkillFoundry Framework${NC} ${YELLOW}— Installer${NC}                    ${CYAN}│${NC}"
-echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 6 platforms             ${CYAN}│${NC}"
+echo -e "${CYAN}│${NC}  ${BOLD}SkillFoundry Framework${NC} ${YELLOW}— Installer${NC}                 ${CYAN}│${NC}"
+echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 6 platforms                 ${CYAN}│${NC}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
 echo ""
 
