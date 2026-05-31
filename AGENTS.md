@@ -1,6 +1,6 @@
 # SkillFoundry Framework — Agent Instructions for OpenAI Codex
 
-**Version 5.2.0** | **Penta-Platform: Claude Code · Cursor · Copilot · Codex · Gemini** | **124+ Skills** | **20 MCP Tool Agents**
+**Version 5.2.0** | **Hexa-Platform: Claude Code · Cursor · Copilot · Codex · Gemini · Grok Build** | **124+ Skills** | **20 MCP Tool Agents**
 
 ---
 

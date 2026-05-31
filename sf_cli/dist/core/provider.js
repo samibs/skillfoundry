@@ -152,7 +152,7 @@ export const AVAILABLE_PROVIDERS = {
         defaultModel: 'claude-sonnet-4-20250514',
     },
     openai: { name: 'OpenAI', envKey: 'OPENAI_API_KEY', defaultModel: 'gpt-4o' },
-    xai: { name: 'xAI Grok', envKey: 'XAI_API_KEY', defaultModel: 'grok-3' },
+    xai: { name: 'xAI Grok', envKey: 'XAI_API_KEY', defaultModel: 'grok-4.3' },
     gemini: {
         name: 'Google Gemini',
         envKey: 'GOOGLE_API_KEY',
@@ -188,6 +188,13 @@ const MODEL_TIERS = {
     'claude-sonnet-4-6': 1,
     'gpt-4o': 1,
     'gpt-4-turbo': 1,
+    // xAI Grok — current lineup (May 2026)
+    'grok-4.3': 1,
+    'grok-4.20-0309-reasoning': 1,
+    'grok-4.20-0309-non-reasoning': 1,
+    'grok-4.20-multi-agent-0309': 1,
+    'grok-build-0.1': 1,
+    // Legacy Grok slugs retired 2026-05-15 (redirect to grok-4.3)
     'grok-3': 1,
     'grok-4': 1,
     'gemini-2.5-pro': 1,
@@ -240,10 +247,10 @@ export function checkModelTierWarning(model, feature) {
     const isPipeline = pipelineFeatures.some((f) => feature.toLowerCase().includes(f));
     const isGate = gateFeatures.some((f) => feature.toLowerCase().includes(f));
     if (tier === 2 && isPipeline) {
-        return `Model "${model}" (Tier 2: Capable) may need retries for complex pipelines. Recommended: claude-sonnet-4, gpt-4o, or grok-3 for ${feature}. See: docs/model-compatibility.md`;
+        return `Model "${model}" (Tier 2: Capable) may need retries for complex pipelines. Recommended: claude-sonnet-4, gpt-4o, or grok-4.3 for ${feature}. See: docs/model-compatibility.md`;
     }
     if (tier >= 3 && (isPipeline || isGate)) {
-        return `Model "${model}" (Tier ${tier}: ${TIER_LABELS[tier]}) does not support ${feature}. Recommended: Use a Tier 1 model (claude-sonnet-4, gpt-4o, grok-3). See: docs/model-compatibility.md`;
+        return `Model "${model}" (Tier ${tier}: ${TIER_LABELS[tier]}) does not support ${feature}. Recommended: Use a Tier 1 model (claude-sonnet-4, gpt-4o, grok-4.3). See: docs/model-compatibility.md`;
     }
     return null;
 }

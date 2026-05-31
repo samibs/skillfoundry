@@ -8,7 +8,7 @@
 
 | Tier | Models | What Works | What Doesn't |
 |------|--------|------------|--------------|
-| **Tier 1 (Recommended)** | Claude Opus 4, Claude Sonnet 4, GPT-4o, Grok-3 | Everything — full pipeline, all gates, autonomous mode | — |
+| **Tier 1 (Recommended)** | Claude Opus 4, Claude Sonnet 4, GPT-4o, Grok 4.3 | Everything — full pipeline, all gates, autonomous mode | — |
 | **Tier 2 (Capable)** | Claude Haiku 4.5, Gemini 2.5 Flash, GPT-4o-mini | Individual skills, basic pipeline, most gates | Complex multi-story pipelines may need retries |
 | **Tier 3 (Limited)** | Llama 3.1 (70B+), Qwen 2.5 Coder (32B+) | Individual skills, simple code tasks, Q&A | Quality gates, multi-agent orchestration, complex reasoning |
 | **Tier 4 (Basic)** | Llama 3.1 (8B), Qwen 2.5 Coder (7B), small local models | Simple edits, code completion, basic Q&A | Most pipeline features, gate enforcement, structured output |
@@ -26,7 +26,7 @@ These models reliably follow complex multi-step agent prompts, produce structure
 | Claude Opus 4.6 | Anthropic | ✅ Full | ✅ All pass | ✅ All | ✅ Reliable | ✅ Native |
 | Claude Sonnet 4 | Anthropic | ✅ Full | ✅ All pass | ✅ All | ✅ Reliable | ✅ Native |
 | GPT-4o | OpenAI | ✅ Full | ✅ All pass | ✅ All | ✅ Reliable | ✅ Native |
-| Grok-3 | xAI | ✅ Full | ✅ All pass | ✅ All | ✅ Reliable | ✅ Native |
+| Grok 4.3 | xAI | ✅ Full | ✅ All pass | ✅ All | ✅ Reliable | ✅ Native |
 
 **Best for:** Full `/forge` pipeline, `/go`, `/goma`, multi-story implementations, security audits, architecture reviews.
 
@@ -134,7 +134,7 @@ max_fixer_retries = 5               # default: 3
 ## Recommendations
 
 ### For Teams / Production Work
-Use **Tier 1 models** (Claude Sonnet 4, GPT-4o, Grok-3). The quality gates are designed to catch AI mistakes — weaker models make more mistakes, which means more gate failures and more fixer retries, which costs more tokens in the long run.
+Use **Tier 1 models** (Claude Sonnet 4, GPT-4o, Grok 4.3). The quality gates are designed to catch AI mistakes — weaker models make more mistakes, which means more gate failures and more fixer retries, which costs more tokens in the long run.
 
 ### For Individual Developers / Learning
 Start with **Tier 2 models** for cost efficiency. Use individual skills (`/coder`, `/review`, `/tester`) rather than full pipeline. Upgrade to Tier 1 when running `/forge` or `/go`.
@@ -171,7 +171,7 @@ The `sf` CLI automatically detects your configured model's tier and warns when c
 
 ```
 ⚠  Model "llama3.1" (Tier 3) has limited support for pipeline features.
-   Recommended: Use a Tier 1 model (claude-sonnet-4, gpt-4o, grok-3) for /forge.
+   Recommended: Use a Tier 1 model (claude-sonnet-4, gpt-4o, grok-4.3) for /forge.
    See: docs/model-compatibility.md
 ```
 
