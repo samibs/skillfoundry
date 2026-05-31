@@ -593,7 +593,7 @@ Each micro-gate uses read-only tools (read, glob, grep) with a maximum of 3 turn
   ├──────────────────────────────────────────────────┤
   │  ✓ anthropic   Anthropic Claude    claude-son..  │
   │    openai      OpenAI             gpt-4o         │
-  │    xai         xAI Grok           grok-3         │
+  │    xai         xAI Grok           grok-4.3       │
   │  ✓ gemini      Google Gemini      gemini-2.5-..  │
   │  ✓ ollama      Ollama (local)     llama3.1       │
   │  ✓ lmstudio    LM Studio (local)  qwen2.5-co..  │

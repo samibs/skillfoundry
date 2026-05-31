@@ -4,13 +4,13 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.15.0-blue)
+![Version](https://img.shields.io/badge/version-5.16.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Platforms](https://img.shields.io/badge/platforms-5-purple)
+![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 22 real tool agents, 127+ skills, 6 AI providers, Semgrep SAST, PRD linting, cross-platform parity detection, and a knowledge base built from 2,792 artifacts across 49 projects.
+SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini, Grok Build). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 22 real tool agents, 127+ skills, 6 AI providers, Semgrep SAST, PRD linting, cross-platform parity detection, and a knowledge base built from 2,792 artifacts across 49 projects.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -214,7 +214,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 | | **Standalone CLI** (`sf`) | **IDE Skills** (62 skills) |
 |---|---|---|
 | **What it is** | Terminal app with its own AI connection | Markdown instruction files your AI reads |
-| **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini |
+| **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build |
 | **Setup** | `sf setup` — interactive wizard, paste API key | `skillfoundry init` — copies skills into your project |
 | **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (23 commands) | `/forge`, `/go`, `/goma` (all 62 skills) |
 | **Autonomous mode** | Not available | `/goma` — full autonomous with safety gates |
@@ -238,7 +238,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 | **Google Gemini** | Skill invocation | `forge`, `go`, `review` |
 
 ```bash
-# Full pipeline — works in Claude Code, Copilot, Cursor, Codex, Gemini
+# Full pipeline — works in Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build
 /prd "add user authentication"     # create requirements
 /forge                             # validate → implement → gate → audit → harvest
 /goma                              # autonomous mode: just describe what you want
@@ -343,7 +343,7 @@ Switch between 6 AI providers without changing your workflow:
 |----------|-------------|---------------|
 | Anthropic Claude | `ANTHROPIC_API_KEY` | claude-sonnet-4 |
 | OpenAI | `OPENAI_API_KEY` | gpt-4o |
-| xAI Grok | `XAI_API_KEY` | grok-3 |
+| xAI Grok | `XAI_API_KEY` | grok-4.3 |
 | Google Gemini | `GOOGLE_API_KEY` | gemini-2.5-flash |
 | Ollama (local) | `OLLAMA_BASE_URL` | llama3.1 |
 | LM Studio (local) | `LMSTUDIO_BASE_URL` | qwen2.5-coder-7b |
@@ -660,7 +660,7 @@ These work inside the `sf` terminal app:
 | `/prd review <path>` | Score a PRD on 4 dimensions with actionable feedback |
 | `/lessons` | Query and manage knowledge bank entries |
 
-### IDE Skills (63 — Claude Code, Copilot, Cursor, Codex, Gemini)
+### IDE Skills (63 — Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build)
 
 These work inside your AI coding tool, not in the `sf` CLI:
 

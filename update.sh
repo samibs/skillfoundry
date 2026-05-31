@@ -107,7 +107,7 @@ print_header() {
     echo ""
     echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
     echo -e "${CYAN}│${NC}  ${BOLD}SkillFoundry Framework${NC} ${YELLOW}— Updater${NC}                     ${CYAN}│${NC}"
-    echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 5 platforms             ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 6 platforms             ${CYAN}│${NC}"
     echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
     echo ""
 }
@@ -115,7 +115,7 @@ print_header() {
 is_valid_project() {
     local project_dir="$1"
     # A valid SkillFoundry project has config.toml or at least one platform folder
-    if [ -f "$project_dir/.skillfoundry/config.toml" ] || [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ] || [ -d "$project_dir/.gemini/skills" ]; then
+    if [ -f "$project_dir/.skillfoundry/config.toml" ] || [ -d "$project_dir/.claude" ] || [ -d "$project_dir/.copilot" ] || [ -d "$project_dir/.cursor" ] || [ -d "$project_dir/.agents/skills" ] || [ -d "$project_dir/.gemini/skills" ] || [ -d "$project_dir/.grok/skills" ]; then
         return 0
     fi
     return 1
@@ -124,7 +124,7 @@ is_valid_project() {
 get_project_version() {
     local project_dir="$1"
     # Check all possible platform locations — they should all have the same version
-    local version_dirs=(".claude" ".copilot" ".cursor" ".agents" ".gemini")
+    local version_dirs=(".claude" ".copilot" ".cursor" ".agents" ".gemini" ".grok")
     for vdir in "${version_dirs[@]}"; do
         if [ -f "$project_dir/$vdir/.framework-version" ]; then
             cat "$project_dir/$vdir/.framework-version"
@@ -138,7 +138,7 @@ set_project_version() {
     local project_dir="$1"
     local wrote_any=false
     # Write version to ALL platform dirs that exist in this project
-    local platform_dirs=(".claude" ".copilot" ".cursor" ".agents" ".gemini")
+    local platform_dirs=(".claude" ".copilot" ".cursor" ".agents" ".gemini" ".grok")
     for pdir in "${platform_dirs[@]}"; do
         if [ -d "$project_dir/$pdir" ]; then
             echo "$FRAMEWORK_VERSION" > "$project_dir/$pdir/.framework-version"
@@ -173,6 +173,9 @@ detect_platform() {
     fi
     if [ -d "$project_dir/.gemini/skills" ]; then
         platforms="${platforms:+$platforms }gemini"
+    fi
+    if [ -d "$project_dir/.grok/skills" ]; then
+        platforms="${platforms:+$platforms }grok"
     fi
 
     echo "$platforms"
@@ -222,6 +225,7 @@ knowledge/staging/
 !.cursor/rules/
 !.agents/skills/
 !.gemini/skills/
+!.grok/skills/
 
 # Arena
 .arena/
@@ -695,6 +699,26 @@ show_diff() {
                     fi
                 done
                 ;;
+            grok)
+                echo -e "${BLUE}Grok skills comparison:${NC}"
+                for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
+                    if [ -d "$skill_dir" ]; then
+                        local skill_name=$(basename "$skill_dir")
+                        local source_skill="$skill_dir/SKILL.md"
+                        local project_skill="$project_dir/.grok/skills/$skill_name/SKILL.md"
+
+                        if [ -f "$source_skill" ]; then
+                            if [ ! -f "$project_skill" ]; then
+                                echo -e "  ${GREEN}+ $skill_name/SKILL.md${NC} (new)"
+                                has_changes=true
+                            elif ! diff -q "$source_skill" "$project_skill" > /dev/null 2>&1; then
+                                echo -e "  ${YELLOW}~ $skill_name/SKILL.md${NC} (modified)"
+                                has_changes=true
+                            fi
+                        fi
+                    fi
+                done
+                ;;
         esac
     done
 
@@ -978,6 +1002,54 @@ update_project() {
                         fi
                     fi
                 done
+
+                if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
+                    echo -e "  ${GREEN}All skills up to date${NC}"
+                else
+                    echo -e "  ${GREEN}$skills_added added, $skills_updated updated${NC}"
+                fi
+                ;;
+            grok)
+                echo -e "${YELLOW}Updating Grok skills...${NC}"
+                mkdir -p "$project_dir/.grok/skills"
+
+                local skills_added=0
+                local skills_updated=0
+
+                for skill_dir in "$SCRIPT_DIR/.agents/skills/"*/; do
+                    if [ -d "$skill_dir" ]; then
+                        local skill_name=$(basename "$skill_dir")
+                        local source_skill="$skill_dir/SKILL.md"
+                        local target_dir="$project_dir/.grok/skills/$skill_name"
+                        local target="$target_dir/SKILL.md"
+
+                        if [ -f "$source_skill" ]; then
+                            mkdir -p "$target_dir"
+                            if [ ! -f "$target" ]; then
+                                cp "$source_skill" "$target"
+                                echo -e "  ${GREEN}+ Added: $skill_name/SKILL.md${NC}"
+                                skills_added=$((skills_added + 1))
+                            elif ! diff -q "$source_skill" "$target" > /dev/null 2>&1; then
+                                cp "$target" "$backup_dir/grok_${skill_name}_SKILL.md"
+                                cp "$source_skill" "$target"
+                                echo -e "  ${CYAN}↑ Updated: $skill_name/SKILL.md${NC}"
+                                skills_updated=$((skills_updated + 1))
+                            fi
+                        fi
+                    fi
+                done
+
+                # Copy/update AGENTS.md to project root
+                if [ -f "$SCRIPT_DIR/AGENTS.md" ]; then
+                    if [ ! -f "$project_dir/AGENTS.md" ]; then
+                        cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
+                        echo -e "  ${GREEN}+ Added: AGENTS.md${NC}"
+                    elif ! diff -q "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md" > /dev/null 2>&1; then
+                        cp "$project_dir/AGENTS.md" "$backup_dir/AGENTS.md"
+                        cp "$SCRIPT_DIR/AGENTS.md" "$project_dir/AGENTS.md"
+                        echo -e "  ${CYAN}↑ Updated: AGENTS.md${NC}"
+                    fi
+                fi
 
                 if [ $skills_added -eq 0 ] && [ $skills_updated -eq 0 ]; then
                     echo -e "  ${GREEN}All skills up to date${NC}"
@@ -1495,6 +1567,13 @@ create_checkpoint() {
         done
     fi
 
+    # Grok skills
+    if [ -d "$project_dir/.grok/skills" ]; then
+        for d in "$project_dir/.grok/skills/"*/; do
+            [ -f "$d/SKILL.md" ] && _cp_manifest "$d/SKILL.md" ".grok/skills/$(basename "$d")/SKILL.md"
+        done
+    fi
+
     # Core files
     for rel in "CLAUDE.md" "AGENTS.md" "bpsbs.md" "genesis/TEMPLATE.md" \
                "docs/ANTI_PATTERNS_BREADTH.md" "docs/ANTI_PATTERNS_DEPTH.md"; do
@@ -1627,7 +1706,7 @@ for f in d.get('files', []):
             local fname
             fname="$(basename "$f")"
             # Best-effort: try .claude/commands first, then agents/
-            for dest_dir in ".claude/commands" "agents" ".cursor/rules" ".copilot/custom-agents" ".gemini/skills"; do
+            for dest_dir in ".claude/commands" "agents" ".cursor/rules" ".copilot/custom-agents" ".gemini/skills" ".grok/skills"; do
                 if [ -d "$project_dir/$dest_dir" ]; then
                     cp "$f" "$project_dir/$dest_dir/$fname" 2>/dev/null && {
                         echo -e "  ${GREEN}✓${NC} $dest_dir/$fname"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # SkillFoundry - Agents & Skills Installer
-# Installs the Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, and/or Google Gemini framework to a target project
+# Installs the Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, and/or Grok Build framework to a target project
 #
 # USAGE:
 #   ./install.sh                                    # Interactive install to current dir
@@ -32,7 +32,7 @@ handle_error() {
 
     # Rollback if partial installation
     if [ -n "$TARGET_DIR" ] && [ -d "$TARGET_DIR" ]; then
-        if [ -d "$TARGET_DIR/.claude" ] || [ -d "$TARGET_DIR/.copilot" ] || [ -d "$TARGET_DIR/.cursor" ] || [ -d "$TARGET_DIR/.agents" ] || [ -d "$TARGET_DIR/.gemini" ]; then
+        if [ -d "$TARGET_DIR/.claude" ] || [ -d "$TARGET_DIR/.copilot" ] || [ -d "$TARGET_DIR/.cursor" ] || [ -d "$TARGET_DIR/.agents" ] || [ -d "$TARGET_DIR/.gemini" ] || [ -d "$TARGET_DIR/.grok" ]; then
             echo -e "${YELLOW}Rolling back partial installation...${NC}"
             rollback_installation
         fi
@@ -72,6 +72,9 @@ rollback_installation() {
                 ;;
             gemini)
                 [ -d "$TARGET_DIR/.gemini" ] && rm -rf "$TARGET_DIR/.gemini" && echo "  Removed .gemini/"
+                ;;
+            grok)
+                [ -d "$TARGET_DIR/.grok" ] && rm -rf "$TARGET_DIR/.grok" && echo "  Removed .grok/"
                 ;;
         esac
     done
@@ -222,6 +225,7 @@ knowledge/staging/
 !.cursor/rules/
 !.agents/skills/
 !.gemini/skills/
+!.grok/skills/
 
 # Arena
 .arena/
@@ -347,7 +351,7 @@ show_install_help() {
     echo "Usage: $(basename "$0") [OPTIONS] [TARGET_DIR]"
     echo ""
     echo "Options:"
-    echo "  --platform=PLATFORMS   Comma-separated: claude,copilot,cursor,codex,gemini"
+    echo "  --platform=PLATFORMS   Comma-separated: claude,copilot,cursor,codex,gemini,grok"
     echo "  --yes, -y              Non-interactive mode (accept all defaults)"
     echo "  --dry-run              Show what would be installed without doing it"
     echo "  --debug, -d            Enable diagnostic logging"
@@ -426,7 +430,7 @@ timer_start
 echo ""
 echo -e "${CYAN}┌─────────────────────────────────────────────────────┐${NC}"
 echo -e "${CYAN}│${NC}  ${BOLD}SkillFoundry Framework${NC} ${YELLOW}— Installer${NC}                    ${CYAN}│${NC}"
-echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 5 platforms             ${CYAN}│${NC}"
+echo -e "${CYAN}│${NC}  v${FRAMEWORK_VERSION} · ${FRAMEWORK_DATE} · 6 platforms             ${CYAN}│${NC}"
 echo -e "${CYAN}└─────────────────────────────────────────────────────┘${NC}"
 echo ""
 
@@ -442,6 +446,7 @@ if [ -z "$platform_input" ]; then
     echo "  3) Cursor"
     echo "  4) OpenAI Codex"
     echo "  5) Google Gemini"
+    echo "  6) Grok Build"
     echo "  a) All platforms"
     echo ""
     read -p "Choice: " -r
@@ -449,7 +454,7 @@ if [ -z "$platform_input" ]; then
 
     # Handle "all" shortcut
     if [[ "$REPLY" =~ ^[aA]$ ]]; then
-        platform_input="claude,copilot,cursor,codex,gemini"
+        platform_input="claude,copilot,cursor,codex,gemini,grok"
     else
         # Parse comma-separated numeric choices
         local_platforms=()
@@ -463,8 +468,9 @@ if [ -z "$platform_input" ]; then
                 3) local_platforms+=("cursor") ;;
                 4) local_platforms+=("codex") ;;
                 5) local_platforms+=("gemini") ;;
+                6) local_platforms+=("grok") ;;
                 *)
-                    echo -e "${RED}Invalid choice: '$choice'. Must be 1-5 or 'a' for all.${NC}"
+                    echo -e "${RED}Invalid choice: '$choice'. Must be 1-6 or 'a' for all.${NC}"
                     exit 1
                     ;;
             esac
@@ -491,8 +497,8 @@ IFS=',' read -ra PLATFORMS <<< "$platform_input"
 for p in "${PLATFORMS[@]}"; do
     # Trim whitespace
     p="$(echo "$p" | tr -d '[:space:]')"
-    if [[ ! "$p" =~ ^(claude|copilot|cursor|codex|gemini)$ ]]; then
-        log_error "Invalid platform '$p'" "Platform must be 'claude', 'copilot', 'cursor', 'codex', or 'gemini'" "install.sh line $LINENO" "Use --platform=claude,copilot (comma-separated, no spaces)"
+    if [[ ! "$p" =~ ^(claude|copilot|cursor|codex|gemini|grok)$ ]]; then
+        log_error "Invalid platform '$p'" "Platform must be 'claude', 'copilot', 'cursor', 'codex', 'gemini', or 'grok'" "install.sh line $LINENO" "Use --platform=claude,copilot (comma-separated, no spaces)"
         exit 2  # Invalid arguments
     fi
 done
@@ -644,6 +650,18 @@ for plat in "${PLATFORMS[@]}"; do
                 PLATFORMS=("${PLATFORMS[@]/gemini}")
             fi
         fi
+    elif [ "$plat" = "grok" ] && [ -d "$TARGET_DIR/.grok/skills" ]; then
+        echo -e "${YELLOW}Warning: .grok/skills directory already exists.${NC}"
+        if [ "$YES_MODE" = true ]; then
+            echo -e "  ${GREEN}--yes: overwriting grok skills${NC}"
+        else
+            read -p "Overwrite existing skills? (y/N): " -n 1 -r
+            echo ""
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo -e "${RED}Installation cancelled for grok.${NC}"
+                PLATFORMS=("${PLATFORMS[@]/grok}")
+            fi
+        fi
     fi
 done
 
@@ -668,6 +686,7 @@ case "$FIRST_PLAT" in
     copilot) FIRST_PLAT_DIR=".copilot" ;;
     codex)   FIRST_PLAT_DIR=".agents" ;;
     gemini)  FIRST_PLAT_DIR=".gemini" ;;
+    grok)    FIRST_PLAT_DIR=".grok" ;;
     cursor)  FIRST_PLAT_DIR=".cursor" ;;
 esac
 
@@ -747,6 +766,10 @@ if [ "$DRY_RUN" = true ]; then
             gemini)
                 local_count=$(ls -1 "$SCRIPT_DIR/.gemini/skills/"*.md 2>/dev/null | wc -l | tr -d ' ')
                 echo "    .gemini/skills/       $local_count skills"
+                ;;
+            grok)
+                local_count=$(find "$SCRIPT_DIR/.agents/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
+                echo "    .grok/skills/         $local_count skills"
                 ;;
         esac
     done
@@ -871,6 +894,9 @@ install_platform() {
         gemini)
             mkdir -p "$TARGET_DIR/.gemini/skills"
             ;;
+        grok)
+            mkdir -p "$TARGET_DIR/.grok/skills"
+            ;;
         cursor)
             mkdir -p "$TARGET_DIR/.cursor/rules"
             ;;
@@ -925,6 +951,14 @@ install_platform() {
             eval "PLAT_SKILL_COUNT_${plat}=${_count}"
             echo -e "${GREEN}    ✓ Gemini skills installed (${_count} skills)${NC}"
             ;;
+        grok)
+            cp -r "$SCRIPT_DIR/.agents/skills/"* "$TARGET_DIR/.grok/skills/"
+            # Copy AGENTS.md to target
+            [ -f "$SCRIPT_DIR/AGENTS.md" ] && cp "$SCRIPT_DIR/AGENTS.md" "$TARGET_DIR/AGENTS.md"
+            _count=$(find "$TARGET_DIR/.grok/skills" -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
+            eval "PLAT_SKILL_COUNT_${plat}=${_count}"
+            echo -e "${GREEN}    ✓ Grok Build skills installed (${_count} skills)${NC}"
+            ;;
         cursor)
             cp -r "$SCRIPT_DIR/.cursor/rules/"* "$TARGET_DIR/.cursor/rules/"
             _count=$(ls -1 "$TARGET_DIR/.cursor/rules/"*.md 2>/dev/null | wc -l | tr -d ' ')
@@ -940,6 +974,7 @@ install_platform() {
         copilot) version_dir="$TARGET_DIR/.copilot" ;;
         codex)   version_dir="$TARGET_DIR/.agents" ;;
         gemini)  version_dir="$TARGET_DIR/.gemini" ;;
+        grok)    version_dir="$TARGET_DIR/.grok" ;;
         cursor)  version_dir="$TARGET_DIR/.cursor" ;;
     esac
     mkdir -p "$version_dir"
@@ -1186,6 +1221,10 @@ for plat in "${PLATFORMS[@]}"; do
             eval "_skills=\${PLAT_SKILL_COUNT_${plat}:-0}"
             echo "    .gemini/skills/         ${_skills} skills"
             ;;
+        grok)
+            eval "_skills=\${PLAT_SKILL_COUNT_${plat}:-0}"
+            echo "    .grok/skills/           ${_skills} skills"
+            ;;
         cursor)
             eval "_rules=\${PLAT_RULE_COUNT_${plat}:-0}"
             echo "    .cursor/rules/          ${_rules} rules"
@@ -1239,6 +1278,13 @@ for plat in "${PLATFORMS[@]}"; do
             echo -e "    ${CYAN}Google Gemini:${NC}"
             echo "      Open your Gemini CLI/workspace in $TARGET_DIR"
             echo "      Skills are available from .gemini/skills/"
+            echo ""
+            ;;
+        grok)
+            echo -e "    ${CYAN}Grok Build:${NC}"
+            echo "      cd $TARGET_DIR && grok"
+            echo "      > \$prd \"your feature\"    Create a PRD"
+            echo "      > \$go                     Implement everything"
             echo ""
             ;;
         copilot)

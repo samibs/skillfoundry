@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.16.0] - 2026-05-31
+
+### Grok: 6th Platform + Provider Refresh
+
+v5.16.0 adds **xAI Grok Build** as the sixth install platform (joining Claude Code, Copilot, Cursor, Codex, and Gemini) and refreshes the `xai` LLM provider to the current Grok model lineup. Grok Build reads `AGENTS.md` + Anthropic-format `SKILL.md` skills, so it consumes the same artifacts SkillFoundry already produces for Codex.
+
+#### Added
+
+- **Grok Build platform** in `install.sh` and `update.sh` — interactive menu option `6) Grok Build`, `--platform=grok`, validation, "all platforms" expansion, existing-install detection, overwrite warnings, version stamping, cleanup, manifest, and update/compare paths. Installs `AGENTS.md` to the target root and 95 `SKILL.md` skills into `.grok/skills/`.
+  - Skills are sourced from the existing `.agents/skills/` (no duplicate skill files in the repo) and installed into the target's `.grok/skills/`.
+- **Current Grok model lineup** in the `xai` provider (`sf_cli`):
+  - Default model `grok-3` → **`grok-4.3`**; added `grok-4.20-0309-reasoning`, `grok-4.20-0309-non-reasoning`, `grok-4.20-multi-agent-0309`, and `grok-build-0.1` to the model picker, capability tiers (all Tier 1), token pricing, and context-window table (1M for the 4.x line, 256K for `grok-build-0.1`).
+  - Real Grok pricing in `MODEL_PRICING` — previously Grok cost estimates silently fell back to the GPT-4o rate.
+
+#### Changed
+
+- Platform count `5` → `6` across installer banners, README badge/IDE lists, and `AGENTS.md` header (`Penta-Platform` → `Hexa-Platform`).
+- README provider table and `docs/USER-GUIDE-CLI.md` now show `grok-4.3` as the xAI default.
+
+#### Why
+
+xAI shipped the Grok Build coding-agent CLI (beta), which loads `AGENTS.md`, Anthropic Skills, and MCP servers out of the box — making it a first-class skill-file consumer like the other five platforms. Separately, xAI retired the `grok-3`/`grok-4`/`grok-4.1`/`grok-code-fast-1` slugs on 2026-05-15 (they redirect to `grok-4.3`), so the provider's defaults and pricing were stale.
+
+#### Note
+
+The Grok skill install target is `.grok/skills/` (matching Grok Build's `.grok/` config namespace). `AGENTS.md` discovery is confirmed; the exact skills directory should be verified with `grok inspect` and is a one-line change if it differs.
+
+---
+
 ## [5.15.0] - 2026-05-16
 
 ### Coding Discipline Protocol

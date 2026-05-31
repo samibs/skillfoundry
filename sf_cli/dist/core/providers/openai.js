@@ -12,6 +12,16 @@ const MODEL_PRICING = {
     'o3': { input: 2, output: 8 },
     'o3-mini': { input: 1.1, output: 4.4 },
     'o4-mini': { input: 1.1, output: 4.4 },
+    // xAI Grok (current lineup, May 2026). Cached input is $0.20/MTok across the
+    // line; we estimate on uncached input since cache hits aren't reported here.
+    'grok-4.3': { input: 1.25, output: 2.5 },
+    'grok-4.20-0309-reasoning': { input: 1.25, output: 2.5 },
+    'grok-4.20-0309-non-reasoning': { input: 1.25, output: 2.5 },
+    'grok-4.20-multi-agent-0309': { input: 1.25, output: 2.5 },
+    'grok-build-0.1': { input: 1, output: 2 },
+    // Legacy slugs retired 2026-05-15 — the API redirects these to grok-4.3 pricing.
+    'grok-3': { input: 1.25, output: 2.5 },
+    'grok-4': { input: 1.25, output: 2.5 },
 };
 function estimateCost(model, inputTokens, outputTokens) {
     const pricing = MODEL_PRICING[model] || { input: 2.5, output: 10 };
@@ -246,7 +256,7 @@ export function createXAIProvider() {
     return new OpenAIAdapter({
         name: 'xai',
         baseURL: 'https://api.x.ai/v1',
-        defaultModel: 'grok-3',
+        defaultModel: 'grok-4.3',
     });
 }
 export function createOllamaProvider() {
