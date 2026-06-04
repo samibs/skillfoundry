@@ -64,7 +64,7 @@ function Restore-FromBackup {
     Write-ColorOutput "Restoring from backup: $BackupPath" "Yellow"
     
     # Restore platform-specific directories
-    $platformDirs = @(".claude", ".copilot", ".cursor", ".agents", ".gemini")
+    $platformDirs = @(".claude", ".copilot", ".cursor", ".agents", ".gemini", ".grok")
     foreach ($dir in $platformDirs) {
         $targetPath = Join-Path $ProjectDir $dir
         $backupDirPath = Join-Path $BackupPath $dir
@@ -229,6 +229,8 @@ function Get-ProjectVersion {
         $versionFile = Join-Path $ProjectDir ".agents\.framework-version"
     } elseif (Test-Path (Join-Path $ProjectDir ".gemini\.framework-version")) {
         $versionFile = Join-Path $ProjectDir ".gemini\.framework-version"
+    } elseif (Test-Path (Join-Path $ProjectDir ".grok\.framework-version")) {
+        $versionFile = Join-Path $ProjectDir ".grok\.framework-version"
     }
     
     if ($versionFile -and (Test-Path $versionFile)) {
@@ -249,6 +251,7 @@ function Set-ProjectVersion {
         "cursor"  = ".cursor"
         "codex"   = ".agents"
         "gemini"  = ".gemini"
+        "grok"    = ".grok"
     }
 
     if ($platforms.Count -eq 0) {
@@ -289,6 +292,9 @@ function Detect-Platform {
     if (Test-Path (Join-Path $ProjectDir ".gemini\skills")) {
         $platforms += "gemini"
     }
+    if (Test-Path (Join-Path $ProjectDir ".grok\skills")) {
+        $platforms += "grok"
+    }
 
     return ,$platforms
 }
@@ -302,6 +308,7 @@ function Test-ValidProject {
            (Test-Path (Join-Path $ProjectDir ".cursor")) -or
            (Test-Path (Join-Path $ProjectDir ".agents\skills")) -or
            (Test-Path (Join-Path $ProjectDir ".gemini\skills")) -or
+           (Test-Path (Join-Path $ProjectDir ".grok\skills")) -or
            (Test-Path (Join-Path $ProjectDir "CLAUDE.md"))
 }
 
@@ -351,6 +358,7 @@ knowledge/staging/
 !.cursor/rules/
 !.agents/skills/
 !.gemini/skills/
+!.grok/skills/
 
 # Arena
 .arena/
@@ -744,6 +752,61 @@ function Update-Project {
                             Copy-Item -Path $skill.FullName -Destination $target -Force
                             Write-ColorOutput "  ^ Updated: $skillName" "Cyan"
                             $skillsUpdated++
+                        }
+                    }
+                }
+
+                if ($skillsAdded -eq 0 -and $skillsUpdated -eq 0) {
+                    Write-ColorOutput "  All skills up to date" "Green"
+                } else {
+                    Write-ColorOutput "  $skillsAdded added, $skillsUpdated updated" "Green"
+                }
+            }
+            "grok" {
+                New-Item -ItemType Directory -Force -Path (Join-Path $ProjectDir ".grok\skills") | Out-Null
+                $skillsAdded = 0
+                $skillsUpdated = 0
+
+                # Grok consumes the same SKILL.md source as Codex (.agents/skills)
+                foreach ($skillDir in Get-ChildItem -Path "$ScriptDir\.agents\skills\*" -Directory) {
+                    $skillName = $skillDir.Name
+                    $targetDir = Join-Path $ProjectDir ".grok\skills\$skillName"
+                    New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+
+                    $skillFile = Join-Path $skillDir.FullName "SKILL.md"
+                    if (Test-Path $skillFile) {
+                        $target = Join-Path $targetDir "SKILL.md"
+
+                        if (-not (Test-Path $target)) {
+                            Copy-Item -Path $skillFile -Destination $target -Force
+                            Write-ColorOutput "  + Added: $skillName/SKILL.md" "Green"
+                            $skillsAdded++
+                        } else {
+                            $sourceContent = Get-FileHash $skillFile -Algorithm MD5
+                            $targetContent = Get-FileHash $target -Algorithm MD5
+                            if ($sourceContent.Hash -ne $targetContent.Hash) {
+                                Backup-File $target | Out-Null
+                                Copy-Item -Path $skillFile -Destination $target -Force
+                                Write-ColorOutput "  ^ Updated: $skillName/SKILL.md" "Cyan"
+                                $skillsUpdated++
+                            }
+                        }
+                    }
+                }
+
+                # Copy/update AGENTS.md to project root
+                if (Test-Path "$ScriptDir\AGENTS.md") {
+                    $agentsTarget = Join-Path $ProjectDir "AGENTS.md"
+                    if (-not (Test-Path $agentsTarget)) {
+                        Copy-Item -Path "$ScriptDir\AGENTS.md" -Destination $agentsTarget -Force
+                        Write-ColorOutput "  + Added: AGENTS.md" "Green"
+                    } else {
+                        $sourceHash = (Get-FileHash "$ScriptDir\AGENTS.md" -Algorithm MD5).Hash
+                        $targetHash = (Get-FileHash $agentsTarget -Algorithm MD5).Hash
+                        if ($sourceHash -ne $targetHash) {
+                            Backup-File $agentsTarget | Out-Null
+                            Copy-Item -Path "$ScriptDir\AGENTS.md" -Destination $agentsTarget -Force
+                            Write-ColorOutput "  ^ Updated: AGENTS.md" "Cyan"
                         }
                     }
                 }

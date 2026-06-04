@@ -1,5 +1,5 @@
 # SkillFoundry - Agents & Skills Installer (PowerShell)
-# Installs the Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, or Google Gemini framework to a target project
+# Installs the Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, and/or Grok Build framework to a target project
 # Supports installing MULTIPLE platforms in a single run via comma-separated values.
 #
 # USAGE:
@@ -10,7 +10,8 @@
 #   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform cursor
 #   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform codex
 #   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform "copilot,codex"
-#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform "claude,copilot,cursor,codex,gemini"
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform grok
+#   C:\DevLab\IDEA\skillfoundry\install.ps1 -Platform "claude,copilot,cursor,codex,gemini,grok"
 #
 # DO NOT copy the skillfoundry folder into your project!
 # Keep it in one central location and run the installer from there.
@@ -46,7 +47,8 @@ trap {
             (Test-Path (Join-Path $resolvedTarget ".copilot")) -or
             (Test-Path (Join-Path $resolvedTarget ".cursor")) -or
             (Test-Path (Join-Path $resolvedTarget ".agents")) -or
-            (Test-Path (Join-Path $resolvedTarget ".gemini"))) {
+            (Test-Path (Join-Path $resolvedTarget ".gemini")) -or
+            (Test-Path (Join-Path $resolvedTarget ".grok"))) {
             Write-ColorOutput "Rolling back partial installation..." "Yellow"
             Rollback-Installation
         }
@@ -68,7 +70,7 @@ function Rollback-Installation {
     Write-ColorOutput "Cleaning up partial installation..." "Yellow"
     
     # Remove created directories
-    $dirs = @(".claude", ".copilot", ".cursor", ".agents", ".gemini", "genesis")
+    $dirs = @(".claude", ".copilot", ".cursor", ".agents", ".gemini", ".grok", "genesis")
     foreach ($dir in $dirs) {
         $path = Join-Path $TargetDir $dir
         if (Test-Path $path) {
@@ -168,7 +170,7 @@ if ($Help) {
     Write-Host "Usage: .\install.ps1 [OPTIONS] [-TargetDir PATH]"
     Write-Host ""
     Write-Host "Options:"
-    Write-Host "  -Platform PLATFORMS   Comma-separated: claude,copilot,cursor,codex,gemini"
+    Write-Host "  -Platform PLATFORMS   Comma-separated: claude,copilot,cursor,codex,gemini,grok"
     Write-Host "  -Yes                  Non-interactive mode (accept all defaults)"
     Write-Host "  -DryRun               Show what would be installed without doing it"
     Write-Host "  -Debug                Enable diagnostic logging"
@@ -284,6 +286,7 @@ knowledge/staging/
 !.cursor/rules/
 !.agents/skills/
 !.gemini/skills/
+!.grok/skills/
 
 # Arena
 .arena/
@@ -378,15 +381,16 @@ if ([string]::IsNullOrWhiteSpace($Platform)) {
         Write-Host "  3) Cursor"
         Write-Host "  4) OpenAI Codex"
         Write-Host "  5) Google Gemini"
+        Write-Host "  6) Grok Build"
         Write-Host "  a) All platforms"
         Write-Host ""
         $choice = Read-Host "Choice"
 
         # Map for number-to-name lookup
-        $choiceMap = @{ "1" = "claude"; "2" = "copilot"; "3" = "cursor"; "4" = "codex"; "5" = "gemini" }
+        $choiceMap = @{ "1" = "claude"; "2" = "copilot"; "3" = "cursor"; "4" = "codex"; "5" = "gemini"; "6" = "grok" }
 
         if ($choice -eq "a" -or $choice -eq "A") {
-            $Platforms = @("claude", "copilot", "cursor", "codex", "gemini")
+            $Platforms = @("claude", "copilot", "cursor", "codex", "gemini", "grok")
         } else {
             $selections = $choice -split ',' | ForEach-Object { $_.Trim() }
             $Platforms = @()
@@ -394,7 +398,7 @@ if ([string]::IsNullOrWhiteSpace($Platform)) {
                 if ($choiceMap.ContainsKey($sel)) {
                     $Platforms += $choiceMap[$sel]
                 } else {
-                    Write-ColorOutput "Invalid choice '$sel'. Must be 1-5 or 'a'." "Red"
+                    Write-ColorOutput "Invalid choice '$sel'. Must be 1-6 or 'a'." "Red"
                     exit 1
                 }
             }
@@ -415,8 +419,8 @@ if ([string]::IsNullOrWhiteSpace($Platform)) {
 
 # Validate each platform
 foreach ($p in $Platforms) {
-    if ($p -notmatch '^(claude|copilot|cursor|codex|gemini)$') {
-        Write-Error-Enhanced "Invalid platform '$p'" "Must be claude, copilot, cursor, codex, or gemini" "install.ps1" "Use -Platform 'claude,codex' (comma-separated for multiple)"
+    if ($p -notmatch '^(claude|copilot|cursor|codex|gemini|grok)$') {
+        Write-Error-Enhanced "Invalid platform '$p'" "Must be claude, copilot, cursor, codex, gemini, or grok" "install.ps1" "Use -Platform 'claude,codex' (comma-separated for multiple)"
         exit 2  # Invalid arguments
     }
 }
@@ -499,6 +503,8 @@ foreach ($plat in $Platforms) {
         $existingDir = ".agents/skills"; $existingLabel = "skills"
     } elseif ($plat -eq "gemini" -and (Test-Path (Join-Path $TargetDir ".gemini\skills"))) {
         $existingDir = ".gemini/skills"; $existingLabel = "skills"
+    } elseif ($plat -eq "grok" -and (Test-Path (Join-Path $TargetDir ".grok\skills"))) {
+        $existingDir = ".grok/skills"; $existingLabel = "skills"
     }
 
     if ($existingDir) {
@@ -559,6 +565,10 @@ if ($DryRun) {
                 $c = (Get-ChildItem -Path "$ScriptDir\.gemini\skills\*.md" -ErrorAction SilentlyContinue).Count
                 Write-Host "    .gemini/skills/       $c skills"
             }
+            "grok" {
+                $c = (Get-ChildItem -Path "$ScriptDir\.agents\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
+                Write-Host "    .grok/skills/         $c skills"
+            }
         }
     }
     Write-Host ""
@@ -616,6 +626,8 @@ foreach ($plat in $Platforms) {
         New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".agents\skills") | Out-Null
     } elseif ($plat -eq "gemini") {
         New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".gemini\skills") | Out-Null
+    } elseif ($plat -eq "grok") {
+        New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".grok\skills") | Out-Null
     } elseif ($plat -eq "cursor") {
         New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir ".cursor\rules") | Out-Null
     }
@@ -656,6 +668,13 @@ foreach ($plat in $Platforms) {
         $count = (Get-ChildItem -Path "$TargetDir\.gemini\skills\*.md" -ErrorAction SilentlyContinue).Count
         $PlatformCounts["gemini"] = $count
         Write-ColorOutput "  [OK] Gemini skills installed ($count skills)" "Green"
+    } elseif ($plat -eq "grok") {
+        Copy-Item -Path "$ScriptDir\.agents\skills\*" -Destination "$TargetDir\.grok\skills\" -Recurse -Force
+        Copy-Item -Path "$ScriptDir\AGENTS.md" -Destination "$TargetDir\AGENTS.md" -Force
+        $count = (Get-ChildItem -Path "$TargetDir\.grok\skills\*\SKILL.md" -ErrorAction SilentlyContinue).Count
+        $PlatformCounts["grok"] = $count
+        Write-ColorOutput "  [OK] Grok Build skills installed ($count skills)" "Green"
+        Write-ColorOutput "  [OK] AGENTS.md installed" "Green"
     } elseif ($plat -eq "cursor") {
         Copy-Item -Path "$ScriptDir\.cursor\rules\*" -Destination "$TargetDir\.cursor\rules\" -Recurse -Force
         $count = (Get-ChildItem -Path "$TargetDir\.cursor\rules\*.md" -ErrorAction SilentlyContinue).Count
@@ -721,6 +740,7 @@ foreach ($plat in $Platforms) {
     elseif ($plat -eq "copilot") { $platDir = ".copilot" }
     elseif ($plat -eq "codex") { $platDir = ".agents" }
     elseif ($plat -eq "gemini") { $platDir = ".gemini" }
+    elseif ($plat -eq "grok") { $platDir = ".grok" }
     elseif ($plat -eq "cursor") { $platDir = ".cursor" }
 
     New-Item -ItemType Directory -Force -Path (Join-Path $TargetDir $platDir) | Out-Null
@@ -889,6 +909,7 @@ foreach ($plat in $Platforms) {
         "copilot" { Write-Host "    .copilot/custom-agents/ $($PlatformCounts['copilot']) agents" }
         "codex"   { Write-Host "    .agents/skills/         $($PlatformCounts['codex']) skills" }
         "gemini"  { Write-Host "    .gemini/skills/         $($PlatformCounts['gemini']) skills" }
+        "grok"    { Write-Host "    .grok/skills/           $($PlatformCounts['grok']) skills" }
         "cursor"  { Write-Host "    .cursor/rules/          $($PlatformCounts['cursor']) rules" }
     }
 }
@@ -931,6 +952,12 @@ foreach ($plat in $Platforms) {
             Write-Host "    Google Gemini:" -ForegroundColor Cyan
             Write-Host "      Open Gemini in $TargetDir"
             Write-Host "      Skills available from .gemini/skills/"
+            Write-Host ""
+        }
+        "grok" {
+            Write-Host "    Grok Build:" -ForegroundColor Cyan
+            Write-Host "      cd $TargetDir; grok"
+            Write-Host "      Skills available from .grok/skills/ (AGENTS.md at root)"
             Write-Host ""
         }
         "copilot" {
