@@ -531,13 +531,37 @@ function pathSimilarity(a: string, b: string): number {
 
 // ─── Main ───────────────────────────────────────────────────────────────────
 
-export async function checkContracts(projectPath: string): Promise<ContractCheckResult> {
+/**
+ * Optional Code Map baseline (STORY-009). When supplied by the pre-flight, the
+ * AST-derived `endpoints[]` augment the regex-scanned backend routes — fewer
+ * false "path_not_found" orphans. Absent ⇒ behavior is byte-for-byte unchanged.
+ */
+export interface ContractBaseline {
+  endpoints?: { method: string; path: string }[];
+}
+
+export async function checkContracts(
+  projectPath: string,
+  baseline?: ContractBaseline,
+): Promise<ContractCheckResult> {
   const start = Date.now();
 
-  const [frontendCalls, backendRoutes] = await Promise.all([
+  const [frontendCalls, scannedRoutes] = await Promise.all([
     extractFrontendCalls(projectPath),
     extractBackendRoutes(projectPath),
   ]);
+
+  // Merge in the codemap baseline (deduped by method+path) — pure no-op if absent.
+  const backendRoutes: BackendRoute[] = [...scannedRoutes];
+  if (baseline?.endpoints?.length) {
+    const seen = new Set(scannedRoutes.map((r) => `${r.method.toUpperCase()} ${r.path}`));
+    for (const e of baseline.endpoints) {
+      const key = `${e.method.toUpperCase()} ${e.path}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      backendRoutes.push({ file: "<code-map>", line: 0, method: e.method.toUpperCase(), path: e.path, raw: key });
+    }
+  }
 
   const { mismatches, orphaned, matchedCount } = findMismatches(frontendCalls, backendRoutes);
 

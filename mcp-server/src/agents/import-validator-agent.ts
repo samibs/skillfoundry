@@ -262,7 +262,20 @@ async function resolveLocalImport(filePath: string, importPath: string, projectP
 /**
  * Validate all imports in a project resolve correctly.
  */
-export async function validateImports(projectPath: string): Promise<ImportValidationResult> {
+/**
+ * Optional Code Map baseline (STORY-009): pre-resolved `unresolvedImports[]` from
+ * the pre-flight. When supplied, they seed the error list so the AST-accurate
+ * findings are surfaced even if this agent's own scan would miss them. Absent ⇒
+ * behavior is byte-for-byte unchanged.
+ */
+export interface ImportBaseline {
+  unresolvedImports?: { fromFile: string; specifier: string; line: number }[];
+}
+
+export async function validateImports(
+  projectPath: string,
+  baseline?: ImportBaseline,
+): Promise<ImportValidationResult> {
   const appName = path.basename(projectPath);
   const files = await walkSourceFiles(projectPath);
   const errors: ImportError[] = [];
@@ -345,6 +358,24 @@ export async function validateImports(projectPath: string): Promise<ImportValida
         }
       }
     } catch { /* skip */ }
+  }
+
+  // Seed AST-derived unresolved imports from the pre-flight (deduped). No-op if absent.
+  if (baseline?.unresolvedImports?.length) {
+    const seen = new Set(errors.map((e) => `${e.filePath}:${e.lineNumber}:${e.importPath}`));
+    for (const u of baseline.unresolvedImports) {
+      const key = `${u.fromFile}:${u.line}:${u.specifier}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      errors.push({
+        filePath: u.fromFile,
+        lineNumber: u.line,
+        importPath: u.specifier,
+        errorType: "missing_local",
+        description: `Unresolved import (code-map): ${u.specifier}`,
+        suggestion: null,
+      });
+    }
   }
 
   return {

@@ -4,13 +4,13 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.16.0-blue)
+![Version](https://img.shields.io/badge/version-5.17.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini, Grok Build). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 22 real tool agents, 127+ skills, 6 AI providers, Semgrep SAST, PRD linting, cross-platform parity detection, and a knowledge base built from 2,792 artifacts across 49 projects.
+SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini, Grok Build). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 23 real tool agents, 128+ skills, 6 AI providers, a tree-sitter Code Map pre-flight that reads your codebase before the AI writes, Semgrep SAST, PRD linting, cross-platform parity detection, and a knowledge base built from 2,792 artifacts across 49 projects.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -25,17 +25,23 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.15.0
+### What's New in v5.17.0
 
-**Coding Discipline Protocol**
+**Codebase Comprehension Pre-Flight (Code Map)**
 
-v5.15.0 adds a framework-wide behavioral guardrail — `agents/_coding-discipline.md` — referenced from `CLAUDE.md` so it activates on every implementation task. Documentation/behavior only, no code paths changed.
+v5.17.0 gives your AI a structural map of the code **before** it writes a line — the missing half of the pre-flight (the other half checks your environment). It's a tree-sitter engine exposed as the `sf_codemap` tool and the `/preflight` command, wired straight into `/forge` and `/go`.
 
-- **Think Before Coding** — surface assumptions, ask before silent reinterpretation, present alternatives.
-- **Simplicity First (scoped)** — minimum code for the request; explicitly does **not** override Three-Layer Enforcement, boundary validation, or mandatory production guards.
-- **Surgical Changes** — touch only what the request requires; clean up only orphans your changes created.
-- **Goal-Driven Execution** — define verifiable success criteria, loop until verified.
-- **Stricter-rule-wins clause** — where the protocol differs from the project's existing rules, the stricter rule wins. Section 2 cannot be used to skip required production guards.
+- **Reads the real code, not guesses** — extracts the API contract surface (`endpoints[]`), import graph, call graph, and a DB/layer map from TS/JS + Python.
+- **Feeds the gates** — hands the real endpoints to `sf_contract_check` and unresolved imports to `sf_import_validator` *before* code is written, attacking the #1 vibe-coding failure (frontend/backend contract mismatch) proactively.
+- **Cheap to run** — incremental refresh re-parses only changed files (sha256-keyed); runs automatically in the IGNITE phase and never blocks (advisory).
+- **Diff-impact** — see the blast radius of a change (which components depend on what you touched).
+- **Code Map dashboard tab** — explore the map by layer, search symbols, toggle a diff-impact overlay (localhost-only).
+- **Optional, non-authoritative LLM labels** — off by default; plain-English summaries are flagged as hints and never satisfy quality gates.
+- Pure-WASM tree-sitter — no native build, `npm ci` stays portable.
+
+#### Previous: Coding Discipline Protocol (v5.15.0)
+
+- Framework-wide behavioral guardrail (`agents/_coding-discipline.md`): Think-Before-Coding, Simplicity-First (scoped), Surgical Changes, Goal-Driven Execution, stricter-rule-wins. Documentation/behavior only.
 
 #### Previous: MCP Server Security Hardening (v5.14.0)
 
@@ -460,6 +466,26 @@ The AI executes tools with permission controls and dangerous command blocking:
 | `debug_stop` | | Terminate debug session |
 
 Permission modes: `auto` (read auto-approved, write asks), `ask` (prompt every time), `trusted` (allow all), `deny` (block all).
+
+### Codebase Pre-Flight (Code Map)
+
+Before the AI changes existing code, SkillFoundry builds a **Code Map** of your repo so it works from facts, not guesses.
+
+```bash
+/preflight              # build/refresh the Code Map and print a summary
+/preflight query <name> # look up a symbol or file and its connections
+/preflight diff-impact  # blast radius of your current changes
+```
+
+| What it maps | Why it matters |
+|--------------|----------------|
+| API contract surface (`endpoints[]`) | The AI calls real endpoints with real shapes — no invented routes |
+| Import + call graph | Unresolved imports caught before build; impact analysis on changes |
+| DB models + layer tags | Knows what's database / backend / frontend / shared |
+
+- Backed by tree-sitter (TS/JS + Python); cached at `.skillfoundry/code-map.json` and refreshed incrementally.
+- Runs automatically in `/forge` and `/go`, feeding `sf_contract_check` and `sf_import_validator`. Advisory — never blocks a run.
+- Explore it visually in the dashboard's **Code Map** tab (search, layer view, diff-impact overlay).
 
 ### Interactive Debugger
 

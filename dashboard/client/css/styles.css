@@ -226,3 +226,49 @@ canvas {
     width: 100%;
     height: 300px;
 }
+
+/* ─── Code Map explorer (STORY-014) ───────────────────────────────────────── */
+.codemap-summary { margin: 0 0 0.75rem; color: #444; font-size: 0.9rem; }
+.codemap-summary span { white-space: nowrap; }
+.codemap-search { padding: 0.4rem 0.6rem; border: 1px solid #ccc; border-radius: 6px; min-width: 0; }
+.codemap-toggle { margin-left: 0.75rem; font-size: 0.9rem; white-space: nowrap; }
+.codemap-legend { margin-bottom: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.codemap-chip { padding: 0.1rem 0.5rem; border-radius: 999px; font-size: 0.75rem; color: #fff; }
+
+/* Responsive grid: columns collapse to a single column on small screens (no h-scroll). */
+.codemap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+.codemap-col { min-width: 0; }
+.codemap-col h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.2rem 0.4rem; border-radius: 4px; color: #fff; }
+
+.codemap-file {
+  border: 1px solid #e2e2e2; border-radius: 6px; padding: 0.5rem; margin: 0.4rem 0;
+  cursor: pointer; word-break: break-word; background: #fff;
+}
+.codemap-file:hover, .codemap-file:focus { border-color: #888; outline: none; }
+.codemap-file-name { font-family: ui-monospace, monospace; font-size: 0.8rem; }
+.codemap-symcount { color: #888; font-size: 0.72rem; margin-top: 0.2rem; }
+.codemap-endpoints { margin: 0.25rem 0; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.codemap-endpoint { background: #eef; border-radius: 4px; padding: 0 0.35rem; font-size: 0.7rem; font-family: ui-monospace, monospace; }
+
+/* Diff overlay states */
+.codemap-file.changed { border-color: #d9534f; box-shadow: inset 3px 0 0 #d9534f; }
+.codemap-file.impacted { border-color: #f0ad4e; box-shadow: inset 3px 0 0 #f0ad4e; }
+
+.codemap-detail { margin-top: 1rem; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; background: #fafafa; word-break: break-word; }
+.codemap-empty { color: #999; }
+.codemap-error { color: #d9534f; }
+
+/* Layer colors */
+.layer-db { background: #6f42c1; }
+.layer-backend { background: #2c7be5; }
+.layer-frontend { background: #2e9e5b; }
+.layer-shared { background: #777; }
+
+@media (max-width: 600px) {
+  .codemap-toggle { margin-left: 0; display: block; margin-top: 0.4rem; }
+}

@@ -248,6 +248,12 @@ This check runs ONCE at the start — before Phase 0 context preparation.
 
 Before any implementation work, prepare the context for efficient token usage.
 
+> **Codebase comprehension pre-flight** (existing code only): as part of Phase 0/IGNITE,
+> run `sf_codemap { mode: "refresh" }` to build `.skillfoundry/code-map.json`, then hand
+> `endpoints[]` to `sf_contract_check` and `unresolvedImports[]` to `sf_import_validator`
+> as a baseline. Advisory — a failure logs a warning and never blocks the run. Skip cleanly
+> for greenfield projects. See `agents/_codemap-preflight-protocol.md`.
+
 ### Context Budget Check
 
 ```

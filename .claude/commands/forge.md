@@ -46,6 +46,10 @@ IF NOT a git repository (no .git/ directory):
 ```
 - If validation fails, stop and report issues
 - If no PRDs exist, guide user to create one with `/prd "idea"`
+- **Codebase comprehension pre-flight** (existing code only): run `sf_codemap { mode: "refresh" }`,
+  then hand `endpoints[]` to `sf_contract_check` and `unresolvedImports[]` to `sf_import_validator`
+  as a baseline. Advisory — a failure logs a warning and never blocks. See
+  `agents/_codemap-preflight-protocol.md`.
 
 **PHASE 2: FORGE** — Implement everything
 ```

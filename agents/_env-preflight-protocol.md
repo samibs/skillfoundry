@@ -191,10 +191,16 @@ Phase 1: IGNITE
   Step 1: Run env-preflight.sh → parse JSON
   Step 2: Pin environment facts
   Step 3: Check for warnings → resolve before proceeding
+  Step 3.5: Codebase comprehension pre-flight (existing code only):
+            → sf_codemap { mode: "refresh" }   (builds .skillfoundry/code-map.json)
+            → hand endpoints[] to sf_contract_check and unresolvedImports[] to
+              sf_import_validator as a baseline
+            → advisory: a failure logs a warning and never blocks the run
+            → see agents/_codemap-preflight-protocol.md
   Step 4: Validate PRDs (existing behavior)
 ```
 
-If env-preflight detects warnings (missing dependencies, non-executable binaries, missing type definitions), resolve them BEFORE any story execution begins.
+If env-preflight detects warnings (missing dependencies, non-executable binaries, missing type definitions), resolve them BEFORE any story execution begins. The codebase pre-flight (Step 3.5) is **additive and advisory** — skip it cleanly for greenfield projects with no existing code to map.
 
 ---
 

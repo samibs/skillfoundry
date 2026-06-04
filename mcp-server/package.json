@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/mcp-server",
-  "version": "5.16.0",
+  "version": "5.17.0",
   "description": "SkillFoundry MCP Server — centralized agent server serving skills to all IDEs",
   "type": "module",
   "main": "dist/server.js",
@@ -23,7 +23,9 @@
     "express-rate-limit": "^8.5.1",
     "glob": "^11.0.2",
     "gray-matter": "^4.0.3",
-    "playwright": "^1.58.2"
+    "playwright": "^1.58.2",
+    "tree-sitter-wasms": "^0.1.13",
+    "web-tree-sitter": "^0.24.7"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",

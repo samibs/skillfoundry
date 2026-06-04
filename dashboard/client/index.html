@@ -22,6 +22,7 @@
             <button class="tab" data-tab="stories">Stories</button>
             <button class="tab" data-tab="agents">Agents</button>
             <button class="tab" data-tab="metrics">Metrics</button>
+            <button class="tab" data-tab="codemap">Code Map</button>
         </nav>
 
         <main>
@@ -110,9 +111,30 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Code Map Tab (STORY-014) -->
+            <div id="codemap" class="tab-content">
+                <div class="section-header">
+                    <h2>Code Map</h2>
+                    <div class="header-actions">
+                        <input id="codemap-search" class="codemap-search" type="search"
+                               placeholder="Search symbol or file…" aria-label="Search the code map" />
+                        <label class="codemap-toggle">
+                            <input id="codemap-diff-toggle" type="checkbox" /> Diff impact overlay
+                        </label>
+                    </div>
+                </div>
+                <div id="codemap-summary" class="codemap-summary"></div>
+                <div class="codemap-legend" id="codemap-legend"></div>
+                <div class="codemap-grid" id="codemap-grid">
+                    <p>Loading the code map…</p>
+                </div>
+                <div id="codemap-detail" class="codemap-detail" hidden></div>
+            </div>
         </main>
     </div>
 
     <script src="js/app.js"></script>
+    <script src="js/codemap.js"></script>
 </body>
 </html>

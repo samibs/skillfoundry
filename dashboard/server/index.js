@@ -7,12 +7,17 @@ import express from "express";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import fs from "fs/promises";
+import { registerCodemapRoutes } from "./codemap-routes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Loopback-only by default (PRD §4.2 / STORY-013) — never expose remotely.
+const HOST = process.env.DASHBOARD_HOST || "127.0.0.1";
+// Project whose Code Map the dashboard reads (override per-request with ?project=).
+const SF_PROJECT = process.env.SF_PROJECT || process.cwd();
 
 // Middleware
 app.use(express.json());
@@ -280,7 +285,10 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`SkillFoundry Dashboard running on http://localhost:${PORT}`);
+// Code Map routes (STORY-013) — read-only readers of the sf_codemap artifacts.
+registerCodemapRoutes(app, SF_PROJECT);
+
+// Start server (loopback-only by default)
+app.listen(PORT, HOST, () => {
+  console.log(`SkillFoundry Dashboard running on http://${HOST}:${PORT}`);
 });
