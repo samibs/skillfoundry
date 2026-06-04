@@ -280,6 +280,28 @@ export const TIER4_TOOLS = [
       required: ["action", "projectPath"],
     },
   },
+  {
+    name: "sf_codemap",
+    description:
+      "Build/refresh a structural Code Map of the repo (tree-sitter): call graph, " +
+      "import graph, API contract surface (endpoints[]), and DB/layer map. Feeds " +
+      "sf_contract_check and sf_import_validator before code is written. Modes: " +
+      "build (full), refresh (incremental, default), query (look up a symbol).",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        projectPath: { type: "string", description: "Project root path" },
+        mode: {
+          type: "string",
+          enum: ["build", "refresh", "query", "diff-impact"],
+          description: "build: full rebuild; refresh: incremental (default); query: look up a symbol; diff-impact: (STORY-011, not yet implemented)",
+        },
+        symbol: { type: "string", description: "Symbol or file to look up (query mode)" },
+        semantic: { type: "boolean", description: "Add LLM semantic labels (STORY-012, not yet implemented)" },
+      },
+      required: ["projectPath"],
+    },
+  },
 ];
 
 export const ALL_TOOL_AGENTS = [...TIER1_TOOLS, ...TIER2_TOOLS, ...TIER3_TOOLS, ...TIER4_TOOLS];

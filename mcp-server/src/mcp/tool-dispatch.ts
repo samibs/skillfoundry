@@ -17,6 +17,7 @@ import { dockerBuild, composeUp } from "../agents/docker-agent.js";
 import { setupNginxForApp } from "../agents/nginx-agent.js";
 import { checkContracts } from "../agents/contract-check-agent.js";
 import { generateProjectContext } from "../agents/project-context-agent.js";
+import { runCodemap, type CodemapMode } from "../agents/codemap-agent.js";
 import { runSecurityScanLite } from "../agents/security-scan-lite-agent.js";
 import { checkVersions } from "../agents/version-check-agent.js";
 import { handleSessionRecording } from "../agents/session-recorder-agent.js";
@@ -151,6 +152,16 @@ export async function dispatchToolAgent(
     case "sf_project_context": {
       const result = await generateProjectContext(args.projectPath as string);
       return jsonResult(result);
+    }
+
+    case "sf_codemap": {
+      const result = await runCodemap({
+        projectPath: args.projectPath as string,
+        mode: args.mode as CodemapMode | undefined,
+        symbol: args.symbol as string | undefined,
+        semantic: args.semantic as boolean | undefined,
+      });
+      return jsonResult(result, !result.ok);
     }
 
     case "sf_security_scan_lite": {

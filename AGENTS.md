@@ -57,6 +57,7 @@ $architect                   # System design
 ### Quality & Review
 | Skill | Purpose |
 |-------|---------|
+| `$preflight` | Codebase comprehension pre-flight — build a Code Map (contract surface, imports, DB/layers) before changing existing code |
 | `$review` | Code review agent |
 | `$evaluator` | BPSBS standards compliance check |
 | `$layer-check` | Three-layer enforcement validation |

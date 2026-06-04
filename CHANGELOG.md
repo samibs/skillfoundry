@@ -7,6 +7,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.17.0] - 2026-06-04
+
+### Codebase Comprehension Pre-Flight (Code Map)
+
+v5.17.0 adds a **codebase comprehension pre-flight** — a tree-sitter-powered Code Map that gives agents a structural model of existing code *before* they write, directly attacking the framework's #1 failure class (Frontend-Backend Contract Mismatch). It complements the environment pre-flight: that one inspects the *environment*, this one inspects the *code*.
+
+#### Added
+
+- **`sf_codemap` MCP tool** (`mcp-server/src/agents/codemap/` + `codemap-agent.ts`) with four modes:
+  - `build` — full tree-sitter parse of TS/JS + Python into a node/edge graph (files, functions, methods, classes, exports; `contains` + same-file `calls` edges).
+  - `refresh` (default) — incremental rebuild keyed off sha256 content hashes; re-parses only changed files.
+  - `query` — look up a symbol/file and return its node + related edges.
+  - `diff-impact` — blast-radius of the working-tree diff (reverse BFS over imports/calls, cycle-safe).
+- **API contract surface extraction** → `endpoints[]` (method, canonical `:param` path, handler node, FastAPI Pydantic request shapes) for Express/Fastify/Hono/Koa-router, Next.js App Router, NestJS, FastAPI, and Flask.
+- **Import graph + `unresolvedImports[]`** — relative + tsconfig-alias + dependency-classification + Python-relative resolution.
+- **DB/layer map** — `model` nodes (Prisma block-parser, Drizzle, Mongoose, TypeORM, SQLAlchemy) with fields; deterministic `db`/`backend`/`frontend`/`shared` layer tags on 100% of files.
+- **Optional LLM semantic labels** (`semantic:true`) — off by default, `confidence:"llm-hint"`, fact-only prompts, non-authoritative (never satisfies Three-Layer verification).
+- **`/preflight` command** (alias `/codemap`) + `agents/_codemap-preflight-protocol.md`, referenced from `CLAUDE.md`.
+- **Dashboard Code Map explorer** — loopback-only `/api/codemap` + `/api/codemap/diff-impact` routes and a responsive "Code Map" tab (layer columns, fuzzy search, diff-impact overlay, file detail panel).
+- **memory_bank feed** — sanitized, deduped `code-map` facts (API surface, model inventory, unresolved-import hotspots, layer distribution) for cross-project learning.
+- New dependencies (pure WASM, no native build — `npm ci` stays portable): `web-tree-sitter@^0.24.7`, `tree-sitter-wasms@^0.1.13`.
+- 61 new tests across 12 suites (engine, tool, gate handoff, dashboard).
+
+#### Changed
+
+- **`/forge` & `/go` IGNITE** now run the codebase pre-flight (`sf_codemap refresh`) after the environment pre-flight, handing `endpoints[]` to `sf_contract_check` and `unresolvedImports[]` to `sf_import_validator` as a baseline. Advisory — a code-map failure logs a warning and never blocks a run.
+- **`checkContracts(projectPath, baseline?)`** and **`validateImports(projectPath, baseline?)`** accept an optional Code Map baseline; behavior is byte-for-byte unchanged when none is supplied.
+- Dashboard server now binds `127.0.0.1` by default (`DASHBOARD_HOST`).
+- Tool-agent count 22 → 23 (`sf_codemap`).
+
+#### Security
+
+- Code Map is read-only and never executes/imports the target code (tree-sitter parse only).
+- Dashboard routes are loopback-only and path-traversal guarded; memory-feed records are sanitized (no absolute paths/secrets).
+- Semantic labels are non-authoritative and excluded from gate/Three-Layer verification.
+
+#### Why
+
+AI agents reasoned about existing code blind, re-discovering structure ad hoc each session and inventing endpoint shapes they never read — the documented #1 vibe-coding failure. The Code Map makes that structure available proactively and feeds it to the gates before code is written.
+
+#### Deferred (tracked follow-ups)
+
+Django `urls.py` routes; zod/TS-type/NestJS-DTO request shapes; ORM field extraction beyond Prisma/Drizzle; diff-impact base-ref param; semantic `domain` label + cost-router/budget routing; cross-platform mirroring of `/preflight`; medium-repo perf benchmark.
+
+---
+
 ## [5.16.0] - 2026-05-31
 
 ### Grok: 6th Platform + Provider Refresh
