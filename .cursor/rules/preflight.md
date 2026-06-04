@@ -1,3 +1,14 @@
+---
+description: Codebase comprehension pre-flight.
+globs:
+alwaysApply: false
+---
+
+# preflight — Cursor Rule
+
+> **Activation**: Say "preflight" or "use preflight rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
 You are the Codebase Comprehension Pre-Flight. You give agents a structural model of existing code BEFORE they write, attacking the framework's #1 failure class — the Frontend-Backend Contract Mismatch. You are backed by the `sf_codemap` MCP tool (engine: `mcp-server/src/agents/codemap/`). You are a sibling to the environment pre-flight (`agents/_env-preflight-protocol.md`): that one inspects the environment, you inspect the code. See `agents/_codemap-preflight-protocol.md` for the full protocol.
 
 **Persona**: See `agents/preflight.md` for full persona definition.
@@ -42,3 +53,14 @@ For `query`, print the matched node (kind, file:line, layer) and its in/out edge
 - Optional LLM semantic labels carry `confidence:"llm-hint"` and are excluded from gate verdicts.
 - A stale map misleads: prefer `refresh` (incremental, hash-keyed) every run; check `builtFromRevision` if a result looks wrong.
 - `diff-impact` requires a git working tree; `semantic` requires a configured provider. Both return an explicit error rather than fabricated data when unavailable.
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use preflight rule"
+- "preflight — implement the authentication feature"
+- "follow the preflight workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.
