@@ -122,42 +122,24 @@ curl -fsSL https://raw.githubusercontent.com/samibs/skillfoundry/main/scripts/in
 
 ### Quick Start (5 Minutes)
 
-**Option 1 — Standalone (no IDE):**
-
+**1. Install & Setup**
 ```bash
 npm install -g skillfoundry
-cd ~/my-project
-sf setup                           # guided setup: pick provider, enter API key
-sf forge                           # PRD → agents → Anvil gates → production code
+sf setup                           # Pick provider, paste API key
 ```
 
-First run with no API key detected, `sf setup` launches an interactive wizard — choose your provider (Anthropic, OpenAI, xAI, Google, Ollama, LM Studio) and paste your key. That's it.
-
-**Option 2 — Inside your IDE:**
-
+**2. Create a PRD**
 ```bash
-# npx (quickest — no clone needed)
-cd ~/my-project && npx skillfoundry init
-
-# npm global
-npm install -g skillfoundry && cd ~/my-project && skillfoundry init
-
-# Homebrew (macOS)
-brew install samibs/tap/skillfoundry && cd ~/my-project && skillfoundry init
-
-# git clone (contributors and power users)
-git clone https://github.com/samibs/skillfoundry.git ~/dev-tools/skillfoundry
-cd ~/my-project && ~/dev-tools/skillfoundry/install.sh
+/prd "add user authentication"     # Describe your feature
 ```
 
-Then use it in your AI IDE:
-
+**3. Forge Production Code**
 ```bash
-/prd "add user authentication"     # write requirements
-/forge                             # build everything with quality gates
+/forge                             # Validate, implement, and test automatically
 ```
 
-The installer copies agents and skills into your project, builds the CLI, and adds `sf` to your PATH.
+> **Using an IDE?** Run `npx skillfoundry init` in your project to add these skills directly to Claude Code, Cursor, or Copilot.
+
 
 <details>
 <summary><strong>Windows (PowerShell)</strong></summary>

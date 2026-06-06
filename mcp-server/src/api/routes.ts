@@ -44,12 +44,23 @@ export function setRegisteredTools(tools: ToolModule[]): void {
   registeredTools = tools;
 }
 
+/**
+ * Creates the main Express router for the MCP server API.
+ * Defines endpoints for health, readiness, agent discovery, metrics, and session management.
+ * @param skills - Map of registered skill definitions
+ * @returns Configured Express Router instance
+ */
 export function createApiRouter(
   skills: Map<string, SkillDefinition>
 ): Router {
   const router = Router();
 
   // Health check
+  /**
+   * GET /health
+   * Returns server health status, version, and bootstrap progress.
+   * Outputs: { status, version, bootstrap, tools, uptime, timestamp }
+   */
   router.get("/health", (_req, res) => {
     const bsState = storedBootstrapState;
 
@@ -87,6 +98,11 @@ export function createApiRouter(
   });
 
   // Readiness probe — returns 503 until bootstrap is fully complete
+  /**
+   * GET /ready
+   * Readiness probe for load balancers and orchestrators.
+   * Outputs: 200 { status: "ready" } if complete, 503 otherwise.
+   */
   router.get("/ready", (_req, res) => {
     if (
       storedBootstrapState !== null &&
@@ -104,6 +120,12 @@ export function createApiRouter(
   });
 
   // List all loaded agents/skills, with optional category segmentation
+  /**
+   * GET /api/v1/agents
+   * Lists all registered agents and skills.
+   * Query Params: category (optional) - Filter by builtin, plugin, skill, or dynamic.
+   * Outputs: Array of agent objects { name, description, tier, category, status }
+   */
   router.get("/api/v1/agents", (req, res) => {
     const categoryParam = req.query.category as string | undefined;
 
@@ -166,6 +188,12 @@ export function createApiRouter(
   });
 
   // Get specific agent
+  /**
+   * GET /api/v1/agents/:name
+   * Returns details for a specific agent.
+   * Path Params: name - The name of the agent.
+   * Outputs: Detailed agent object.
+   */
   router.get("/api/v1/agents/:name", (req, res) => {
     const skill = skills.get(req.params.name);
     if (!skill) {
@@ -192,6 +220,12 @@ export function createApiRouter(
   // ─── Knowledge API ──────────────────────────────────────────
 
   // Query known quirks
+  /**
+   * GET /api/v1/knowledge/quirks
+   * Returns known framework quirks/patterns.
+   * Query Params: framework (optional) - Filter by framework name.
+   * Outputs: Array of quirk objects.
+   */
   router.get("/api/v1/knowledge/quirks", async (req, res) => {
     try {
       const framework = req.query.framework as string | undefined;
@@ -204,6 +238,12 @@ export function createApiRouter(
 
   // Trigger knowledge harvest
   // Accepts: { appsRoot: string } OR { appsRoots: string[] }
+  /**
+   * POST /api/v1/knowledge/harvest
+   * Triggers a knowledge harvest from specified root directories.
+   * Inputs: JSON { appsRoot?: string, appsRoots?: string[] }
+   * Outputs: Harvest outcome summary.
+   */
   router.post("/api/v1/knowledge/harvest", async (req, res) => {
     try {
       const body = req.body as Record<string, unknown>;
@@ -249,6 +289,11 @@ export function createApiRouter(
 
   // ─── Fleet Health API ─────────────────────────────────────
 
+  /**
+   * GET /api/v1/fleet/health
+   * Returns health and assessment metrics for the entire fleet of managed apps.
+   * Outputs: Fleet summary, platform distribution, framework versions, and stale/unassessed app lists.
+   */
   router.get("/api/v1/fleet/health", async (_req, res) => {
     try {
       const fleet = getFleetHealth();
@@ -320,6 +365,12 @@ export function createApiRouter(
 
   // ─── Session Recordings API ──────────────────────────────
 
+  /**
+   * GET /api/v1/knowledge/recordings
+   * Queries session recordings based on app name, entry type, and scope.
+   * Query Params: app, type, scope, limit.
+   * Outputs: Array of recording objects.
+   */
   router.get("/api/v1/knowledge/recordings", async (req, res) => {
     try {
       const recordings = querySessionRecordings({
@@ -339,6 +390,11 @@ export function createApiRouter(
 
   // ─── Cost Router API ────────────────────────────────────────
 
+  /**
+   * GET /api/v1/routing
+   * Returns the current agent routing table and today's token spend.
+   * Outputs: Routing table and spend summary.
+   */
   router.get("/api/v1/routing", (_req, res) => {
     res.json({
       data: getRoutingTable(),
@@ -348,6 +404,12 @@ export function createApiRouter(
 
   // ─── Metrics API ──────────────────────────────────────────
 
+  /**
+   * GET /api/v1/metrics
+   * Returns global quality metrics and pass rates.
+   * Query Params: since (ISO date) - filter by date.
+   * Outputs: Metrics summary object.
+   */
   router.get("/api/v1/metrics", (req, res) => {
     try {
       const since = req.query.since as string | undefined;
@@ -358,6 +420,12 @@ export function createApiRouter(
     }
   });
 
+  /**
+   * GET /api/v1/metrics/agents/:name
+   * Returns performance metrics for a specific agent.
+   * Path Params: name - The agent name.
+   * Outputs: Agent-specific metrics object.
+   */
   router.get("/api/v1/metrics/agents/:name", (req, res) => {
     try {
       const metrics = getAgentMetrics(req.params.name);
@@ -375,6 +443,11 @@ export function createApiRouter(
 
   // ─── Sessions API ──────────────────────────────────────────
 
+  /**
+   * GET /api/v1/sessions
+   * Lists all persisted AI session IDs.
+   * Outputs: Array of session IDs.
+   */
   router.get("/api/v1/sessions", (_req, res) => {
     try {
       const sessionConfig = createSessionConfig();
@@ -388,6 +461,12 @@ export function createApiRouter(
     }
   });
 
+  /**
+   * GET /api/v1/sessions/:id
+   * Returns full state and token usage for a specific session.
+   * Path Params: id - The session ID.
+   * Outputs: Detailed session state object.
+   */
   router.get("/api/v1/sessions/:id", (req, res) => {
     try {
       const sessionConfig = createSessionConfig();
