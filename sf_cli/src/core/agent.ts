@@ -24,6 +24,9 @@ import { randomUUID } from 'node:crypto';
 // Agent State Machine
 // ---------------------------------------------------------------------------
 
+/**
+ * Represents the current operational status of an agent.
+ */
 export type AgentStatus =
   | 'idle'
   | 'running'
@@ -33,18 +36,27 @@ export type AgentStatus =
   | 'aborted'
   | 'budget_exceeded';
 
+/**
+ * Tracks the progress of a multi-step task being performed by an agent.
+ */
 export interface AgentProgress {
   current: number;
   total: number;
   label: string;
 }
 
+/**
+ * Records a significant decision made by an agent during execution.
+ */
 export interface AgentDecision {
   timestamp: string;
   decision: string;
   reasoning: string;
 }
 
+/**
+ * Encapsulates the runtime state of an agent, including its progress, decisions, and child agents.
+ */
 export interface AgentState {
   status: AgentStatus;
   progress: AgentProgress;
@@ -58,6 +70,9 @@ export interface AgentState {
 // Agent Result
 // ---------------------------------------------------------------------------
 
+/**
+ * Represents the final outcome of an agent's execution.
+ */
 export interface AgentResult {
   status: 'completed' | 'failed' | 'aborted' | 'budget_exceeded';
   output: string;
@@ -72,6 +87,9 @@ export interface AgentResult {
 // Agent Context
 // ---------------------------------------------------------------------------
 
+/**
+ * Provides the execution environment and constraints for an agent.
+ */
 export interface AgentContext {
   workDir: string;
   config: SfConfig;
@@ -126,6 +144,10 @@ const MAX_DELEGATION_DEPTH = 3;
 // Agent Base Class
 // ---------------------------------------------------------------------------
 
+/**
+ * Abstract base class for all autonomous agents in SkillFoundry.
+ * Provides the lifecycle management, event system, and execution loop for agents.
+ */
 export abstract class Agent {
   readonly name: string;
   readonly displayName: string;
@@ -157,6 +179,13 @@ export abstract class Agent {
 
   // ── Public API ──────────────────────────────────────────────────────
 
+  /**
+   * Executes the agent's primary task within the provided context.
+   * Orchestrates the AI runner loop, budget management, and result collection.
+   * @param task - The natural language task description
+   * @param context - The execution context and constraints
+   * @returns Promise resolving to the AgentResult
+   */
   async execute(task: string, context: AgentContext): Promise<AgentResult> {
     this.context = context;
     this.startTime = Date.now();

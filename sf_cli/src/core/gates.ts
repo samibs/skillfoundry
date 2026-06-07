@@ -21,8 +21,14 @@ function hasWindowsDrivePath(p: string): boolean {
   return /^[A-Za-z]:[/\\]/.test(p);
 }
 
+/**
+ * Represents the outcome of a single quality gate.
+ */
 export type GateStatus = 'pass' | 'fail' | 'warn' | 'skip' | 'running';
 
+/**
+ * Detailed result of a specific quality gate tier execution.
+ */
 export interface GateResult {
   tier: string;
   name: string;
@@ -31,6 +37,9 @@ export interface GateResult {
   durationMs: number;
 }
 
+/**
+ * Aggregated summary of a complete quality gate run across all tiers.
+ */
 export interface GateRunSummary {
   gates: GateResult[];
   passed: number;
@@ -996,6 +1005,12 @@ export interface GateOptions {
   parallel?: boolean;
 }
 
+/**
+ * Executes all quality gate tiers (T0-T7) for a given target.
+ * Supports both sequential and parallel execution phases.
+ * @param options - Configuration including work directory, target, and callbacks
+ * @returns Promise resolving to a summary of all gate results
+ */
 export async function runAllGates(options: GateOptions): Promise<GateRunSummary> {
   const { workDir, target = '.', storyFile, onGateStart, onGateComplete, parallel = false } = options;
   const resolvedTarget = resolve(workDir, target);
