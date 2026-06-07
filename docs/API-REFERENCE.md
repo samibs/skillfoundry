@@ -4,6 +4,12 @@ Reference documentation for SkillFoundry Framework agent protocols and communica
 
 ---
 
+## Certified Skills Registry
+
+For a list of certified agent skills and their contracts, see [SKILLS-CERTIFIED.md](./SKILLS-CERTIFIED.md).
+
+---
+
 ## Agent Communication Protocol
 
 ### Request Format
