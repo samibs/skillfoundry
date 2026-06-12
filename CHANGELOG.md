@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.18.0] - 2026-06-12
+
+### Web Security Checker — Pre-Production Promotion Gate
+
+v5.18.0 adds `/web-security-check` — a mandatory infrastructure validation gate that runs against a live deployed URL before production promotion. Closes the gap between static code analysis and what attackers actually see.
+
+#### Added
+
+- **`agents/web-security-checker.md`** — Full agent persona with 10 check groups, BLOCKER/WARN/INFO severity model, evidence-first tool execution pattern (curl, openssl, dig, whois), structured per-finding output, mandatory closing block with score, and integration documentation.
+- **`.claude/commands/web-security-check.md`** — Self-contained command wrapper. `/web-security-check` immediately available as a Claude Code skill.
+- **10 check groups:**
+  1. TLS/Certificates — validity, chain, expiry, cipher suites, TLS version
+  2. HTTP Security Headers — HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+  3. Cookie Security — `Secure`, `HttpOnly`, `SameSite` flags on session cookies
+  4. DNS/Mail Security — SPF, DKIM, DMARC, DNSSEC
+  5. Information Leakage — `/.env`, `/.git/config`, Server/X-Powered-By headers, directory listing
+  6. Redirect Chain — HTTP→HTTPS enforcement, redirect loops, open redirects
+  7. Open Ports — unexpected DB/admin port exposure
+  8. WHOIS/Domain Expiry — domain expiry and registrar lock
+  9. Dependency Fingerprint — client-side JS library CVE detection (INFO)
+  10. WAF/Rate Limiting — WAF header detection, 429 behaviour (INFO)
+- **BLOCKER examples** (stop promotion): no HTTPS, expired/invalid cert, session cookie missing `Secure`/`HttpOnly`, HSTS absent on production, `.env` or `.git/config` publicly accessible.
+- **WARN examples** (hold pending sign-off): CSP missing, DMARC missing or `p=none`, server version exposed, TLS 1.2 only.
+- **Operating modes:** `--headers`, `--tls`, `--dns`, `--quick` (BLOCKERs only), `--report` (writes JSON artifact to `logs/web-security/`).
+- **Score:** 100 − (15 × BLOCKERs) − (5 × WARNs).
+
+#### Changed
+
+- **`agents/production-orchestrator.md`** — New hard constraint: `NO promotion to production without web-security-checker pass (required for any project with a public-facing URL)`.
+- **`.claude/commands/production-orchestrator.md`** — Mirrored same constraint.
+- **`agents/_governance-model.md`** — `web-security-checker` added to Validation Tier, Veto list, and Escalation Matrix (BLOCKER = immediate stop, WARN = 4hr hold).
+- **`agents/INDEX-v2.md`** — Registered as agent #54 (Validation Tier now 5 agents). Deployment gate sequence updated to 7 steps.
+- **Version:** `5.17.0` → `5.18.0` across `.version`, `sf_cli/package.json`, README badge.
+
+#### Why
+
+Static analysis (`/security`, `/pentest`) only sees the code. A clean codebase can still expose a broken server: certificates expire silently, HSTS is never set, cookies ship without `Secure`, `.env` is forgotten in the web root. This gate runs after staging deploy and before production promotion — it validates what's actually reachable, not what the developer intended to configure.
+
+#### Scope
+
+Does NOT replace `/security` (code-level OWASP analysis) or `/pentest` (adversarial exploitation). Operates on live URLs only (staging minimum). Exempt: internal tools with no public URL, non-web projects (CLI, libraries, background workers).
+
+---
+
 ## [5.17.0] - 2026-06-04
 
 ### Codebase Comprehension Pre-Flight (Code Map)
@@ -20,36 +64,17 @@ v5.17.0 adds a **codebase comprehension pre-flight** — a tree-sitter-powered C
   - `refresh` (default) — incremental rebuild keyed off sha256 content hashes; re-parses only changed files.
   - `query` — look up a symbol/file and return its node + related edges.
   - `diff-impact` — blast-radius of the working-tree diff (reverse BFS over imports/calls, cycle-safe).
-- **API contract surface extraction** → `endpoints[]` (method, canonical `:param` path, handler node, FastAPI Pydantic request shapes) for Express/Fastify/Hono/Koa-router, Next.js App Router, NestJS, FastAPI, and Flask.
+- **API contract surface extraction** → `endpoints[]` for Express/Fastify/Hono/Koa-router, Next.js App Router, NestJS, FastAPI, and Flask.
 - **Import graph + `unresolvedImports[]`** — relative + tsconfig-alias + dependency-classification + Python-relative resolution.
-- **DB/layer map** — `model` nodes (Prisma block-parser, Drizzle, Mongoose, TypeORM, SQLAlchemy) with fields; deterministic `db`/`backend`/`frontend`/`shared` layer tags on 100% of files.
-- **Optional LLM semantic labels** (`semantic:true`) — off by default, `confidence:"llm-hint"`, fact-only prompts, non-authoritative (never satisfies Three-Layer verification).
-- **`/preflight` command** (alias `/codemap`) + `agents/_codemap-preflight-protocol.md`, referenced from `CLAUDE.md`.
-- **Dashboard Code Map explorer** — loopback-only `/api/codemap` + `/api/codemap/diff-impact` routes and a responsive "Code Map" tab (layer columns, fuzzy search, diff-impact overlay, file detail panel).
-- **memory_bank feed** — sanitized, deduped `code-map` facts (API surface, model inventory, unresolved-import hotspots, layer distribution) for cross-project learning.
-- New dependencies (pure WASM, no native build — `npm ci` stays portable): `web-tree-sitter@^0.24.7`, `tree-sitter-wasms@^0.1.13`.
-- 61 new tests across 12 suites (engine, tool, gate handoff, dashboard).
+- **DB/layer map** — `model` nodes (Prisma, Drizzle, Mongoose, TypeORM, SQLAlchemy); deterministic `db`/`backend`/`frontend`/`shared` layer tags.
+- **`/preflight` command** (alias `/codemap`) + `agents/_codemap-preflight-protocol.md`.
+- Pure-WASM tree-sitter — no native build, `npm ci` stays portable.
+- 61 new tests across 12 suites.
 
 #### Changed
 
-- **`/forge` & `/go` IGNITE** now run the codebase pre-flight (`sf_codemap refresh`) after the environment pre-flight, handing `endpoints[]` to `sf_contract_check` and `unresolvedImports[]` to `sf_import_validator` as a baseline. Advisory — a code-map failure logs a warning and never blocks a run.
-- **`checkContracts(projectPath, baseline?)`** and **`validateImports(projectPath, baseline?)`** accept an optional Code Map baseline; behavior is byte-for-byte unchanged when none is supplied.
-- Dashboard server now binds `127.0.0.1` by default (`DASHBOARD_HOST`).
+- `/forge` & `/go` IGNITE now run `sf_codemap refresh` after env pre-flight. Advisory — never blocks.
 - Tool-agent count 22 → 23 (`sf_codemap`).
-
-#### Security
-
-- Code Map is read-only and never executes/imports the target code (tree-sitter parse only).
-- Dashboard routes are loopback-only and path-traversal guarded; memory-feed records are sanitized (no absolute paths/secrets).
-- Semantic labels are non-authoritative and excluded from gate/Three-Layer verification.
-
-#### Why
-
-AI agents reasoned about existing code blind, re-discovering structure ad hoc each session and inventing endpoint shapes they never read — the documented #1 vibe-coding failure. The Code Map makes that structure available proactively and feeds it to the gates before code is written.
-
-#### Deferred (tracked follow-ups)
-
-Django `urls.py` routes; zod/TS-type/NestJS-DTO request shapes; ORM field extraction beyond Prisma/Drizzle; diff-impact base-ref param; semantic `domain` label + cost-router/budget routing; cross-platform mirroring of `/preflight`; medium-repo perf benchmark.
 
 ---
 
