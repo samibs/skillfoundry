@@ -21,4 +21,43 @@ describe('Documentation Validation', () => {
     const content = readFileSync(filePath, 'utf-8');
     expect(content).toContain('[SKILLS-CERTIFIED.md](./SKILLS-CERTIFIED.md)');
   });
+
+  // FR-DOCS-104 — Documentation & Knowledge Base Enhancement
+  describe('FR-DOCS-104 deliverables', () => {
+    const docsRoot = join(process.cwd(), '../docs');
+
+    it('DEPLOYMENT-GUIDE.md exists and references real install scripts', () => {
+      const filePath = join(docsRoot, 'DEPLOYMENT-GUIDE.md');
+      expect(existsSync(filePath)).toBe(true);
+      const content = readFileSync(filePath, 'utf-8');
+      expect(content).toContain('install-unified.sh');
+      expect(content).toContain('update.sh');
+      expect(content).toContain('scripts/dashboard.sh');
+    });
+
+    it('CONFIGURATION-REFERENCE.md exists and documents real config surfaces', () => {
+      const filePath = join(docsRoot, 'CONFIGURATION-REFERENCE.md');
+      expect(existsSync(filePath)).toBe(true);
+      const content = readFileSync(filePath, 'utf-8');
+      expect(content).toContain('.claude/settings.json');
+      expect(content).toContain('ANTHROPIC_API_KEY');
+      expect(content).toContain('Never commit');
+    });
+
+    it('DOCS-VERSIONING-STRATEGY.md exists and declares WCAG baseline', () => {
+      const filePath = join(docsRoot, 'DOCS-VERSIONING-STRATEGY.md');
+      expect(existsSync(filePath)).toBe(true);
+      const content = readFileSync(filePath, 'utf-8');
+      expect(content).toContain('WCAG 2.1');
+      expect(content).toContain('Release-Triggered Review');
+    });
+
+    it('DOCUMENTATION-INDEX.md links all three new FR-DOCS-104 docs', () => {
+      const filePath = join(docsRoot, 'DOCUMENTATION-INDEX.md');
+      const content = readFileSync(filePath, 'utf-8');
+      expect(content).toContain('DEPLOYMENT-GUIDE.md');
+      expect(content).toContain('CONFIGURATION-REFERENCE.md');
+      expect(content).toContain('DOCS-VERSIONING-STRATEGY.md');
+    });
+  });
 });
