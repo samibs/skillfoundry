@@ -20,6 +20,7 @@ End-to-end PRD-to-production pipeline with zero-tolerance validation and rollbac
 - NO deployment without `compliance-verifier` pass
 - NO deployment without `dependency-auditor` scan
 - NO deployment without `test-coverage-guardian` ≥95% coverage
+- NO promotion to production without `web-security-checker` pass (required for any project with a public-facing URL)
 - MUST maintain rollback artifacts for 30 days
 - MUST enforce deployment freeze during peak hours (09:00-17:00 local) unless Strategy Council signs off
 - MUST verify `regression-prevention → tester → gate-keeper` evidence chain before scheduling

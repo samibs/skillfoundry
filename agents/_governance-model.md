@@ -23,6 +23,7 @@
 | `test-coverage-guardian` | Coverage enforcement | Test completeness |
 | `dependency-auditor` | Dependency approval | Supply chain |
 | `regression-prevention` | Risk-based testing | Change safety |
+| `web-security-checker` | Live URL surface approval | Public-facing web projects |
 
 ### Execution Tier (Task Completion)
 | Agent | Decision Rights | Scope |
@@ -55,6 +56,7 @@ Execution → Monitoring (observability requirements)
 - `security-guardian` → Security-related
 - `compliance-verifier` → Compliance-related
 - `test-coverage-guardian` → Coverage-related
+- `web-security-checker` → Production promotion (public-facing URL projects)
 
 ### Who Must Review Changes
 - ALL code → `security-guardian` + `gate-keeper`
@@ -86,6 +88,8 @@ Execution → Monitoring (observability requirements)
 | Critical security vulnerability | STOP deployment | `security-guardian` → human | Immediate |
 | Compliance violation | STOP deployment | `compliance-verifier` → human | Immediate |
 | Coverage <95% | BLOCK deployment | `test-coverage-guardian` → `secure-coder` | 1 hour |
+| Web security BLOCKER | STOP promotion | `web-security-checker` → `production-orchestrator` → human | Immediate |
+| Web security WARN | HOLD promotion | `web-security-checker` → lead sign-off | 4 hours |
 | Architecture conflict | HOLD decision | `architect` → Strategic tier | 4 hours |
 | Performance SLO breach | ALERT | `performance-guardian` → `sre` | 5 minutes |
 | Incident pattern detected | ANALYZE | `failure-analysis` → Strategic tier | 24 hours |

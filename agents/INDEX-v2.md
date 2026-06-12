@@ -9,8 +9,8 @@ color: gray
 
 ## 53-Agent Enterprise Architecture
 
-**Last Updated:** 2026-02-22
-**Total Agents:** 53 (46 original + 9 new - 2 merged)
+**Last Updated:** 2026-06-12
+**Total Agents:** 54 (46 original + 9 new - 2 merged + 1 web-security-checker)
 **Governance Model:** 5-tier hierarchy with escalation protocols
 
 ---
@@ -31,7 +31,7 @@ color: gray
 | `data-architect` | Database design | Query performance validated; N+1 prevention |
 | `refactoring-strategist` | Safe refactoring guidance | Security preservation; architecture conformance |
 
-## Validation Tier (4 agents)
+## Validation Tier (5 agents)
 
 | Agent | Mission | Key Constraints |
 |-------|---------|-----------------|
@@ -39,6 +39,7 @@ color: gray
 | `test-coverage-guardian` | Coverage enforcement | ≥95% coverage; all error paths tested |
 | `dependency-auditor` | Supply chain security | NO CVSS >7.0; SBOM generation |
 | `regression-prevention` | Change impact analysis | Risk score 1-10; blast radius documented |
+| `web-security-checker` | Live URL surface validation | Mandatory for public-facing URLs; BLOCKER stops promotion |
 
 ## Execution Tier (6 agents)
 
@@ -68,7 +69,7 @@ See full list in INDEX-v1.md - these support the core 20 agents above.
 
 ## New in v2.0
 
-### Added Agents (9)
+### Added Agents (10)
 1. `failure-analysis` - Post-mortem automation
 2. `compliance-verifier` - Real-time compliance
 3. `test-coverage-guardian` - Coverage enforcement
@@ -78,6 +79,7 @@ See full list in INDEX-v1.md - these support the core 20 agents above.
 7. `performance-guardian` - Production performance
 8. `refactoring-strategist` - Safe refactoring
 9. `build-stability` - CI/CD reliability
+10. `web-security-checker` - Live URL surface validation (pre-production promotion gate)
 
 ### Upgraded Agents (3)
 | Original | New | Key Improvements |
@@ -109,7 +111,8 @@ See `_governance-model.md` for:
 3. test-coverage-guardian validates ≥95%
 4. dependency-auditor scans
 5. compliance-verifier validates
-6. production-orchestrator deploys
+6. web-security-checker validates live URL (public-facing projects)
+7. production-orchestrator deploys
 ```
 
 ### Escalation Path

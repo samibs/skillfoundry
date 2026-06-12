@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.17.0-blue)
+![Version](https://img.shields.io/badge/version-5.18.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,27 +25,29 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.17.0
+### What's New in v5.18.0
 
-**Codebase Comprehension Pre-Flight (Code Map)**
+**Web Security Checker — Pre-Production Promotion Gate**
 
-v5.17.0 gives your AI a structural map of the code **before** it writes a line — the missing half of the pre-flight (the other half checks your environment). It's a tree-sitter engine exposed as the `sf_codemap` tool and the `/preflight` command, wired straight into `/forge` and `/go`.
+v5.18.0 adds `/web-security-check` — a mandatory gate that validates the **live deployed surface** of web applications before production promotion. Fills the gap between static code analysis and what's actually running in the wild.
 
-- **Reads the real code, not guesses** — extracts the API contract surface (`endpoints[]`), import graph, call graph, and a DB/layer map from TS/JS + Python.
-- **Feeds the gates** — hands the real endpoints to `sf_contract_check` and unresolved imports to `sf_import_validator` *before* code is written, attacking the #1 vibe-coding failure (frontend/backend contract mismatch) proactively.
-- **Cheap to run** — incremental refresh re-parses only changed files (sha256-keyed); runs automatically in the IGNITE phase and never blocks (advisory).
-- **Diff-impact** — see the blast radius of a change (which components depend on what you touched).
-- **Code Map dashboard tab** — explore the map by layer, search symbols, toggle a diff-impact overlay (localhost-only).
-- **Optional, non-authoritative LLM labels** — off by default; plain-English summaries are flagged as hints and never satisfy quality gates.
-- Pure-WASM tree-sitter — no native build, `npm ci` stays portable.
+- **10 check groups** — TLS/certificates, HTTP security headers, cookie flags, DNS/mail security (SPF/DKIM/DMARC), information leakage, redirect chains, open ports, WHOIS/domain expiry, dependency fingerprints, WAF detection.
+- **BLOCKER / WARN / INFO severity model** — BLOCKERs stop promotion immediately (expired cert, no HTTPS, missing HSTS, session cookies without `Secure`/`HttpOnly`, `.env` exposed). WARNs hold promotion pending lead sign-off.
+- **Real evidence collection** — the agent runs `curl`, `openssl`, `dig`, and `whois` commands against the live URL; no self-certification.
+- **Wired into `/production-orchestrator`** — new mandatory gate in the deployment sequence alongside `compliance-verifier`, `dependency-auditor`, and `test-coverage-guardian`. Required for any project with a public-facing URL.
+- **Scored report + audit trail** — `--report` flag writes a JSON artifact to `logs/web-security/`. Score: 100 − (15×BLOCKERs) − (5×WARNs).
+
+#### Previous: Codebase Comprehension Pre-Flight (v5.17.0)
+
+- `sf_codemap` MCP tool (tree-sitter Code Map): API contract surface, import graph, DB/layer map. `/preflight` command. Wired into `/forge` IGNITE phase. Pure-WASM, advisory (never blocks).
+
+#### Previous: Grok Platform & Provider Refresh (v5.16.0)
+
+- xAI Grok Build added as the 6th install platform. `.grok/skills/` with `AGENTS.md`. Updated xAI provider to `grok-4.3` with real pricing. Platform count `5` → `6`.
 
 #### Previous: Coding Discipline Protocol (v5.15.0)
 
-- Framework-wide behavioral guardrail (`agents/_coding-discipline.md`): Think-Before-Coding, Simplicity-First (scoped), Surgical Changes, Goal-Driven Execution, stricter-rule-wins. Documentation/behavior only.
-
-#### Previous: MCP Server Security Hardening (v5.14.0)
-
-- Bearer token auth, rate limiting, CORS, `handleRouteError()`, `MAX_PAGE_SIZE = 500`, atomic session writes. All 11 BPSBS controls pass.
+- Framework-wide behavioral guardrail (`agents/_coding-discipline.md`): Think-Before-Coding, Simplicity-First (scoped), Surgical Changes, Goal-Driven Execution.
 
 #### Previous: Pipeline Quality (v5.13.0)
 
@@ -199,12 +201,12 @@ Or use autonomous mode — just type what you want in plain English:
 
 SkillFoundry has two independent systems. They share the same agents and philosophy, but work differently:
 
-| | **Standalone CLI** (`sf`) | **IDE Skills** (62 skills) |
+| | **Standalone CLI** (`sf`) | **IDE Skills** (63 skills) |
 |---|---|---|
 | **What it is** | Terminal app with its own AI connection | Markdown instruction files your AI reads |
 | **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build |
 | **Setup** | `sf setup` — interactive wizard, paste API key | `skillfoundry init` — copies skills into your project |
-| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (23 commands) | `/forge`, `/go`, `/goma` (all 62 skills) |
+| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (23 commands) | `/forge`, `/go`, `/goma` (all 63 skills) |
 | **Autonomous mode** | Not available | `/goma` — full autonomous with safety gates |
 | **Provider switching** | Built-in: 6 providers, switch at runtime | Uses your IDE's provider |
 | **Budget controls** | Per-run and monthly cost caps | Not available |
@@ -215,7 +217,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 1. Inside Your IDE (Recommended)
 
-64 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
+65 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
 
 | Platform | Invocation | Example |
 |----------|-----------|---------|
@@ -668,7 +670,7 @@ These work inside the `sf` terminal app:
 | `/prd review <path>` | Score a PRD on 4 dimensions with actionable feedback |
 | `/lessons` | Query and manage knowledge bank entries |
 
-### IDE Skills (63 — Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build)
+### IDE Skills (65 — Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build)
 
 These work inside your AI coding tool, not in the `sf` CLI:
 
@@ -682,6 +684,7 @@ These work inside your AI coding tool, not in the `sf` CLI:
 | `/tester` | Test generation and validation |
 | `/review` | Code review |
 | `/security` | Security audit (OWASP, credentials, banned patterns) |
+| `/web-security-check` | Pre-production gate: TLS, headers, cookies, DNS, leakage, redirects |
 | `/architect` | System design and architecture |
 | `/debug` | Interactive debugger (breakpoints, scope, evaluate) |
 | `/layer-check` | Three-layer validation (DB → Backend → Frontend) |
@@ -696,11 +699,11 @@ These work inside your AI coding tool, not in the `sf` CLI:
 
 ## Supported Platforms
 
-The framework generates platform-specific configurations during install. Each platform gets the same 64 skills adapted to its native format:
+The framework generates platform-specific configurations during install. Each platform gets the same skills adapted to its native format:
 
 | Platform | What Gets Installed | How to Invoke | Notes |
 |----------|-------------------|---------------|-------|
-| **Claude Code** | `.claude/commands/` (64 skills) | `/command` | Slash commands in Claude Code CLI |
+| **Claude Code** | `.claude/commands/` (65 skills) | `/command` | Slash commands in Claude Code CLI |
 | **GitHub Copilot** | `.copilot/custom-agents/` (60 agents) | `@agent` in chat | Custom agents in Copilot Chat |
 | **Cursor** | `.cursor/rules/` (60 rules) | Auto-loaded | Rules activate based on context |
 | **OpenAI Codex** | `.agents/skills/` (64 skills) | `$command` | Dollar-prefix commands in Codex CLI |
@@ -713,7 +716,7 @@ Install multiple platforms at once:
 ./install.ps1 -Platform "claude,cursor,copilot"     # Windows
 ```
 
-**All 64 skills work identically across platforms.** The installer translates agent contracts from `agents/` into each platform's native format. When you update the framework, `update.sh` / `update.ps1` regenerates all platform files.
+**Skills work identically across platforms.** The installer translates agent contracts from `agents/` into each platform's native format. When you update the framework, `update.sh` / `update.ps1` regenerates all platform files.
 
 ---
 
