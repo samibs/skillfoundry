@@ -1,0 +1,56 @@
+{
+  "_comment": "SkillFoundry framework configuration. All keys are optional — defaults shown.",
+
+  "tone": "cold-blooded",
+  "_tone_options": ["cold-blooded", "professional"],
+  "_tone_note": "cold-blooded: original persona language (merciless, brutal, rejected). professional: same logic, neutral language (issues found, review required, blocked).",
+
+  "execution_mode": "auto",
+  "_execution_mode_options": ["auto", "real", "advisory"],
+  "_execution_mode_note": "auto: detected at runtime via _execution-context.md. real/advisory: forced override.",
+
+  "complexity_routing": true,
+  "_complexity_routing_note": "When true, /feature auto-classifies MICRO/SMALL/MEDIUM/LARGE and scales pipeline depth. Disable to always run full pipeline.",
+
+  "semgrep": {
+    "enabled": "auto",
+    "_enabled_options": ["auto", "always", "never"],
+    "_enabled_note": "auto: runs if semgrep is installed. always: fail pipeline if semgrep missing. never: LLM-only security.",
+    "rules_path": "config/semgrep-rules/",
+    "registry_rules": ["p/owasp-top-ten", "p/jwt", "p/secrets"],
+    "_registry_note": "Registry rules require internet access. Remove entries to run offline."
+  },
+
+  "commit": {
+    "include_evaluator_verdict": true,
+    "include_test_summary": true,
+    "include_story_reference": true,
+    "co_authored_by": "Claude Sonnet 4.6 <noreply@anthropic.com>"
+  },
+
+  "reports": {
+    "generate_html": true,
+    "output_dir": "reports/",
+    "_generate_html_note": "Single-file HTML report per feature/forge run. Set to false to disable."
+  },
+
+  "audit_webhook": "",
+  "_audit_webhook_note": "Optional: POST audit entries to this URL after writing locally. See agents/_audit-export.md. Use ${ENV_VAR} for token substitution.",
+
+  "testloop": {
+    "max_iterations": 5,
+    "coverage_threshold_lines": 80,
+    "coverage_threshold_branches": 75
+  },
+
+  "feature": {
+    "max_challenge_cycles": 3,
+    "shadow_tester": true,
+    "_shadow_tester_note": "Runs shadow tester in parallel with coder to generate risk list for evaluator."
+  },
+
+  "overrides": {
+    "log_file": "logs/overrides.md",
+    "_note": "All --override decisions are logged here with timestamp, stage, reason, and user."
+  }
+}

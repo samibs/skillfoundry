@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.18.0-blue)
+![Version](https://img.shields.io/badge/version-5.19.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,17 +25,26 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.18.0
+### What's New in v5.19.0
 
-**Web Security Checker — Pre-Production Promotion Gate**
+**Structural Trust & Production Resilience**
 
-v5.18.0 adds `/web-security-check` — a mandatory gate that validates the **live deployed surface** of web applications before production promotion. Fills the gap between static code analysis and what's actually running in the wild.
+v5.19.0 makes SkillFoundry safe for teams, resilient in production incidents, and trustworthy over time. The theme: stop fighting your project — adapt to it, protect it, and remember what you learned.
 
-- **10 check groups** — TLS/certificates, HTTP security headers, cookie flags, DNS/mail security (SPF/DKIM/DMARC), information leakage, redirect chains, open ports, WHOIS/domain expiry, dependency fingerprints, WAF detection.
-- **BLOCKER / WARN / INFO severity model** — BLOCKERs stop promotion immediately (expired cert, no HTTPS, missing HSTS, session cookies without `Secure`/`HttpOnly`, `.env` exposed). WARNs hold promotion pending lead sign-off.
-- **Real evidence collection** — the agent runs `curl`, `openssl`, `dig`, and `whois` commands against the live URL; no self-certification.
-- **Wired into `/production-orchestrator`** — new mandatory gate in the deployment sequence alongside `compliance-verifier`, `dependency-auditor`, and `test-coverage-guardian`. Required for any project with a public-facing URL.
-- **Scored report + audit trail** — `--report` flag writes a JSON artifact to `logs/web-security/`. Score: 100 − (15×BLOCKERs) − (5×WARNs).
+- **Multi-user state isolation** — `.claude/local/` (gitignored, machine-scoped) separates volatile session state from `.claude/shared/` (committed, team-visible config). Concurrent developers can no longer corrupt each other's in-flight pipeline state.
+- **Convention discovery** — `_convention-discovery.md` reads your existing project before onboarding: changelog format, commit style, test file naming. SkillFoundry adapts to your conventions instead of overriding them.
+- **Hotfix pathway** — `/hotfix` provides an emergency route when production is down. Semgrep hard-blocks always run. Full gates are bypassed. A mandatory follow-up story is created. Everything is logged to the audit trail.
+- **Evaluator calibration** — `/evaluator --feedback "finding N was wrong"` stores project-specific corrections in `.claude/shared/evaluator-calibration.json`. Every future evaluation loads this context. Wrong verdicts become better verdicts.
+- **Durable audit trail** — Every feature commit, override decision, gate block, and hotfix is appended to `logs/audit-trail.jsonl`. Optional webhook for external durability. Append-only, never rewritten.
+- **Global profile resolution** — `~/.claude/skillfoundry-profile.json` provides personal defaults across all projects. Team profile at `.claude/shared/team-profile.json`. Merge order: global → team → project → CLI flags.
+- **Stack confidence hard block** — LOW or UNKNOWN confidence in `_stack-profile.md` now stops execution before running any test command, preventing silent wrong-runner failures.
+- **Security guardrail on `/quick`** — Detects localStorage tokens, hardcoded secrets, HS256, `eval()`, and `exec()` before committing. Auto-escalates to `/feature`. Not overridable in quick mode.
+
+**Agent count:** 58 → 60 (`hotfix`, `health`). **New protocol modules (4):** `_convention-discovery`, `_evaluator-calibration`, `_audit-export`, `_profile-resolution`.
+
+#### Previous: Web Security Checker (v5.18.0)
+
+- `/web-security-check` — 10 check groups (TLS, headers, cookies, DNS, info leakage, redirects, ports, WHOIS, deps, WAF). BLOCKER/WARN/INFO severity. Mandatory gate in `/production-orchestrator` for public-facing URLs.
 
 #### Previous: Codebase Comprehension Pre-Flight (v5.17.0)
 

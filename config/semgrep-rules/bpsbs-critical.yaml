@@ -1,0 +1,197 @@
+rules:
+  # ─────────────────────────────────────────────────────────
+  # BPSBS Critical: Auth Token Storage
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.localstorage-token
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Auth token stored in localStorage or sessionStorage — XSS vulnerable.
+      Move to HttpOnly + Secure + SameSite=Strict cookie or memory only.
+    metadata:
+      category: security
+      cwe: CWE-922
+      bpsbs: zero-tolerance
+    patterns:
+      - pattern: localStorage.setItem($KEY, ...)
+        where:
+          - metavariable-regex:
+              metavariable: $KEY
+              regex: (?i)(token|jwt|auth|access|refresh|bearer|session)
+      - pattern: sessionStorage.setItem($KEY, ...)
+        where:
+          - metavariable-regex:
+              metavariable: $KEY
+              regex: (?i)(token|jwt|auth|access|refresh|bearer|session)
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS Critical: Hardcoded Secrets
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.hardcoded-secret
+    languages: [javascript, typescript, python, csharp]
+    severity: ERROR
+    message: >
+      Hardcoded secret detected. Move to environment variable or secrets manager.
+    metadata:
+      category: security
+      cwe: CWE-798
+      bpsbs: zero-tolerance
+    patterns:
+      - pattern: |
+          const $VAR = "$SECRET"
+        where:
+          - metavariable-regex:
+              metavariable: $VAR
+              regex: (?i)(secret|password|passwd|api_key|apikey|private_key|token|jwt_secret)
+          - metavariable-regex:
+              metavariable: $SECRET
+              regex: .{8,}
+      - pattern: |
+          $VAR = "$SECRET"
+        where:
+          - metavariable-regex:
+              metavariable: $VAR
+              regex: (?i)(SECRET|PASSWORD|API_KEY|PRIVATE_KEY|JWT_SECRET)
+          - metavariable-regex:
+              metavariable: $SECRET
+              regex: .{8,}
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS Critical: HS256 JWT with hardcoded secret
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.jwt-hs256-hardcoded
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      JWT signed with HS256 and a hardcoded secret. Use RS256 or ES256 with
+      asymmetric keys. HS256 with a shared secret is vulnerable to key leakage.
+    metadata:
+      category: security
+      cwe: CWE-327
+      bpsbs: zero-tolerance
+    patterns:
+      - pattern: jwt.sign($PAYLOAD, "$SECRET", {algorithm: "HS256"})
+      - pattern: jwt.sign($PAYLOAD, "$SECRET", {...})
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS Critical: Plaintext password comparison
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.plaintext-password-compare
+    languages: [javascript, typescript, python]
+    severity: ERROR
+    message: >
+      Plaintext password comparison detected. Always use bcrypt, argon2, or
+      scrypt for password verification. Never compare passwords directly.
+    metadata:
+      category: security
+      cwe: CWE-256
+      bpsbs: zero-tolerance
+    patterns:
+      - pattern: $USER.password === $INPUT
+        where:
+          - metavariable-regex:
+              metavariable: $INPUT
+              regex: (?i)(password|passwd|pass|pwd)
+      - pattern: $USER.password == $INPUT
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS Critical: Stack trace in production response
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.stack-trace-in-response
+    languages: [javascript, typescript]
+    severity: ERROR
+    message: >
+      Stack trace sent in HTTP response — information leakage.
+      Log the error server-side; return a generic message to the client.
+    metadata:
+      category: security
+      cwe: CWE-209
+      bpsbs: zero-tolerance
+    patterns:
+      - pattern: res.json({..., stack: $ERR.stack, ...})
+      - pattern: res.send($ERR.stack)
+      - pattern: res.json({..., error: $ERR.stack, ...})
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS High: SQL injection via string concatenation
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.sql-injection-concat
+    languages: [javascript, typescript, python, csharp]
+    severity: ERROR
+    message: >
+      SQL query built with string concatenation — SQL injection risk.
+      Use parameterized queries or an ORM.
+    metadata:
+      category: security
+      cwe: CWE-89
+      bpsbs: zero-tolerance
+    patterns:
+      - pattern: |
+          "SELECT " + ... + $USERINPUT + ...
+      - pattern: |
+          `SELECT ... ${$USERINPUT} ...`
+        where:
+          - metavariable-regex:
+              metavariable: $USERINPUT
+              regex: (?i)(req\.(body|params|query)|input|user)
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS High: Nullable array method call
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.nullable-array-method
+    languages: [typescript]
+    severity: WARNING
+    message: >
+      Array method called on a field that may be undefined/null.
+      Guard with: (field ?? []).method(...) or field?.method(...) ?? []
+    metadata:
+      category: correctness
+      bpsbs: high
+    patterns:
+      - pattern: $OBJ.$FIELD.map(...)
+        where:
+          - metavariable-regex:
+              metavariable: $FIELD
+              regex: (?i)(items|data|results|records|list|entries|rows)
+      - pattern: $OBJ.$FIELD.filter(...)
+      - pattern: $OBJ.$FIELD.some(...)
+      - pattern: $OBJ.$FIELD.find(...)
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS High: ts-ignore without explanation
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.ts-ignore-no-comment
+    languages: [typescript]
+    severity: WARNING
+    message: >
+      @ts-ignore without an explanatory comment. Add a comment explaining
+      WHY this suppression is necessary and what the correct fix would be.
+    metadata:
+      category: code-quality
+      bpsbs: high
+    patterns:
+      - pattern: |
+          // @ts-ignore
+          $NEXT_LINE
+        where:
+          - metavariable-regex:
+              metavariable: $NEXT_LINE
+              regex: ^(?!.*\/).+$
+
+  # ─────────────────────────────────────────────────────────
+  # BPSBS High: Empty catch block
+  # ─────────────────────────────────────────────────────────
+  - id: bpsbs.empty-catch
+    languages: [javascript, typescript]
+    severity: WARNING
+    message: >
+      Empty catch block silently swallows errors.
+      At minimum, log the error. Never fail silently.
+    metadata:
+      category: error-handling
+      bpsbs: high
+    patterns:
+      - pattern: |
+          try { ... } catch ($E) {}
+      - pattern: |
+          try { ... } catch ($E) { /* ... */ }

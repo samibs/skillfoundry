@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.19.0] - 2026-06-22
+
+### Structural Trust & Production Resilience
+
+v5.19.0 hardens SkillFoundry for multi-developer teams, adds a dedicated hotfix path for production incidents, builds evaluator trust through calibration, and lays down a durable audit trail. The pipeline now adapts to your project's existing conventions instead of overriding them.
+
+#### Added
+
+- **`agents/hotfix.md` + `.claude/commands/hotfix.md`** — Emergency fix pathway. Semgrep hard-blocks always active. Full gates bypassed (shadow tester, Anvil, evaluator, full TestLoop — smoke test max 2 iterations only). Mandatory follow-up story written to `genesis/hotfix-followup-*.md`. Audit trail entry written on completion. `logs/hotfixes.md` running log.
+- **`agents/health.md` + `.claude/commands/health.md`** (extended) — Framework health diagnostics extended with Phase 5: shared config integrity, `.claude/local/` stale state cleanup (`--cleanup-state`), evaluator calibration health, audit trail validity, protocol module presence, genesis/story lifecycle checks.
+- **`agents/_convention-discovery.md`** — One-time detection of existing project conventions: changelog format (keepachangelog, RST, version-date), commit message style (conventional, JIRA, ticket-prefix, imperative), test file naming, documentation style, PR templates. Outputs `.claude/shared/conventions.json`. Agents read this before writing commits, changelogs, or test files.
+- **`agents/_evaluator-calibration.md`** — Feedback loop for wrong evaluator verdicts. `/evaluator --feedback "reason"` appends to `.claude/shared/evaluator-calibration.json`. Every future evaluation loads this as context. Scope options: project-wide, file-pattern, one-time. Commands: `--list-calibrations`, `--remove-calibration`, `--confirm-calibration`.
+- **`agents/_audit-export.md`** — Append-only `logs/audit-trail.jsonl` with structured entries for every `feature_commit`, `override_decision`, `gate_blocked`, `hotfix_applied`, and `forge_complete` event. Optional webhook export via `audit_webhook` in config (fire-and-forget, 5s timeout, non-blocking).
+- **`agents/_profile-resolution.md`** — Merge order: `~/.claude/skillfoundry-profile.json` (global, personal) → `.claude/shared/team-profile.json` (team, committed) → `.claude/shared/config.json` (project) → CLI flags. `/onboard --team-profile <url>` pulls and commits a team profile.
+
+#### Changed
+
+- **State isolation** — All volatile state moved to `.claude/local/` (gitignored): `*-state.json`, `*-results.json`, `execution-context.json`, `semgrep-results.json`. Team-visible config stays in `.claude/shared/` (committed): `config.json`, `stack-profile.json`, `conventions.json`, `evaluator-calibration.json`. `.gitignore` updated. Path references migrated in `testloop.md`, `feature-lifecycle.md`, `_execution-context.md`, `_stack-profile.md`, `onboard.md`, `quick.md`.
+- **`agents/_stack-profile.md`** — Added confidence gate: LOW or UNKNOWN confidence is now a hard stop before any test execution. Displays options (confirm detected commands, override manually, verbose re-detect). `unknown` always blocks; `low` blocks unless `user_confirmed: true`.
+- **`.claude/config.json`** — `reports.generate_html` default flipped from `false` to `true`. Added `audit_webhook` key.
+- **`.claude/commands/onboard.md`** — Added Step 4b (convention discovery), Step 4c (global profile resolution), state isolation documentation, `--detect-conventions` / `--detect-stack` / `--team-profile` flags.
+- **`.claude/commands/quick.md`** — Added Step 2.8: security-critical pattern scan before commit (localStorage tokens, hardcoded secrets, HS256, `eval()`, `exec()`). Auto-escalates to `/feature`. Not overridable in quick mode.
+- **`.claude/commands/evaluator.md`** — Added calibration pre-load step. Added `--feedback`, `--list-calibrations`, `--remove-calibration`, `--confirm-calibration` commands.
+- **`agents/feature-lifecycle.md`** — Stage 5 now reads `conventions.json` before formatting commit. Audit trail entry written after commit. Integration map updated with `_convention-discovery`, `_audit-export`, `_evaluator-calibration`.
+- **`agents/INDEX-v2.md`** — Agent count 58 → 60. `hotfix` (Execution Tier — Emergency), `health` (Monitoring Tier). Pass 2 protocol modules listed.
+
+#### Agent Count
+
+- **58 → 60** (`hotfix`, `health`)
+- **New protocol modules:** `_convention-discovery`, `_evaluator-calibration`, `_audit-export`, `_profile-resolution`
+
+---
+
 ## [5.18.0] - 2026-06-12
 
 ### Web Security Checker — Pre-Production Promotion Gate

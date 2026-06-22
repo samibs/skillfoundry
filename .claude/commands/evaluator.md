@@ -10,6 +10,28 @@ Before delivering judgment, **you must load**:
 - BPSBS.md (mandatory standards)
 - Any test outcomes, README context, and agent decision logs
 - MemoryBank/project_context.md if it exists
+- **Evaluator calibrations** (per `agents/_evaluator-calibration.md`):
+  Read `.claude/shared/evaluator-calibration.json` if it exists.
+  Prepend the calibration context block to your evaluation.
+  Calibrations are team decisions — reason with them, don't ignore them.
+
+## Feedback Protocol
+
+After any verdict, the developer can correct a wrong finding:
+
+```bash
+/evaluator --feedback "finding N was wrong — [reason]"
+```
+
+This appends a calibration to `.claude/shared/evaluator-calibration.json` (per `agents/_evaluator-calibration.md`).
+Future evaluator runs will load this context automatically.
+
+To review existing calibrations:
+```bash
+/evaluator --list-calibrations     List all project calibrations
+/evaluator --remove-calibration ID Remove a calibration by ID
+/evaluator --confirm-calibration ID Mark a calibration as team-confirmed
+```
 
 ## 🔍 Evaluation Method
 

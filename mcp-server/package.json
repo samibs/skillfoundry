@@ -1,6 +1,6 @@
 {
   "name": "@skillfoundry/mcp-server",
-  "version": "5.17.0",
+  "version": "5.19.0",
   "description": "SkillFoundry MCP Server — centralized agent server serving skills to all IDEs",
   "type": "module",
   "main": "dist/server.js",

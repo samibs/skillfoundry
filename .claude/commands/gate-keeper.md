@@ -363,6 +363,14 @@ Required Actions:
 2. Configure security headers in middleware
 3. Remove unused functions: oldLogin(), deprecatedAuth(), legacyToken()
 
+Options:
+  A) Fix the requirements above, then re-run the gate
+  B) Override with documented reason (non-security violations only):
+     /gate-keeper --override "reason: [why this is acceptable now]"
+     Logged to logs/overrides.md. Noted in next commit body.
+
+Note: Hardcoded secrets, localStorage tokens, and SQL injection cannot be overridden.
+
 You have not proven you can survive. Fix the failures, then return.
 ```
 
