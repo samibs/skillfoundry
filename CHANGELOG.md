@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.20.0] - 2026-06-23
+
+### Autonomous Loop Engine — Agent Prompting Itself
+
+v5.20.0 introduces the Ralph Loop protocol: a self-prompting execution cycle where the agent is simultaneously the worker, the scheduler, and the quality judge. Inspired by Boris Cherny's (Anthropic) framing of loops as the next structural shift in how software gets built.
+
+#### Added
+
+- **`agents/_ralph-loop-protocol.md`** — The core loop engine. Implements the Ralph Loop: SET GOAL → EXECUTE → CHECKPOINT (agent writes it) → JUDGE (AI decides, not Boolean) → SELF-PROMPT (agent formulates its own next task) → RE-ENTER. Five exit conditions: `COMPLETE`, `CONTINUE`, `BLOCKED`, `BUDGET_HALT`, `OSCILLATION`. State persisted to `.claude/ralph-loop-state.json` after every iteration. Integrated by `/improve`, `/goma`, `/testloop`, and any agent operating in Loop Mode.
+- **`agents/_self-prompt-protocol.md`** — Governs quality of self-generated prompts. Five rules: specificity must increase each iteration, actual root cause must be stated, no invented requirements outside original success criteria, approach must change if previous attempt failed, discoveries must be carried forward. Anti-oscillation check before every self-prompt. Budget-aware: MINIMAL prompt at <40% budget, BUDGET_HALT at <20%. Bad self-prompts cause infinite spirals — this protocol prevents them.
+- **`.claude/commands/improve.md`** — `/improve` command. Continuously scans the codebase for improvements (security → quality GL-01–GL-10 → duplication → architectural), fixes them one at a time, and loops until no improvements remain or budget is exhausted. Each iteration: prioritize → fix (surgical, one item only) → verify (tests) → checkpoint → self-prompt. Modes: `--dry-run`, `--resume`, `--budget N`, `--pr`. Supports category scope: `arch`, `duplication`, `quality`, `security`. Never waits for human input between iterations.
+
+#### Changed
+
+- **`agents/_autonomous-protocol.md`** — Added "Operating Modes" section: Checkpoint Mode (default, routes to user after each cycle) vs Loop Mode (`loop_mode: true` in `.claude/state.json`, routes through Ralph Loop). Added Step 4b: LOOP CONTINUATION CHECK — fires after pipeline completes in Loop Mode; runs Ralph Loop goal-achievement judgment; if `CONTINUE`, formulates self-prompt and re-enters pipeline without surfacing intermediate output to user. Added token-budget stopping condition: budget < 20% in Loop Mode → `BUDGET_HALT`, save state, surface resume instructions. Updated to v1.1.0.
+- **`agents/_reflection-protocol.md`** — Added Loop-Back Decision section: after post-action self-scoring, checks `.claude/ralph-loop-state.json`; if `CONTINUE`, formulates self-prompt (via `_self-prompt-protocol.md`) and re-enters Step 2 without waiting for human; if `COMPLETE` (all criteria met, score ≥ 9.0, security ≥ 7.0), exits to user. Escalation overrides always force exit: security dimension < 5.0, destructive action required, oscillation, budget < 20%. Updated to v1.1.
+
+#### New Protocol Modules
+
+- `_ralph-loop-protocol.md` — The self-prompting loop engine
+- `_self-prompt-protocol.md` — Self-prompt quality, oscillation prevention, budget awareness
+
+#### Why
+
+The standard model of AI-assisted development is request-response: the developer prompts, the agent responds, the developer reviews and re-prompts. This works but puts the scheduling burden back on the human. Boris Cherny's loop model changes the contract: the agent executes, judges its own output, writes its own next task, and continues — the human only re-enters when the agent's judgment reaches a terminal state (done, blocked, or budget exhausted). v5.20.0 formalizes this as a first-class protocol in SkillFoundry. `/improve` is the first command that fully expresses the model: the agent finds the work, does the work, finds more work, and stops when there is nothing left.
+
+---
+
 ## [5.19.0] - 2026-06-22
 
 ### Structural Trust & Production Resilience

@@ -20,6 +20,26 @@ Toggle via `/autonomous on` or `/autonomous off`.
 
 ---
 
+## Operating Modes
+
+The autonomous protocol supports two execution modes. The mode is set per-run and governs what happens after Step 4 (REVIEW).
+
+| Mode | Behaviour After Review | When to Use |
+|---|---|---|
+| **Checkpoint Mode** (default) | Surface output to user after every pipeline cycle | Most autonomous work — user reviews each completion |
+| **Loop Mode** | Re-enter pipeline if goal not yet achieved and budget allows | Hands-off execution until done (e.g. `/goma`, `/improve`) |
+
+**Activating Loop Mode**: the triggering command sets `"loop_mode": true` in `.claude/state.json` before execution begins. Loop Mode follows the Ralph Loop protocol — see `agents/_ralph-loop-protocol.md` and `agents/_self-prompt-protocol.md`.
+
+**Loop Mode stopping conditions** (any one triggers exit):
+- The AI judges the goal achieved (AI-decided, not a Boolean rule)
+- Token budget < 20% remaining → save state, surface partial output
+- Max loop iterations exceeded (default: 5 per story in Loop Mode)
+- Oscillation detected: same remaining work in two consecutive iterations with no change
+- A condition that requires user input (see Escalation Rules below)
+
+---
+
 ## The Loop: Classify → Route → Execute → Review → Record
 
 Every user input follows this sequence. No exceptions.
@@ -94,6 +114,7 @@ Run the mapped pipeline **fully** without stopping for confirmation.
 - If the task is burning excessive tokens (50%+ of context on a single story), warn the user
 - Suggest breaking the work into smaller pieces if needed
 - Never sacrifice quality for token savings
+- In Loop Mode: if token budget drops below 20%, do NOT start the next iteration — exit with BUDGET_HALT, write `.claude/ralph-loop-state.json`, and surface resume instructions
 
 ### Step 4: REVIEW
 
@@ -132,6 +153,36 @@ Autonomous Pipeline Complete
 ```
 
 **The user reviews ONCE at the end, not during execution.**
+
+### Step 4b: LOOP CONTINUATION CHECK (Loop Mode only)
+
+This step runs only when `loop_mode: true`. It fires after Step 4 completes and before presenting output to the user.
+
+```
+READ .claude/state.json → check "loop_mode" field
+IF loop_mode == false:
+  → Skip this step. Present output to user normally (Checkpoint Mode).
+
+IF loop_mode == true:
+  → Run the Ralph Loop judgment (see agents/_ralph-loop-protocol.md Step 4):
+    Ask: "Is the goal fully achieved?"
+
+  IF COMPLETE:
+    → Exit loop. Present final output to user.
+
+  IF CONTINUE:
+    → Formulate self-prompt (see agents/_self-prompt-protocol.md)
+    → Set current_task = self_prompt
+    → Loop back to Step 3 (EXECUTE) without surfacing intermediate output
+    → Log iteration to .claude/ralph-loop-state.json
+
+  IF BLOCKED, BUDGET_HALT, or OSCILLATION:
+    → Exit loop regardless of loop_mode
+    → Present partial output to user with clear reason for halt
+    → Provide resume or action instructions
+```
+
+**Key rule**: In Loop Mode the user does NOT see intermediate pipeline outputs. They see only the final exit (COMPLETE / BLOCKED / BUDGET_HALT / OSCILLATION). This is what makes it a genuine loop — the agent decides when it is done, not the human.
 
 ### Step 5: RECORD
 
@@ -221,3 +272,4 @@ These can be adjusted per-project. Defaults favor safety (no auto-commit, no aut
 ---
 
 *The Autonomous Developer Loop — Type once, review once, ship.*
+*v1.1.0: Added Loop Mode (Ralph Loop), token-budget stopping condition, self-prompt continuation (2026-06-23)*
