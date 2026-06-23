@@ -9,12 +9,15 @@ color: gray
 
 ## Enterprise Agent Architecture
 
-**Last Updated:** 2026-06-22
+**Last Updated:** 2026-06-23
 **Total Agents:** 60 (58 v2.0 + hotfix + health)
 **New Agents (Pass 2):** hotfix, health
 **New Protocol Modules (Pass 2):** _convention-discovery, _evaluator-calibration, _audit-export, _profile-resolution
+**New Protocol Modules (v5.20.0):** _ralph-loop-protocol, _self-prompt-protocol
+**New Commands (v5.20.0):** /improve (continuous improvement loop)
 **State Isolation:** .claude/local/ (gitignored) + .claude/shared/ (committed)
 **Governance Model:** 5-tier hierarchy with escalation protocols
+**Loop Engine:** Ralph Loop (_ralph-loop-protocol.md) — agent-prompts-self pattern
 
 ---
 

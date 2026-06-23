@@ -4,13 +4,13 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.19.0-blue)
+![Version](https://img.shields.io/badge/version-5.20.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
 ![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen)
 
-SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini, Grok Build). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 23 real tool agents, 128+ skills, 6 AI providers, a tree-sitter Code Map pre-flight that reads your codebase before the AI writes, Semgrep SAST, PRD linting, cross-platform parity detection, and a knowledge base built from 2,792 artifacts across 49 projects.
+SkillFoundry is an AI engineering framework that works two ways: as a **standalone CLI** (`sf`) with its own AI connection, or as a **skill layer inside your existing IDE** (Claude Code, Cursor, Copilot, Codex, Gemini, Grok Build). Either way you get the same thing — quality gates your AI can't skip, a PRD-first pipeline that enforces structure before writing code, and persistent memory that learns from every session. 23 real tool agents, 130+ skills, 6 AI providers, a tree-sitter Code Map pre-flight that reads your codebase before the AI writes, Semgrep SAST, PRD linting, cross-platform parity detection, and a knowledge base built from 2,792 artifacts across 49 projects.
 
 <p align="center">
   <img src="docs/demo.gif" alt="SkillFoundry /forge demo — PRD validation, story implementation, quality gates, security audit" width="840">
@@ -25,22 +25,23 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.19.0
+### What's New in v5.20.0
 
-**Structural Trust & Production Resilience**
+**Autonomous Loop Engine — Agent Prompting Itself**
 
-v5.19.0 makes SkillFoundry safe for teams, resilient in production incidents, and trustworthy over time. The theme: stop fighting your project — adapt to it, protect it, and remember what you learned.
+v5.20.0 introduces the Ralph Loop: a self-prompting execution cycle where the agent is simultaneously the worker, the scheduler, and the quality judge. Inspired by Boris Cherny's (Anthropic) framing of loops as the next structural shift in AI-assisted software development.
 
-- **Multi-user state isolation** — `.claude/local/` (gitignored, machine-scoped) separates volatile session state from `.claude/shared/` (committed, team-visible config). Concurrent developers can no longer corrupt each other's in-flight pipeline state.
-- **Convention discovery** — `_convention-discovery.md` reads your existing project before onboarding: changelog format, commit style, test file naming. SkillFoundry adapts to your conventions instead of overriding them.
-- **Hotfix pathway** — `/hotfix` provides an emergency route when production is down. Semgrep hard-blocks always run. Full gates are bypassed. A mandatory follow-up story is created. Everything is logged to the audit trail.
-- **Evaluator calibration** — `/evaluator --feedback "finding N was wrong"` stores project-specific corrections in `.claude/shared/evaluator-calibration.json`. Every future evaluation loads this context. Wrong verdicts become better verdicts.
-- **Durable audit trail** — Every feature commit, override decision, gate block, and hotfix is appended to `logs/audit-trail.jsonl`. Optional webhook for external durability. Append-only, never rewritten.
-- **Global profile resolution** — `~/.claude/skillfoundry-profile.json` provides personal defaults across all projects. Team profile at `.claude/shared/team-profile.json`. Merge order: global → team → project → CLI flags.
-- **Stack confidence hard block** — LOW or UNKNOWN confidence in `_stack-profile.md` now stops execution before running any test command, preventing silent wrong-runner failures.
-- **Security guardrail on `/quick`** — Detects localStorage tokens, hardcoded secrets, HS256, `eval()`, and `exec()` before committing. Auto-escalates to `/feature`. Not overridable in quick mode.
+- **Ralph Loop protocol** — `_ralph-loop-protocol.md`: SET GOAL → EXECUTE → CHECKPOINT → JUDGE (AI decides, not a Boolean) → SELF-PROMPT (agent writes its own next task) → RE-ENTER. Five exit states: `COMPLETE`, `CONTINUE`, `BLOCKED`, `BUDGET_HALT`, `OSCILLATION`. Loop state persisted to `.claude/ralph-loop-state.json` for resumption.
+- **Self-prompt protocol** — `_self-prompt-protocol.md`: rules that keep self-generated prompts sharp enough to converge. Specificity must increase each iteration. Root cause must be stated. No scope creep. Anti-oscillation check before every prompt. Budget-aware (MINIMAL at <40%, HALT at <20%).
+- **`/improve` command** — Continuously scans the codebase (security → quality → duplication → architectural), fixes one item per iteration, verifies, checkpoints, and loops. Stops when backlog is empty or budget exhausted. `--dry-run`, `--resume`, `--pr`, `--budget N` flags. The agent finds the work, does the work, finds more work, and stops when there is nothing left.
+- **Loop Mode added to autonomous protocol** — `_autonomous-protocol.md` now supports Checkpoint Mode (default) and Loop Mode. In Loop Mode the agent re-enters the pipeline after each pipeline cycle without surfacing intermediate output to the user. Step 4b (LOOP CONTINUATION CHECK) governs the re-entry decision.
+- **Reflection loop-back** — `_reflection-protocol.md` now includes a Loop-Back Decision: after self-scoring, if goal not met, the agent formulates a self-prompt and re-enters execution — no human re-invocation required.
 
-**Agent count:** 58 → 60 (`hotfix`, `health`). **New protocol modules (4):** `_convention-discovery`, `_evaluator-calibration`, `_audit-export`, `_profile-resolution`.
+**New protocol modules (2):** `_ralph-loop-protocol`, `_self-prompt-protocol`. **New command:** `/improve`.
+
+#### Previous: Structural Trust & Production Resilience (v5.19.0)
+
+- Multi-user state isolation (`.claude/local/` vs `.claude/shared/`), convention discovery, `/hotfix` emergency pathway, evaluator calibration, durable audit trail, global profile resolution, stack confidence hard block.
 
 #### Previous: Web Security Checker (v5.18.0)
 

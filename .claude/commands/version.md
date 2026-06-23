@@ -161,26 +161,29 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.1.0**
+**SkillFoundry v5.20.0**
 
-- **56 Agents, 63 Skills** - Complete development lifecycle coverage
-- **5 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini
+- **60 Agents, 130+ Skills** - Complete development lifecycle coverage
+- **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
 - **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
-- **164 Deviation Patterns** - LLM failure prevention across 16 categories
+- **171 Deviation Patterns** - LLM failure prevention across 16 categories
+- **Autonomous Loop Engine** - Ralph Loop: agent prompts itself, judges its own output, stops when done
+- **`/improve` command** - Continuous codebase improvement loop: scan → fix → verify → loop
 - **Pre-Execution Verification** - Goal reframing and assumption surfacing before implementation
 - **Anvil T4b Traceability** - Line-level change traceability gate
 - **Auto-Remediation** - 90%+ violations fixed autonomously
-- **Execution Modes** - Supervised, Semi-Autonomous, Autonomous
-- **Native Debugger** - CDP-based interactive debugging for AI agents
+- **Execution Modes** - Supervised, Semi-Autonomous, Autonomous, Loop
 
 ### Recent Milestones
 
 | Version | Date | Milestone |
 |---------|------|-----------|
-| 5.1.0 | 2026-04-14 | Karpathy-inspired: Pre-Execution Verification, T4b Traceability, 3 new deviation patterns |
-| 5.0.0 | 2026-03-29 | Learning-driven intelligence: Secret Guard, Deviation Enforcer, Import Validator, Health Scores |
-| 4.0.0 | 2026-03-29 | Tier 4 agents, fleet health, multi-platform intelligence |
-| 3.0.0 | 2026-03-29 | MCP Agent Server + iznir Skill Factory |
+| 5.20.0 | 2026-06-23 | Autonomous Loop Engine: Ralph Loop, /improve, self-prompt protocol |
+| 5.19.0 | 2026-06-22 | Structural Trust: state isolation, hotfix pathway, evaluator calibration, audit trail |
+| 5.18.0 | 2026-06-12 | Web Security Checker: live URL surface validation pre-production |
+| 5.17.0 | 2026-06 | Codebase Comprehension Pre-Flight: tree-sitter Code Map, /preflight |
+| 5.15.0 | 2026-05 | Coding Discipline Protocol + GuardLoop adaptive guardrails |
+| 5.1.0 | 2026-04-14 | Karpathy-inspired: Pre-Execution Verification, T4b Traceability |
 
 ## Implementation
 

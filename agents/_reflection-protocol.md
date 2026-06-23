@@ -153,6 +153,80 @@ This protocol ensures all agents engage in self-critique and continuous improvem
 
 ---
 
+### Loop-Back Decision
+
+This section activates after Post-Action Reflection and Self-Score when the agent is operating inside a Ralph Loop (see `agents/_ralph-loop-protocol.md`). It determines whether to self-prompt and continue or to surface output to the user.
+
+**Trigger**: check `.claude/ralph-loop-state.json` — if it exists and `status == "CONTINUE"`, this decision applies.
+
+```
+LOOP-BACK DECISION TREE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                                                    
+  Self-score calculated
+         │
+         ▼
+  Overall score >= 9.0 AND all success criteria met?
+         │YES → COMPLETE: Present final output. Exit loop.
+         │
+         ▼NO
+  Remaining work exists AND score >= 5.0?
+         │YES → CONTINUE: Formulate self-prompt. Re-enter.
+         │
+         ▼NO
+  Score < 5.0 on any dimension?
+         │YES → BLOCKED: Cannot progress. Surface blocker. Exit loop.
+         │
+         ▼NO (score is 5.0-8.9 but remaining work exists)
+         → CONTINUE: Formulate self-prompt. Re-enter.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+**CONTINUE action** (agent prompts itself):
+
+When the loop-back decision is CONTINUE, the agent must:
+
+1. Write a self-prompt following `agents/_self-prompt-protocol.md`:
+   ```
+   Based on my reflection:
+     Overall score: [X]/10
+     Not yet achieved: [list from Post-Action Reflection — Goal Achievement gaps]
+     Root cause of gaps: [from Contradiction Detection or Quality Assessment]
+     Next task: [specific action targeting the gaps]
+     Different approach: [what to do differently based on the reflection]
+   ```
+
+2. Update `.claude/ralph-loop-state.json` with:
+   - Current iteration number
+   - Self-score for this iteration
+   - Remaining work list
+   - The self-prompt just written
+
+3. Re-enter Step 2 (EXECUTE) with the self-prompt as `current_task`.
+
+4. Do NOT surface intermediate reflection output to the user — only the loop exit report is shown.
+
+**COMPLETE action** (exit criteria met):
+
+The agent decides "done" when ALL of:
+- Overall self-score >= 9.0
+- No gaps identified in Goal Achievement
+- No unresolved contradictions
+- Security dimension >= 7.0
+
+This is an AI judgment call. The numbers are guides, not hard rules — if the agent is genuinely satisfied the goal is met even at 8.5, COMPLETE is correct.
+
+**Escalation overrides** (always exit loop, regardless of loop-back decision):
+
+These conditions override CONTINUE and force an exit to user review:
+- Security dimension < 5.0 (cannot self-fix a security regression)
+- A destructive action is required to proceed (drop table, force push, etc.)
+- The same gap appears in two consecutive iterations (oscillation — refer to `_ralph-loop-protocol.md`)
+- Token budget < 20% remaining
+
+---
+
 ### Reflection Output Format
 
 **When reflecting, use this structured format**:
@@ -291,5 +365,5 @@ This protocol ensures all agents engage in self-critique and continuous improvem
 
 ---
 
-**Last Updated**: January 25, 2026  
-**Version**: 1.0
+**Last Updated**: 2026-06-23
+**Version**: 1.1 — Added Loop-Back Decision (Ralph Loop integration, self-prompt continuation)
