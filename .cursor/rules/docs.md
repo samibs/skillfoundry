@@ -441,6 +441,187 @@ done
 ```
 
 
+## PHASE 7: CODEBASE AGENT WIKI (REPO-WIDE, AGENT-FACING)
+
+Phases 1–6 document **features on demand** — you hand them a finished feature and they codify it. This phase does the opposite: it **inspects the whole repository and generates a navigable wiki whose primary reader is a future coding agent**. The goal is that an agent (or human) with zero prior knowledge can start at one entrypoint, understand what the project is and how it is organized, and make high-quality changes with far less source exploration.
+
+> Inspired by langchain-ai/openwiki. The core idea it adds to this agent: documentation is not just a storefront (README) and a workshop log (CHANGELOG) — it is also a **map of the codebase built for the next agent**, grounded in real source and git evidence, and kept current with surgical, change-aware updates.
+
+### Invocation
+
+| Command | Mode | Behavior |
+|---------|------|----------|
+| `/docs wiki` or `/docs wiki init` | **Init** | Build the agent wiki from scratch. Assume `docs/wiki/` has no useful content yet. |
+| `/docs wiki update` | **Update** | Surgical, change-aware refresh of the existing wiki. May be a no-op. |
+| `/docs wiki audit` | **Audit** | Report wiki freshness vs. current git HEAD without editing. |
+
+**Location**: `docs/wiki/` (SkillFoundry convention — keeps generated agent docs separate from hand-authored `docs/` and the user-facing `README.md`). Entrypoint is always `docs/wiki/quickstart.md`.
+
+### Grounding Discipline (NON-NEGOTIABLE — anti-hallucination)
+
+The #1 failure mode of AI-generated documentation is confidently describing APIs, modules, or behavior that do not exist. This mode forbids it.
+
+```
+- Ground EVERY important claim in a source file, existing doc, or git evidence you actually inspected.
+- Do NOT invent files, modules, APIs, routes, business rules, config keys, or behavior.
+- If you cannot verify a claim from the repository, either omit it or mark it explicitly as an open question.
+- Prefer "unknown / needs verification" over a plausible-sounding guess. A confident lie is worse than an admitted gap.
+- Include inline source references (`src/agent/index.ts`, `path/to/file:line`) so any reader can verify or continue exploring.
+```
+
+### Discovery Discipline (do NOT read everything)
+
+```
+- Do not exhaustively read every file. Inspect: the repo tree, package/config files (package.json, pyproject, *.csproj, docker-compose), README-style files, entrypoints, routing/API files, DB/schema/migration files, and one representative file per major domain.
+- Do not glob **/* from the repo root. Use targeted discovery by directory and extension. Prefer `rg --files` with excludes for .git, node_modules, dist, build, cache, and existing generated wiki output.
+- Prefer grep/glob + short targeted reads over full-file reads on large files.
+- For repos with multiple substantial domains, you MAY dispatch read-only research subagents (see Chunk Dispatch Support). Subagents only inspect and summarize — they never write to docs/wiki/. The main agent synthesizes and owns all writes.
+```
+
+### Git-as-Discovery (explain WHY, not just WHAT)
+
+```
+- Use git heavily to explain why code exists, not only what files contain.
+- INIT: inspect recent commit history; use `git log`, `git show`, `git blame` selectively on high-signal files (entrypoints, core workflows, business-rule modules) to understand how they evolved.
+- UPDATE: inspect commits added since the previous successful wiki run (use gitHead from docs/wiki/.last-update.json; fall back to the last updatedAt timestamp). Also run `git status` / `git diff` to account for uncommitted local changes.
+- Do NOT over-index on ancient history, and do NOT dump persistent commit-hash lists into pages unless a specific commit documents an important, still-relevant decision.
+```
+
+### Planning Discipline
+
+```
+- After discovery and BEFORE writing final pages, write a temporary docs/wiki/_plan.md listing: intended pages, the source evidence backing each page, and remaining open questions.
+- Build the final wiki from the plan.
+- DELETE docs/wiki/_plan.md before finishing. Never leave _plan.md in the committed wiki.
+```
+
+### Required Structure
+
+```
+docs/wiki/
+├── quickstart.md              ← ALWAYS the entrypoint (high-level overview + links to every section)
+├── .last-update.json          ← run metadata (see below)
+└── <section>/                 ← one directory per REAL documentation area
+    └── *.md                   ← focused pages (architecture/, workflows/, domain/, api/,
+                                  data-models/, operations/, integrations/, testing/, ...)
+```
+
+`quickstart.md` MUST contain: a high-level repository overview, a "Start here" list linking every major section, a "Key source files" list, and a "Notes for future agents" section.
+
+**Init page budget**: at most ~8 pages on the first run unless the repo is clearly tiny. Document the main architecture, workflows, domain concepts, data models, integrations, operations, and known extension points — NOT every source file.
+
+### Navigability Rules (avoid thin pages & sprawl)
+
+```
+- One canonical home per concept. Explain it fully in ONE page; link to it from others. Never re-explain the same concept in multiple pages.
+- No thin pages. If a page would mostly be a stub or a bare source list, fold it into quickstart.md or a broader section page instead.
+- No single-file directories unless that page is substantial, has a clear domain boundary, and is likely to grow. Prefer a heading in a broader page first.
+- For small repos (~10 or fewer primary source files): quickstart.md + at most 1–2 supporting pages.
+- Before finishing, review the docs/wiki/ tree and merge/move/remove low-value directories and stubs.
+```
+
+### Section Page Template
+
+```markdown
+# [Area name]
+
+[1–2 sentences: what this area does and why it exists.]
+
+## How it works
+[The real mechanics, grounded in named source files. Explain the WHY, not just the WHAT.]
+
+## Where to start
+[Which file/function an agent should open first to change this area.]
+
+## What to watch out for
+[Gotchas, invariants, cross-cutting coupling, "if you change X you must also change Y".]
+
+## Relevant tests / checks
+[Which tests, gates, or commands validate changes to this area.]
+
+## Source references
+`path/to/entrypoint.ts` · `path/to/core-logic.ts` · related: [Other area](../other/page.md)
+```
+
+The **"Where to start / What to watch out for / Relevant tests"** trio is what makes the wiki agent-actionable rather than a passive file inventory. Every section page must earn its place by providing real change-oriented guidance.
+
+### Agent Instruction File Integration
+
+So future agents actually find and use the wiki, ensure the repo's top-level agent instruction files point to it:
+
+```
+- Consider ONLY top-level /AGENTS.md and /CLAUDE.md. Never edit nested AGENTS.md / CLAUDE.md files.
+- If either exists, add or refresh a single reference section (below). If both exist, keep the same section in both.
+- If neither exists, create a top-level /AGENTS.md containing only the reference section.
+- Preserve all surrounding instructions. Replace an existing reference section in place — never add duplicates.
+- Do NOT make formatting-only edits if the existing reference section is already semantically correct.
+```
+
+Reference section to insert:
+
+```markdown
+## Codebase Wiki
+
+This repository has an agent-facing wiki in docs/wiki/, grounded in source and git evidence.
+
+Start here:
+- [Wiki quickstart](docs/wiki/quickstart.md)
+
+It covers the repository overview, architecture, workflows, domain concepts, data models,
+operations, integrations, and testing guidance, with per-area "where to start / what to
+watch out for / relevant tests" notes.
+
+When working in this repository, read the wiki quickstart first, then follow its links to
+the area you are changing before exploring source.
+```
+
+### Update Mode (surgical & change-aware)
+
+```
+- Read docs/wiki/.last-update.json, then build a DOCS IMPACT PLAN from changed source:
+    source change  →  wiki page affected  →  edit needed  →  why
+  If a page cannot be tied to a real source/workflow/product/doc change, do NOT edit it.
+- Updates are surgical: preserve accurate structure and wording. Prefer replacing one stale
+  sentence over adding new paragraphs. Keep each concept in its one canonical page.
+- NO formatting-only edits (do not reflow tables, normalize blank lines, reorder source lists,
+  or polish wording) unless surrounding content is already being changed for accuracy.
+- Soft diff budget: if fewer than ~5 source files changed, touch at most 1–2 wiki pages.
+  Avoid touching quickstart unless top-level product behavior, setup, or navigation changed.
+  If you think >3 pages need edits, re-justify deeply before making broad changes.
+- Updates MAY be a no-op. If nothing relevant changed since the last successful run and the
+  wiki is already accurate, edit nothing and report "wiki already current".
+```
+
+### Run Metadata (docs/wiki/.last-update.json)
+
+After any init/update run that actually changed wiki content, write:
+
+```json
+{
+  "command": "init | update",
+  "updatedAt": "2026-07-05T12:00:00Z",
+  "gitHead": "<full commit SHA at run time>"
+}
+```
+
+Do NOT rewrite metadata when the run was a no-op — an unchanged wiki keeps its previous gitHead so the next update knows the true "since" point.
+
+### Security (hard limits)
+
+```
+- NEVER read or document secret values: credentials, private keys, tokens, .env files.
+- Do NOT read .env. .env.example / sample configs may be read ONLY if they contain placeholders.
+- If a secret-bearing file is relevant, document only THAT such configuration exists and where
+  non-sensitive setup belongs — never the values.
+- Keep all wiki output under docs/wiki/. The only files outside it you may touch are top-level
+  /AGENTS.md and /CLAUDE.md, and only for the reference section above.
+```
+
+### Continuous Automation (optional)
+
+For repos that want the wiki to self-maintain, add a scheduled CI job (e.g. a daily GitHub Actions workflow) that runs `/docs wiki update` and opens a PR with any documentation changes — mirroring openwiki's `openwiki-update.yml`. Never auto-merge; the diff is always human-reviewed.
+
+
 ## DOCUMENTATION TYPES
 
 ### Technical Documentation (for developers)
