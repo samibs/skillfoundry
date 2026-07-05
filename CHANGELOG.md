@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.21.0] - 2026-07-05
+
+### Codebase Agent Wiki — Documentation Built for the Next Agent
+
+v5.21.0 extends the `/docs` skill (Documentation Codifier) with a repo-wide, agent-facing wiki generator. Inspired by [langchain-ai/openwiki](https://github.com/langchain-ai/openwiki). Phases 1–6 of `/docs` document features on demand and enforce README/CHANGELOG separation and version consistency. The new Phase 7 does the opposite: it inspects the whole repository and produces a navigable wiki whose primary reader is a future coding agent — grounded in real source and git evidence, and maintained with surgical, change-aware updates.
+
+#### Added
+
+- **`agents/documentation-codifier.md` — PHASE 7: Codebase Agent Wiki.** New `/docs wiki` capability with three modes:
+  - `/docs wiki init` — build the agent wiki from scratch under `docs/wiki/` (a `quickstart.md` entrypoint plus focused section directories). Init page budget: ~8 pages unless the repo is tiny.
+  - `/docs wiki update` — surgical, change-aware refresh. Builds a docs-impact plan (source change → wiki page → edit → why), applies a soft diff budget, and may be a genuine no-op when nothing relevant changed.
+  - `/docs wiki audit` — report wiki freshness vs. current git HEAD without editing.
+- **Grounding discipline (anti-hallucination).** Every important claim must be tied to a source file, existing doc, or git evidence actually inspected. No invented files, modules, APIs, routes, config keys, or behavior. Prefer an admitted gap over a confident guess. Inline source references required.
+- **Git-as-discovery.** Uses `git log`/`blame`/`show` to explain *why* code exists. Update runs inspect commits added since the previous successful run via the `gitHead` recorded in `docs/wiki/.last-update.json` (falling back to the last `updatedAt`).
+- **Navigability rules.** One canonical home per concept, no thin/stub pages, no single-file directories unless substantial and likely to grow. Small repos collapse to `quickstart.md` + 1–2 pages.
+- **Agent-actionable section template.** Each page carries a "where to start / what to watch out for / relevant tests" trio so the wiki drives change rather than passively inventorying files.
+- **Agent instruction file integration.** Ensures top-level `AGENTS.md`/`CLAUDE.md` carry a reference section pointing future agents to `docs/wiki/quickstart.md`; edits are idempotent and preserve surrounding instructions.
+- **Run metadata & security.** Writes `docs/wiki/.last-update.json` (`command`, `updatedAt`, `gitHead`) only when content changed; never rewrites metadata on a no-op. Never reads or documents `.env`/secret values; all output confined to `docs/wiki/`.
+- **Planning discipline.** Writes a temporary `docs/wiki/_plan.md` (intended pages, source evidence, open questions) during a run and deletes it before finishing.
+
+#### Changed
+
+- **All 6 install platforms regenerated.** Ran `scripts/sync-platforms.sh sync documentation-codifier` so the enhanced `/docs` skill propagates to `.claude/commands/`, `.copilot/custom-agents/`, `.cursor/rules/`, `.agents/skills/` (Codex — also the source for Grok Build's `.grok/skills/`), and `.gemini/skills/`.
+
+#### Why
+
+Documentation in SkillFoundry was modeled as two things: a storefront (README) and a workshop log (CHANGELOG). OpenWiki adds a missing third: a map of the codebase built for the next agent. An agent that reads a grounded, change-oriented wiki before touching source makes higher-quality changes with far less exploration — and because updates are surgical and git-aware, the map stays honest as the code evolves. This is a capability upgrade to an existing skill: no new commands, no new agents, no version drift.
+
+---
+
 ## [5.20.0] - 2026-06-23
 
 ### Autonomous Loop Engine — Agent Prompting Itself

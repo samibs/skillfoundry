@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.20.0-blue)
+![Version](https://img.shields.io/badge/version-5.21.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,19 +25,23 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.20.0
+### What's New in v5.21.0
 
-**Autonomous Loop Engine — Agent Prompting Itself**
+**Codebase Agent Wiki — Documentation Built for the Next Agent**
 
-v5.20.0 introduces the Ralph Loop: a self-prompting execution cycle where the agent is simultaneously the worker, the scheduler, and the quality judge. Inspired by Boris Cherny's (Anthropic) framing of loops as the next structural shift in AI-assisted software development.
+v5.21.0 extends the `/docs` skill with a repo-wide, agent-facing wiki generator, inspired by [langchain-ai/openwiki](https://github.com/langchain-ai/openwiki). Until now `/docs` documented features on demand (README vs CHANGELOG, version consistency). It can now also inspect the whole repository and produce a navigable wiki whose primary reader is a future coding agent — grounded in real source and git evidence, and kept current with surgical, change-aware updates.
 
-- **Ralph Loop protocol** — `_ralph-loop-protocol.md`: SET GOAL → EXECUTE → CHECKPOINT → JUDGE (AI decides, not a Boolean) → SELF-PROMPT (agent writes its own next task) → RE-ENTER. Five exit states: `COMPLETE`, `CONTINUE`, `BLOCKED`, `BUDGET_HALT`, `OSCILLATION`. Loop state persisted to `.claude/ralph-loop-state.json` for resumption.
-- **Self-prompt protocol** — `_self-prompt-protocol.md`: rules that keep self-generated prompts sharp enough to converge. Specificity must increase each iteration. Root cause must be stated. No scope creep. Anti-oscillation check before every prompt. Budget-aware (MINIMAL at <40%, HALT at <20%).
-- **`/improve` command** — Continuously scans the codebase (security → quality → duplication → architectural), fixes one item per iteration, verifies, checkpoints, and loops. Stops when backlog is empty or budget exhausted. `--dry-run`, `--resume`, `--pr`, `--budget N` flags. The agent finds the work, does the work, finds more work, and stops when there is nothing left.
-- **Loop Mode added to autonomous protocol** — `_autonomous-protocol.md` now supports Checkpoint Mode (default) and Loop Mode. In Loop Mode the agent re-enters the pipeline after each pipeline cycle without surfacing intermediate output to the user. Step 4b (LOOP CONTINUATION CHECK) governs the re-entry decision.
-- **Reflection loop-back** — `_reflection-protocol.md` now includes a Loop-Back Decision: after self-scoring, if goal not met, the agent formulates a self-prompt and re-enters execution — no human re-invocation required.
+- **`/docs wiki` capability** — New Phase 7 of the Documentation Codifier. `/docs wiki init` builds an agent wiki under `docs/wiki/` (a `quickstart.md` entrypoint plus focused section pages); `/docs wiki update` refreshes it surgically; `/docs wiki audit` reports freshness vs git HEAD.
+- **Grounding discipline (anti-hallucination)** — Every claim must be tied to a source file, existing doc, or git evidence actually inspected. No invented files, APIs, routes, or behavior. "Unknown / needs verification" beats a plausible guess.
+- **Git-as-discovery** — Uses `git log`/`blame`/`show` to explain *why* code exists, not just what files contain. Update runs inspect commits since the last successful run via a recorded `gitHead`.
+- **Surgical, change-aware updates** — A docs-impact plan (source change → wiki page → edit → why), a soft diff budget, and a genuine no-op path so an unchanged repo produces zero edits. Run metadata tracked in `docs/wiki/.last-update.json`.
+- **Agent-actionable pages** — Every section page carries a "where to start / what to watch out for / relevant tests" trio, and the top-level `AGENTS.md`/`CLAUDE.md` gets a reference section pointing agents to the wiki.
 
-**New protocol modules (2):** `_ralph-loop-protocol`, `_self-prompt-protocol`. **New command:** `/improve`.
+Synced across all 6 install platforms (Claude, Copilot, Cursor, Codex, Gemini, Grok Build). No new commands or agents — a capability upgrade to the existing `/docs` skill.
+
+#### Previous: Autonomous Loop Engine (v5.20.0)
+
+- Ralph Loop protocol (`_ralph-loop-protocol.md`), self-prompt quality protocol (`_self-prompt-protocol.md`), `/improve` continuous-improvement command, Loop Mode in the autonomous protocol, and reflection loop-back. The agent finds the work, does the work, judges its own output, and stops when there is nothing left.
 
 #### Previous: Structural Trust & Production Resilience (v5.19.0)
 

@@ -161,12 +161,13 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.20.0**
+**SkillFoundry v5.21.0**
 
 - **60 Agents, 130+ Skills** - Complete development lifecycle coverage
 - **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
 - **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
 - **171 Deviation Patterns** - LLM failure prevention across 16 categories
+- **Codebase Agent Wiki** - `/docs wiki` generates a repo-wide, agent-facing wiki grounded in source + git evidence
 - **Autonomous Loop Engine** - Ralph Loop: agent prompts itself, judges its own output, stops when done
 - **`/improve` command** - Continuous codebase improvement loop: scan → fix → verify → loop
 - **Pre-Execution Verification** - Goal reframing and assumption surfacing before implementation
@@ -178,6 +179,7 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 5.21.0 | 2026-07-05 | Codebase Agent Wiki: /docs wiki, grounded agent-facing docs, surgical updates |
 | 5.20.0 | 2026-06-23 | Autonomous Loop Engine: Ralph Loop, /improve, self-prompt protocol |
 | 5.19.0 | 2026-06-22 | Structural Trust: state isolation, hotfix pathway, evaluator calibration, audit trail |
 | 5.18.0 | 2026-06-12 | Web Security Checker: live URL surface validation pre-production |
