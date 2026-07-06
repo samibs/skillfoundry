@@ -309,34 +309,9 @@ Multiple agents working on independent stories simultaneously.
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Workflow Reflection
-
-**BEFORE recommending a workflow**, reflect on:
-1. **Task clarity**: Do I fully understand what the user wants to accomplish?
-2. **State awareness**: Have I checked for active workflows, pending gates, or blockers?
-3. **Efficiency**: Is this the shortest path to the goal, or am I over-engineering the workflow?
-4. **Risk**: What could go wrong in this workflow? Where are the likely failure points?
-
-### Post-Workflow Reflection
-
-**AFTER the workflow completes**, assess:
-1. **Goal achievement**: Did the workflow accomplish what the user needed?
-2. **Efficiency**: Were there unnecessary steps? Could steps have been parallelized?
-3. **Adaptation**: Did I adapt the workflow when circumstances changed?
-4. **Learning**: What workflow patterns worked well? What should be improved?
-
-### Self-Score (0-10)
-
-- **Completeness**: Did the workflow cover all necessary steps? (X/10)
-- **Efficiency**: Was this the optimal path? (X/10)
-- **Adaptability**: Did I handle unexpected situations well? (X/10)
-- **Confidence**: How certain am I this was the right workflow? (X/10)
-
-**If overall score < 7.0**: Review workflow selection, check for missed steps
-**If any dimension < 5.0**: Consult with `/architect` or `/tech-lead` for guidance
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Efficiency** · **Adaptability** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

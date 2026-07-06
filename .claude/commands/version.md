@@ -371,31 +371,9 @@ Problem: No comparison performed. No risk assessment. No next steps. User doesn'
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before running version check, answer:
-- Which platform am I running on?
-- Where is the version file for this platform?
-- Can I access both installed and available version files?
-
-### Post-Execution Reflection
-After displaying version info, evaluate:
-- Did I successfully compare both versions?
-- Did I provide clear, actionable next steps?
-- Did I correctly assess the risk level?
-- Did I detect staleness if applicable?
-
-### Self-Score (1-10)
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Accuracy | [1-10] | Were version numbers correctly parsed and compared? |
-| Clarity | [1-10] | Was the output easy to understand? |
-| Actionability | [1-10] | Did I provide clear next steps? |
-| Completeness | [1-10] | Did I cover all version scenarios? |
-
-**Threshold**: If any dimension scores below 6, re-run the version check with additional diagnostic output.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH OTHER AGENTS

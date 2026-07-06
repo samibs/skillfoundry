@@ -426,31 +426,9 @@ Remediation log: logs/remediations.md
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before launching autonomous mode, reflect:
-1. **PRD Quality**: Are PRDs detailed enough for autonomous decisions? Vague PRDs cause bad auto-decisions.
-2. **Scope Risk**: Is the scope small enough for autonomous? Large multi-PRD runs compound errors.
-3. **Reversibility**: Can all expected changes be rolled back cleanly?
-4. **Trust Level**: Has this project run successfully in semi-auto before? Jumping straight to autonomous is risky.
-
-### Post-Execution Reflection
-After completion, assess:
-1. **Decision Quality**: Were deferred decisions reasonable? Would a developer have chosen differently?
-2. **Auto-Fix Quality**: Did auto-fixes introduce regressions or new issues?
-3. **Emergency Stops**: Were any triggered? If yes, why -- and could they be prevented?
-4. **Mode Appropriateness**: Should this project use semi-auto instead next time?
-
-### Self-Score (0-10)
-- **Completion Rate**: What % of stories completed successfully? (X/10)
-- **Decision Quality**: Were autonomous decisions defensible? (X/10)
-- **Safety Protocol**: Were all guardrails respected? (X/10)
-- **Output Quality**: Is the result production-ready? (X/10)
-
-**If overall score < 7.0**: Recommend switching to `/gosm` for future runs.
-**If decision quality < 6.0**: PRDs need more specificity before autonomous is safe.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completion Rate** · **Decision Quality** · **Safety Protocol** · **Output Quality** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

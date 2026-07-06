@@ -471,37 +471,9 @@ Next Scheduled: [timestamp]
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL DevOps operations require reflection before and after execution.**
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-DevOps Reflection
-
-**BEFORE executing**, reflect on:
-1. **Risks**: What could break? What's the blast radius?
-2. **Reversibility**: Can this be undone? Is there a backup?
-3. **Dependencies**: What depends on this? Who needs to know?
-4. **Automation**: Am I doing this manually when it should be automated?
-
-### Post-DevOps Reflection
-
-**AFTER execution**, assess:
-1. **Goal Achievement**: Did the operation succeed cleanly?
-2. **Side Effects**: Any unexpected changes or failures?
-3. **Documentation**: Is the change documented and reproducible?
-4. **Learning**: Should this be automated / added to a runbook?
-
-### Self-Score (0-10)
-
-- **Completeness**: All requirements addressed? (X/10)
-- **Automation**: Everything automated? (X/10)
-- **Safety**: Backups verified, rollback tested? (X/10)
-- **Confidence**: Will this work reliably in production? (X/10)
-
-**If overall score < 7.0**: Request peer review before proceeding
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Automation** · **Safety** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## REMEMBER

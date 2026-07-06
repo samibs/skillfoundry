@@ -289,31 +289,9 @@ COST SUMMARY
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Report Reflection
-Before generating a report, reflect:
-1. **Data Completeness**: Do I have data from all sources, or are there gaps?
-2. **Pricing Accuracy**: Am I using current model pricing, or do rates need updating?
-3. **Context**: Is this a session report or a project-wide report? Scope matters.
-4. **Actionability**: Will this report help the developer make better decisions?
-
-### Post-Report Reflection
-After generating the report, assess:
-1. **Accuracy**: Are the calculations correct? Cross-check totals.
-2. **Recommendations**: Are suggestions actionable and specific?
-3. **Completeness**: Did I cover all requested breakdowns?
-4. **Clarity**: Is the report easy to scan and understand?
-
-### Self-Score (0-10)
-- **Data Coverage**: Did I capture all available cost data? (X/10)
-- **Accuracy**: Are calculations and pricing correct? (X/10)
-- **Actionability**: Are recommendations useful and specific? (X/10)
-- **Clarity**: Is the report scannable and well-formatted? (X/10)
-
-**If overall score < 7.0**: Re-check data sources, verify calculations.
-**If actionability < 6.0**: Add more specific recommendations based on usage patterns.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Data Coverage** · **Accuracy** · **Actionability** · **Clarity** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

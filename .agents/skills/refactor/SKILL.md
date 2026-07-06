@@ -266,39 +266,9 @@ When working on large files (>300 lines) or producing large outputs (>300 lines)
 
 ---
 
-## 🔍 REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL refactoring operations require reflection before and after execution.**
-
-See `agents/_reflection-protocol.md` for complete protocol. Summary:
-
-### Pre-Refactoring Reflection
-
-**BEFORE refactoring**, reflect on:
-1. **Risks**: What could break if I refactor this?
-2. **Assumptions**: What assumptions am I making about the code?
-3. **Patterns**: Have similar refactorings failed before?
-4. **Test Coverage**: Do I have enough tests to ensure behavior preservation?
-
-### Post-Refactoring Reflection
-
-**AFTER refactoring**, assess:
-1. **Goal Achievement**: Did I improve code quality without breaking behavior?
-2. **Edge Cases**: Did I preserve all edge case handling?
-3. **Quality**: Is the refactored code better than before?
-4. **Learning**: What refactoring patterns worked well?
-
-### Self-Score (0-10)
-
-After each refactoring, self-assess:
-- **Completeness**: Did I address all code smells? (X/10)
-- **Quality**: Is refactored code production-ready? (X/10)
-- **Safety**: Did I preserve behavior (tests pass)? (X/10)
-- **Confidence**: How certain am I nothing broke? (X/10)
-
-**If overall score < 7.0**: Request peer review before proceeding  
-**If safety score < 7.0**: Run more tests, verify behavior preservation
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Safety** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## OUTPUT FORMAT

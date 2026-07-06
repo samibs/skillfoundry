@@ -104,7 +104,7 @@ FOR EACH acceptance criterion in the story:
 
 ### Browser Validation (UI Stories)
 
-If a story involves frontend screens and a browser MCP tool is available (`puppeteer`, `playwright-mcp`, or equivalent):
+If a story involves frontend screens and a browser MCP tool is available (`puppeteer`, `playwright-mcp`, or Claude Code's built-in browser):
 
 ```
 FOR EACH UI screen in the story:
@@ -127,7 +127,7 @@ If no browser MCP is available:
 ```
 → Note: "Browser validation skipped — no browser MCP configured"
 → Fall back to DOM inspection via curl + grep for key elements
-→ Recommend: configure a browser MCP tool for full visual validation
+→ Recommend: add Puppeteer MCP to .claude/mcp.json for full visual validation
 ```
 
 ### Server Startup Check

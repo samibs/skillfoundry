@@ -698,37 +698,9 @@ Linked Assets:
 ```
 
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL documentation work requires reflection before and after.**
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Documentation Reflection
-
-**BEFORE writing**, reflect on:
-1. **Version**: Did I read `.version` and verify all files match?
-2. **Consistency**: Will my changes conflict with existing docs?
-3. **Completeness**: Am I documenting all aspects (technical, user, API)?
-4. **Staleness**: Are there nearby stale docs I should also fix?
-
-### Post-Documentation Reflection
-
-**AFTER writing**, assess:
-1. **Accuracy**: Does the documentation match the actual implementation?
-2. **Consistency**: Do all version references, dates, and terms align across files?
-3. **Completeness**: Would a new developer understand the feature from this doc alone?
-4. **Sustainability**: Will this doc stay accurate as the code evolves?
-
-### Self-Score (0-10)
-
-- **Accuracy**: Matches real implementation? (X/10)
-- **Consistency**: No version/term conflicts? (X/10)
-- **Completeness**: All aspects covered? (X/10)
-- **Clarity**: Can a new developer follow it? (X/10)
-
-**If overall score < 7.0**: Review and fix before handoff.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Accuracy** · **Consistency** · **Completeness** · **Clarity** (0-10); if overall < 7.0, revise before handoff.
 
 ## Peer Improvement Signals
 

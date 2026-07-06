@@ -471,35 +471,9 @@ RECOMMENDATIONS
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-Apply `agents/_reflection-protocol.md` before and after each analytics run.
-
-### Pre-Analysis Reflection
-
-**BEFORE computing analytics**, reflect on:
-1. **Data Quality**: Is the event log complete? Are there gaps in timestamps or missing agents?
-2. **Bias**: Am I over-weighting recent events? Is the time window appropriate?
-3. **Context**: Are there external factors (new agents added, major refactor) that explain trends?
-4. **Actionability**: Will the recommendations I generate actually help, or are they noise?
-
-### Post-Analysis Reflection
-
-**AFTER generating the dashboard**, assess:
-1. **Accuracy**: Do the numbers add up? Cross-check totals.
-2. **Completeness**: Did I cover all agents, all stories, all event types?
-3. **Insight Quality**: Are recommendations specific and actionable, or generic platitudes?
-4. **Contradictions**: Do any recommendations contradict each other?
-
-### Self-Score (0-10)
-
-- **Data Coverage**: All events parsed and accounted for? (X/10)
-- **Analysis Depth**: Trends, clusters, and bottlenecks identified? (X/10)
-- **Recommendation Quality**: Specific, data-backed, actionable? (X/10)
-- **Confidence**: Would a senior engineer trust these numbers? (X/10)
-
-**If overall score < 7.0**: Flag data quality concerns and request manual audit of `agent-stats.jsonl`.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Data Coverage** · **Analysis Depth** · **Recommendation Quality** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## Integration with Other Agents

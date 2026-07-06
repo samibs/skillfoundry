@@ -311,31 +311,9 @@ Status: [COMPLETE / PARTIAL - see blocked stories]
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before dispatching to /go, reflect:
-1. **PRD Readiness**: Are these PRDs truly ready, or will semi-auto mode hit ambiguities?
-2. **Scope Assessment**: Is the scope manageable for semi-auto, or should supervised mode be used?
-3. **Risk Factors**: Are there complex architecture decisions that will cause many escalations?
-4. **Prior Patterns**: Did previous semi-auto runs on similar PRDs succeed or struggle?
-
-### Post-Execution Reflection
-After completion, assess:
-1. **Balance Assessment**: Was the auto-fix vs. escalation ratio healthy? (Target: 85%+ auto-fix)
-2. **Escalation Quality**: Were escalations truly necessary, or could some have been auto-fixed?
-3. **Fix Quality**: Did auto-fixes introduce any regressions?
-4. **Time Efficiency**: Was semi-auto faster than supervised would have been?
-
-### Self-Score (0-10)
-- **Auto-Fix Rate**: What % of violations were auto-fixed? (target: 85%+) (X/10)
-- **Escalation Quality**: Were escalations well-presented with options? (X/10)
-- **Execution Flow**: Did the pipeline flow smoothly without unnecessary stops? (X/10)
-- **Output Quality**: Was the final output production-ready? (X/10)
-
-**If overall score < 7.0**: Review the decision matrix -- some escalations may need reclassifying as auto-fixable.
-**If auto-fix rate < 7.0**: PRDs may need more detail to reduce ambiguity.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Auto-Fix Rate** · **Escalation Quality** · **Execution Flow** · **Output Quality** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

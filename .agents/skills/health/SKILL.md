@@ -294,34 +294,9 @@ When `--fix` is passed, execute safe auto-fixes (mkdir, chmod, sync) automatical
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE running health checks**, reflect on:
-1. **Completeness**: Am I checking all critical components, or just the easy ones?
-2. **Environment**: Is this a fresh install, an upgrade, or a long-running project? Adjust expectations.
-3. **False Positives**: Could any check incorrectly report FAIL? (e.g., optional files treated as required)
-4. **Platform Differences**: Am I accounting for Windows/Linux/macOS path differences?
-
-### Post-Execution Reflection
-
-**AFTER generating the health report**, assess:
-1. **Goal Achievement**: Does the report give a complete picture of framework health?
-2. **Actionability**: Can the developer fix every FAIL and WARN with the provided suggestions?
-3. **Accuracy**: Did I actually verify each file/directory, or did I assume?
-4. **Learning**: Are there new check categories I should add?
-
-### Self-Score (0-10)
-
-After each health check:
-- **Thoroughness**: Did I check all 25+ items? (X/10)
-- **Accuracy**: Is every PASS backed by verification? (X/10)
-- **Actionability**: Does every FAIL have a fix suggestion? (X/10)
-- **Clarity**: Can the developer understand the report at a glance? (X/10)
-
-**Threshold: If overall score < 7.0**: Re-run checks that returned UNKNOWN, add more detail to fix suggestions.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Thoroughness** · **Accuracy** · **Actionability** · **Clarity** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS
@@ -358,10 +333,121 @@ When health reports all PASS but platform sync counts differ, health MUST challe
 
 ---
 
-## Read-Only (except --fix)
+---
+
+## PHASE 5: CHECK PIPELINE INFRASTRUCTURE (NEW in v2.0)
+
+### 5.1 Shared Config Integrity
+
+```
+CHECK-PC01: .claude/shared/config.json exists and is valid JSON
+CHECK-PC02: .claude/shared/stack-profile.json exists
+  → WARN if missing (run /onboard --detect-stack)
+  → WARN if detected_at > 30 days old
+  → WARN if confidence is LOW or UNKNOWN
+CHECK-PC03: .claude/shared/conventions.json exists
+  → INFO if missing (run /onboard --detect-conventions)
+  → WARN if changelog.file referenced does not exist on disk
+CHECK-PC04: .gitignore contains .claude/local/ entry
+  → ERROR if missing — session state will be committed to git
+```
+
+### 5.2 State File Cleanup
+
+```
+SCAN: .claude/local/
+
+CHECK-PS01: List all *-state.json files
+  → WARN if any state file is older than 7 days (abandoned session)
+CHECK-PS02: List all *-results.json files
+  → INFO if any results file is older than 24 hours
+
+When /health --cleanup-state is passed:
+  1. List stale files with age
+  2. Ask: Delete N stale files? [y/N]
+  3. Delete on confirmation, report what was removed
+```
+
+### 5.3 Evaluator Calibration Health
+
+```
+CHECK-EC01: .claude/shared/evaluator-calibration.json valid JSON (if exists)
+CHECK-EC02: No calibrations with empty correction text
+CHECK-EC03: one-time scope calibrations older than 7 days (should have expired)
+CHECK-EC04: Calibrations referencing specific files — check those files still exist
+CHECK-EC05: Calibration count
+  → 0-5: normal
+  → 6-15: INFO — review periodically
+  → 16+: WARN — evaluator being corrected frequently
+```
+
+### 5.4 Audit Trail Integrity
+
+```
+CHECK-AT01: logs/audit-trail.jsonl exists (WARN if missing — audit export not running)
+CHECK-AT02: All lines valid JSON (detect truncated entries)
+CHECK-AT03: Count entries by type (feature_commit, override_decision, hotfix_applied, etc.)
+CHECK-AT04: WARN if override_decision entries exist with no corresponding fix in later entries (>14 days)
+CHECK-AT05: logs/hotfixes.md — hotfixes with follow-up stories that no longer exist in genesis/ or docs/stories/
+```
+
+### 5.5 Protocol Module Presence
+
+```
+SCAN: agents/_*.md
+
+CHECK-PM01: _execution-context.md exists
+CHECK-PM02: _stack-profile.md exists
+CHECK-PM03: _semgrep-bridge.md exists
+CHECK-PM04: _convention-discovery.md exists
+CHECK-PM05: _evaluator-calibration.md exists
+CHECK-PM06: _audit-export.md exists
+CHECK-PM07: _profile-resolution.md exists
+CHECK-PM08: _bidirectional-iteration.md exists
+CHECK-PM09: _tdd-protocol.md exists
+```
+
+### 5.6 Genesis / Story Lifecycle
+
+```
+CHECK-GL01: PRDs older than 30 days with no corresponding story in docs/stories/ → INFO
+CHECK-GL02: Stories with status DEV older than 14 days → INFO
+CHECK-GL03: Stories with status TEST older than 7 days → INFO
+```
+
+### Phase 5 Output Block
+
+```
+PIPELINE INFRASTRUCTURE
+  ✅ .claude/shared/config.json     valid
+  ⚠️  .claude/shared/stack-profile  detected 35 days ago — may be stale
+  ℹ️  .claude/shared/conventions    not found — run /onboard --detect-conventions
+  🔴 .gitignore                    missing .claude/local/ entry — state will be committed!
+
+STATE FILES (.claude/local/)
+  ⚠️  2 stale state files (>7d) — run /health --cleanup-state to remove
+
+EVALUATOR CALIBRATIONS
+  ✅ 4 calibrations — healthy
+
+AUDIT TRAIL
+  ✅ logs/audit-trail.jsonl — 47 entries, all valid JSON
+  ⚠️  2 unresolved overrides (>14 days)
+
+PROTOCOL MODULES
+  ✅ 9/9 protocol modules present
+
+GENESIS / STORIES
+  ℹ️  2 PRDs older than 30 days with no story
+```
+
+---
+
+## Read-Only (except --fix and --cleanup-state)
 
 Default invocations are read-only. No mutations. No confirmation required.
 The `--fix` subcommand modifies files (mkdir, chmod, sync) and requires confirmation before each fix.
+The `--cleanup-state` subcommand offers interactive deletion of stale `.claude/local/` state files (>7 days old).
 
 ---
 

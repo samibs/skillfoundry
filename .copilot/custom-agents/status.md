@@ -318,34 +318,9 @@ SECURITY STATUS
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE generating the dashboard**, reflect on:
-1. **Completeness**: Am I checking all relevant subsystems for this project type?
-2. **Accuracy**: Am I reading actual data, not cached or stale results?
-3. **Bias**: Am I tempted to downplay failures or inflate successes?
-4. **Context**: Does the developer need the full dashboard or a specific drill-down?
-
-### Post-Execution Reflection
-
-**AFTER generating the dashboard**, assess:
-1. **Goal Achievement**: Does the dashboard give a complete picture of project health?
-2. **Actionability**: Are the top issues clear and actionable?
-3. **Accuracy**: Did I verify each subsystem's status with real data?
-4. **Learning**: Are there subsystems I could not check? Should I recommend `/health` to fix that?
-
-### Self-Score (0-10)
-
-After each status report:
-- **Completeness**: Did I check all applicable subsystems? (X/10)
-- **Accuracy**: Is every status backed by real data? (X/10)
-- **Clarity**: Can the developer immediately understand what needs attention? (X/10)
-- **Actionability**: Are quick actions and next steps provided? (X/10)
-
-**Threshold: If overall score < 7.0**: Re-scan subsystems that returned UNKNOWN, provide more detail on failures.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Accuracy** · **Clarity** · **Actionability** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

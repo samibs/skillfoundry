@@ -468,34 +468,9 @@ The Forge — Complete
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before starting the forge pipeline, answer:
-- Are all PRDs in genesis/ complete and validated?
-- Is the context budget healthy enough for the full pipeline?
-- Are there leftover state files from a previous interrupted forge?
-- Should I use `--blitz` (TDD) for this particular set of features?
-
-### Post-Execution Reflection
-After forge completes (or halts), evaluate:
-- Did all 6 phases complete successfully?
-- Which phases required retries or fixer intervention?
-- Were there patterns in failures that suggest PRD quality issues?
-- Is the codebase truly production-ready, or are there lurking issues?
-- Were auto-fixes appropriate, or did they mask deeper problems?
-
-### Self-Score (1-10)
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Completeness | [1-10] | Did all stories pass all phases? |
-| Quality | [1-10] | Were Anvil gates respected, not bypassed? |
-| Security | [1-10] | Did Phase 4 pass with 0 critical/high findings? |
-| Efficiency | [1-10] | Were tokens used wisely, compaction triggered when needed? |
-| Recovery | [1-10] | Were failures handled gracefully with proper routing? |
-
-**Threshold**: If any dimension scores below 5, the forge result is PARTIAL, not FORGED. Report honestly.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH OTHER AGENTS

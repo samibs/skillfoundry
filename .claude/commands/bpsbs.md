@@ -470,37 +470,9 @@ REMEDIATION CHECKLIST
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL BPSBS audits require reflection before and after.**
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Audit Reflection
-
-**BEFORE auditing**, reflect on:
-1. **Scope Accuracy**: Am I checking the right files and the right domains?
-2. **Bias Check**: Am I being too lenient on familiar code or too harsh on unfamiliar patterns?
-3. **Completeness**: Have I covered all BPSBS domains that apply to this code type?
-4. **Context**: Do I understand the project's stack, deployment target, and constraints?
-
-### Post-Audit Reflection
-
-**AFTER auditing**, assess:
-1. **Thoroughness**: Did I check every applicable rule, or did I skim?
-2. **Actionability**: Can the developer fix every violation using only my output? (No vague guidance.)
-3. **Severity Accuracy**: Are my severity classifications correct, or did I over/under-classify?
-4. **False Positives**: Did I flag anything that is actually correct? Remove false positives.
-
-### Self-Score (0-10)
-
-- **Thoroughness**: Did I check every applicable rule? (X/10)
-- **Accuracy**: Are my findings correct with no false positives? (X/10)
-- **Actionability**: Can every violation be fixed from my output alone? (X/10)
-- **Severity Calibration**: Are severity levels correctly assigned? (X/10)
-
-**If overall score < 7.0**: Re-audit before delivering results.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Thoroughness** · **Accuracy** · **Actionability** · **Severity Calibration** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## Integration with Other Agents

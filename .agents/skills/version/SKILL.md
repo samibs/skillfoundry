@@ -167,31 +167,31 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v2.0.52**
+**SkillFoundry v5.21.0**
 
-- **56 Agents, 63 Skills** - Complete development lifecycle coverage
-- **5 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini
+- **60 Agents, 130+ Skills** - Complete development lifecycle coverage
+- **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
 - **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
+- **171 Deviation Patterns** - LLM failure prevention across 16 categories
+- **Codebase Agent Wiki** - `/docs wiki` generates a repo-wide, agent-facing wiki grounded in source + git evidence
+- **Autonomous Loop Engine** - Ralph Loop: agent prompts itself, judges its own output, stops when done
+- **`/improve` command** - Continuous codebase improvement loop: scan → fix → verify → loop
+- **Pre-Execution Verification** - Goal reframing and assumption surfacing before implementation
+- **Anvil T4b Traceability** - Line-level change traceability gate
 - **Auto-Remediation** - 90%+ violations fixed autonomously
-- **Execution Modes** - Supervised, Semi-Autonomous, Autonomous
-- **Native Debugger** - CDP-based interactive debugging for AI agents
-- **Batch Execution** - Context exhaustion prevention with resume support
-- **Delivery Audit** - Planned vs actual deliverable verification
-- **Metrics Baseline** - `sf metrics baseline` for quality snapshot capture
-- **HTML Reports** - `sf report --html` for self-contained quality reports
+- **Execution Modes** - Supervised, Semi-Autonomous, Autonomous, Loop
 
 ### Recent Milestones
 
 | Version | Date | Milestone |
 |---------|------|-----------|
-| 2.0.52 | 2026-03-16 | Metrics baseline, HTML reports, Docusaurus docs site |
-| 2.0.41 | 2026-03-13 | Smart output compression — 60-90% token savings on tool output |
-| 2.0.40 | 2026-03-13 | Pipeline resilience — batch execution, delivery audit, git pre-flight |
-| 2.0.39 | 2026-03-12 | Native debugger integration (CDP + 6 debug tools) |
-| 2.0.38 | 2026-03-08 | Correctness contracts (T0, MG0, MG1.5) |
-| 2.0.37 | 2026-03-05 | Platform memory migration |
-| 2.0.36 | 2026-03-03 | Automatic memory harvesting |
-| 2.0.35 | 2026-03-01 | Two-pass pipeline (FORGE + POLISH) |
+| 5.21.0 | 2026-07-05 | Codebase Agent Wiki: /docs wiki, grounded agent-facing docs, surgical updates |
+| 5.20.0 | 2026-06-23 | Autonomous Loop Engine: Ralph Loop, /improve, self-prompt protocol |
+| 5.19.0 | 2026-06-22 | Structural Trust: state isolation, hotfix pathway, evaluator calibration, audit trail |
+| 5.18.0 | 2026-06-12 | Web Security Checker: live URL surface validation pre-production |
+| 5.17.0 | 2026-06 | Codebase Comprehension Pre-Flight: tree-sitter Code Map, /preflight |
+| 5.15.0 | 2026-05 | Coding Discipline Protocol + GuardLoop adaptive guardrails |
+| 5.1.0 | 2026-04-14 | Karpathy-inspired: Pre-Execution Verification, T4b Traceability |
 
 ## Implementation
 
@@ -377,31 +377,9 @@ Problem: No comparison performed. No risk assessment. No next steps. User doesn'
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before running version check, answer:
-- Which platform am I running on?
-- Where is the version file for this platform?
-- Can I access both installed and available version files?
-
-### Post-Execution Reflection
-After displaying version info, evaluate:
-- Did I successfully compare both versions?
-- Did I provide clear, actionable next steps?
-- Did I correctly assess the risk level?
-- Did I detect staleness if applicable?
-
-### Self-Score (1-10)
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Accuracy | [1-10] | Were version numbers correctly parsed and compared? |
-| Clarity | [1-10] | Was the output easy to understand? |
-| Actionability | [1-10] | Did I provide clear next steps? |
-| Completeness | [1-10] | Did I cover all version scenarios? |
-
-**Threshold**: If any dimension scores below 6, re-run the version check with additional diagnostic output.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH OTHER AGENTS

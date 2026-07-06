@@ -345,39 +345,9 @@ When working on large files (>300 lines) or producing large outputs (>300 lines)
 
 ---
 
-## 🔍 REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL code reviews require reflection before and after completion.**
-
-See `agents/_reflection-protocol.md` for complete protocol. Summary:
-
-### Pre-Review Reflection
-
-**BEFORE reviewing**, reflect on:
-1. **Risks**: What critical issues might I miss?
-2. **Assumptions**: What assumptions am I making about the code?
-3. **Patterns**: What patterns have I seen fail in reviews before?
-4. **Focus**: Am I focusing on the right issues (not style nitpicks)?
-
-### Post-Review Reflection
-
-**AFTER reviewing**, assess:
-1. **Goal Achievement**: Did I find all critical issues?
-2. **Security**: Did I thoroughly check for security vulnerabilities?
-3. **Quality**: Is my review actionable and helpful?
-4. **Learning**: What review patterns worked well?
-
-### Self-Score (0-10)
-
-After each review, self-assess:
-- **Completeness**: Did I cover all critical areas? (X/10)
-- **Quality**: Is my review high signal-to-noise? (X/10)
-- **Security**: Did I check security thoroughly? (X/10)
-- **Confidence**: How certain am I I didn't miss critical issues? (X/10)
-
-**If overall score < 7.0**: Re-review, check for missed issues  
-**If security score < 7.0**: Re-check security, verify all Top 12 vulnerabilities reviewed
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Security** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## REMEMBER

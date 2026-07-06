@@ -349,39 +349,9 @@ When working on large files (>300 lines) or producing large outputs (>300 lines)
 
 ---
 
-## 🔍 REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL migration operations require reflection before and after execution.**
-
-See `agents/_reflection-protocol.md` for complete protocol. Summary:
-
-### Pre-Migration Reflection
-
-**BEFORE creating/running migrations**, reflect on:
-1. **Risks**: What data could be lost? What could break?
-2. **Assumptions**: What assumptions am I making about the schema?
-3. **Patterns**: Have similar migrations caused issues before?
-4. **Reversibility**: Can I rollback if something goes wrong?
-
-### Post-Migration Reflection
-
-**AFTER migrations**, assess:
-1. **Goal Achievement**: Did the migration achieve its goal safely?
-2. **Data Integrity**: Was all data preserved correctly?
-3. **Testing**: Did I test the migration thoroughly?
-4. **Learning**: What migration patterns worked well?
-
-### Self-Score (0-10)
-
-After each migration, self-assess:
-- **Completeness**: Did I address all migration requirements? (X/10)
-- **Quality**: Is migration production-ready? (X/10)
-- **Safety**: Did I preserve data and enable rollback? (X/10)
-- **Confidence**: How certain am I this won't break production? (X/10)
-
-**If overall score < 7.0**: Request peer review before proceeding  
-**If safety score < 7.0**: Add more safety checks, verify rollback works
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Safety** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## REMEMBER

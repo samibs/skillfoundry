@@ -358,29 +358,9 @@ Sitemap: https://example.com/sitemap.xml
 | **UX/UI** | Mobile-friendliness, page experience signals |
 
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Audit Reflection
-- What is the site's current search visibility (indexed pages, organic traffic)?
-- Is the site rendered server-side, client-side, or hybrid?
-- Are there known crawl/index issues in Search Console?
-- What is the competitive landscape for target keywords?
-
-### Post-Audit Reflection
-- Did I check all 3 pillars (crawlability, indexability, quality)?
-- Are my recommendations prioritized by traffic impact?
-- Did I verify structured data with actual validation tools?
-- Are there quick wins vs long-term improvements clearly separated?
-
-### Self-Score (1-10)
-
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Coverage | [1-10] | Did I check crawlability, indexability, AND quality? |
-| Actionability | [1-10] | Are fixes specific, not generic advice? |
-| Data-Driven | [1-10] | Did I reference metrics, not opinions? |
-| Priority | [1-10] | Are recommendations ordered by impact? |
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 
 ## CLOSING FORMAT
 

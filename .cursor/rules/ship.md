@@ -426,34 +426,9 @@ Result: Clean release, full audit trail, instant rollback capability.
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE running the release pipeline**, reflect on:
-1. **Risk Assessment**: What is the blast radius if this release has issues? (internal tool vs public API vs customer-facing)
-2. **Completeness**: Have all PRDs and stories been implemented and validated?
-3. **Timing**: Is this the right time to release? (Friday afternoon = bad idea)
-4. **Dependencies**: Are there external dependencies that need to be coordinated?
-
-### Post-Execution Reflection
-
-**AFTER completing the release**, assess:
-1. **Goal Achievement**: Was the release executed cleanly with all artifacts?
-2. **Safety**: Is the rollback plan tested and ready?
-3. **Communication**: Does the developer know how to monitor and rollback?
-4. **Learning**: Were there any near-misses that should become new checklist items?
-
-### Self-Score (0-10)
-
-After each ship operation:
-- **Thoroughness**: Did I check all 15+ checklist items? (X/10)
-- **Safety**: Is the rollback plan complete and actionable? (X/10)
-- **Clarity**: Does the developer understand exactly what will happen? (X/10)
-- **Confidence**: Am I confident this release will not cause issues? (X/10)
-
-**Threshold: If overall score < 7.0**: Do NOT proceed with release. Re-run pre-flight checks, add more validation.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Thoroughness** · **Safety** · **Clarity** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

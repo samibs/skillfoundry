@@ -457,34 +457,9 @@ Use when:
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Swarm Reflection
-
-**BEFORE dispatching**, reflect on:
-1. **Independence**: Are tasks truly independent, or am I forcing parallelism on dependent work?
-2. **Scope isolation**: Can I guarantee no file write overlaps between workers?
-3. **Failure handling**: What happens if one worker fails? Does it cascade?
-4. **Efficiency**: Is parallel execution actually faster here, or is the overhead not worth it?
-
-### Post-Swarm Reflection
-
-**AFTER swarm completes**, assess:
-1. **Correctness**: Did all results integrate cleanly? Any hidden conflicts?
-2. **Efficiency**: Was the parallel speedup worth the coordination overhead?
-3. **Conflicts**: Were there conflicts? Could they have been predicted and avoided?
-4. **Learning**: What task decomposition patterns worked well?
-
-### Self-Score (0-10)
-
-- **Decomposition**: Was the task breakdown correct and efficient? (X/10)
-- **Isolation**: Were worker scopes properly isolated? (X/10)
-- **Conflict handling**: Were conflicts detected and resolved properly? (X/10)
-- **Confidence**: Am I confident all results are correctly integrated? (X/10)
-
-**If overall score < 7.0**: Run integration tests again, check for hidden conflicts
-**If isolation score < 5.0**: Switch to `/swarm fallback` — parallel execution is not safe
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Decomposition** · **Isolation** · **Conflict handling** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

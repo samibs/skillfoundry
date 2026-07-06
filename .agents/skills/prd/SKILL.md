@@ -319,33 +319,9 @@ When updating an existing PRD:
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Execution Reflection
-Before creating a PRD, verify:
-1. Has the user articulated a concrete problem statement (not just a feature wish)?
-2. Are success criteria measurable and specific (not vague "it should work well")?
-3. Are there existing systems or constraints that this PRD must account for?
-4. Is the target user clearly defined (not "everyone")?
-
-### Post-Execution Reflection
-After completion, assess:
-1. Does the PRD contain zero TBD/TODO markers -- every section is fully specified?
-2. Are all user stories backed by testable acceptance criteria?
-3. Are risks identified with concrete mitigations (not just "mitigate risk")?
-4. Could a developer implement this PRD in isolation without needing to ask clarifying questions?
-
-### Self-Score (0-10)
-- **Clarity**: No ambiguous language, all acronyms defined, examples provided? (X/10)
-- **Completeness**: All sections filled, no TBD markers, security and risks addressed? (X/10)
-- **Feasibility**: Dependencies available, constraints realistic, effort estimated? (X/10)
-- **Testability**: Every requirement has acceptance criteria that can be verified? (X/10)
-
-**If overall < 7.0**: Re-interrogate the user for missing information, fill gaps, and re-validate before saving.
-
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Clarity** · **Completeness** · **Feasibility** · **Testability** (0-10); if overall < 7.0, revise before handoff.
 ## BAD vs GOOD PRD Examples
 
 ### BAD PRD (vague, incomplete, untestable)

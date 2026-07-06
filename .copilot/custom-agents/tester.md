@@ -315,9 +315,9 @@ Root cause hypothesis: [best guess]
 Suggested next steps: [for user or senior-engineer]
 ```
 
-## Reflection Protocol
+## Reflection
 
-Apply `agents/_reflection-protocol.md` before and after each test cycle. Self-Score your work (1-10) on coverage, edge cases, and security testing before handoff.
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 
 ---
 

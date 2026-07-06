@@ -299,34 +299,9 @@ When `--fix` is passed, execute safe auto-fixes (mkdir, chmod, sync) automatical
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE running health checks**, reflect on:
-1. **Completeness**: Am I checking all critical components, or just the easy ones?
-2. **Environment**: Is this a fresh install, an upgrade, or a long-running project? Adjust expectations.
-3. **False Positives**: Could any check incorrectly report FAIL? (e.g., optional files treated as required)
-4. **Platform Differences**: Am I accounting for Windows/Linux/macOS path differences?
-
-### Post-Execution Reflection
-
-**AFTER generating the health report**, assess:
-1. **Goal Achievement**: Does the report give a complete picture of framework health?
-2. **Actionability**: Can the developer fix every FAIL and WARN with the provided suggestions?
-3. **Accuracy**: Did I actually verify each file/directory, or did I assume?
-4. **Learning**: Are there new check categories I should add?
-
-### Self-Score (0-10)
-
-After each health check:
-- **Thoroughness**: Did I check all 25+ items? (X/10)
-- **Accuracy**: Is every PASS backed by verification? (X/10)
-- **Actionability**: Does every FAIL have a fix suggestion? (X/10)
-- **Clarity**: Can the developer understand the report at a glance? (X/10)
-
-**Threshold: If overall score < 7.0**: Re-run checks that returned UNKNOWN, add more detail to fix suggestions.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Thoroughness** · **Accuracy** · **Actionability** · **Clarity** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

@@ -343,39 +343,9 @@ paths:
 
 ---
 
-## 🔍 REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL API design work requires reflection before and after completion.**
-
-See `agents/_reflection-protocol.md` for complete protocol. Summary:
-
-### Pre-Design Reflection
-
-**BEFORE designing API**, reflect on:
-1. **Risks**: What could break clients? What design decisions are irreversible?
-2. **Assumptions**: What assumptions am I making about use cases?
-3. **Patterns**: Have similar API designs caused issues before?
-4. **Consistency**: Does this match existing API patterns?
-
-### Post-Design Reflection
-
-**AFTER designing API**, assess:
-1. **Goal Achievement**: Does the API meet all requirements?
-2. **Usability**: Is the API easy to use and understand?
-3. **Quality**: Is the API well-documented and versioned?
-4. **Learning**: What API design patterns worked well?
-
-### Self-Score (0-10)
-
-After each API design, self-assess:
-- **Completeness**: Did I address all requirements? (X/10)
-- **Quality**: Is API design production-ready? (X/10)
-- **Documentation**: Is API fully documented? (X/10)
-- **Confidence**: How certain am I this won't break clients? (X/10)
-
-**If overall score < 7.0**: Request peer review before proceeding  
-**If documentation score < 7.0**: Enhance documentation, add examples
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Documentation** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## GRAPHQL PATTERNS

@@ -451,29 +451,9 @@ When announcing a single event (release, milestone, feature) across all platform
 | **Evaluator** | Content quality assessment before publishing |
 
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Content Reflection
-- What is the specific goal of this content? (awareness, engagement, conversion)
-- Who is the target audience on THIS platform?
-- What format performs best on this platform for this topic?
-- Is there existing content to reference or build upon?
-
-### Post-Content Reflection
-- Does the content respect platform culture and formatting?
-- Is the hook strong enough to stop scrolling?
-- Would I engage with this content if I saw it in my feed?
-- Is there a clear call to action?
-
-### Self-Score (1-10)
-
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Platform-native | [1-10] | Is it crafted for THIS platform, not cross-posted? |
-| Hook strength | [1-10] | Would the first line stop someone scrolling? |
-| Authenticity | [1-10] | Does it sound like a real person, not a brand? |
-| Actionability | [1-10] | Is there a clear next step for the reader? |
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 
 ## PUBLISHING (scripts/social-publish.sh)
 

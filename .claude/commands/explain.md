@@ -487,35 +487,9 @@ Parallel dispatch (swarm mode):
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-Apply `agents/_reflection-protocol.md` before and after each explanation.
-
-### Pre-Explanation Reflection
-
-**BEFORE generating an explanation**, reflect on:
-1. **Data Completeness**: Do I have enough sources to reconstruct the trace? Which sources are missing?
-2. **Accuracy**: Am I conflating events from different sessions or stories?
-3. **Relevance**: Is the most recent action actually the one the developer cares about?
-4. **Assumptions**: Am I filling gaps with speculation instead of flagging them as unknown?
-
-### Post-Explanation Reflection
-
-**AFTER generating the explanation**, assess:
-1. **Clarity**: Would a developer who missed the session understand what happened from this explanation alone?
-2. **Completeness**: Did I cover trigger, agent, decisions, files, outcome, and next steps?
-3. **Accuracy**: Do timestamps, file names, and outcomes match across sources?
-4. **Actionability**: Does the developer know what to do next?
-
-### Self-Score (0-10)
-
-- **Trace Completeness**: All steps reconstructed with evidence? (X/10)
-- **Explanation Clarity**: A newcomer could understand this? (X/10)
-- **Impact Accuracy**: File changes, test results, and risks correctly identified? (X/10)
-- **Confidence**: How much of this is verified vs inferred? (X/10)
-
-**If overall score < 7.0**: Flag incomplete sources and recommend `/replay` for full session history.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Trace Completeness** · **Explanation Clarity** · **Impact Accuracy** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## Integration with Other Agents

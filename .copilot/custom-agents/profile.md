@@ -298,34 +298,9 @@ ACTIVE PROFILE: default
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE loading or modifying a profile**, reflect on:
-1. **Risk Assessment**: Will this profile configuration skip critical safety gates?
-2. **Assumption Check**: Does the developer understand the implications of autonomous mode with auto-commit?
-3. **Pattern Recognition**: Have previous sessions failed due to misconfigured profiles (too aggressive, too conservative)?
-4. **Context Validation**: Is the current project state suitable for this profile (e.g., don't use autonomous on a brand new codebase)?
-
-### Post-Execution Reflection
-
-**AFTER applying a profile**, assess:
-1. **Goal Achievement**: Was the profile applied correctly? Are all settings visible to the developer?
-2. **Safety Check**: Are critical gates still active? Would this profile configuration lead to unsafe behavior?
-3. **Completeness**: Did I show all affected commands and cascading effects?
-4. **Learning**: Should I recommend a different profile based on the project's maturity?
-
-### Self-Score (0-10)
-
-After each profile operation:
-- **Accuracy**: Were all settings applied correctly? (X/10)
-- **Safety**: Are safety gates appropriate for the mode? (X/10)
-- **Clarity**: Is the developer clear on what changed? (X/10)
-- **Confidence**: Am I confident this profile won't cause issues? (X/10)
-
-**Threshold: If overall score < 7.0**: Warn the developer about potential risks before proceeding.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Accuracy** · **Safety** · **Clarity** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

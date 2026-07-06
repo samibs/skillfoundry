@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — Refinement Pass
+
+Tightening and consolidation of the existing framework for precise modern LLMs: less boilerplate, fewer overlapping entry points, corrected drift. No new features — every change maps to something that already existed.
+
+### Changed
+
+- **Item 1/10 — Reflection blocks collapsed to a single reference.** The restated `## REFLECTION PROTOCOL` section (pre/post-reflection questions + a paraphrase of the canonical protocol) is removed from 45 source files (9 agent personas + 36 standalone command skills) and regenerated across all six platform mirrors, replaced by a one-line reference to the canonical `agents/_reflection-protocol.md` that **preserves each file's own self-score axes** (the persona-specific delta). Net ~3,000 lines removed across all trees. Platform sync integrity verified (52/52 in sync, 0 drift). As a side effect, the pre-existing platform sync drift (item 4/10 — 3 skills missing on 4 platforms, 5 drifted) was resolved by the same `sync --all`. Behavior preserved: a precise model reads the referenced canon; no rule, threshold, or gate definition was removed.
+
 ## [5.21.0] - 2026-07-05
 
 ### Codebase Agent Wiki — Documentation Built for the Next Agent
