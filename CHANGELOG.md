@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.23.0] - 2026-07-07 — Verification Layer
+
+Three additions that lean into 2026's defining problem — trust in AI-generated code (84% adoption, ~29% trust, 96% won't ship it unchecked). Each reuses existing gate machinery: the framework's verification thesis, applied more widely and earlier.
+
+### Added
+
+- **`/verify` — agent-agnostic verification gate.** New skill that runs SkillFoundry's existing gates (`scripts/anvil.sh` check + SAST, `/security` audit, `/layer-check`, and the Anvil A3 adversarial lens) against **any** code diff — `--staged`, working tree, `--since <ref>`, or explicit files — not just `/forge` output. Read-only; emits a `PASS / WARN / BLOCK` ship verdict. The portable trust layer: verify code written by Cursor, Copilot, Claude Code, Codex, Gemini, Grok, or by hand, held to the same bar `/forge` enforces internally. Thin orchestrator, no new gate logic. (Skill count 107 → 108 per platform.)
+- **`/prd-lint` semantic reasoning — contradiction + gap detection.** Beyond the structural script, `/prd-lint` now reasons over PRD content for the two failure classes that silently produce wrong code: **contradictions** (architectural / data / authz / NFR conflicts the pipeline would otherwise resolve arbitrarily → ERROR/FAIL) and **gaps** (undefined error/auth/edge-case behavior, unmeasurable acceptance criteria, referenced-but-undefined entities → WARN; security/data → ERROR). Moves verification to the cheapest possible point — before a line of code exists. Structural behavior (`scripts/prd-lint.sh`) unchanged.
+- **Property-based testing in the `/tester` gate.** `agents/ruthless-tester` gains Property-Based Tests as a first-class category: assert invariants across *generated* inputs (fast-check / Hypothesis / jqwik) — round-trip, idempotence, bounds, never-throws, oracle comparison — instead of only hand-picked examples. Added to the coverage summary; `/testloop` runs the new tests unchanged.
+
+### Why
+
+The market converged on SkillFoundry's founding thesis — enforced verification — while AWS Kiro began contesting the PRD-first space with two techniques SkillFoundry lacked (automated spec-contradiction checking and property-based tests). v5.23.0 closes both gaps by *sharpening existing gates* (the only new top-level surface is `/verify`), and turns the gates outward with `/verify` so they cover code from any agent — the one wedge no single-agent tool can copy.
+
 ## [5.22.1] - 2026-07-06 — Consistency Follow-up
 
 Post-release documentation and build hygiene completing the Refinement Pass. Docs, comments, and a comment-only rebuild — no runtime behavior changed.
