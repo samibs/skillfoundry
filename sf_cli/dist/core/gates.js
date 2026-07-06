@@ -854,6 +854,12 @@ function runT6(workDir, storyFile) {
         durationMs: Date.now() - start,
     };
 }
+/**
+ * Executes all quality gate tiers (T0-T7) for a given target.
+ * Supports both sequential and parallel execution phases.
+ * @param options - Configuration including work directory, target, and callbacks
+ * @returns Promise resolving to a summary of all gate results
+ */
 export async function runAllGates(options) {
     const { workDir, target = '.', storyFile, onGateStart, onGateComplete, parallel = false } = options;
     const resolvedTarget = resolve(workDir, target);

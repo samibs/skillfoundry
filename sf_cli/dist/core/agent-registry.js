@@ -29,10 +29,10 @@ function advisorPrompt(displayName, role, domain) {
     return `You are ${displayName}, a SkillFoundry agent. ${role}. Answer questions about ${domain}. You have no file access in this mode. Be concise and reference project standards when relevant.`;
 }
 // ---------------------------------------------------------------------------
-// Registry: all 60 agents
+// Registry: all 61 agents
 // ---------------------------------------------------------------------------
 export const AGENT_REGISTRY = {
-    // ── FULL (21 agents) ─────────────────────────────────────────────────
+    // ── FULL (23 agents) ─────────────────────────────────────────────────
     auto: {
         name: 'auto', displayName: 'Auto Pilot', toolCategory: 'FULL',
         systemPrompt: implementerPrompt('Auto Pilot', 'Master workflow orchestrator that classifies intent and executes full pipelines', 'autonomous execution, pipeline routing, intent classification'),

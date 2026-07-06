@@ -15,6 +15,10 @@ const MAX_DELEGATION_DEPTH = 3;
 // ---------------------------------------------------------------------------
 // Agent Base Class
 // ---------------------------------------------------------------------------
+/**
+ * Abstract base class for all autonomous agents in SkillFoundry.
+ * Provides the lifecycle management, event system, and execution loop for agents.
+ */
 export class Agent {
     name;
     displayName;
@@ -41,6 +45,13 @@ export class Agent {
         this.state = this.createInitialState();
     }
     // ── Public API ──────────────────────────────────────────────────────
+    /**
+     * Executes the agent's primary task within the provided context.
+     * Orchestrates the AI runner loop, budget management, and result collection.
+     * @param task - The natural language task description
+     * @param context - The execution context and constraints
+     * @returns Promise resolving to the AgentResult
+     */
     async execute(task, context) {
         this.context = context;
         this.startTime = Date.now();
