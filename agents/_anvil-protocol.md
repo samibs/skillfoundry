@@ -1,6 +1,6 @@
-# The Anvil — 7-Tier Quality Gate Protocol
+# The Anvil — 7-Tier Agent-Handoff Gate Protocol (A0–A6)
 
-**Version**: 1.0
+**Version**: 1.1
 **Status**: ACTIVE
 **Applies To**: All Agents in the Story Execution Pipeline
 
@@ -12,20 +12,22 @@ The Anvil is a 7-tier validation system that runs between every agent phase in t
 
 **Core insight**: LLMs generate code optimistically (forward, single-pass) but debug analytically (backwards from evidence). The Anvil forces analytical validation at every handoff point, not just at the end.
 
+> **Namespace — read this first.** Anvil tiers use the **A-namespace (A0–A6)**. They are *agent-handoff prompt checks*. They are **distinct from the CLI quality gates (T0–T7)** implemented in `sf_cli/src/core/gates.ts` and `scripts/anvil.sh`, which the deterministic `sf` engine runs. The two systems have the same count but different checks — e.g. **Anvil A3** is Self-Adversarial Review, while **CLI gate T3** is Tests. Never conflate an "A#" (Anvil) with a "T#" (CLI gate). This is the single canonical Anvil tier definition; other docs reference it rather than re-tabulating.
+
 ---
 
-## The 7 Tiers
+## The 7 Anvil Tiers (A0–A6)
 
 | Tier | Name | Type | When | What It Catches |
 |------|------|------|------|-----------------|
-| **T0** | Correctness Contract | Static check (no LLM, no build) | Before any agent runs | Missing tests for completed story acceptance criteria — every `done_when` item must have a corresponding test |
-| **T1** | Shell Pre-Flight | Shell script (no LLM) | Between EVERY agent handoff | Syntax errors, banned patterns, missing files, broken imports |
-| **T2** | Canary Smoke Test | Quick execution test | After Coder, before Tester | Fundamental breakage — module won't import, won't compile |
-| **T3** | Self-Adversarial Review | Coder self-critique | After Coder writes code | Coder's blind spots, untested failure modes |
-| **T4** | Scope Validation | Diff comparison | In Gate-Keeper validation | Scope creep, incomplete implementation |
-| **T4b** | Traceability Test | Line-level diff analysis | In Gate-Keeper validation (after T4) | Orthogonal changes — lines that don't trace to the request (see `LLM-020`) |
-| **T5** | Contract Enforcement | API contract check | In Gate-Keeper validation | API drift, wrong signatures, missing endpoints |
-| **T6** | Shadow Tester | Parallel risk agent | Concurrent with Coder | Risk prioritization for Tester, early warnings |
+| **A0** | Correctness Contract | Static check (no LLM, no build) | Before any agent runs | Missing tests for completed story acceptance criteria — every `done_when` item must have a corresponding test |
+| **A1** | Shell Pre-Flight | Shell script (no LLM) | Between EVERY agent handoff | Syntax errors, banned patterns, missing files, broken imports |
+| **A2** | Canary Smoke Test | Quick execution test | After Coder, before Tester | Fundamental breakage — module won't import, won't compile |
+| **A3** | Self-Adversarial Review | Coder self-critique | After Coder writes code | Coder's blind spots, untested failure modes |
+| **A4** | Scope Validation | Diff comparison | In Gate-Keeper validation | Scope creep, incomplete implementation |
+| **A4b** | Traceability Test | Line-level diff analysis | In Gate-Keeper validation (after A4) | Orthogonal changes — lines that don't trace to the request (see `LLM-020`) |
+| **A5** | Contract Enforcement | API contract check | In Gate-Keeper validation | API drift, wrong signatures, missing endpoints |
+| **A6** | Shadow Tester | Parallel risk agent | Concurrent with Coder | Risk prioritization for Tester, early warnings |
 
 ---
 
@@ -36,35 +38,35 @@ The Anvil is a 7-tier validation system that runs between every agent phase in t
 ```
 FOR EACH story:
 
-  0. ANVIL T0: Correctness Contract check
+  0. ANVIL A0: Correctness Contract check
      └── For completed stories: verify every done_when item has a matching test
      └── Uses fuzzy keyword matching against test file content (no AI, no build)
 
   1. Architect designs solution
-     └── ANVIL T1: Validate file references in architect output
+     └── ANVIL A1: Validate file references in architect output
 
-  2. Coder implements (+ T6 Shadow Tester in parallel)
-     └── ANVIL T1: Syntax, patterns, imports on ALL changed files
-     └── ANVIL T2: Canary smoke test (can it import/compile?)
-     └── ANVIL T3: Self-adversarial review (3+ failure modes)
+  2. Coder implements (+ A6 Shadow Tester in parallel)
+     └── ANVIL A1: Syntax, patterns, imports on ALL changed files
+     └── ANVIL A2: Canary smoke test (can it import/compile?)
+     └── ANVIL A3: Self-adversarial review (3+ failure modes)
 
-  3. Tester writes tests (receives T6 risk list as input)
-     └── ANVIL T1: Validate test files (syntax, no banned patterns)
+  3. Tester writes tests (receives A6 risk list as input)
+     └── ANVIL A1: Validate test files (syntax, no banned patterns)
 
   4. Gate-Keeper validates
-     └── ANVIL T4: Scope validation (expected vs actual files)
-     └── ANVIL T4b: Traceability test (every changed line traces to request)
-     └── ANVIL T5: Contract enforcement (API matches declaration)
+     └── ANVIL A4: Scope validation (expected vs actual files)
+     └── ANVIL A4b: Traceability test (every changed line traces to request)
+     └── ANVIL A5: Contract enforcement (API matches declaration)
 ```
 
 ### Fast-Fail Behavior
 
-- **T0 FAIL** → Block pipeline, done_when items lack test coverage — route to Tester
-- **T1 FAIL after Architect** → Block Coder, route to Fixer
-- **T1 FAIL after Coder** → Block Tester, route to Fixer
-- **T2 FAIL (canary)** → Skip Tester entirely, route to Fixer
-- **T3 VULNERABLE** → Block handoff, Coder must fix before proceeding
-- **T4/T5 FAIL** → Gate-Keeper blocks, standard remediation flow
+- **A0 FAIL** → Block pipeline, done_when items lack test coverage — route to Tester
+- **A1 FAIL after Architect** → Block Coder, route to Fixer
+- **A1 FAIL after Coder** → Block Tester, route to Fixer
+- **A2 FAIL (canary)** → Skip Tester entirely, route to Fixer
+- **A3 VULNERABLE** → Block handoff, Coder must fix before proceeding
+- **A4/A5 FAIL** → Gate-Keeper blocks, standard remediation flow
 
 ---
 
@@ -105,8 +107,8 @@ Action: CONTINUE / FIX_REQUIRED / BLOCK
 | Expected file not changed | BLOCK |
 | API contract mismatch | BLOCK |
 | Unexpected file changed (scope creep) | WARN |
-| Changed line not traceable to request (T4b) | WARN |
-| Changed line in security/auth file not traceable (T4b) | BLOCK |
+| Changed line not traceable to request (A4b) | WARN |
+| Changed line in security/auth file not traceable (A4b) | BLOCK |
 | Suspicious duplicate content | WARN |
 | Shadow tester HIGH risk | WARN |
 | Shadow tester MEDIUM risk | INFO |
@@ -118,7 +120,7 @@ Action: CONTINUE / FIX_REQUIRED / BLOCK
 
 ### Gate-Keeper
 
-The Gate-Keeper integrates T4 (Scope Validation) and T5 (Contract Enforcement) into its validation phase. These are additional checks alongside the existing three-layer enforcement and banned pattern scanning.
+The Gate-Keeper integrates A4 (Scope Validation) and A5 (Contract Enforcement) into its validation phase. These are additional checks alongside the existing three-layer enforcement and banned pattern scanning.
 
 ### Fixer Orchestrator
 
@@ -149,7 +151,7 @@ For specific use cases, Anvil can be disabled:
 /go --anvil=t1,t2       Run Tiers 1 and 2 only
 ```
 
-**Default**: All tiers enabled in semi-auto and autonomous modes. In supervised mode, T1 always runs; T2-T6 run if Gate-Keeper is in auto-fix mode.
+**Default**: All tiers enabled in semi-auto and autonomous modes. In supervised mode, A1 always runs; A2-A6 run if Gate-Keeper is in auto-fix mode.
 
 ---
 
@@ -159,14 +161,14 @@ Each tier has a dedicated protocol file:
 
 | Tier | Protocol File |
 |------|--------------|
-| T0 | Static check — fuzzy keyword match of `done_when` items against test files (no external script) |
-| T1 | `scripts/anvil.sh` (shell script) |
-| T2 | `agents/_canary-smoke-test.md` |
-| T3 | `agents/_self-adversarial-review.md` |
-| T4 | `agents/_scope-validation.md` |
-| T4b | `agents/_scope-validation.md` (Traceability Test section) |
-| T5 | `agents/_contract-enforcement.md` |
-| T6 | `agents/_shadow-tester.md` |
+| A0 | Static check — fuzzy keyword match of `done_when` items against test files (no external script) |
+| A1 | `scripts/anvil.sh` (shell script) |
+| A2 | `agents/_canary-smoke-test.md` |
+| A3 | `agents/_self-adversarial-review.md` |
+| A4 | `agents/_scope-validation.md` |
+| A4b | `agents/_scope-validation.md` (Traceability Test section) |
+| A5 | `agents/_contract-enforcement.md` |
+| A6 | `agents/_shadow-tester.md` |
 
 ---
 
@@ -176,20 +178,20 @@ Track Anvil effectiveness:
 
 | Metric | Target |
 |--------|--------|
-| T0 coverage gap detection (missing tests for done_when) | >90% of untested criteria caught |
-| T1 catch rate (issues caught before LLM agents) | >40% of all violations |
-| T2 canary catch rate (broken code before Tester) | >80% of import/compile errors |
-| T3 adversarial miss rate (failures coder missed) | <20% unmitigated failure modes |
-| T4 scope accuracy (expected vs actual) | >90% match rate |
-| T4b traceability accuracy (lines traceable to request) | >95% of changed lines traceable |
-| T5 contract match (API implementation vs spec) | 100% for declared endpoints |
-| T6 risk prediction accuracy | >60% of HIGH risks confirmed by Tester |
+| A0 coverage gap detection (missing tests for done_when) | >90% of untested criteria caught |
+| A1 catch rate (issues caught before LLM agents) | >40% of all violations |
+| A2 canary catch rate (broken code before Tester) | >80% of import/compile errors |
+| A3 adversarial miss rate (failures coder missed) | <20% unmitigated failure modes |
+| A4 scope accuracy (expected vs actual) | >90% match rate |
+| A4b traceability accuracy (lines traceable to request) | >95% of changed lines traceable |
+| A5 contract match (API implementation vs spec) | 100% for declared endpoints |
+| A6 risk prediction accuracy | >60% of HIGH risks confirmed by Tester |
 
 ---
 
 ## Design Principles
 
-1. **Cheap checks first**: T0 (static) and T1 (shell) catch 60%+ of issues with zero LLM cost
+1. **Cheap checks first**: A0 (static) and A1 (shell) catch 60%+ of issues with zero LLM cost
 2. **Fast-fail**: Don't run expensive agents on broken code
 3. **Non-destructive**: Anvil only reads and validates — never modifies code
 4. **Additive**: Anvil supplements existing Gate-Keeper, never replaces it

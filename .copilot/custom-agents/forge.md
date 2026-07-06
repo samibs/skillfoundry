@@ -415,7 +415,7 @@ Problem: Ignoring phase failures produces code that looks done but is not produc
 
 Phase 1 (Ignite):    ✓ PRD validated (2 PRDs)
 Phase 2 (Forge):     ✓ 8/8 stories implemented
-  └── STORY-005: Failed Anvil T2 → Fixer applied → Re-validated → PASS
+  └── STORY-005: Failed Anvil A2 → Fixer applied → Re-validated → PASS
   └── STORY-007: Failed tests → Fixer retry 1/3 → PASS
 Phase 3 (Temper):    ✓ All layers passing
   └── Database: ✓ | Backend: ✓ | Frontend: ✓

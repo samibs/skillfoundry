@@ -171,7 +171,7 @@ See CHANGELOG.md for full details
 - **Autonomous Loop Engine** - Ralph Loop: agent prompts itself, judges its own output, stops when done
 - **`/improve` command** - Continuous codebase improvement loop: scan → fix → verify → loop
 - **Pre-Execution Verification** - Goal reframing and assumption surfacing before implementation
-- **Anvil T4b Traceability** - Line-level change traceability gate
+- **Anvil A4b Traceability** - Line-level change traceability gate
 - **Auto-Remediation** - 90%+ violations fixed autonomously
 - **Execution Modes** - Supervised, Semi-Autonomous, Autonomous, Loop
 

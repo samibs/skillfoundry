@@ -65,7 +65,7 @@ Run `git diff --name-only` (or `git diff --name-only HEAD` if commits were made)
 ## Output Format
 
 ```markdown
-ANVIL CHECK: T4 Scope Validation — [story ID]
+ANVIL CHECK: A4 Scope Validation — [story ID]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Expected Changes:
@@ -113,17 +113,17 @@ When unexpected files are changed:
 
 ---
 
-## T4b: Traceability Test (Line-Level)
+## A4b: Traceability Test (Line-Level)
 
-T4 validates at the **file level** (expected vs actual files changed). T4b goes deeper: it validates at the **line level** that every changed line traces directly to the user's request.
+A4 validates at the **file level** (expected vs actual files changed). A4b goes deeper: it validates at the **line level** that every changed line traces directly to the user's request.
 
 > **Core Question**: "Can every changed line trace directly to the user's request? If not, flag the unrelated changes."
 
 ### When to Run
 
-- After T4 passes (T4b is a sub-check of T4, not independent)
-- Only on files that passed T4 (i.e., expected or accepted scope-creep files)
-- Skipped if T4 fails with BLOCK (no point checking lines if files are wrong)
+- After A4 passes (A4b is a sub-check of A4, not independent)
+- Only on files that passed A4 (i.e., expected or accepted scope-creep files)
+- Skipped if A4 fails with BLOCK (no point checking lines if files are wrong)
 
 ### Process
 
@@ -150,7 +150,7 @@ For each changed file, categorize hunks from `git diff`:
 #### Step 3: Report
 
 ```markdown
-ANVIL CHECK: T4b Traceability Test — [story ID]
+ANVIL CHECK: A4b Traceability Test — [story ID]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Request Intent: [summary of what was asked]
@@ -182,7 +182,7 @@ This check directly prevents:
 
 ### Handling Flagged Lines
 
-When T4b flags orthogonal or suspicious changes:
+When A4b flags orthogonal or suspicious changes:
 
 1. **WARN**: Gate-Keeper logs the warning. Coder is asked to justify or revert in next iteration
 2. **BLOCK**: Route to Fixer Orchestrator with violation type: `orthogonal_change`
@@ -200,4 +200,4 @@ When expected files were NOT changed:
 
 ---
 
-*The Anvil T4 — What you said you'd change, you must change. What you didn't say you'd change, explain why.*
+*The Anvil A4 — What you said you'd change, you must change. What you didn't say you'd change, explain why.*
