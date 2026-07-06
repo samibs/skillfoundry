@@ -170,7 +170,7 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.21.0**
+**SkillFoundry v5.22.0**
 
 - **60 Agents, 130+ Skills** - Complete development lifecycle coverage
 - **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
@@ -188,6 +188,7 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 5.22.0 | 2026-07-06 | Refinement Pass: prompt tightening, /gosm-/goma-/blitz aliases, Anvil A-namespace, drift fixes |
 | 5.21.0 | 2026-07-05 | Codebase Agent Wiki: /docs wiki, grounded agent-facing docs, surgical updates |
 | 5.20.0 | 2026-06-23 | Autonomous Loop Engine: Ralph Loop, /improve, self-prompt protocol |
 | 5.19.0 | 2026-06-22 | Structural Trust: state isolation, hotfix pathway, evaluator calibration, audit trail |

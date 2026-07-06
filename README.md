@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.21.0-blue)
+![Version](https://img.shields.io/badge/version-5.22.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,19 +25,22 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.21.0
+### What's New in v5.22.0
 
-**Codebase Agent Wiki — Documentation Built for the Next Agent**
+**Refinement Pass — Tighter, Clearer, More Consistent**
 
-v5.21.0 extends the `/docs` skill with a repo-wide, agent-facing wiki generator, inspired by [langchain-ai/openwiki](https://github.com/langchain-ai/openwiki). Until now `/docs` documented features on demand (README vs CHANGELOG, version consistency). It can now also inspect the whole repository and produce a navigable wiki whose primary reader is a future coding agent — grounded in real source and git evidence, and kept current with surgical, change-aware updates.
+v5.22.0 is a refinement release: **no new features** — every change tightens or corrects what already existed, targeting precise modern LLMs that don't need verbose scaffolding. Roughly **12,000 lines of repeated ceremony removed** across all six platform trees, overlapping entry points consolidated, and long-standing drift corrected.
 
-- **`/docs wiki` capability** — New Phase 7 of the Documentation Codifier. `/docs wiki init` builds an agent wiki under `docs/wiki/` (a `quickstart.md` entrypoint plus focused section pages); `/docs wiki update` refreshes it surgically; `/docs wiki audit` reports freshness vs git HEAD.
-- **Grounding discipline (anti-hallucination)** — Every claim must be tied to a source file, existing doc, or git evidence actually inspected. No invented files, APIs, routes, or behavior. "Unknown / needs verification" beats a plausible guess.
-- **Git-as-discovery** — Uses `git log`/`blame`/`show` to explain *why* code exists, not just what files contain. Update runs inspect commits since the last successful run via a recorded `gitHead`.
-- **Surgical, change-aware updates** — A docs-impact plan (source change → wiki page → edit → why), a soft diff budget, and a genuine no-op path so an unchanged repo produces zero edits. Run metadata tracked in `docs/wiki/.last-update.json`.
-- **Agent-actionable pages** — Every section page carries a "where to start / what to watch out for / relevant tests" trio, and the top-level `AGENTS.md`/`CLAUDE.md` gets a reference section pointing agents to the wiki.
+- **Prompt tightening** — Restated reflection blocks, peer/context ceremony, and `go.md`'s embedded version-changelog collapsed to single references. Behavior preserved; the repeated scaffolding is gone.
+- **Entry-point consolidation** — `/gosm`, `/goma`, `/blitz` are now thin aliases over `/go` (each was ~400 lines of duplicated pipeline docs); each keeps only its real differentiator.
+- **Gate disambiguation** — Anvil agent-handoff tiers renamed to the **A-namespace (A0–A6)**, ending the collision with the CLI quality gates (T0–T7) where "T3" meant two different things.
+- **Correctness & consistency** — Fixed a VS Code forge option that silently forged nothing, restored 3 skills missing on 4 platforms, made the sync engine generate standalone commands to all six platforms, and reconciled stale version mastheads and platform counts (Penta→Hexa) across the docs.
 
-Synced across all 6 install platforms (Claude, Copilot, Cursor, Codex, Gemini, Grok Build). No new commands or agents — a capability upgrade to the existing `/docs` skill.
+Full item-by-item breakdown in the CHANGELOG under `[5.22.0]`.
+
+#### Previous: Codebase Agent Wiki (v5.21.0)
+
+- `/docs wiki` — a repo-wide, agent-facing wiki generator (Phase 7 of the Documentation Codifier), grounded in source + git evidence, with surgical change-aware updates. Inspired by [langchain-ai/openwiki](https://github.com/langchain-ai/openwiki).
 
 #### Previous: Autonomous Loop Engine (v5.20.0)
 
