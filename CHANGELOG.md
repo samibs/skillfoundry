@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Refinement Pass
+## [5.22.0] - 2026-07-06 — Refinement Pass
 
 Tightening and consolidation of the existing framework for precise modern LLMs: less boilerplate, fewer overlapping entry points, corrected drift. No new features — every change maps to something that already existed.
 
