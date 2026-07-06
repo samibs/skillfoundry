@@ -17,6 +17,7 @@ import { StatusBarManager } from './providers/statusbar';
 import { registerGateCommands } from './commands/gate';
 import { registerForgeCommands } from './commands/forge';
 import { registerMemoryCommands } from './commands/memory';
+import { registerExampleCommand } from './commands/example';
 import { registerSetupCommand, runSetupWizard, secretKeyFor, envVarFor } from './commands/setup';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -136,6 +137,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerSetupCommand(context, workDir, outputChannel);
   registerGateCommands(context, bridge, gateTimelineProvider, diagnosticsManager, outputChannel);
   registerForgeCommands(context, bridge, forgeMonitorProvider, outputChannel);
+  registerExampleCommand(context, bridge, forgeMonitorProvider, outputChannel);
   registerMemoryCommands(context, bridge, outputChannel);
 
   // Open Last Report command — opens .skillfoundry/report.html in browser
@@ -204,10 +206,10 @@ function registerPlaceholderCommands(context: vscode.ExtensionContext): void {
   // so the wizard runs even when no SkillFoundry install is detected.
   const commands = [
     'skillfoundry.gateAll', 'skillfoundry.gate', 'skillfoundry.gateFile',
-    'skillfoundry.forge', 'skillfoundry.metrics', 'skillfoundry.report',
-    'skillfoundry.benchmark', 'skillfoundry.hook', 'skillfoundry.memory',
-    'skillfoundry.prd', 'skillfoundry.scanDeps', 'skillfoundry.openReport',
-    'skillfoundry.refresh',
+    'skillfoundry.forge', 'skillfoundry.runExample', 'skillfoundry.metrics',
+    'skillfoundry.report', 'skillfoundry.benchmark', 'skillfoundry.hook',
+    'skillfoundry.memory', 'skillfoundry.prd', 'skillfoundry.scanDeps',
+    'skillfoundry.openReport', 'skillfoundry.refresh',
   ];
   for (const cmd of commands) {
     context.subscriptions.push(

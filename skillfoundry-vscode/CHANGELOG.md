@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.0] - 2026-07-06
+
+### Onboarding — from install to first gated build in five minutes
+
+The extension inherited the framework's full surface area (14 palette commands, four always-on sidebar trees, CodeLens everywhere). This release makes the first-run experience opinionated instead: one obvious path in, everything else discoverable but out of the way.
+
+- **"Run the Example Project" command** — Scaffolds a ready-made Todo-API PRD into `genesis/todo-api.md` and launches the full forge pipeline, watched live, with no mode/provider prompts. The fastest way to see a complete pipeline succeed on a known-good input before pointing it at your own code. Idempotent — never overwrites an existing PRD.
+- **"Get Started with SkillFoundry" walkthrough** — Native VS Code Get-Started experience: connect a provider → run the example → watch the gates → forge your own PRD. Steps self-complete as you go.
+- **Welcome states on empty views** — The Forge Monitor and Gate Timeline now show a one-click "Run the Example Project" action when there's nothing to display yet, instead of an empty tree.
+- **Quieter Command Palette** — Advanced commands (gates, metrics, benchmark, hooks, memory, dependency scan, report, refresh) are hidden from the palette by default; only the four core commands (Setup, Run the Example Project, Start Forge Pipeline, Create PRD) show. Set `skillfoundry.showAdvancedCommands` to `true` to reveal them all. Context-menu and CodeLens actions are unchanged.
+
 ## [1.2.0] - 2026-03-17
 
 ### T7 Deploy Pre-Flight Gate
