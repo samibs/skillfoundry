@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.22.0-blue)
+![Version](https://img.shields.io/badge/version-5.22.1-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,11 +25,13 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.22.0
+### What's New in v5.22.x
 
 **Refinement Pass — Tighter, Clearer, More Consistent**
 
-v5.22.0 is a refinement release: **no new features** — every change tightens or corrects what already existed, targeting precise modern LLMs that don't need verbose scaffolding. Roughly **12,000 lines of repeated ceremony removed** across all six platform trees, overlapping entry points consolidated, and long-standing drift corrected.
+The v5.22 line is a refinement release: **no new features** — every change tightens or corrects what already existed, targeting precise modern LLMs that don't need verbose scaffolding. Roughly **12,000 lines of repeated ceremony removed** across all six platform trees, overlapping entry points consolidated, and long-standing drift corrected.
+
+> **v5.22.1 (patch):** reconciled the skill/agent counts to verifiable ground truth (**61 agents · 107 skills/platform**, sourced from `AGENT_REGISTRY` + `install.sh`) and rebuilt the `sf_cli` dist to match source (comment-only). Docs/build hygiene — no behavior change.
 
 - **Prompt tightening** — Restated reflection blocks, peer/context ceremony, and `go.md`'s embedded version-changelog collapsed to single references. Behavior preserved; the repeated scaffolding is gone.
 - **Entry-point consolidation** — `/gosm`, `/goma`, `/blitz` are now thin aliases over `/go` (each was ~400 lines of duplicated pipeline docs); each keeps only its real differentiator.

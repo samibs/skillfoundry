@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v5.22.0
+# Documentation Index - SkillFoundry Framework v5.22.1
 
 Complete guide to all documentation in the framework.
 
@@ -23,6 +23,8 @@ Start here for installation and basic usage:
 | **[docs/DOCS-VERSIONING-STRATEGY.md](docs/DOCS-VERSIONING-STRATEGY.md)** | - | **NEW (FR-DOCS-104)** - Docs versioning, release-triggered review, WCAG 2.1 AA baseline |
 | **[docs/ESCALATION-CRITERIA.md](docs/ESCALATION-CRITERIA.md)** | 18 KB | **NEW v1.7.0** - Auto-fix vs. escalation decision matrix |
 | **[docs/AUTONOMOUS-EXECUTION.md](docs/AUTONOMOUS-EXECUTION.md)** | 10 KB | **NEW v1.7.0.2** - Autonomous execution setup, permission profiles, safety hooks |
+| **[V5.22.1-RELEASE-NOTES.md](docs/V5.22.1-RELEASE-NOTES.md)** | - | What's new in v5.22.1 — Consistency Follow-up (count reconciliation, dist rebuild) |
+| **[V5.22.0-RELEASE-NOTES.md](docs/V5.22.0-RELEASE-NOTES.md)** | - | What's new in v5.22.0 — Refinement Pass (prompt tightening, consolidation, drift fixes) |
 | **[V5.21.0-RELEASE-NOTES.md](docs/V5.21.0-RELEASE-NOTES.md)** | - | What's new in v5.21.0 — Codebase Agent Wiki (`/docs wiki`) |
 | **[V5.18.0-RELEASE-NOTES.md](docs/V5.18.0-RELEASE-NOTES.md)** | - | What's new in v5.18.0 — Web Security Checker |
 | **[V5.15.0-RELEASE-NOTES.md](docs/V5.15.0-RELEASE-NOTES.md)** | - | What's new in v5.15.0 — Coding Discipline Protocol |
@@ -535,7 +537,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 5.22.0
+**Framework Version**: 5.22.1
 **Documentation Updated**: March 15, 2026
 **Total Agents**: 61 core agents / 107 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
