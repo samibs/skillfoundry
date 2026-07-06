@@ -4,7 +4,7 @@ Complete guide to all documentation in the framework.
 
 **Version:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-**60 Agents (Core Roster) / 107 Skills** | **Hexa Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, Grok Build) | **Auto-Remediation** | **Knowledge Exchange** | **Swarm Coordination** | **DX Tooling** | **Advanced Intelligence**
+**61 Agents (Core Roster) / 107 Skills** | **Hexa Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, Grok Build) | **Auto-Remediation** | **Knowledge Exchange** | **Swarm Coordination** | **DX Tooling** | **Advanced Intelligence**
 
 ---
 
@@ -361,7 +361,7 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 | **SOC 2** | [agents/compliance-profiles/SOC2.md](agents/compliance-profiles/SOC2.md) | 28 rules: security, availability, integrity, confidentiality, privacy |
 | **GDPR** | [agents/compliance-profiles/GDPR.md](agents/compliance-profiles/GDPR.md) | 27 rules: consent, DSR, data protection, security, breach notification |
 
-## Agent Personas (60 Core Agents)
+## Agent Personas (61 Core Agents)
 
 **See [docs/AGENTS.md](docs/AGENTS.md) for complete agent documentation.**
 
@@ -537,7 +537,7 @@ Starting points for your work:
 
 **Framework Version**: 5.22.0
 **Documentation Updated**: March 15, 2026
-**Total Agents**: 60 core agents / 107 skills
+**Total Agents**: 61 core agents / 107 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
 **Total Documentation Size**: ~700 KB
 **Documentation Files**: 60+ files
