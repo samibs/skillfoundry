@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /gosm - Go Semi-Auto Orchestrator
 
 `/gosm` is a thin alias for **`/go --mode=semi-auto`**. It runs the full `/go` pipeline but auto-fixes routine issues and escalates only critical decisions to you. This is the recommended execution mode.
@@ -41,3 +50,17 @@ The one behavior semi-auto layers over `/go`: an auto-fix-vs-escalate decision o
 | API | Breaking change to consumers | ESCALATE |
 
 On escalation, present: story, phase, issue type, context, options with trade-offs, and a recommendation — then wait for input. If the auto-fix rate falls below 70% for a run, recommend switching to `/go` (supervised) — most findings need human decisions, so semi-auto is buying little. Everything else — phases, gates, delivery audit — is `/go`'s behavior unchanged.
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

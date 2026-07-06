@@ -1,3 +1,15 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
+---
+min_model: opus
+---
 # /forge - Summon The Forge
 
 > The full pipeline: validate, implement, test, audit, and harvest — all in one command.
@@ -24,8 +36,9 @@ Execute these phases in order:
 
 ### Pre-Flight: Project Readiness
 
-Before Phase 1, verify the project has a git repository:
+Before Phase 1, run these checks in order:
 
+**1. Git repository:**
 ```
 IF NOT a git repository (no .git/ directory):
   AUTO-INITIALIZE:
@@ -33,9 +46,32 @@ IF NOT a git repository (no .git/ directory):
 
   OUTPUT:
     ✓ Git repository initialized with initial commit.
-
-  CONTINUE to Phase 1.
 ```
+
+**2. Execution context** (per `agents/_execution-context.md`):
+Read or detect `.claude/execution-context.json`. Display mode:
+```
+EXECUTION MODE: REAL | ADVISORY | DEGRADED
+```
+In ADVISORY mode, all test and build claims use qualified language throughout the forge run.
+
+**3. Stack profile** (per `agents/_stack-profile.md`):
+Read `.claude/stack-profile.json`. If missing, detect and write now. All execution agents in Phase 2 use this — never hardcoded commands.
+
+**4. Token budget estimate:**
+Count total PRDs and estimate story count. Display before starting:
+```
+FORGE ESTIMATE
+PRDs found:     [N]
+Est. stories:   [N × avg 6]
+Est. tokens:    ~[N]k (varies by story complexity)
+
+Proceed? This will run the full pipeline including /feature per story.
+Use /forge --yes to skip this prompt.
+```
+
+**5. Tone:**
+Read `"tone"` from `.claude/config.json`. Apply `professional` language throughout if set.
 
 **PHASE 1: IGNITE** — Validate all PRDs
 ```
@@ -43,6 +79,10 @@ IF NOT a git repository (no .git/ directory):
 ```
 - If validation fails, stop and report issues
 - If no PRDs exist, guide user to create one with `/prd "idea"`
+- **Codebase comprehension pre-flight** (existing code only): run `sf_codemap { mode: "refresh" }`,
+  then hand `endpoints[]` to `sf_contract_check` and `unresolvedImports[]` to `sf_import_validator`
+  as a baseline. Advisory — a failure logs a warning and never blocks. See
+  `agents/_codemap-preflight-protocol.md`.
 
 **PHASE 2: FORGE** — Implement everything
 ```
@@ -50,14 +90,17 @@ IF NOT a git repository (no .git/ directory):
 ```
 - Semi-auto mode: auto-fix routine, escalate critical
 - Parallel execution for independent stories
-- Full story pipeline: Architect → Coder → Tester → Gate-Keeper
-- **The Anvil** runs between every handoff (T1-T6 quality checks)
+- **Per-story pipeline: Architect → `/feature`** — each story runs the full Feature Lifecycle:
+  `implement → testloop → evaluator challenge → coder feedback → document → commit`
+  See `agents/feature-lifecycle.md` for the complete per-story protocol.
+- **The Anvil** runs between every agent handoff within `/feature` (T1-T6 quality checks)
 - See `agents/_anvil-protocol.md` for Anvil tier details
-- **TEST ENFORCEMENT**: Every story MUST produce test files. The pipeline runs a
-  test existence gate after each story. If no test files are created:
-  1. A tester remediation agent is triggered to write tests
-  2. If remediation fails, the story is flagged with `testsMissing: true`
-  3. T3 gate in TEMPER phase will FAIL if zero test files exist
+- **TEST ENFORCEMENT**: `/feature` Stage 2 (TestLoop) enforces test existence and green pass rate.
+  A story cannot reach Stage 4 (Document) or Stage 5 (Commit) without passing tests.
+  Stories where TestLoop escalates are flagged `testsMissing: true` and blocked at T3 gate.
+- **EVALUATOR ENFORCEMENT**: `/feature` Stage 3 (Challenge) enforces evaluator approval.
+  A 🚫 verdict halts the story — it cannot proceed to Document or Commit.
+  A 🔴 verdict requires a coder fix + testloop re-run before re-evaluation.
 - **Batch execution**: Stories are executed in batches of 3-5. After each batch,
   state is persisted and context is compacted. If context is critically low,
   output explicit resume instructions before stopping.
@@ -286,9 +329,9 @@ IF ANY anomalies detected:
 ```
 /gohm
 ```
-- Extract lessons learned to `memory_bank/` (NOT Copilot's built-in memory-tool — see `.github/copilot-instructions.md`)
+- Extract lessons learned to `memory_bank/` (NOT any platform-internal memory tool)
 - Decisions, corrections, patterns recorded to `memory_bank/knowledge/*.jsonl`
-- Do NOT use Copilot's internal `WorkspaceStorage/` — it is not portable across platforms
+- All knowledge must be portable across platforms — never save to platform-specific storage
 
 **PHASE 6: DEBRIEF** — Write session summary
 - Auto-write a scratchpad summary to `.claude/scratchpad.md`
@@ -300,8 +343,13 @@ IF ANY anomalies detected:
   - Stories: <completed>/<total>
   - Issues: <count> found, <count> auto-fixed
   - Security: <pass/fail>
+  - Semgrep: <N> hard blocks found and fixed | not active
+  - Overrides: <count> (see logs/overrides.md)
   - Knowledge: <count> entries harvested
   ```
+- **HTML Report** (if `"reports.generate_html": true` in `.claude/config.json`):
+  Generate `reports/forge-[date].html` — single-file, pure HTML + inline CSS, no dependencies.
+  Contents: phase outcomes, per-story summary (tests, verdict, commit), Semgrep findings, override log, coverage trends.
 
 ### Output Format:
 
@@ -478,6 +526,8 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | Agent | Interaction |
 |-------|------------|
 | `/go` | Phase 2 delegates to `/go` for story execution |
+| `/feature` | **Phase 2 story unit** — each story runs the full feature lifecycle: implement→testloop→challenge→document→commit |
+| `/testloop` | Called by `/feature` Stage 2 — test execution feedback loop with Playwright support |
 | `/layer-check` | Phase 3 uses layer-check for validation |
 | `/security` | Phase 4 uses security for audit |
 | `/gohm` | Phase 5 uses gohm for knowledge harvesting |
@@ -486,3 +536,17 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/replay` | Forge state is replayable via `/replay` |
 | `/metrics` | Forge execution metrics tracked automatically |
 | `/context` | Budget monitored throughout; compaction triggered as needed |
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

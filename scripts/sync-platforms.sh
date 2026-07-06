@@ -413,6 +413,84 @@ generate_codex_standalone_content() {
     cat "$cmd_file"
 }
 
+# Generate Copilot custom-agent from a standalone command file (no backing agent)
+# Usage: generate_copilot_standalone_content <command_file>
+generate_copilot_standalone_content() {
+    local cmd_file="$1"
+
+    cat <<'COPILOT_HEADER'
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
+COPILOT_HEADER
+
+    cat "$cmd_file"
+
+    cat <<'COPILOT_FOOTER'
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```
+COPILOT_FOOTER
+}
+
+# Generate Cursor rule from a standalone command file (no backing agent)
+# Usage: generate_cursor_standalone_content <command_file>
+generate_cursor_standalone_content() {
+    local cmd_file="$1"
+    local cmd_name
+    cmd_name=$(basename "$cmd_file" .md)
+    local first_line
+    first_line=$(grep -m1 '^#' "$cmd_file" 2>/dev/null | sed 's/^#* *//' || echo "")
+    local description="${first_line:-Use this rule for the ${cmd_name} workflow.}"
+
+    cat <<CURSOR_HEADER
+---
+description: ${description}
+globs:
+alwaysApply: false
+---
+
+# ${cmd_name} — Cursor Rule
+
+> **Activation**: Say "${cmd_name}" or "use ${cmd_name} rule" in chat to activate this workflow.
+> **Platform**: Cursor (rule-based context, not slash-command invocation)
+
+CURSOR_HEADER
+
+    cat "$cmd_file"
+
+    cat <<CURSOR_FOOTER
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use ${cmd_name} rule"
+- "${cmd_name} — run the workflow"
+- "follow the ${cmd_name} workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.
+CURSOR_FOOTER
+}
+
 # ═══════════════════════════════════════════════════════════════
 # AGENT DISCOVERY
 # ═══════════════════════════════════════════════════════════════
@@ -571,7 +649,7 @@ cmd_sync() {
 
         # Sync standalone commands to Codex/Gemini (commands without backing agents)
         echo ""
-        echo -e "${BOLD}Syncing standalone commands to Codex/Gemini...${NC}"
+        echo -e "${BOLD}Syncing standalone commands to Codex/Gemini/Copilot/Cursor...${NC}"
         echo ""
         local standalone_count=0
         for file in "$CLAUDE_DIR"/*.md; do
@@ -596,12 +674,18 @@ cmd_sync() {
                 if [ "$DRY_RUN" = true ]; then
                     echo -e "  ${YELLOW}[dry-run]${NC} Would write: $codex_file"
                     echo -e "  ${YELLOW}[dry-run]${NC} Would write: $GEMINI_DIR/${cmd_name}.md"
+                    echo -e "  ${YELLOW}[dry-run]${NC} Would write: $COPILOT_DIR/${cmd_name}.md"
+                    echo -e "  ${YELLOW}[dry-run]${NC} Would write: $CURSOR_DIR/${cmd_name}.md"
                 else
                     mkdir -p "$codex_dir"
                     generate_codex_standalone_content "$file" > "$codex_file"
                     echo -e "  ${GREEN}wrote${NC} $codex_file (standalone)"
                     generate_gemini_standalone_content "$file" > "$GEMINI_DIR/${cmd_name}.md"
                     echo -e "  ${GREEN}wrote${NC} $GEMINI_DIR/${cmd_name}.md (standalone)"
+                    generate_copilot_standalone_content "$file" > "$COPILOT_DIR/${cmd_name}.md"
+                    echo -e "  ${GREEN}wrote${NC} $COPILOT_DIR/${cmd_name}.md (standalone)"
+                    generate_cursor_standalone_content "$file" > "$CURSOR_DIR/${cmd_name}.md"
+                    echo -e "  ${GREEN}wrote${NC} $CURSOR_DIR/${cmd_name}.md (standalone)"
                 fi
                 standalone_count=$((standalone_count + 1))
             fi

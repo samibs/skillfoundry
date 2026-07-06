@@ -109,7 +109,7 @@ FOR EACH acceptance criterion in the story:
 
 ### Browser Validation (UI Stories)
 
-If a story involves frontend screens and a browser MCP tool is available (`puppeteer`, `playwright-mcp`, or equivalent):
+If a story involves frontend screens and a browser MCP tool is available (`puppeteer`, `playwright-mcp`, or Claude Code's built-in browser):
 
 ```
 FOR EACH UI screen in the story:
@@ -132,7 +132,7 @@ If no browser MCP is available:
 ```
 → Note: "Browser validation skipped — no browser MCP configured"
 → Fall back to DOM inspection via curl + grep for key elements
-→ Recommend: configure a browser MCP tool for full visual validation
+→ Recommend: add Puppeteer MCP to .claude/mcp.json for full visual validation
 ```
 
 ### Server Startup Check
@@ -208,3 +208,14 @@ After fixer runs on failed ACs:
 | `/fixer` | Self-validate routes failed ACs to fixer with the actual-vs-expected delta |
 | `/tester` | Self-validate is NOT a replacement for tests — it verifies the running system, tests verify the code |
 | `/layer-check` | Self-validate verifies individual AC outputs; layer-check validates entire layers |
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use self-validate rule"
+- "self-validate — run the workflow"
+- "follow the self-validate workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

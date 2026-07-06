@@ -549,7 +549,7 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 
 This rule activates when you reference it in chat. Examples:
 - "use metrics rule"
-- "metrics — implement the feature"
-- "follow the metrics workflow"
+- "metrics — run the workflow"
+- "follow the metrics workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

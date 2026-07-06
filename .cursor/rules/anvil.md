@@ -11,7 +11,9 @@ alwaysApply: false
 
 # /anvil - The Anvil Quality Gate
 
-> 6-tier validation system that catches issues between every agent phase.
+> 7-tier (A0–A6) agent-handoff validation system that catches issues between every agent phase.
+
+> **Namespace**: Anvil tiers are **A0–A6** — distinct from the CLI quality gates **T0–T7** (`sf_cli/core/gates.ts`). Same count, different checks (e.g. Anvil A3 = Self-Adversarial Review, CLI gate T3 = Tests). Canonical definition: `agents/_anvil-protocol.md`.
 
 ---
 
@@ -19,11 +21,12 @@ alwaysApply: false
 
 ```
 /anvil                    Run all tiers on current story/changed files
-/anvil t1                 Tier 1 only (shell checks: syntax, patterns, imports)
+/anvil t1                 Tier 1 only (shell checks: syntax, patterns, imports, SAST)
 /anvil t1 <file>          Tier 1 on specific file
 /anvil t2                 Tier 2 (canary smoke test)
 /anvil t3                 Tier 3 (self-adversarial review of last implementation)
-/anvil t4                 Tier 4 (scope validation: expected vs actual files)
+/anvil t4                 Tier 4 (scope validation + Semgrep SAST deep scan)
+/anvil t4 --sast-only     Tier 4 SAST scan only (skip scope diff)
 /anvil t5                 Tier 5 (contract enforcement: API spec vs implementation)
 /anvil t6                 Tier 6 (shadow tester: risk assessment of changed code)
 /anvil --report           Full Anvil report on last story
@@ -39,10 +42,10 @@ You are **The Anvil** — the quality gate that strikes between every agent hand
 
 | Tier | Name | Type | What It Catches |
 |------|------|------|-----------------|
-| A1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files |
+| A1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files, Semgrep SAST (if installed) |
 | A2 | Canary Smoke Test | Quick execution test | Module won't import, won't compile |
 | A3 | Self-Adversarial Review | Coder self-critique | Untested failure modes, blind spots |
-| A4 | Scope Validation | Diff comparison | Scope creep, incomplete implementation |
+| A4 | Scope + SAST | Diff comparison + Semgrep deep scan | Scope creep, incomplete implementation, OWASP Top 10, hardcoded secrets |
 | A5 | Contract Enforcement | API contract check | API drift, wrong signatures |
 | A6 | Shadow Tester | Risk assessment | Priority risks for Tester |
 
@@ -60,9 +63,13 @@ You are **The Anvil** — the quality gate that strikes between every agent hand
    - List 3+ failure modes for recently implemented code
    - Each must have a mitigation (test/guard/validation)
    - Verdict: RESILIENT or VULNERABLE
-5. **A4 — Scope Validation**: See `agents/_scope-validation.md`
+5. **A4 — Scope Validation + SAST**: See `agents/_scope-validation.md`
    - Compare expected_changes from story vs git diff
    - Flag missing or unexpected changes
+   - Run `scripts/anvil.sh sast <changed-files>` for Semgrep OWASP Top 10 + secrets scan
+   - If `semgrep` not installed: WARN and skip (non-blocking unless HIGH findings present)
+   - HIGH severity findings → FAIL (route to secure-coder); MEDIUM → WARN
+   - For deep LLM-assisted SAST: invoke `sf_security_scan` tool with the changed file list
 6. **A5 — Contract Enforcement**: See `agents/_contract-enforcement.md`
    - If story has API contract, validate endpoints exist
    - Check methods, request/response models, status codes
@@ -351,11 +358,13 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/security` | A1 banned pattern scan overlaps with security scanning |
 | `/metrics` | Anvil pass/fail rates tracked per tier |
 
+---
+
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use anvil rule"
-- "anvil — implement the feature"
-- "follow the anvil workflow"
+- "anvil — run the workflow"
+- "follow the anvil workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

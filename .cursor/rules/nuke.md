@@ -343,7 +343,7 @@ Before executing full nuke (not `--rollback-only` or `--clean-only`), nuke MUST 
 
 This rule activates when you reference it in chat. Examples:
 - "use nuke rule"
-- "nuke — implement the feature"
-- "follow the nuke workflow"
+- "nuke — run the workflow"
+- "follow the nuke workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

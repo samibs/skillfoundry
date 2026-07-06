@@ -353,7 +353,7 @@ When the user requests a feature workflow without an existing PRD, workflow MUST
 
 This rule activates when you reference it in chat. Examples:
 - "use workflow rule"
-- "workflow — implement the feature"
-- "follow the workflow workflow"
+- "workflow — run the workflow"
+- "follow the workflow workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

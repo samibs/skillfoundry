@@ -5,8 +5,6 @@
 
 ## Agent Description
 
-Execution Explainer - Reconstructs, traces, and explains the last agent action in plain English with three levels of detail.
-
 ## Instructions
 
 # /explain - Execution Explainer
@@ -116,6 +114,7 @@ For every action, reconstruct the complete trace:
 
 ```
 TRACE: Session abc-123 | 2026-02-24T14:22:00Z
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 TRIGGER: /go 2026-02-15-competitive-leap.md
 STORY:   STORY-003 (GitHub Actions CI pipeline)
@@ -180,9 +179,9 @@ FINAL OUTCOME: SUCCESS
 ### Agent Handoff Chain Visualization
 
 ```
-  orchestrate -> architect -> coder -> tester -> fixer -> tester -> gate-keeper
-       |              |          |         |         |         |          |
-       L dispatch     L ADR-003  L 3 files L 1 fail  L fix    L 12 pass L PASSED
+  orchestrate ─→ architect ─→ coder ─→ tester ─→ fixer ─→ tester ─→ gate-keeper
+       │              │          │         │         │         │          │
+       └ dispatch     └ ADR-003  └ 3 files └ 1 fail  └ fix    └ 12 pass └ PASSED
 ```
 
 ### Trace Reconstruction from Incomplete Data
@@ -211,6 +210,7 @@ CONFIDENCE: PARTIAL (3 of 7 sources available)
 
 ```
 Last Action: coder implemented STORY-003 (GitHub Actions CI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 What happened:
   - Coder rewrote .github/workflows/ci.yml with matrix builds
@@ -231,9 +231,104 @@ What's next:
 
 Full trace with file changes, decision rationale, and before/after diffs.
 
+```
+Last Action: coder implemented STORY-003 (GitHub Actions CI)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Mode: VERBOSE
+
+TRIGGER
+  Command: /go 2026-02-15-competitive-leap.md
+  PRD: competitive-leap (17 stories, 5 waves)
+  Story: STORY-003 — GitHub Actions CI pipeline
+  Wave: 3 (dependencies STORY-001, STORY-002 completed)
+
+AGENT CHAIN
+  orchestrate ─→ architect ─→ coder ─→ tester ─→ fixer ─→ tester ─→ gate-keeper
+       │              │          │         │         │         │          │
+       └ dispatch     └ ADR-003  └ 3 files └ 1 fail  └ fix    └ 12 pass └ PASSED
+
+DECISION LOG
+  architect: Chose matrix build strategy over sequential builds.
+    Rationale: Matrix reduces CI time from ~8min to ~3min for
+    multi-platform targets.
+  coder: Split into ci.yml (build+test) and deploy.yml (deploy).
+    Rationale: Separation of concerns. Deploy only triggers on
+    main branch merge, not on every PR.
+  fixer: Added actions/upload-artifact and actions/download-artifact
+    between build and deploy stages.
+    Rationale: Tester caught missing artifact dependency.
+
+FILE CHANGES
+  .github/workflows/ci.yml
+    Before: 48 lines (single job, no matrix)
+    After:  72 lines (+42, -18)
+    Key changes:
+      - Added matrix strategy for node 18, 20
+      - Added npm audit step
+      - Added artifact upload after build
+
+  .github/workflows/deploy.yml (NEW)
+    38 lines
+    - Triggered on push to main only
+    - Downloads build artifact
+    - Runs smoke test before deploy
+
+  scripts/smoke-test.sh (NEW)
+    12 lines
+    - Curl health endpoint with retry logic
+    - Exit 1 on failure for CI gate
+
+TEST RESULTS
+  Run 1: 11/12 passed (1 failure: missing artifact)
+  Run 2: 12/12 passed (after fixer repair)
+
+TIMING
+  Total: 1 min 56.6s
+  Slowest step: coder (41.2s)
+  Rework: 1 cycle (fixer auto-fix, 6.3s)
+
+GATE-KEEPER VERDICT: PASSED
+  Lint: OK | Security: OK | Coverage: OK | Banned patterns: none
+```
+
 #### Story Mode (`/explain --story STORY-003`)
 
 All actions for a story in chronological order, across sessions.
+
+```
+Story Trace: STORY-003 — GitHub Actions CI Pipeline
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PRD: 2026-02-15-competitive-leap.md
+Status: COMPLETED
+Sessions: 2
+
+SESSION 1: abc-122 (2026-02-23T16:00:00Z)
+──────────────────────────────────────────────────
+  16:00:00  orchestrate   Dispatched STORY-003 in wave 3
+  16:00:02  architect     Generated ADR-003 (matrix CI strategy)
+  16:00:10  coder         Wrote ci.yml, deploy.yml, smoke-test.sh
+  16:00:52  tester        11/12 tests passed, 1 failure
+  16:00:52  escalation    Tester escalated: "artifact dependency missing"
+  16:00:53  [SESSION END] User closed session before fix
+
+SESSION 2: abc-123 (2026-02-24T14:20:00Z)
+──────────────────────────────────────────────────
+  14:20:00  orchestrate   Resumed STORY-003 from last checkpoint
+  14:22:00  coder         Re-read previous output, confirmed state
+  14:22:05  fixer         Auto-fixed artifact dependency (+8 lines)
+  14:22:11  tester        12/12 tests passed
+  14:22:36  gate-keeper   PASSED all checks
+  14:22:41  orchestrate   Marked STORY-003 complete, moved to STORY-004
+
+TOTAL ELAPSED: 2 sessions, 8 agent invocations
+REWORK CYCLES: 1 (cross-session)
+FILES CREATED: 2 new, 1 modified
+TESTS WRITTEN: 12
+
+AGENT HANDOFFS (all sessions):
+  orchestrate ──→ architect ──→ coder ──→ tester ──→ [session break]
+                                          ──→ coder ──→ fixer ──→ tester ──→ gate-keeper
+```
 
 ---
 
@@ -245,6 +340,7 @@ For every explained action, assess the impact:
 
 ```
 IMPACT ASSESSMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 FILES MODIFIED
   .github/workflows/ci.yml        +42 / -18 lines  (pipeline config)
@@ -256,15 +352,28 @@ TESTS AFFECTED
   0 existing tests modified
   0 existing tests broken
 
+DEPENDENCIES TOUCHED
+  GitHub Actions: actions/checkout@v4, actions/setup-node@v4,
+                  actions/upload-artifact@v4, actions/download-artifact@v4
+  No npm dependency changes
+  No runtime dependency changes
+
 SECURITY IMPLICATIONS
   - npm audit step added to pipeline (POSITIVE: catches vulnerable deps)
   - No secrets added to workflow files (verified: no hardcoded tokens)
+  - Deploy workflow requires main branch protection (assumed in place)
+  - smoke-test.sh uses curl with no auth (acceptable for health endpoint)
 
 SAFETY ASSESSMENT
   Reversible: YES (revert commit or delete new files)
   Breaking change: NO (additive only, existing CI preserved during transition)
   Rollback command: git revert <commit-sha>
   Risk level: LOW (CI config changes, no runtime code modified)
+
+DOWNSTREAM EFFECTS
+  - STORY-004 can now proceed (dependency on CI pipeline met)
+  - STORY-005 (CI badge polish) depends on this pipeline being functional
+  - No other stories blocked
 ```
 
 ### Safety Checklist
@@ -280,6 +389,110 @@ Every impact assessment must answer:
 | Is the change reversible? | YES/NO (provide rollback command) |
 | Could this break existing features? | YES/NO (explain if yes) |
 | Does this require manual verification? | YES/NO (list what to check) |
+
+---
+
+## OUTPUT FORMAT
+
+### Quick Mode Output
+
+```
+==================================================
+LAST ACTION EXPLAINED (Quick)
+==================================================
+
+Agent: [name]
+Story: [STORY-XXX] — [title]
+Time: [timestamp] ([duration])
+Outcome: [SUCCESS/FAILURE/REJECTED/ESCALATED]
+
+What happened:
+  - [bullet 1]
+  - [bullet 2]
+  - [bullet 3]
+
+Why:
+  - [requirement or trigger that caused this]
+
+What's next:
+  - [next pipeline step or required action]
+
+==================================================
+```
+
+### Verbose Mode Output
+
+```
+==================================================
+LAST ACTION EXPLAINED (Verbose)
+==================================================
+
+[Full trace as shown in Phase 3 verbose example]
+
+IMPACT:
+  Files: [N] modified, [N] new, [N] deleted
+  Tests: [N] new, [N] modified, [N] broken
+  Risk: [LOW/MEDIUM/HIGH]
+  Reversible: [YES/NO]
+
+==================================================
+```
+
+### Story Mode Output
+
+```
+==================================================
+STORY TRACE: STORY-XXX — [Title]
+==================================================
+
+[Full story trace as shown in Phase 3 story example]
+
+SUMMARY:
+  Sessions: [N]
+  Total invocations: [N]
+  Rework cycles: [N]
+  Final outcome: [COMPLETED/IN PROGRESS/BLOCKED]
+  Total elapsed: [duration across all sessions]
+
+==================================================
+```
+
+---
+
+## Trace Visualization
+
+### Agent Handoff Chain (always include in verbose and story modes)
+
+Simple linear chain:
+```
+  architect ─→ coder ─→ tester ─→ gate-keeper
+     │           │         │          │
+     └ ADR-003   └ 3 files └ 12 tests └ PASSED
+```
+
+Chain with rework loop:
+```
+  architect ─→ coder ─→ tester ─→ fixer ─→ tester ─→ gate-keeper
+     │           │         │         │         │          │
+     └ ADR-003   └ 3 files └ 1 FAIL  └ fix    └ 12 pass └ PASSED
+                            │                    ^
+                            └── rework loop ─────┘
+```
+
+Chain with escalation:
+```
+  architect ─→ coder ─→ tester ─→ debugger ─→ [USER]
+     │           │         │          │           │
+     └ ADR-003   └ 3 files └ 3 FAIL   └ unclear  └ ESCALATED
+                                                    (awaiting input)
+```
+
+Parallel dispatch (swarm mode):
+```
+  orchestrate ─┬→ coder (STORY-001) ─→ tester ─→ gate-keeper ─→ DONE
+               ├→ coder (STORY-002) ─→ tester ─→ gate-keeper ─→ DONE
+               └→ coder (STORY-003) ─→ tester ─→ fixer ─→ tester ─→ gate-keeper ─→ DONE
+```
 
 ---
 
@@ -299,6 +512,19 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **T
 | **Undo** | If the explanation reveals a bad action, `/undo` can reverse it. Explain provides the context undo needs. |
 | **Debugger** | When an explanation reveals a failure, debugger can be invoked with the trace context to investigate root cause. |
 
+### Handoff Patterns
+
+```
+Developer: "What just happened?"
+  └→ /explain (quick summary)
+      └→ "That looks wrong" → /undo (reverse it)
+      └→ "Why did it fail?" → /debugger (investigate)
+      └→ "Show me everything" → /explain --verbose
+      └→ "Show the whole story" → /explain --story STORY-XXX
+      └→ "Show the full session" → /replay
+      └→ "Is this a pattern?" → /analytics agent <name>
+```
+
 ---
 
 ## Read-Only
@@ -308,3 +534,17 @@ This command is read-only. No mutations. No confirmation required.
 ---
 
 *Execution Explainer - SkillFoundry Framework*
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

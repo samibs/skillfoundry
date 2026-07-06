@@ -543,7 +543,7 @@ This command is read-only. No mutations. No confirmation required.
 
 This rule activates when you reference it in chat. Examples:
 - "use explain rule"
-- "explain — implement the feature"
-- "follow the explain workflow"
+- "explain — run the workflow"
+- "follow the explain workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

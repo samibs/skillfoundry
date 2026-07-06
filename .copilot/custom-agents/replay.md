@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /replay - Replay & Session Viewer
 
 > Re-run the last `/go` or `/forge` execution, or view past session timelines.
@@ -264,3 +273,17 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/status` | Shows replay-eligible sessions |
 | `/context` | Budget check before replay to avoid token waste |
 | `/memory` | Replay outcomes recorded to memory bank |
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

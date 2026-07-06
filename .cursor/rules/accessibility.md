@@ -554,7 +554,7 @@ IF accessibility regression reported:
 
 This rule activates when you reference it in chat. Examples:
 - "use accessibility rule"
-- "accessibility — implement the feature"
-- "follow the accessibility workflow"
+- "accessibility — run the workflow"
+- "follow the accessibility workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /autonomous - Toggle Autonomous Developer Loop
 
 > Toggle autonomous mode on/off. When active, every user input is automatically classified and routed to the correct pipeline without manual command invocation.
@@ -121,3 +130,17 @@ Autonomous Mode: [ON/OFF]
 ---
 
 *The Autonomous Developer Loop — Type once, review once, ship.*
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

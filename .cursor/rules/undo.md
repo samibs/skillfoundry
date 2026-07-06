@@ -410,7 +410,7 @@ Before any multi-step undo (`--steps=N` where N >= 3), undo MUST challenge:
 
 This rule activates when you reference it in chat. Examples:
 - "use undo rule"
-- "undo — implement the feature"
-- "follow the undo workflow"
+- "undo — run the workflow"
+- "follow the undo workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /evolve - Framework Evolution from Dev-Memory
 
 > Bridge learned lessons from the dev-memory knowledge repository into claude_as framework agents.
@@ -91,3 +100,17 @@ Evolve — Evolution Complete
 ---
 
 *Evolve — The Self-Improving Framework — Claude AS*
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

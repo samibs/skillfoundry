@@ -91,7 +91,7 @@ Respond to user instructions by mapping them to debug tools:
 
 This rule activates when you reference it in chat. Examples:
 - "use debug rule"
-- "debug — implement the feature"
-- "follow the debug workflow"
+- "debug — run the workflow"
+- "follow the debug workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

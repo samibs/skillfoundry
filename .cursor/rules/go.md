@@ -1,5 +1,5 @@
 ---
-description: ---
+description: Project Kickstart - PRD-First Orchestrator
 globs:
 alwaysApply: false
 ---
@@ -1349,11 +1349,11 @@ See `agents/_context-discipline.md`.
 
 ---
 
-## Activation
+## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use go rule"
-- "go — run the pipeline"
-- "follow the go workflow"
+- "go — run the workflow"
+- "follow the go workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

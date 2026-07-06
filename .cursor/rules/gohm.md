@@ -358,7 +358,7 @@ Before writing entries with `confidence: "low"`, gohm MUST challenge itself:
 
 This rule activates when you reference it in chat. Examples:
 - "use gohm rule"
-- "gohm — implement the feature"
-- "follow the gohm workflow"
+- "gohm — run the workflow"
+- "follow the gohm workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

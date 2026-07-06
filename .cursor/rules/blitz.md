@@ -41,11 +41,11 @@ Wave planning is defined in `agents/_parallel-dispatch.md`: stories are grouped 
 
 ---
 
-## Activation
+## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use blitz rule"
-- "blitz — run the pipeline"
-- "follow the blitz workflow"
+- "blitz — run the workflow"
+- "follow the blitz workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -357,7 +357,7 @@ Before loading a profile with `mode: "autonomous"` and `auto_commit: true`, prof
 
 This rule activates when you reference it in chat. Examples:
 - "use profile rule"
-- "profile — implement the feature"
-- "follow the profile workflow"
+- "profile — run the workflow"
+- "follow the profile workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

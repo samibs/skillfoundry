@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /blitz - Blitz Mode Commander
 
 `/blitz` is a thin alias for **`/go --mode=semi-auto --parallel --tdd`**. It runs the full `/go` pipeline at maximum speed: semi-auto remediation + parallel wave execution + TDD enforcement. Blitz is for well-defined PRDs with independent stories.
@@ -27,3 +36,17 @@ Blitz only adds value when stories can run in parallel. Readiness check — all 
 - **At least 2 stories are independent** — otherwise parallelism has no value
 
 Wave planning is defined in `agents/_parallel-dispatch.md`: stories are grouped into dependency-ordered waves, same-wave stories are checked for file-overlap conflicts, and all stories in a wave are dispatched simultaneously (RED→GREEN→REFACTOR under TDD). Run `--dry-run` to preview the wave plan before executing. Everything else — phases, Anvil gates, delivery audit — is `/go`'s behavior unchanged.
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

@@ -353,7 +353,7 @@ See `agents/_context-discipline.md`.
 
 This rule activates when you reference it in chat. Examples:
 - "use context rule"
-- "context — implement the feature"
-- "follow the context workflow"
+- "context — run the workflow"
+- "follow the context workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /profile - Session Profile Manager
 
 > Load, list, diff, or create execution profiles that control how agents behave, how tokens are budgeted, and which execution mode is active.
@@ -339,3 +348,17 @@ Before loading a profile with `mode: "autonomous"` and `auto_commit: true`, prof
 ---
 
 *Session Profile Manager - SkillFoundry Framework*
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

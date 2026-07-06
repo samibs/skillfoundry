@@ -105,7 +105,7 @@ When no argument is given, recursively scan `docs/stories/` for all `.md` files 
 
 This rule activates when you reference it in chat. Examples:
 - "use ac rule"
-- "ac — implement the feature"
-- "follow the ac workflow"
+- "ac — run the workflow"
+- "follow the ac workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /gohm - Go Harvest Memory (Knowledge Harvester)
 
 > Scan the current session for decisions, corrections, patterns, and errors. Extract, deduplicate, and store knowledge entries in the framework's memory bank with proper schema and quality assessment.
@@ -340,3 +349,17 @@ Before writing entries with `confidence: "low"`, gohm MUST challenge itself:
 ---
 
 *Knowledge Harvester - SkillFoundry Framework*
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

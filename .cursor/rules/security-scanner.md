@@ -521,14 +521,16 @@ When working alongside coder agent, provide proactive guidance to prevent vulner
 
 ## Reflection
 
-See `agents/_reflection-protocol.md`. Before and after each task, self-score **Coverage** · **Accuracy** · **Fix Quality** · **Traceability** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Coverage** · **Accuracy** · **Fix Quality** · **Traceability** (0-10); if overall < 7.0, revise before handoff.
+---
+
 ---
 
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use security-scanner rule"
-- "security-scanner — implement the feature"
-- "follow the security-scanner workflow"
+- "security-scanner — run the workflow"
+- "follow the security-scanner workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

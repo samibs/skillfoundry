@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /test-map — Test Cases Documentation Generator
 
 > Read every test file in the project, classify each test by value tier, and produce a structured HTML deliverable documenting what is tested, why, and how good the coverage actually is.
@@ -248,3 +257,17 @@ Apply CSS classes exactly as specified:
 ---
 
 *Run after every major feature delivery or before any client review, audit, or code handoff.*
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

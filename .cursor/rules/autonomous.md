@@ -139,7 +139,7 @@ Autonomous Mode: [ON/OFF]
 
 This rule activates when you reference it in chat. Examples:
 - "use autonomous rule"
-- "autonomous — implement the feature"
-- "follow the autonomous workflow"
+- "autonomous — run the workflow"
+- "follow the autonomous workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

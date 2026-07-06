@@ -397,7 +397,7 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **C
 
 This rule activates when you reference it in chat. Examples:
 - "use migration rule"
-- "migration — implement the feature"
-- "follow the migration workflow"
+- "migration — run the workflow"
+- "follow the migration workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.
