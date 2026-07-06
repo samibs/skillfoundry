@@ -34,9 +34,15 @@ export async function runSetupWizard(
   workDir: string,
   outputChannel: vscode.OutputChannel,
 ): Promise<boolean> {
+  // Anthropic (PROVIDERS[0]) is the default — it is the pre-highlighted first
+  // item, so the user can just press Enter. Mirrors the CLI wizard's "[1]" default.
   const providerChoice = await vscode.window.showQuickPick(
-    PROVIDERS.map(p => ({ label: p.label, description: p.id })),
-    { placeHolder: 'Select AI provider', title: 'SkillFoundry Setup (1 of 2)' },
+    PROVIDERS.map((p, i) => ({
+      label: p.label,
+      description: p.id,
+      detail: i === 0 ? 'Default — press Enter to accept' : undefined,
+    })),
+    { placeHolder: 'Select AI provider — Anthropic Claude is the default (press Enter)', title: 'SkillFoundry Setup (1 of 2)' },
   );
   if (!providerChoice) return false;
 
