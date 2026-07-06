@@ -222,6 +222,6 @@ Suggested next steps: [for user or senior-engineer]
 ```
 
 ---
-## Reflection Protocol
+## Reflection
 
-Apply `agents/_reflection-protocol.md` before and after each implementation. Self-Score your work (1-10) on correctness, completeness, and security before handoff.
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.

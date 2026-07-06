@@ -254,32 +254,9 @@ REPLAY RESULT
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before replaying, answer:
-- Is this replay necessary, or should I run `/go` fresh?
-- Are the failure conditions from the last run still present?
-- Will the same inputs produce different outputs this time?
-- Have files changed since the original execution?
-
-### Post-Execution Reflection
-After replay completes, evaluate:
-- Did the replayed stories pass that previously failed?
-- Were there new failures not present in the original run?
-- Was the replay more efficient than running fresh?
-- Should the state file be updated or cleared?
-
-### Self-Score (1-10)
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Safety | [1-10] | Were all pre-flight checks performed? |
-| Efficiency | [1-10] | Did we avoid re-running unnecessary stories? |
-| Completeness | [1-10] | Were all failed stories addressed? |
-| Recovery | [1-10] | Did we handle errors gracefully? |
-
-**Threshold**: If any dimension scores below 6, escalate to user with explanation before proceeding.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH OTHER AGENTS

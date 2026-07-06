@@ -278,22 +278,9 @@ When working alongside coder agent, provide proactive guidance:
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL security scans require reflection before and after execution.**
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Self-Score (0-10)
-
-- **Coverage**: All vulnerability patterns checked? (X/10)
-- **Accuracy**: Findings are real, not false positives? (X/10)
-- **Fix Quality**: Every fix is correct and copy-paste ready? (X/10)
-- **Traceability**: Every finding has file:line, trace, and attack scenario? (X/10)
-- **Confidence**: Would this pass an external security audit? (X/10)
-
-**If overall score < 7.0**: Expand scan scope and re-check before reporting.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Coverage** · **Accuracy** · **Fix Quality** · **Traceability** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## Peer Improvement Signals

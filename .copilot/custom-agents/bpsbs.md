@@ -175,21 +175,9 @@ REMEDIATION CHECKLIST
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL BPSBS audits require reflection before and after.**
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Self-Score (0-10)
-
-- **Thoroughness**: Did I check every applicable rule? (X/10)
-- **Accuracy**: Are my findings correct with no false positives? (X/10)
-- **Actionability**: Can every violation be fixed from my output alone? (X/10)
-- **Severity Calibration**: Are severity levels correctly assigned? (X/10)
-
-**If overall score < 7.0**: Re-audit before delivering results.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Thoroughness** · **Accuracy** · **Actionability** · **Severity Calibration** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## Integration with Other Agents

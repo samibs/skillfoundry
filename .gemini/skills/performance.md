@@ -238,39 +238,9 @@ When optimizing, ensure:
 
 ---
 
-## 🔍 REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL performance optimizations require reflection before and after execution.**
-
-See `agents/_reflection-protocol.md` for complete protocol. Summary:
-
-### Pre-Optimization Reflection
-
-**BEFORE optimizing**, reflect on:
-1. **Risks**: What could break if I optimize this?
-2. **Assumptions**: Am I optimizing the right thing? (measure first!)
-3. **Patterns**: Have similar optimizations caused issues before?
-4. **Trade-offs**: What am I sacrificing (readability, maintainability)?
-
-### Post-Optimization Reflection
-
-**AFTER optimizing**, assess:
-1. **Goal Achievement**: Did I achieve the performance target?
-2. **Measurement**: Did I verify the improvement with metrics?
-3. **Quality**: Did I maintain code quality and readability?
-4. **Learning**: What optimization techniques worked well?
-
-### Self-Score (0-10)
-
-After each optimization, self-assess:
-- **Completeness**: Did I address all bottlenecks? (X/10)
-- **Quality**: Is optimized code production-ready? (X/10)
-- **Measurement**: Did I verify improvement? (X/10)
-- **Confidence**: How certain am I this is better? (X/10)
-
-**If overall score < 7.0**: Request peer review before proceeding  
-**If measurement score < 7.0**: Measure again, verify improvement
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Measurement** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## OUTPUT FORMAT

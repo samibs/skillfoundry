@@ -1280,19 +1280,9 @@ type AsyncState<T> =
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-After every UI implementation:
-
-### Self-Score (0-10)
-- **Visual Consistency**: Does it match the design system? (X/10)
-- **Responsiveness**: Works on all viewports? (X/10)
-- **Accessibility**: Meets WCAG AA? (X/10)
-- **Code Quality**: Maintainable, no anti-patterns? (X/10)
-- **Performance**: No unnecessary re-renders, optimized assets? (X/10)
-
-**If any score < 5**: BLOCKING — address before considering complete.
-**If any score < 7**: Address before considering complete.
+See `agents/_reflection-protocol.md`. After every UI implementation, self-score **Visual Consistency** · **Responsiveness** · **Accessibility** · **Code Quality** · **Performance** (0-10); any score < 5 is BLOCKING, < 7 must be addressed before complete.
 
 ---
 

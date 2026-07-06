@@ -17,9 +17,10 @@ description: >-
 /test-map [path]             Generate report for a specific directory
 /test-map --format=html      Output as HTML file (default)
 /test-map --format=md        Output as Markdown
+/test-map --open             Generate HTML and open in browser (if tool available)
 ```
 
-Output saved to: `docs/test-map-[YYYY-MM-DD].html`
+Output saved to: `docs/test-map-[YYYY-MM-DD].html` (or `.md`)
 
 ---
 
@@ -33,94 +34,129 @@ This is NOT a static checker. You READ the test bodies. You UNDERSTAND the asser
 
 ### Phase 1: Discovery
 
-Find all test files matching:
+Find all test files matching these patterns:
 ```
-*.spec.ts  *.spec.tsx  *.test.ts  *.test.tsx  *.spec.js  *.test.js
-test_*.py  *_test.py  *.Tests.cs  *Tests.cs  *Test.java  *_test.go
+*.spec.ts       *.spec.tsx      *.test.ts       *.test.tsx
+*.spec.js       *.test.js
+test_*.py       *_test.py
+*.Tests.cs      *Tests.cs
+*Test.java      *Spec.java
+*_test.go
 ```
-Exclude: `node_modules/`, `dist/`, `.next/`, `build/`, `coverage/`
 
-For each file: relative path, test count, framework detected.
+Exclude: `node_modules/`, `dist/`, `.next/`, `build/`, `coverage/`, `__pycache__/`
+
+For each file, record:
+- File path (relative to project root)
+- Number of test cases (`it(...)`, `test(...)`, `it.each(...)`, `@Test`, `def test_`)
+- Framework detection (Jest, Vitest, pytest, NUnit, JUnit, Go test)
 
 ---
 
 ### Phase 2: Classification
 
-Read each test body. Classify the file's primary tier:
+Read each test file body. Classify the **file's primary tier** based on what the tests actually do:
 
-**Tier 1 — Business Logic (HIGH VALUE)**: ANY test asserting:
-- Conditional rendering or visibility based on input combinations
-- State transitions (step 1 → step 2, open → closed)
-- Data transformation rules (format strings, filtering logic)
-- Business rules (permission checks, calculation correctness)
-- Field exposure/hiding (information disclosure prevention)
-- Orchestration: exact payload shapes sent to services
-- Multi-step flows (open popup → reset form → API call)
+#### Tier 1 — Business Logic (HIGH VALUE)
 
-Signals: `toBe(false)`, `toEqual({...})`, `toHaveBeenCalledWith(...)`, multiple `expect()` with specific values.
+A file is Tier 1 if ANY test in it:
+- Asserts conditional rendering or visibility based on input combinations
+- Verifies state transitions (step 1 → step 2, open → closed, disabled → enabled)
+- Tests data transformation rules (format strings, concatenation, filtering logic)
+- Validates business rules (permission checks, validation logic, calculation correctness)
+- Verifies that specific fields are/aren't exposed (information hiding)
+- Tests orchestration: component A calls service B with exact payload shape
+- Tests multi-step flows (open popup → reset form → call API with formatted payload)
 
-**Tier 2 — Integration / Contract (MEDIUM-HIGH VALUE)**: Tests verifying DI wiring with real providers, HTTP request shapes via `HttpTestingController`, lifecycle-triggered behavior, event flows between services.
+Signals: `toBe(false)`, `toEqual({...})`, `toHaveBeenCalledWith(...)`, multiple `expect()` calls with specific values, `toContain(specificValue)`, conditional test data setups.
 
-**Tier 3 — Smoke / Creation Guard (BASELINE VALUE)**: ALL tests are `expect(x).toBeTruthy()` / `should create` with zero behavioral assertions.
+#### Tier 2 — Integration / Contract (MEDIUM-HIGH VALUE)
 
-One Tier 1 test in a file makes the whole file Tier 1.
+A file is Tier 2 if tests:
+- Verify DI wiring with real providers (not just `toBeTruthy()`)
+- Assert HTTP request shapes using `HttpTestingController`
+- Verify event flows between services
+- Test lifecycle hooks (`ngOnInit`, `ngOnChanges`, `useEffect`)
+- Assert service method delegation with specific parameters
+
+Signals: `HttpTestingController`, `spyOn(...).and.returnValue(...)` with assertions on call args, `TestBed.inject(...)`, lifecycle-triggered behavior.
+
+#### Tier 3 — Smoke / Creation Guard (BASELINE VALUE)
+
+A file is Tier 3 if ALL tests are:
+- `expect(component).toBeTruthy()` / `expect(service).toBeTruthy()`
+- `expect(pipe).toBeTruthy()`
+- `should create` with no further assertions
+- Zero behavioral assertions (no `toBe(value)`, no `toHaveBeenCalledWith(...)`)
 
 ---
 
 ### Phase 3: Per-File Deep Analysis (Tier 1 and Tier 2 only)
 
-For each file:
+For each Tier 1 and Tier 2 file, produce:
 
-1. **Test Case Table**: `# | Test Name | What It Verifies (plain English, one sentence)`
+#### a) Test Case Table
+For each `it(...)` / `test(...)` block:
+- Test number
+- Test name (exact)
+- Plain-English explanation of WHAT it verifies (1 sentence, business-readable)
 
-2. **Why This File Exists**: Risk context — what was refactored, what business operation this protects, what would break without these tests.
+#### b) Why This File Exists
+Explain the risk context: what was refactored, what business operation this protects, what would break without these tests.
 
-3. **Added Value Table**: `Benefit | Explanation` (minimum 3 rows; reference actual method names, business rules, field names from the test file)
+#### c) Added Value Table
+| Benefit | Explanation |
 
-4. **"Is It Useful?" Verdict**: One of: `YES — Critical.` / `YES — Very.` / `YES.` / `MODERATELY.` / `MINIMAL on their own.`
-   Followed by 1-2 sentences of justification.
+At least 3 rows. Be specific — reference actual method names, business rules, or field names from the test file.
+
+#### d) "Is It Useful?" Verdict
+One of: `YES — Critical.` / `YES.` / `YES — Very.` / `MODERATELY.` / `MINIMAL on their own.`
+Followed by 1-2 sentences explaining the verdict.
 
 ---
 
-### Phase 4: Tier 3 Summary (grouped by module)
+### Phase 4: Tier 3 Summary (grouped, not per-file)
 
-Group Tier 3 files by module (inferred from file path). Produce:
-- Table: `Module | Components/Pipes/Services Tested`
+For Tier 3 files, group by module (inferred from path). Produce:
+- A table: Module | Components/Pipes/Services Tested
 - Shared explanation of why smoke tests exist and their collective value
 
 ---
 
 ### Phase 5: Assessment Summary
 
-**Value Distribution Table**:
+#### Value Distribution Table
 | Tier | Test Count | File Count | Assessment |
 
-**Coverage Quality Score (1-10 per dimension)**:
+#### Coverage Quality Score (1-10 per dimension)
 | Dimension | Score | Notes |
-- Breadth (source files with any test)
-- Depth (Tier 1/2 ratio vs Tier 3)
-- Business rule coverage (Tier 1 files vs total feature component files)
-- Edge case coverage (boundary/error/empty state tests present)
-- API contract coverage (Tier 2 files with HttpTestingController vs total API service files)
+- **Breadth** — percentage of source files with any test
+- **Depth** — ratio of Tier 1/2 tests to Tier 3 tests
+- **Business rule coverage** — Tier 1 files vs total feature files
+- **Edge case coverage** — presence of boundary/error/empty state tests
+- **API contract coverage** — Tier 2 files with HttpTestingController vs total API service files
 
 ---
 
 ### Phase 6: Recommendations
 
-**Immediate High-Impact Additions** — ordered by impact:
+#### Immediate High-Impact Additions
+Ordered by impact. For each:
 - What is missing
 - Specific example code snippet showing the recommended test
-- Exact target file
+- Which file/service to target first
 
-**Tests That Can Be Removed**: Honest assessment. If none, say so explicitly.
+#### Tests That Can Be Removed
+Honest assessment. If none, say so.
 
-**Tests That Should Be Enhanced**: `Current Test File | Enhancement | Priority`
+#### Tests That Should Be Enhanced
+Table: Current Test File | Enhancement | Priority
 
 ---
 
 ### HTML Output Specification
 
-Generate a self-contained HTML file with inline CSS:
+Generate a self-contained HTML file with inline CSS. Use this exact structure and style:
 
 ```html
 <!DOCTYPE html>
@@ -157,27 +193,52 @@ hr { border: none; border-top: 1px solid #eee; margin: 2rem 0; }
 </style>
 </head>
 <body>
+
 <h1>[ProjectName] — Test Cases Documentation</h1>
+
 <p><strong>Generated:</strong> [DATE]<br>
 <strong>Total Spec Files:</strong> [N]<br>
 <strong>Framework:</strong> [detected framework(s)]</p>
+
 <hr>
-<!-- TOC, Tier sections, Assessment, Recommendations -->
+
+<div class="toc">
+<h2 style="margin-top:0">Table of Contents</h2>
+<ol>
+  <li><a href="#test-categories-overview">Test Categories Overview</a></li>
+  <li><a href="#tier-1">Tier 1 — Business Logic Tests (HIGH VALUE)</a></li>
+  <li><a href="#tier-2">Tier 2 — Integration Tests (MEDIUM-HIGH VALUE)</a></li>
+  <li><a href="#tier-3">Tier 3 — Smoke Tests / Creation Guards (BASELINE VALUE)</a></li>
+  <li><a href="#assessment-summary">Assessment Summary</a></li>
+  <li><a href="#recommendations">Recommendations</a></li>
+</ol>
+</div>
+
+<hr>
+<!-- ... sections ... -->
 <p><em>End of Test Cases Documentation</em></p>
 </body>
 </html>
 ```
 
+Apply CSS classes exactly as specified:
+- `class="tier-high"` → HIGH VALUE labels
+- `class="tier-medium"` → MEDIUM-HIGH VALUE labels
+- `class="tier-baseline"` → BASELINE VALUE labels
+- `class="verdict-yes"` → YES verdicts
+- `class="verdict-moderate"` → MODERATELY verdicts
+- `class="verdict-minimal"` → MINIMAL verdicts
+
 ---
 
 ### Rules
 
-- **Read the test bodies.** Names lie. `it()` bodies tell the truth.
-- **One tier per file.** One Tier 1 test makes the whole file Tier 1.
-- **Never fake a verdict.** No assertions = "UNCLEAR" not "YES."
-- **Business language.** Tier 1 explanations are for engineering leads, not developers.
-- **Count accurately.** Assessment totals must match Phase 1.
-- **Specific recommendations.** Name the exact file, include real code example, not a generic template.
+- **Read the test bodies.** File names and `describe()` labels lie. The `it()` bodies tell the truth.
+- **One tier per file.** If a file has one Tier 1 test and 10 smoke tests, it is Tier 1. The high-value test is the reason the file exists.
+- **Never fake a verdict.** If you can't determine what a test protects from reading the assertions, say "UNCLEAR — test body lacks assertions" not "YES."
+- **Business language.** The Tier 1 explanations are written for an engineering lead, not a developer. No `toBe()` jargon in the "Why" sections.
+- **Count accurately.** The test count in the Assessment Summary must match the actual count from Phase 1.
+- **Specific recommendations.** Each recommendation names the exact file and includes a real code example, not a generic template.
 
 ---
 
@@ -185,10 +246,10 @@ hr { border: none; border-top: 1px solid #eee; margin: 2rem 0; }
 
 | Command | Relationship |
 |---------|-------------|
-| `/tester` | Creates tests. `/test-map` documents what already exists. |
-| `/doc-tests` | Checks test doc quality. `/test-map` generates the deliverable report. |
-| `/self-validate` | Verifies running output. `/test-map` maps assertions in test files. |
-| `/layer-check` | Validates layers. `/test-map` reports test coverage per layer. |
+| `/tester` | Creates tests. `/test-map` documents what tests already exist. |
+| `/doc-tests` | Checks test documentation quality. `/test-map` generates the deliverable report. |
+| `/self-validate` | Verifies running output. `/test-map` maps what assertions exist in test files. |
+| `/layer-check` | Validates all three layers. `/test-map` reports test coverage of each layer. |
 
 ---
 

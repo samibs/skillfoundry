@@ -477,29 +477,9 @@ jobs:
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Clean Reflection
-- What is the deployment target (npm, Docker, cloud, bare metal)?
-- Are there project-specific files that look like framework artifacts but aren't?
-- Is there a build step that already excludes some artifacts?
-- Are there CI/CD pipelines that need .gitignore/.dockerignore updates?
-
-### Post-Clean Reflection
-- Did I check all 22 framework directories?
-- Did I scan source code for AI markers?
-- Is the .gitignore complete without blocking application files?
-- Would a fresh clone + build produce a clean deployable?
-
-### Self-Score (1-10)
-
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Coverage | [1-10] | Did I check all artifact categories? |
-| Safety | [1-10] | Did I avoid removing application files? |
-| Verification | [1-10] | Did I verify the clean state, not just generate rules? |
-| CI/CD Ready | [1-10] | Can the clean check run automatically in pipelines? |
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## CLOSING FORMAT

@@ -298,34 +298,9 @@ PUSH TO FRAMEWORK REPO
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE harvesting**, reflect on:
-1. **Signal vs Noise**: Am I about to harvest trivial entries that add no value?
-2. **Deduplication**: Have I checked against existing entries to avoid bloat?
-3. **Sanitization**: Could any entries contain secrets, paths, or PII that should be stripped?
-4. **Relevance**: Are these entries specific to this project, or do they have cross-project value?
-
-### Post-Execution Reflection
-
-**AFTER harvesting**, assess:
-1. **Quality**: What percentage of harvested entries would actually help a future session?
-2. **Completeness**: Did I miss any significant decisions or corrections from this session?
-3. **Accuracy**: Are the confidence levels appropriate? Did I over/under-rate any entries?
-4. **Learning**: Should any entries be promoted to universal knowledge?
-
-### Self-Score (0-10)
-
-After each harvest:
-- **Signal Quality**: Are harvested entries genuinely valuable? (X/10)
-- **Deduplication**: Did I avoid adding redundant entries? (X/10)
-- **Completeness**: Did I capture all significant knowledge from the session? (X/10)
-- **Schema Compliance**: Do all entries conform to the required schema? (X/10)
-
-**Threshold: If overall score < 7.0**: Re-scan session, look for missed decisions/corrections, tighten quality filter.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Signal Quality** · **Deduplication** · **Completeness** · **Schema Compliance** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

@@ -201,37 +201,9 @@ These are the subtle conceptual errors of a "slightly sloppy, hasty junior dev":
 **Reference**: `docs/ANTI_PATTERNS_DEPTH.md` for detailed patterns.
 
 ---
-## 🔍 REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**See** `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Implementation Reflection
-
-**BEFORE writing code**, reflect on:
-1. **Risks**: What could go wrong with this approach?
-2. **Assumptions**: What assumptions am I making?
-3. **Patterns**: Have I seen similar patterns fail before?
-4. **Simplicity**: Is there a simpler solution?
-
-### Post-Implementation Reflection
-
-**AFTER writing code**, assess:
-1. **Goal Achievement**: Did the output match the intent?
-2. **Edge Cases**: What edge cases did I miss?
-3. **Quality**: Is this production-ready?
-4. **Learning**: What would I do differently next time?
-
-### Self-Score (0-10)
-
-After each implementation, self-assess:
-- **Completeness**: Did I address all requirements? (X/10)
-- **Quality**: Is this production-ready? (X/10)
-- **Security**: Did I follow BPSBS? (X/10)
-- **Confidence**: How certain am I this is correct? (X/10)
-
-**If overall score < 7.0**: Request peer review before proceeding
-**If any dimension < 5.0**: BLOCK further progress until addressed
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Security** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 ## Required Deliverables
 

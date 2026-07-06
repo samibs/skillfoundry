@@ -514,38 +514,9 @@ When working alongside coder agent, provide proactive guidance to prevent vulner
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL security scans require reflection before and after execution.**
-
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Scan Reflection
-
-**BEFORE scanning**, reflect on:
-1. **Scope**: Am I scanning the right files? Could vulnerabilities hide in config, scripts, or infrastructure code?
-2. **Context**: What does this code do? Auth, payments, user data, admin? Higher risk = deeper scan.
-3. **History**: Has this module had security issues before? Check memory_bank for past findings.
-4. **Blind spots**: What might I miss? Am I only checking patterns I know, or also thinking about logic flaws?
-
-### Post-Scan Reflection
-
-**AFTER scanning**, assess:
-1. **Coverage**: Did I check all 7 (quick) or 15 (comprehensive) patterns thoroughly?
-2. **False negatives**: Could there be vulnerabilities I missed because the pattern is unusual?
-3. **Fix quality**: Are my recommended fixes actually secure, or do they just move the vulnerability?
-4. **Systemic issues**: Do the findings suggest a pattern (e.g., all SQL queries are unsafe, suggesting no ORM usage)?
-
-### Self-Score (0-10)
-
-- **Coverage**: All vulnerability patterns checked? (X/10)
-- **Accuracy**: Findings are real, not false positives? (X/10)
-- **Fix Quality**: Every fix is correct and copy-paste ready? (X/10)
-- **Traceability**: Every finding has file:line, trace, and attack scenario? (X/10)
-- **Confidence**: Would this pass an external security audit? (X/10)
-
-**If overall score < 7.0**: Expand scan scope and re-check before reporting.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Coverage** · **Accuracy** · **Fix Quality** · **Traceability** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## Peer Improvement Signals

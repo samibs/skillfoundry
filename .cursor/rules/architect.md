@@ -140,9 +140,9 @@ The architect skill can ONLY create or modify these file types:
 **You CANNOT write source code files** (`.ts`, `.js`, `.py`, `.go`, `.cs`, `.rs`, `.java`, etc.).
 If architecture requires code changes, delegate to `/coder` with explicit instructions describing what to implement and where.
 
-## Reflection Protocol
+## Reflection
 
-Apply `agents/_reflection-protocol.md` before and after each architectural decision. Self-Score your work (1-10) on correctness, scalability, and security before handoff.
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 
 ---
 

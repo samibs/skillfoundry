@@ -327,33 +327,9 @@ Action: Implement mitigations, then re-run /anvil t3
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before running Anvil checks, answer:
-- Which files changed since the last Anvil run?
-- Is there a story context available for T4/T5 validation?
-- Should all 6 tiers run, or is a targeted check sufficient?
-- Is the `scripts/anvil.sh` script available and executable?
-
-### Post-Execution Reflection
-After Anvil completes, evaluate:
-- Did any tier produce false positives (flagging correct code)?
-- Were all failure findings actionable (not vague)?
-- Did T3 identify meaningful failure modes (not trivial ones)?
-- Was the overall verdict consistent with the individual tier results?
-- Should any findings be escalated beyond the Fixer?
-
-### Self-Score (1-10)
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Thoroughness | [1-10] | Were all applicable tiers run? No inappropriate skips? |
-| Accuracy | [1-10] | Were findings real issues, not false positives? |
-| Actionability | [1-10] | Can each finding be fixed with clear instructions? |
-| Handoff Quality | [1-10] | Was the handoff to Fixer/Gate-Keeper properly structured? |
-
-**Threshold**: If Thoroughness scores below 6 (too many skipped tiers), re-run with explicit file targets. If Accuracy scores below 6, review T1 patterns for false positive tuning.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH OTHER AGENTS

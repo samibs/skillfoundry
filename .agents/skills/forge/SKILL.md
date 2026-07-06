@@ -4,6 +4,9 @@ description: >-
   /forge - Summon The Forge
 ---
 
+---
+min_model: opus
+---
 # /forge - Summon The Forge
 
 > The full pipeline: validate, implement, test, audit, and harvest — all in one command.
@@ -30,8 +33,9 @@ Execute these phases in order:
 
 ### Pre-Flight: Project Readiness
 
-Before Phase 1, verify the project has a git repository:
+Before Phase 1, run these checks in order:
 
+**1. Git repository:**
 ```
 IF NOT a git repository (no .git/ directory):
   AUTO-INITIALIZE:
@@ -39,9 +43,32 @@ IF NOT a git repository (no .git/ directory):
 
   OUTPUT:
     ✓ Git repository initialized with initial commit.
-
-  CONTINUE to Phase 1.
 ```
+
+**2. Execution context** (per `agents/_execution-context.md`):
+Read or detect `.claude/execution-context.json`. Display mode:
+```
+EXECUTION MODE: REAL | ADVISORY | DEGRADED
+```
+In ADVISORY mode, all test and build claims use qualified language throughout the forge run.
+
+**3. Stack profile** (per `agents/_stack-profile.md`):
+Read `.claude/stack-profile.json`. If missing, detect and write now. All execution agents in Phase 2 use this — never hardcoded commands.
+
+**4. Token budget estimate:**
+Count total PRDs and estimate story count. Display before starting:
+```
+FORGE ESTIMATE
+PRDs found:     [N]
+Est. stories:   [N × avg 6]
+Est. tokens:    ~[N]k (varies by story complexity)
+
+Proceed? This will run the full pipeline including /feature per story.
+Use /forge --yes to skip this prompt.
+```
+
+**5. Tone:**
+Read `"tone"` from `.claude/config.json`. Apply `professional` language throughout if set.
 
 **PHASE 1: IGNITE** — Validate all PRDs
 ```
@@ -49,6 +76,10 @@ IF NOT a git repository (no .git/ directory):
 ```
 - If validation fails, stop and report issues
 - If no PRDs exist, guide user to create one with `/prd "idea"`
+- **Codebase comprehension pre-flight** (existing code only): run `sf_codemap { mode: "refresh" }`,
+  then hand `endpoints[]` to `sf_contract_check` and `unresolvedImports[]` to `sf_import_validator`
+  as a baseline. Advisory — a failure logs a warning and never blocks. See
+  `agents/_codemap-preflight-protocol.md`.
 
 **PHASE 2: FORGE** — Implement everything
 ```
@@ -56,14 +87,17 @@ IF NOT a git repository (no .git/ directory):
 ```
 - Semi-auto mode: auto-fix routine, escalate critical
 - Parallel execution for independent stories
-- Full story pipeline: Architect → Coder → Tester → Gate-Keeper
-- **The Anvil** runs between every handoff (T1-T6 quality checks)
+- **Per-story pipeline: Architect → `/feature`** — each story runs the full Feature Lifecycle:
+  `implement → testloop → evaluator challenge → coder feedback → document → commit`
+  See `agents/feature-lifecycle.md` for the complete per-story protocol.
+- **The Anvil** runs between every agent handoff within `/feature` (T1-T6 quality checks)
 - See `agents/_anvil-protocol.md` for Anvil tier details
-- **TEST ENFORCEMENT**: Every story MUST produce test files. The pipeline runs a
-  test existence gate after each story. If no test files are created:
-  1. A tester remediation agent is triggered to write tests
-  2. If remediation fails, the story is flagged with `testsMissing: true`
-  3. T3 gate in TEMPER phase will FAIL if zero test files exist
+- **TEST ENFORCEMENT**: `/feature` Stage 2 (TestLoop) enforces test existence and green pass rate.
+  A story cannot reach Stage 4 (Document) or Stage 5 (Commit) without passing tests.
+  Stories where TestLoop escalates are flagged `testsMissing: true` and blocked at T3 gate.
+- **EVALUATOR ENFORCEMENT**: `/feature` Stage 3 (Challenge) enforces evaluator approval.
+  A 🚫 verdict halts the story — it cannot proceed to Document or Commit.
+  A 🔴 verdict requires a coder fix + testloop re-run before re-evaluation.
 - **Batch execution**: Stories are executed in batches of 3-5. After each batch,
   state is persisted and context is compacted. If context is critically low,
   output explicit resume instructions before stopping.
@@ -278,7 +312,7 @@ IF ANY anomalies detected:
 - Backend: endpoints, auth, tests
 - Frontend: real API, all states, accessible
 - **Browser-level auth**: login/logout/protected routes verified in real browser context (curl is NOT sufficient for auth flows — it cannot detect cookie handling, CSRF pairing, or redirect set-cookie failures)
-- **Playwright mandatory** for any dependency marked Beta/Alpha in §5.0 Technology Maturity Assessment
+- **Playwright mandatory** for any dependency marked Beta/Alpha in §5.0 Technology Maturity Assessment — agent CANNOT declare TEMPER PASS with only curl when beta deps touch the feature
 
 **PHASE 4: INSPECT** — Security audit
 ```
@@ -306,8 +340,13 @@ IF ANY anomalies detected:
   - Stories: <completed>/<total>
   - Issues: <count> found, <count> auto-fixed
   - Security: <pass/fail>
+  - Semgrep: <N> hard blocks found and fixed | not active
+  - Overrides: <count> (see logs/overrides.md)
   - Knowledge: <count> entries harvested
   ```
+- **HTML Report** (if `"reports.generate_html": true` in `.claude/config.json`):
+  Generate `reports/forge-[date].html` — single-file, pure HTML + inline CSS, no dependencies.
+  Contents: phase outcomes, per-story summary (tests, verdict, commit), Semgrep findings, override log, coverage trends.
 
 ### Output Format:
 
@@ -474,34 +513,9 @@ The Forge — Complete
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before starting the forge pipeline, answer:
-- Are all PRDs in genesis/ complete and validated?
-- Is the context budget healthy enough for the full pipeline?
-- Are there leftover state files from a previous interrupted forge?
-- Should I use `--blitz` (TDD) for this particular set of features?
-
-### Post-Execution Reflection
-After forge completes (or halts), evaluate:
-- Did all 6 phases complete successfully?
-- Which phases required retries or fixer intervention?
-- Were there patterns in failures that suggest PRD quality issues?
-- Is the codebase truly production-ready, or are there lurking issues?
-- Were auto-fixes appropriate, or did they mask deeper problems?
-
-### Self-Score (1-10)
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Completeness | [1-10] | Did all stories pass all phases? |
-| Quality | [1-10] | Were Anvil gates respected, not bypassed? |
-| Security | [1-10] | Did Phase 4 pass with 0 critical/high findings? |
-| Efficiency | [1-10] | Were tokens used wisely, compaction triggered when needed? |
-| Recovery | [1-10] | Were failures handled gracefully with proper routing? |
-
-**Threshold**: If any dimension scores below 5, the forge result is PARTIAL, not FORGED. Report honestly.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH OTHER AGENTS
@@ -509,6 +523,8 @@ After forge completes (or halts), evaluate:
 | Agent | Interaction |
 |-------|------------|
 | `/go` | Phase 2 delegates to `/go` for story execution |
+| `/feature` | **Phase 2 story unit** — each story runs the full feature lifecycle: implement→testloop→challenge→document→commit |
+| `/testloop` | Called by `/feature` Stage 2 — test execution feedback loop with Playwright support |
 | `/layer-check` | Phase 3 uses layer-check for validation |
 | `/security` | Phase 4 uses security for audit |
 | `/gohm` | Phase 5 uses gohm for knowledge harvesting |

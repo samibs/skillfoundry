@@ -499,32 +499,9 @@ Use /metrics [category] for detailed breakdowns.
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before generating metrics, answer:
-- Is the metrics data file (`metrics.json`) present and non-empty?
-- What time period is the user interested in?
-- Are there enough data points for meaningful trends (need 7+ days)?
-- Should I highlight any known data quality issues?
-
-### Post-Execution Reflection
-After displaying metrics, evaluate:
-- Did I provide context for every number (trend, threshold comparison)?
-- Were recommendations specific and actionable?
-- Did I identify the most important metric to focus on?
-- Were calculations verified (no division by zero, no stale data)?
-
-### Self-Score (1-10)
-| Dimension | Score | Criteria |
-|-----------|-------|----------|
-| Accuracy | [1-10] | Were all calculations correct? No math errors? |
-| Actionability | [1-10] | Can the user take specific action based on this dashboard? |
-| Completeness | [1-10] | Were all relevant metrics categories displayed? |
-| Clarity | [1-10] | Is the dashboard easy to read and understand? |
-
-**Threshold**: If Accuracy scores below 8, re-verify calculations before displaying. If Actionability scores below 6, add specific recommendations.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## ERROR HANDLING

@@ -405,31 +405,9 @@ Status: PARTIAL — manual intervention required
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Execution Reflection
-Before launching blitz, reflect:
-1. **Story Independence**: Are stories truly independent within each wave? File overlap = conflicts.
-2. **TDD Feasibility**: Is a test framework available? Are test patterns clear for this codebase?
-3. **Parallelism Value**: Will parallel execution actually save time, or are stories mostly serial?
-4. **Complexity Assessment**: Is this project well-understood enough for blitz, or should /gosm run first?
-
-### Post-Execution Reflection
-After completion, assess:
-1. **Speedup Achieved**: Was the parallel speedup meaningful (>1.5x)?
-2. **Conflict Rate**: How many file conflicts occurred? Could wave planning be improved?
-3. **TDD Quality**: Were TDD tests meaningful, or just coverage padding?
-4. **Semi-Auto Balance**: Was the auto-fix vs escalation ratio healthy?
-
-### Self-Score (0-10)
-- **Speedup**: Was parallel execution >1.5x faster? (X/10)
-- **Conflict-Free**: Were file conflicts minimal (<2)? (X/10)
-- **TDD Coverage**: Did TDD produce meaningful tests at 80%+? (X/10)
-- **Completion Rate**: Did all stories complete successfully? (X/10)
-
-**If speedup < 5/10**: Stories may be too interdependent for blitz. Recommend /gosm.
-**If conflict rate < 5/10**: Wave planning needs refinement. Restructure story dependencies.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Speedup** · **Conflict-Free** · **TDD Coverage** · **Completion Rate** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

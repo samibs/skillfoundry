@@ -4,6 +4,9 @@ Gemini skill for `go`.
 
 ## Instructions
 
+---
+min_model: opus
+---
 # Project Kickstart - PRD-First Orchestrator
 
 You are the Project Kickstart agent. Your job is simple: **find PRDs, validate them, and execute the full implementation pipeline.**
@@ -251,6 +254,12 @@ This check runs ONCE at the start — before Phase 0 context preparation.
 
 Before any implementation work, prepare the context for efficient token usage.
 
+> **Codebase comprehension pre-flight** (existing code only): as part of Phase 0/IGNITE,
+> run `sf_codemap { mode: "refresh" }` to build `.skillfoundry/code-map.json`, then hand
+> `endpoints[]` to `sf_contract_check` and `unresolvedImports[]` to `sf_import_validator`
+> as a baseline. Advisory — a failure logs a warning and never blocks the run. Skip cleanly
+> for greenfield projects. See `agents/_codemap-preflight-protocol.md`.
+
 ### Context Budget Check
 
 ```
@@ -398,9 +407,26 @@ Proceeding to validation...
 
 ---
 
+## PHASE 1.5: PRD LINT GATE
+
+Before validating content, run the structural linter on all discovered PRDs:
+
+```
+bash scripts/prd-lint.sh genesis/
+```
+
+**Rules:**
+- If any PRD has **ERRORS** → block that PRD from Phase 3; report which ones failed
+- If all PRDs have only **WARNINGS** → log warnings, continue to Phase 2
+- PRDs that pass lint proceed to Phase 2 validation as normal
+
+This catches structural issues (missing sections, TBD markers, empty `layers:`) before spending tokens on content validation.
+
+---
+
 ## PHASE 2: PRD VALIDATION
 
-For each PRD, run completeness check:
+For each PRD that passed Phase 1.5 lint, run completeness check:
 
 ### REQUIRED SECTIONS (Must Exist)
 
@@ -479,6 +505,84 @@ Run '/prd review [filename]' to complete the PRD.
 
 IMPLEMENTATION BLOCKED
 ```
+
+---
+
+## PHASE 2.5: PRD DEPENDENCY ORDERING
+
+After all PRDs pass validation, compute execution order using the `dependencies.requires` front matter field. See `agents/_prd-dependencies.md` for full algorithm.
+
+### Step 1 — Build dependency graph
+
+For each validated PRD, extract from front matter:
+```yaml
+dependencies:
+  requires: [prd-id-1, prd-id-2]   # hard blocks
+  recommends: [prd-id-3]            # soft warnings
+```
+
+### Step 2 — Topological sort into waves
+
+```
+ALGORITHM:
+  completed = set of PRDs whose status = COMPLETED in .claude/prd-status.json
+  remaining = all validated PRDs
+
+  while remaining:
+    wave = [prd for prd in remaining
+            if all(dep in completed for dep in prd.requires)]
+
+    if wave is empty → DEADLOCK detected (cycle or missing dep)
+    levels.append(wave)
+    completed += wave
+    remaining -= wave
+```
+
+### Step 3 — Cycle detection
+
+If a cycle is found (e.g., A requires B, B requires A):
+```
+❌ DEPENDENCY CYCLE DETECTED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Cycle: user-auth → user-mgmt → user-auth
+
+STOP. Resolve the cycle before proceeding:
+  1. Remove one dependency to break the cycle
+  2. Extract shared code into a new foundation PRD
+Cannot continue until resolved.
+```
+
+### Step 4 — Output execution plan
+
+```
+PRD EXECUTION PLAN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Wave 1 — Foundation (no dependencies):
+  ├── database-schema.md
+
+Wave 2 — Core (parallel, after Wave 1):
+  ├── user-auth.md
+  ├── user-mgmt.md
+  └── audit-log.md
+
+Wave 3 — Features (after Wave 2):
+  └── admin-panel.md
+
+BLOCKED (unmet hard deps — skipped this run):
+  ├── reporting.md → waiting for: analytics.md (not found in genesis/)
+
+Execution order: 4 PRDs across 3 waves
+```
+
+### Step 5 — Blocked PRD handling
+
+If a PRD's `requires` dep is not in genesis/ **or** not yet COMPLETED:
+- Remove it from this run's execution plan
+- Log it in the scratchpad under "BLOCKED PRDs"
+- After all other waves complete, report blocked PRDs and their unmet deps
+
+**`--ignore-deps` flag**: Skip this phase and execute all validated PRDs sequentially (emit warning at start).
 
 ---
 
@@ -1021,6 +1125,84 @@ Default: All tiers enabled. In supervised mode, T1 always runs.
 
 ---
 
+## STORY STATE FOLDERS (Phase 2 of FolderFlow PRD)
+
+When a feature's story directory uses the migrated folder layout
+(`docs/stories/<feature>/{todo,in-progress,blocked,done}/`), `/go` makes
+story state explicit by physically moving files between those folders as
+the pipeline progresses. State is determined by `ls`, not by parsing
+markdown.
+
+### When to move
+
+```
+PRD decomposed
+    └── stories generated → land in docs/stories/<feature>/todo/
+
+Story selected for execution
+    └── scripts/move-story.sh <story> in-progress
+
+Architect → Coder → Tester → Gate-Keeper
+
+Gate-Keeper APPROVED + reconciler --strict passes
+    └── scripts/move-story.sh <story> done
+
+Any gate FAILED / story BLOCKED
+    └── scripts/move-story.sh <story> blocked \
+            --blocked-gate "<failing-gate>" \
+            --reason "<short reason>"
+
+Story unblocked (root cause fixed)
+    └── scripts/move-story.sh <story> in-progress
+```
+
+### Detecting layout
+
+Before invoking `move-story.sh`, check whether the feature has been migrated:
+
+```bash
+if [ -d "docs/stories/<feature>/todo" ]; then
+    # Migrated layout — use move-story.sh
+    scripts/move-story.sh "$STORY_PATH" in-progress
+else
+    # Pre-migration flat layout — skip moves, just track state in scratchpad
+    :
+fi
+```
+
+If the feature is unmigrated, `/go` MUST NOT auto-migrate it mid-run —
+that would mix scope. Suggest `scripts/migrate-stories-to-folders.sh
+<feature-dir>` to the user as a separate housekeeping step.
+
+### Skip story when already done
+
+When iterating through a feature's stories, **skip any story already in
+`done/`**. This is the explicit fix for the "/go re-runs already-complete
+work" failure described in the PRD's §1.1.
+
+```bash
+for story in docs/stories/<feature>/todo/STORY-*.md; do
+    [ -e "$story" ] || continue   # glob expanded literally if folder empty
+    # process this story
+done
+```
+
+Stories in `done/` are not iterated. Stories in `blocked/` are surfaced
+to the user as part of the run summary, not silently retried.
+
+### Refused transitions
+
+`scripts/move-story.sh` will refuse `→ done` (exit code 3) if any
+artifact-tagged `- [ ]` checkbox remains in the story. This is the
+intended behaviour: the gate said "pass" but the artifact-backed
+acceptance criteria say otherwise. Treat rc=3 as an audit failure, not
+a script bug — fix the underlying gap (missing artifact, incorrect
+checkbox tag, or premature gate verdict) and retry.
+
+See `docs/story-state-folders.md` for the full workflow.
+
+---
+
 ## CONTEXT DISCIPLINE
 
 ### Token Conservation Rules
@@ -1250,34 +1432,9 @@ or
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE starting a /go run**, reflect on:
-1. **PRD Validity**: Are all PRDs valid and complete? Have they passed validation, or am I about to orchestrate on incomplete specifications?
-2. **Context Budget**: Is the context budget sufficient for the full run? How many stories are planned, and will compaction be needed mid-run?
-3. **Leftover State**: Is there leftover state from a previous run (`.claude/state.json`)? Should I resume, rollback, or start fresh?
-4. **PRD Conflicts**: Have I checked for conflicting PRDs that modify the same files or define overlapping features?
-
-### Post-Execution Reflection
-
-**AFTER completing a /go run**, assess:
-1. **Orchestration Completeness**: Did all stories complete successfully? Were any left in BLOCKED status that should have been resolved?
-2. **Gate Compliance**: Were Anvil gates respected throughout? Were any gates bypassed or overridden during execution?
-3. **Context Management**: Did context compaction fire at appropriate intervals? Were there any context overflow incidents or near-misses?
-4. **Delivery Quality**: Is the final deliverable truly production-ready? Would it pass an independent /gate-keeper and /layer-check evaluation?
-
-### Self-Score (0-10)
-
-- **Orchestration Completeness**: Were all planned stories executed and completed? (X/10)
-- **Gate Compliance**: Were all quality gates and Anvil checkpoints enforced without shortcuts? (X/10)
-- **Context Management**: Was the token budget managed effectively throughout the run? (X/10)
-- **Delivery Quality**: Is the output production-ready with no placeholders, TODOs, or untested code? (X/10)
-
-**If overall score < 7.0**: Review the run log, identify failure points, and address before marking the PRD as COMPLETE.
-**If orchestration completeness < 5.0**: The run should be classified as PARTIAL, not COMPLETED — document which stories remain and why.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Orchestration Completeness** · **Gate Compliance** · **Context Management** · **Delivery Quality** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## REMEMBER

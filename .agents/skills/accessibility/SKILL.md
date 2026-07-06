@@ -221,39 +221,9 @@ Testing: [PASSED]
 
 ---
 
-## 🔍 REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-**ALL accessibility work requires reflection before and after completion.**
-
-See `agents/_reflection-protocol.md` for complete protocol. Summary:
-
-### Pre-Accessibility Reflection
-
-**BEFORE accessibility work**, reflect on:
-1. **Risks**: What accessibility barriers might I miss?
-2. **Assumptions**: What assumptions am I making about users?
-3. **Patterns**: Have similar accessibility fixes caused issues before?
-4. **Testing**: Am I testing with real assistive technologies?
-
-### Post-Accessibility Reflection
-
-**AFTER accessibility work**, assess:
-1. **Goal Achievement**: Did I achieve WCAG 2.1 Level AA compliance?
-2. **Testing**: Did I test with assistive technologies?
-3. **Quality**: Are accessibility fixes production-ready?
-4. **Learning**: What accessibility patterns worked well?
-
-### Self-Score (0-10)
-
-After each accessibility audit/fix, self-assess:
-- **Completeness**: Did I address all accessibility issues? (X/10)
-- **Quality**: Is accessibility work production-ready? (X/10)
-- **Testing**: Did I test with assistive technologies? (X/10)
-- **Confidence**: How certain am I the app is accessible? (X/10)
-
-**If overall score < 7.0**: Request peer review before proceeding  
-**If testing score < 7.0**: Test with more assistive technologies, verify fixes
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Testing** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## WCAG 2.2 UPDATES (2023+)

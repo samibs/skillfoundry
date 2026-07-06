@@ -456,33 +456,9 @@ Before finalizing stories, verify:
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Execution Reflection
-Before generating stories from a PRD, verify:
-1. Has the PRD passed its quality gates (no TBD markers, all user stories have acceptance criteria)?
-2. Are the functional requirements specific enough to decompose into implementable stories?
-3. Have I analyzed the existing codebase to align technical approach with existing patterns?
-4. Are dependencies between stories clear enough to establish a valid DAG (no cycles)?
-
-### Post-Execution Reflection
-After completion, assess:
-1. Is each story truly self-contained (a developer can implement it without referencing the PRD)?
-2. Are acceptance criteria in Gherkin format and testable (not vague "it should work")?
-3. Are the Expected Changes (Anvil T4) sections populated with specific file paths?
-4. Is the story dependency graph valid (no cycles, critical path identified, parallelizable work marked)?
-
-### Self-Score (0-10)
-- **Self-Containment**: Stories include all context needed for isolated implementation? (X/10)
-- **Testability**: Acceptance criteria are Gherkin format and directly automatable? (X/10)
-- **Granularity**: Each story completable in one focused session (not too large, not too small)? (X/10)
-- **Dependency Accuracy**: DAG is valid, critical path correct, parallel work identified? (X/10)
-
-**If overall < 7.0**: Expand incomplete stories, fix dependency cycles, and ensure self-containment before closing.
-
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Self-Containment** · **Testability** · **Granularity** · **Dependency Accuracy** (0-10); if overall < 7.0, revise before handoff.
 ## BAD vs GOOD Story Examples
 
 ### BAD Story (vague, not self-contained, untestable)

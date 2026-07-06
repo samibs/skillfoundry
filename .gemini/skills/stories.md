@@ -216,10 +216,14 @@ Feature: [Feature name from PRD]
 
 - [ ] Input validation implemented
 - [ ] Authentication check in place
-- [ ] Authorization verified
+- [ ] Authorization verified (role + ownership)
 - [ ] No sensitive data in logs
 - [ ] SQL injection prevented
 - [ ] XSS prevention applied
+- [ ] **Tenant isolation: queries scoped by tenant_id/user_id** (if multi-tenant)
+- [ ] **File storage: paths include tenant scope** (if file handling)
+- [ ] **Downloads: auth + ownership check before serving** (if file serving)
+- [ ] **No hardcoded credentials in config** (if auth system)
 
 ---
 
@@ -443,6 +447,83 @@ graph TD
 
 ---
 
+## PRD SECURITY TRAIT DETECTION (MANDATORY)
+
+Before generating stories, scan the PRD for security-critical traits. If detected, **auto-inject mandatory security stories** — the developer didn't ask for them, but they're required.
+
+### Trait: Multi-Tenant / Multi-User
+
+**Trigger words in PRD:** "multi-tenant", "multi-user", "tenant", "fiduciary", "organization", "workspace", "team", "company", "client isolation", "data isolation", "row-level security", "RLS", "tenant_id", "org_id"
+
+**If detected, INJECT these mandatory stories (in addition to PRD stories):**
+
+1. **STORY-SEC-001: Tenant Data Model & Scoping**
+   - Every database table with user-created data MUST have a `tenant_id` (or `org_id`/`user_id`) column
+   - Every query MUST filter by tenant: `WHERE tenant_id = :current_tenant`
+   - No `.all()` / `SELECT *` without tenant filter on user-data tables
+   - Junction tables and foreign keys enforce tenant boundaries
+   - Acceptance: `Given User A (tenant 1) and User B (tenant 2), When User A lists records, Then only tenant 1 records return`
+
+2. **STORY-SEC-002: Tenant-Scoped File Storage**
+   - File storage paths MUST include tenant: `tenants/{tenant_id}/...` or `{tenant_id}/uploads/...`
+   - NEVER `uploads/{id}/` flat structure
+   - Storage service validates tenant ownership before serving files
+   - Acceptance: `Given file at tenants/T1/file.pdf, When User from T2 requests it, Then 404 (not 403)`
+
+3. **STORY-SEC-003: Auth on Every Endpoint**
+   - Every route that reads/writes/deletes data MUST have auth middleware
+   - Every route that serves files MUST have auth middleware
+   - Download/export endpoints MUST verify tenant ownership before serving
+   - No `HTTPBasic` with hardcoded credentials — use proper JWT/session auth
+   - Acceptance: `Given no auth token, When any data endpoint is called, Then 401`
+
+4. **STORY-SEC-004: Tenant Isolation Integration Tests**
+   - Test: User A cannot see User B's records
+   - Test: User A cannot download User B's files
+   - Test: User A cannot delete/modify User B's data
+   - Test: Admin can see all records (if applicable)
+   - Test: Unauthenticated requests return 401 on ALL data endpoints
+
+**These stories are MUST priority and block all other stories that create endpoints, models, or file storage.**
+
+**Dependency injection:**
+```
+STORY-SEC-001 (tenant data model)
+    ↓ blocks
+STORY-SEC-002 (tenant file storage)  ← blocks any story that handles files
+STORY-SEC-003 (auth on every endpoint) ← blocks any story that creates routes
+    ↓ blocks
+STORY-SEC-004 (isolation tests)      ← runs after all endpoints exist
+```
+
+### Trait: File Upload / Download
+
+**Trigger words:** "upload", "download", "file", "attachment", "document", "export", "import", "PDF", "CSV", "report generation"
+
+**If detected (even without multi-tenant), INJECT:**
+
+1. **STORY-SEC-005: Secure File Handling**
+   - All download endpoints require authentication
+   - File paths validated — no path traversal (`../` stripped, basename only)
+   - File type validation (magic bytes, not just extension)
+   - Max file size enforced
+   - Files never served from user-supplied paths without validation
+   - Acceptance: `Given path "../../../etc/passwd", When download requested, Then 400 Bad Request`
+
+### Trait: Authentication System
+
+**Trigger words:** "login", "register", "password", "JWT", "session", "OAuth", "auth"
+
+**If detected, INJECT:**
+
+1. **STORY-SEC-006: No Hardcoded Credentials**
+   - No default passwords in config files
+   - No `admin:admin`, `root:root`, `password:password`
+   - All credentials from environment variables with NO defaults
+   - Acceptance: `Given config.py, When scanned for Field("admin"...) or default password strings, Then zero matches`
+
+---
+
 ## QUALITY CHECKS
 
 Before finalizing stories, verify:
@@ -453,36 +534,16 @@ Before finalizing stories, verify:
 - [ ] Acceptance criteria are testable
 - [ ] Technical approach matches existing codebase patterns
 - [ ] No story is too large (should be completable in one session)
+- [ ] **PRD security traits detected and mandatory stories injected**
+- [ ] **Multi-tenant PRD has SEC-001 through SEC-004 in story index**
+- [ ] **File handling PRD has SEC-005 in story index**
+- [ ] **Auth PRD has SEC-006 in story index**
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Execution Reflection
-Before generating stories from a PRD, verify:
-1. Has the PRD passed its quality gates (no TBD markers, all user stories have acceptance criteria)?
-2. Are the functional requirements specific enough to decompose into implementable stories?
-3. Have I analyzed the existing codebase to align technical approach with existing patterns?
-4. Are dependencies between stories clear enough to establish a valid DAG (no cycles)?
-
-### Post-Execution Reflection
-After completion, assess:
-1. Is each story truly self-contained (a developer can implement it without referencing the PRD)?
-2. Are acceptance criteria in Gherkin format and testable (not vague "it should work")?
-3. Are the Expected Changes (Anvil T4) sections populated with specific file paths?
-4. Is the story dependency graph valid (no cycles, critical path identified, parallelizable work marked)?
-
-### Self-Score (0-10)
-- **Self-Containment**: Stories include all context needed for isolated implementation? (X/10)
-- **Testability**: Acceptance criteria are Gherkin format and directly automatable? (X/10)
-- **Granularity**: Each story completable in one focused session (not too large, not too small)? (X/10)
-- **Dependency Accuracy**: DAG is valid, critical path correct, parallel work identified? (X/10)
-
-**If overall < 7.0**: Expand incomplete stories, fix dependency cycles, and ensure self-containment before closing.
-
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Self-Containment** · **Testability** · **Granularity** · **Dependency Accuracy** (0-10); if overall < 7.0, revise before handoff.
 ## BAD vs GOOD Story Examples
 
 ### BAD Story (vague, not self-contained, untestable)

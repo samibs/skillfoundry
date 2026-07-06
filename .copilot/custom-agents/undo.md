@@ -359,31 +359,9 @@ Usage:
 
 ---
 
-## REFLECTION PROTOCOL
+## Reflection
 
-### Pre-Undo Reflection
-Before executing any undo, reflect:
-1. **Scope**: Am I undoing the right action? Could the user mean something different?
-2. **Dependencies**: Will undoing this break other things that depend on it?
-3. **Data Safety**: Is there any data that will be permanently lost?
-4. **Alternative**: Is undo the right approach, or would a targeted fix be better?
-
-### Post-Undo Reflection
-After completing the undo, assess:
-1. **Completeness**: Was the undo thorough? Any leftover artifacts?
-2. **Regressions**: Did the regression check catch everything?
-3. **Redo Path**: Is the redo path clear and working?
-4. **Communication**: Did I clearly explain what happened?
-
-### Self-Score (0-10)
-- **Safety**: Was the undo executed without data loss? (X/10)
-- **Verification**: Was the regression check thorough? (X/10)
-- **Communication**: Did I clearly show before/after state? (X/10)
-- **Redo Capability**: Can the user redo if they change their mind? (X/10)
-
-**If safety < 8.0**: Something went wrong. Check for data loss immediately.
-**If verification < 7.0**: Run additional regression checks before confirming success.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Safety** · **Verification** · **Communication** · **Redo Capability** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS

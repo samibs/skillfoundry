@@ -330,7 +330,8 @@ ANY MATCH = BLOCKED (except in test files where mocks are allowed)
 │ ITERATION GATES:                                            │
 │ ├─ Documentation: [✓/✗]                                     │
 │ ├─ Security Scan: [✓/✗]                                     │
-│ └─ Audit Log: [✓/✗]                                         │
+│ ├─ Audit Log: [✓/✗]                                         │
+│ └─ Checkbox Reconcile: [✓/✗]                                │
 │                                                             │
 │ BANNED PATTERN SCAN: [CLEAN/VIOLATIONS]                     │
 │                                                             │
@@ -346,6 +347,86 @@ ANY MATCH = BLOCKED (except in test files where mocks are allowed)
 
 ---
 
+## STORY CHECKBOX RECONCILIATION (final step)
+
+After all layer gates and the audit log entry, run the story checkbox reconciler.
+It updates `- [ ]` → `- [x]` based on artifact pointers in the story file
+(`<!-- artifact: handler:args -->`), so the checkbox state in `docs/stories/`
+matches the gate results that just ran. The reconciler is non-destructive
+(it never un-checks a box) and idempotent (no change on a second run with
+no new artifacts).
+
+```bash
+# Reconcile checkboxes for a single story (after gates pass)
+scripts/reconcile-story-checkboxes.sh docs/stories/<feature>/STORY-XXX.md
+
+# Strict mode: fail if any artifact-tagged box remains unchecked.
+# Use this for the final validation pass on a "done" story.
+scripts/reconcile-story-checkboxes.sh --strict docs/stories/<feature>/STORY-XXX.md
+
+# Reconcile every story under a feature
+scripts/reconcile-story-checkboxes.sh docs/stories/<feature>/
+```
+
+Exit codes (relevant to /layer-check):
+| Code | Meaning |
+|------|---------|
+| 0 | All artifact-tagged boxes resolved (or none present) |
+| 1 | `--strict` mode and at least one tagged box remained unchecked |
+| 3 | I/O error (target story file unreadable) |
+
+If the reconciler exits non-zero in strict mode, the verdict is REJECTED:
+the gate result and the checkbox state disagree — that is a story-level
+audit failure, not a code failure.
+
+Available handlers: `file-exists`, `grep`, `test`, `lint`, `layer-check`.
+The JSON-based handlers (`test`, `lint`, `layer-check`) parse artifacts
+emitted by Anvil gates and CI tools using the schemas frozen in PRD §5.2.
+Malformed JSON or missing required fields cause the handler to return
+**invalid** — the checkbox stays unchecked and a clear error is logged,
+so a half-broken gate cannot produce a vacuous pass.
+
+See: `genesis/2026-05-08-folder-state-and-checkbox-reconciler.md` and
+`docs/story-checkbox-reconciler.md`.
+
+---
+
+## STORY STATE FOLDERS (Phase 2)
+
+When a story lives under `docs/stories/<feature>/{todo,in-progress,blocked,done}/`,
+`/layer-check`'s verdict drives the folder transition. Use
+`scripts/move-story.sh` so the move is atomic (`git mv`), the INDEX.md is
+regenerated, and the strict-reconcile precondition is enforced before any
+story can land in `done/`.
+
+```bash
+# After verdict APPROVED:
+scripts/move-story.sh docs/stories/<feature>/in-progress/STORY-XXX.md done
+
+# After verdict REJECTED at a specific gate:
+scripts/move-story.sh docs/stories/<feature>/in-progress/STORY-XXX.md blocked \
+    --blocked-gate "T3-security" \
+    --reason "STRIDE-S identified missing auth check on /api/v1/x"
+```
+
+Properties:
+- `→ done` runs `scripts/reconcile-story-checkboxes.sh --strict` first; if
+  any artifact-tagged `- [ ]` remains, the move is **refused** (rc=3) — the
+  gate said "approved" but the checkbox state disagrees, which is itself
+  an audit failure.
+- `→ blocked` writes a sibling `STORY-XXX.BLOCKED.md` with the failing gate
+  and reason. Leaving `blocked/` automatically removes the sibling.
+- `git mv` is preferred so the audit trail (`git log --follow`) survives.
+- INDEX.md is regenerated automatically; pass `--no-index` for batch ops.
+
+Features still on the flat (pre-migration) layout are **not** affected.
+Run `scripts/migrate-stories-to-folders.sh <feature-dir>` once when you're
+ready to adopt the folder layout for that feature.
+
+See `docs/story-state-folders.md` for the full workflow.
+
+---
+
 ## INVOCATION
 
 ```
@@ -355,6 +436,7 @@ ANY MATCH = BLOCKED (except in test files where mocks are allowed)
 /layer-check frontend     - Frontend layer only
 /layer-check scan         - Banned pattern scan only
 /layer-check audit        - Generate audit log entry
+/layer-check reconcile    - Run story checkbox reconciler only
 ```
 
 ---
@@ -386,33 +468,9 @@ IF SECURITY ISSUES → Block until resolved
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-See `agents/_reflection-protocol.md` for complete protocol.
-
-### Pre-Execution Reflection
-Before starting any layer-check validation, verify:
-1. Which layers does this feature/story affect (Database, Backend, Frontend)?
-2. Has the PRD data model been compared against the actual schema for consistency?
-3. Are there recent deployments or migrations that could affect layer integrity?
-4. Has the banned pattern scan been configured to exclude test files appropriately?
-
-### Post-Execution Reflection
-After completion, assess:
-1. Did all affected layers pass their validation checklists independently?
-2. Were banned patterns detected and resolved (not just documented)?
-3. Is the audit log entry complete with evidence for each gate (documentation, security, audit)?
-4. Are there cross-layer consistency issues (e.g., frontend expects fields the backend does not provide)?
-
-### Self-Score (0-10)
-- **Layer Coverage**: All affected layers validated with evidence? (X/10)
-- **Banned Pattern Detection**: Scan thorough and violations resolved? (X/10)
-- **Cross-Layer Consistency**: Frontend-Backend-Database alignment verified? (X/10)
-- **Gate Rigor**: Documentation, security, and audit gates enforced without shortcuts? (X/10)
-
-**If overall < 7.0**: Re-run failed layer checks, resolve all banned patterns, and produce evidence before closing.
-
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Layer Coverage** · **Banned Pattern Detection** · **Cross-Layer Consistency** · **Gate Rigor** (0-10); if overall < 7.0, revise before handoff.
 ## REMEMBER
 
 > "A mock is a lie you tell yourself. This system does not tolerate lies."

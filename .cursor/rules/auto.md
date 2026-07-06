@@ -500,34 +500,9 @@ This looks like a simple feature. Options:
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Execution Reflection
-
-**BEFORE orchestrating a pipeline**, reflect on:
-1. **Classification Accuracy**: Am I classifying this request correctly? Could it fit a simpler pipeline (e.g., BUG_FIX instead of NEW_FEATURE)?
-2. **Pipeline Necessity**: Is the full pipeline needed, or is this overkill for the request? Would quick mode be more appropriate?
-3. **Context Efficiency**: Am I about to load unnecessary context? Can I avoid loading the full PRD/story set when only a subset is needed?
-4. **PRD Location**: Is the PRD location correct (genesis/, not docs/prd/)? Am I referencing the right source of truth?
-
-### Post-Execution Reflection
-
-**AFTER pipeline completion**, assess:
-1. **Pipeline Completeness**: Did the pipeline complete all required phases? Were any phases skipped or short-circuited?
-2. **Feedback Loop Effectiveness**: Were feedback loops necessary? Did they converge within the 3-attempt limit?
-3. **Escalation Appropriateness**: Did I escalate at the right moments? Were there escalations that could have been auto-resolved?
-4. **Auto-Fix Quality**: Were auto-fixes appropriate, or did they mask underlying problems that will resurface later?
-
-### Self-Score (0-10)
-
-- **Classification Accuracy**: Did the request type map to the correct pipeline? (X/10)
-- **Pipeline Completeness**: Were all phases executed with proper gate enforcement? (X/10)
-- **Escalation Quality**: Were user interruptions minimized to only truly blocking questions? (X/10)
-- **Token Efficiency**: Was context managed well, avoiding unnecessary loading and compaction? (X/10)
-
-**If overall score < 7.0**: Review pipeline selection logic and feedback loop handling before next invocation.
-**If classification accuracy < 5.0**: Re-classify the request and restart with the correct pipeline.
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Classification Accuracy** · **Pipeline Completeness** · **Escalation Quality** · **Token Efficiency** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INVOCATION

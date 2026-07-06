@@ -298,34 +298,9 @@ If a nuke was performed and the user needs to recover:
 
 ---
 
-## REFLECTION PROTOCOL (MANDATORY)
+## Reflection
 
-### Pre-Nuke Reflection
-
-**BEFORE any nuke**, reflect on:
-1. **Necessity**: Is destruction actually needed, or would a targeted fix suffice?
-2. **Scope**: Am I destroying more than necessary? Could `--rollback-only` or `--clean-only` work?
-3. **Recovery**: Have I verified that critical work can be recovered?
-4. **Impact**: Are there downstream effects I have not considered?
-
-### Post-Nuke Reflection
-
-**AFTER nuke completes**, assess:
-1. **Completeness**: Is the workspace in the expected clean state?
-2. **Protection**: Were all protected items preserved?
-3. **Logging**: Was every destruction action logged?
-4. **Guidance**: Did I give the user clear next steps?
-
-### Self-Score (0-10)
-
-- **Safety**: Did I verify backups and warn about unrecoverable items? (X/10)
-- **Thoroughness**: Did I inventory everything before destroying? (X/10)
-- **Communication**: Was the preview clear and the confirmation unambiguous? (X/10)
-- **Confidence**: Am I certain nothing was destroyed that should have been protected? (X/10)
-
-**If overall score < 7.0**: Verify protected items again, check nuke log for anomalies
-**If safety score < 5.0**: BLOCK — do not proceed, request human review
-
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Safety** · **Thoroughness** · **Communication** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
 ## INTEGRATION WITH PEER AGENTS
