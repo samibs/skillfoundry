@@ -109,7 +109,7 @@ Evolve — Evolution Complete
 
 This rule activates when you reference it in chat. Examples:
 - "use evolve rule"
-- "evolve — implement the feature"
-- "follow the evolve workflow"
+- "evolve — run the workflow"
+- "follow the evolve workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

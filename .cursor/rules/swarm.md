@@ -504,7 +504,7 @@ When conflict rate exceeds 30% of dispatched tasks, swarm MUST challenge:
 
 This rule activates when you reference it in chat. Examples:
 - "use swarm rule"
-- "swarm — implement the feature"
-- "follow the swarm workflow"
+- "swarm — run the workflow"
+- "follow the swarm workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

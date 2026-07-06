@@ -494,11 +494,13 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **C
 
 ---
 
+---
+
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use devops rule"
-- "devops — implement the feature"
-- "follow the devops workflow"
+- "devops — run the workflow"
+- "follow the devops workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

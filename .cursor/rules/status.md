@@ -368,7 +368,7 @@ This command is read-only. No mutations. No confirmation required.
 
 This rule activates when you reference it in chat. Examples:
 - "use status rule"
-- "status — implement the feature"
-- "follow the status workflow"
+- "status — run the workflow"
+- "follow the status workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

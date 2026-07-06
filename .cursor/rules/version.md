@@ -1,12 +1,18 @@
 ---
-name: version
-description: Show version information and check for updates
+description: Version Format
+globs:
+alwaysApply: false
 ---
 
 # version — Cursor Rule
 
 > **Activation**: Say "version" or "use version rule" in chat to activate this workflow.
 > **Platform**: Cursor (rule-based context, not slash-command invocation)
+
+---
+name: version
+description: Show version information and check for updates
+---
 
 You are the **Version Information Agent**. Display current version, check for updates, and explain version semantics.
 
@@ -166,22 +172,31 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**Claude AS Framework v1.7.0.0**
+**SkillFoundry v5.21.0**
 
-- **41 Agents** - Complete development lifecycle coverage
-- **Triple Platform** - Claude Code, GitHub Copilot CLI, Cursor
+- **60 Agents, 130+ Skills** - Complete development lifecycle coverage
+- **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
+- **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
+- **171 Deviation Patterns** - LLM failure prevention across 16 categories
+- **Codebase Agent Wiki** - `/docs wiki` generates a repo-wide, agent-facing wiki grounded in source + git evidence
+- **Autonomous Loop Engine** - Ralph Loop: agent prompts itself, judges its own output, stops when done
+- **`/improve` command** - Continuous codebase improvement loop: scan → fix → verify → loop
+- **Pre-Execution Verification** - Goal reframing and assumption surfacing before implementation
+- **Anvil A4b Traceability** - Line-level change traceability gate
 - **Auto-Remediation** - 90%+ violations fixed autonomously
-- **Execution Modes** - Supervised, Semi-Autonomous, Autonomous
+- **Execution Modes** - Supervised, Semi-Autonomous, Autonomous, Loop
 
 ### Recent Milestones
 
 | Version | Date | Milestone |
 |---------|------|-----------|
-| 1.7.0.0 | 2026-02-05 | Auto-remediation & autonomous execution |
-| 1.6.0.0 | 2026-02-03 | The Dream Team (38+2 agents) |
-| 1.5.0.0 | 2026-01-25 | Observability & tracing |
-| 1.4.0.0 | 2026-01-15 | Persistent memory & MCP integration |
-| 1.3.0.0 | 2026-01-05 | State machine & recovery |
+| 5.21.0 | 2026-07-05 | Codebase Agent Wiki: /docs wiki, grounded agent-facing docs, surgical updates |
+| 5.20.0 | 2026-06-23 | Autonomous Loop Engine: Ralph Loop, /improve, self-prompt protocol |
+| 5.19.0 | 2026-06-22 | Structural Trust: state isolation, hotfix pathway, evaluator calibration, audit trail |
+| 5.18.0 | 2026-06-12 | Web Security Checker: live URL surface validation pre-production |
+| 5.17.0 | 2026-06 | Codebase Comprehension Pre-Flight: tree-sitter Code Map, /preflight |
+| 5.15.0 | 2026-05 | Coding Discipline Protocol + GuardLoop adaptive guardrails |
+| 5.1.0 | 2026-04-14 | Karpathy-inspired: Pre-Execution Verification, T4b Traceability |
 
 ## Implementation
 
@@ -382,3 +397,14 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/update` | Triggered when version agent recommends update |
 | `/forge` | Verifies framework version before pipeline execution |
 | `/metrics` | Tracks version across executions for compatibility analysis |
+
+---
+
+## How to Use in Cursor
+
+This rule activates when you reference it in chat. Examples:
+- "use version rule"
+- "version — run the workflow"
+- "follow the version workflow for this task"
+
+Cursor loads this rule as context. It does NOT use /slash-command syntax.

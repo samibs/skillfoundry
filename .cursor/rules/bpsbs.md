@@ -512,7 +512,7 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **T
 
 This rule activates when you reference it in chat. Examples:
 - "use bpsbs rule"
-- "bpsbs — implement the feature"
-- "follow the bpsbs workflow"
+- "bpsbs — run the workflow"
+- "follow the bpsbs workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

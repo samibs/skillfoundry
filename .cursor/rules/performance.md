@@ -595,7 +595,7 @@ IF optimization causes regression:
 
 This rule activates when you reference it in chat. Examples:
 - "use performance rule"
-- "performance — implement the feature"
-- "follow the performance workflow"
+- "performance — run the workflow"
+- "follow the performance workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

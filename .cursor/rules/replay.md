@@ -276,11 +276,13 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/context` | Budget check before replay to avoid token waste |
 | `/memory` | Replay outcomes recorded to memory bank |
 
+---
+
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use replay rule"
-- "replay — implement the feature"
-- "follow the replay workflow"
+- "replay — run the workflow"
+- "follow the replay workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

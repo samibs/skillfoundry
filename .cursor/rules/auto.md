@@ -535,7 +535,7 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **C
 
 This rule activates when you reference it in chat. Examples:
 - "use auto rule"
-- "auto — implement the feature"
-- "follow the auto workflow"
+- "auto — run the workflow"
+- "follow the auto workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

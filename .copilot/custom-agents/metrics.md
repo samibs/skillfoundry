@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # Metrics Dashboard
 
 View and analyze execution metrics for the Claude AS framework.
@@ -531,3 +540,17 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 > "Every number tells a story. Learn to read it."
 
 > "Good metrics lead to good decisions."
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

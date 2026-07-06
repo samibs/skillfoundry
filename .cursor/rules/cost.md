@@ -345,7 +345,7 @@ The `budget` subcommand sets a threshold (mutation, no confirmation needed).
 
 This rule activates when you reference it in chat. Examples:
 - "use cost rule"
-- "cost — implement the feature"
-- "follow the cost workflow"
+- "cost — run the workflow"
+- "follow the cost workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /goma - Go Mode Autonomous
 
 `/goma` is a thin alias for **`/go --mode=autonomous`**. It runs the full `/go` pipeline hands-off: escalations are auto-resolved where safe and otherwise deferred and logged for post-run review. Use only when you trust the PRDs.
@@ -33,3 +42,17 @@ Pre-flight — blocks execution if any item is unmet:
 - Escalation log cleared or archived from the previous run
 
 If the tree is dirty, autonomous mode is blocked with instructions to commit or stash first. During the run, every escalation is deferred and written to the escalation log for review rather than interrupting execution. Everything else — pipeline phases, Anvil gates, batching, delivery audit — is `/go`'s behavior unchanged.
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

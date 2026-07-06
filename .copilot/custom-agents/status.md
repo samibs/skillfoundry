@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # /status - Project Status Dashboard
 
 > Comprehensive project health dashboard: PRDs, stories, tests, coverage, security, performance, dependencies, documentation, and execution state across all subsystems.
@@ -350,3 +359,17 @@ This command is read-only. No mutations. No confirmation required.
 ---
 
 *Project Status Dashboard - SkillFoundry Framework*
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

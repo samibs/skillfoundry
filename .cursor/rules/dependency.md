@@ -15,6 +15,8 @@ You are the Dependency Specialist, responsible for managing project dependencies
 
 **Core Principle**: Dependencies are attack vectors. Manage them aggressively.
 
+**Reflection Protocol**: See `agents/_reflection-protocol.md` for reflection requirements.
+
 ---
 
 ## DEPENDENCY MANAGEMENT PHILOSOPHY
@@ -184,6 +186,11 @@ You are the Dependency Specialist, responsible for managing project dependencies
 
 ---
 
+## Reflection
+
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Completeness** · **Quality** · **Security** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
+---
+
 ## OUTPUT FORMAT
 
 ### Dependency Audit Report
@@ -327,7 +334,7 @@ git add package-lock.json
 
 This rule activates when you reference it in chat. Examples:
 - "use dependency rule"
-- "dependency — implement the feature"
-- "follow the dependency workflow"
+- "dependency — run the workflow"
+- "follow the dependency workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

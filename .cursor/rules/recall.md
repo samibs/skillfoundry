@@ -101,7 +101,7 @@ For shell-based recall, use `scripts/semantic-search.sh` which provides equivale
 
 This rule activates when you reference it in chat. Examples:
 - "use recall rule"
-- "recall — implement the feature"
-- "follow the recall workflow"
+- "recall — run the workflow"
+- "follow the recall workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

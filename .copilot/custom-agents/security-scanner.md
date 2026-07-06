@@ -1,11 +1,9 @@
 # Custom Agent Instructions
 
 **Agent Type**: task
-**Model**: claude-sonnet-4.5
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
 
 ## Agent Description
-
-Security scanner specialized in detecting AI-generated code vulnerabilities using comprehensive anti-pattern databases. References docs/ANTI_PATTERNS_BREADTH.md and docs/ANTI_PATTERNS_DEPTH.md.
 
 ## Instructions
 
@@ -91,17 +89,74 @@ Scan code in priority order (frequency x severity). For each pattern, use target
 
 **1. Hardcoded Secrets** -- API keys, passwords, tokens embedded in code
 
+```bash
+# Search patterns
+grep -rn "password\s*=\s*['\"]" --include="*.{js,ts,py,cs,java}"
+grep -rn "API_KEY\|SECRET\|TOKEN\|PRIVATE_KEY" --include="*.{js,ts,py,cs,java}" | grep -v "process\.env\|os\.environ\|Environment\."
+grep -rn "sk-\|ghp_\|gho_\|aws_\|AKIA\|Bearer " --include="*.{js,ts,py,cs,java,json,yaml,yml}"
+grep -rn "-----BEGIN.*PRIVATE KEY-----" --include="*.{pem,key,js,ts,py}"
+```
+
 **2. SQL Injection** -- String concatenation or interpolation in queries
+
+```bash
+# Search patterns
+grep -rn "query.*\+.*req\.\|query.*\+.*params\.\|query.*\+.*body\." --include="*.{js,ts}"
+grep -rn "execute.*f\"\|execute.*\.format(\|execute.*%s" --include="*.py"
+grep -rn "FromSqlRaw.*\$\"\|ExecuteSqlRaw.*\+\|SqlCommand.*\+" --include="*.cs"
+grep -rn "\"\s*SELECT.*\+\|\"\s*INSERT.*\+\|\"\s*UPDATE.*\+\|\"\s*DELETE.*\+" --include="*.{js,ts,py,cs,java}"
+```
 
 **3. Cross-Site Scripting (XSS)** -- Unescaped user input rendered as HTML
 
+```bash
+# Search patterns
+grep -rn "innerHTML\s*=" --include="*.{js,ts,jsx,tsx}"
+grep -rn "dangerouslySetInnerHTML" --include="*.{jsx,tsx}"
+grep -rn "v-html" --include="*.vue"
+grep -rn "\$sce\.trustAsHtml\|\$sce\.trustAs" --include="*.{js,ts}"
+grep -rn "document\.write\|document\.writeln" --include="*.{js,ts}"
+grep -rn "\[innerHTML\]\s*=" --include="*.{html,component.html}"
+grep -rn "Markup\|SafeString\|mark_safe\|safe\s*}}" --include="*.{py,html}"
+```
+
 **4. Insecure Randomness** -- Predictable random for security-sensitive operations
+
+```bash
+# Search patterns
+grep -rn "Math\.random()" --include="*.{js,ts,jsx,tsx}"
+grep -rn "random\.random()\|random\.randint(" --include="*.py"
+grep -rn "new Random()" --include="*.{cs,java}" | grep -v "SecureRandom\|RandomNumberGenerator"
+grep -rn "uuid.*v1\|uuid.*v4.*Math" --include="*.{js,ts}"
+```
 
 **5. Authentication/Authorization Flaws** -- Missing or broken auth checks
 
+```bash
+# Search patterns: routes without auth middleware
+grep -rn "app\.get\|app\.post\|app\.put\|app\.delete\|router\." --include="*.{js,ts}" | grep -v "auth\|middleware\|protect\|guard\|verify"
+grep -rn "@app\.route\|@router\." --include="*.py" | grep -v "login_required\|authenticate\|permission"
+grep -rn "\[AllowAnonymous\]\|\[HttpGet\]\|\[HttpPost\]" --include="*.cs" | grep -v "Authorize"
+```
+
 **6. Package Hallucination** -- Imports of non-existent packages (AI-specific)
 
+```bash
+# Collect all imports and verify against lock files
+grep -rn "^import\|^from.*import\|require(" --include="*.{js,ts,py}"
+# Cross-reference with: package.json, package-lock.json, requirements.txt, Pipfile.lock
+# Flag any import not found in lock file or standard library
+```
+
 **7. Command Injection** -- Unsanitized user input in shell execution
+
+```bash
+# Search patterns
+grep -rn "exec(\|execSync(\|spawn(\|child_process" --include="*.{js,ts}" | grep -v "execFile"
+grep -rn "os\.system(\|subprocess\.call(\|subprocess\.Popen(" --include="*.py" | grep -v "shell=False"
+grep -rn "Process\.Start(\|ProcessStartInfo" --include="*.cs"
+grep -rn "eval(\|Function(" --include="*.{js,ts}" | grep -v "JSON\.\|config\."
+```
 
 ### Priority 2 -- Additional (from docs/ANTI_PATTERNS_BREADTH.md)
 
@@ -123,24 +178,27 @@ For each candidate found in Phase 1, perform deep data flow analysis.
 ### Analysis Steps
 
 For each file/function:
-1. **Identify Sources**: Where does user input enter?
-2. **Trace Data Flow**: Follow each input through transformations -- is it validated? sanitized? encoded?
-3. **Check Sinks**: Where does the data end up? (DB queries, HTML rendering, shell commands, file operations)
-4. **Verify Controls**: Are security controls present AND correctly applied?
+1. **Identify Sources**: Where does user input enter? (HTTP requests, file uploads, DB queries, external APIs, environment, CLI args)
+2. **Trace Data Flow**: Follow each input through transformations -- is it validated? sanitized? encoded? At every step?
+3. **Check Sinks**: Where does the data end up? (DB queries, HTML rendering, shell commands, file system operations, crypto operations, HTTP responses)
+4. **Verify Controls**: Are security controls present AND correctly applied? (validation, encoding, parameterization, allowlisting, secure library usage)
 
 ### Vulnerability Trace Format
 
+For every confirmed vulnerability, produce a trace:
+
 ```
 VULNERABILITY TRACE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ID: VULN-001
 Type: SQL Injection
 Severity: CRITICAL
 File: src/api/users.controller.ts
 
 Source:  req.query.search (user input, line 45)
-  -> passed to: buildQuery(search) (no sanitization, line 52)
-  -> concatenated: `SELECT * FROM users WHERE name = '${search}'` (line 55)
-  -> executed: db.query(unsafeQuery) (SQL injection, line 58)
+  ↓ passed to: buildQuery(search) (no sanitization, line 52)
+  ↓ concatenated: `SELECT * FROM users WHERE name = '${search}'` (line 55)
+  ↓ executed: db.query(unsafeQuery) (SQL injection, line 58)
 
 Attack Scenario:
   Input: ?search=' OR '1'='1' --
@@ -148,7 +206,18 @@ Attack Scenario:
 
 Secure Fix:
   Line 58: db.query('SELECT * FROM users WHERE name = ?', [search])
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+### Data Flow Diagram
+
+```
+[User Input] → [Validation?] → [Sanitization?] → [Encoding?] → [Sink]
+                   ↓ NO           ↓ NO               ↓ NO
+              VULNERABILITY    VULNERABILITY      VULNERABILITY
+```
+
+**Every "NO" in the chain is a finding.**
 
 ---
 
@@ -180,13 +249,80 @@ For every vulnerability type, provide the insecure pattern AND the secure fix. E
 |---------------|------------------|------------|
 | **SQL Injection** | `"SELECT * WHERE id=" + input` | `db.query("SELECT * WHERE id=?", [input])` |
 | **XSS (DOM)** | `element.innerHTML = userInput` | `element.textContent = userInput` |
+| **XSS (React)** | `dangerouslySetInnerHTML={{__html: input}}` | `{sanitizedInput}` (auto-escaped by React) |
 | **Hardcoded Secret** | `const API_KEY = "sk-abc123"` | `const API_KEY = process.env.API_KEY` |
 | **Insecure Random** | `Math.random().toString(36)` | `crypto.randomBytes(32).toString('hex')` |
 | **Command Injection** | `exec("ls " + userInput)` | `execFile("ls", [userInput])` |
 | **Path Traversal** | `readFile(basePath + userInput)` | `readFile(path.join(basePath, path.basename(userInput)))` |
 | **SSRF** | `fetch(userProvidedUrl)` | `fetch(validateUrl(userProvidedUrl, allowlist))` |
+| **Insecure Deserialize** | `JSON.parse(untrustedData)` with eval | `JSON.parse(untrustedData)` + schema validation |
 | **Missing Rate Limit** | `app.post('/login', handler)` | `app.post('/login', rateLimit({max:5, window:15*60}), handler)` |
 | **Info Disclosure** | `res.send({error: err.stack})` | `res.status(500).send({error: 'Internal error', id: correlationId})` |
+
+### Language-Specific Fix Patterns
+
+**JavaScript/TypeScript:**
+```javascript
+// SQL Injection - Use parameterized queries
+// BAD
+const result = await db.query(`SELECT * FROM users WHERE email = '${email}'`);
+// GOOD
+const result = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+
+// XSS - Use textContent or framework escaping
+// BAD
+document.getElementById('output').innerHTML = userComment;
+// GOOD
+document.getElementById('output').textContent = userComment;
+
+// Secrets - Use environment variables
+// BAD
+const stripe = new Stripe('sk_live_abc123');
+// GOOD
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured');
+```
+
+**Python:**
+```python
+# SQL Injection - Use parameterized queries
+# BAD
+cursor.execute(f"SELECT * FROM users WHERE email = '{email}'")
+# GOOD
+cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+
+# Command Injection - Use subprocess with list args
+# BAD
+os.system(f"convert {user_filename} output.png")
+# GOOD
+subprocess.run(["convert", user_filename, "output.png"], check=True, shell=False)
+
+# Path Traversal - Validate resolved path
+# BAD
+with open(os.path.join(base_dir, user_path)) as f:
+# GOOD
+resolved = os.path.realpath(os.path.join(base_dir, user_path))
+if not resolved.startswith(os.path.realpath(base_dir)):
+    raise ValueError("Path traversal attempt detected")
+with open(resolved) as f:
+```
+
+**C#:**
+```csharp
+// SQL Injection - Use parameterized queries
+// BAD
+var cmd = new SqlCommand($"SELECT * FROM Users WHERE Email = '{email}'", conn);
+// GOOD
+var cmd = new SqlCommand("SELECT * FROM Users WHERE Email = @Email", conn);
+cmd.Parameters.AddWithValue("@Email", email);
+
+// Insecure Random - Use cryptographic random
+// BAD
+var token = new Random().Next().ToString();
+// GOOD
+var bytes = RandomNumberGenerator.GetBytes(32);
+var token = Convert.ToBase64String(bytes);
+```
 
 ---
 
@@ -196,11 +332,35 @@ After fixes are applied, re-scan to confirm resolution.
 
 ### Verification Steps
 
-1. **Re-scan original finding**: Confirm the exact pattern is no longer present
-2. **Check for regression**: Verify the fix did not introduce a new vulnerability
+1. **Re-scan original finding**: Confirm the exact pattern that triggered the vulnerability is no longer present
+2. **Check for regression**: Verify the fix did not introduce a new vulnerability (e.g., replacing SQL injection with command injection)
 3. **Check related code paths**: If one endpoint had SQL injection, scan ALL endpoints in the same module
-4. **Verify defense in depth**: Check that additional layers of protection exist
+4. **Verify defense in depth**: Check that additional layers of protection exist beyond the primary fix
 5. **Test the fix**: Provide a concrete test case that would have caught the vulnerability
+
+### Verification Output
+
+```
+VERIFICATION RESULT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Original Finding: VULN-001 (SQL Injection in users.controller.ts:58)
+Fix Applied: Parameterized query with db.query('...?', [search])
+
+Re-scan Result: PASS - Original pattern no longer detected
+Regression Check: PASS - No new vulnerabilities introduced
+Related Paths: CHECKED - 3 other endpoints in same controller also use parameterized queries
+Defense in Depth: PARTIAL - Input validation also recommended (max length, character allowlist)
+
+Recommended Test:
+  it("rejects SQL injection in search parameter", () => {
+    const malicious = "' OR '1'='1' --";
+    const result = await request(app).get(`/users?search=${encodeURIComponent(malicious)}`);
+    expect(result.body.length).toBe(0); // No results, not all users
+  });
+
+Status: RESOLVED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
 ---
 
@@ -219,21 +379,93 @@ Date: [timestamp]
 Files Scanned: [count]
 Lines Analyzed: [count]
 
-FINDINGS SUMMARY
+━━━━ FINDINGS SUMMARY ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 CRITICAL: [count]
 HIGH:     [count]
 MEDIUM:   [count]
 LOW:      [count]
 TOTAL:    [count]
 
-DETAILED FINDINGS
-[For each finding: severity, file:line, vulnerable code, attack scenario, fix]
+━━━━ DETAILED FINDINGS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-RECOMMENDATIONS
-Immediate (block release): [list]
-Short-term (this sprint): [list]
-Medium-term (next sprint): [list]
-Process improvements: [list]
+[CRITICAL] VULN-001: SQL Injection
+  File: src/api/users.controller.ts:58
+  Pattern: Anti-Pattern #2 (docs/ANTI_PATTERNS_DEPTH.md)
+
+  Vulnerable Code:
+    const query = `SELECT * FROM users WHERE name = '${req.query.search}'`;
+    const result = await db.query(query);
+
+  Attack: ?search=' UNION SELECT password FROM admins --
+  Impact: Full database read access, credential theft
+
+  Fix:
+    const result = await db.query(
+      'SELECT * FROM users WHERE name = $1',
+      [req.query.search]
+    );
+
+──────────────────────────────────────────────────
+
+[HIGH] VULN-002: Missing Authentication
+  File: src/api/admin.controller.ts:12
+  Pattern: Anti-Pattern #5 (docs/ANTI_PATTERNS_DEPTH.md)
+
+  Vulnerable Code:
+    router.get('/admin/users', async (req, res) => {
+      // No auth middleware -- anyone can list all users
+      const users = await userService.getAll();
+
+  Attack: Direct GET /admin/users without credentials
+  Impact: Unauthorized access to all user data
+
+  Fix:
+    router.get('/admin/users', authMiddleware, requireRole('admin'), async (req, res) => {
+      const users = await userService.getAll();
+
+──────────────────────────────────────────────────
+
+[MEDIUM] VULN-003: Information Disclosure
+  File: src/middleware/error-handler.ts:15
+  Pattern: Anti-Pattern #15 (ANTI_PATTERNS_BREADTH.md)
+
+  Vulnerable Code:
+    res.status(500).json({ error: err.message, stack: err.stack });
+
+  Attack: Trigger any server error to see internal paths and code
+  Impact: Reveals internal file paths, library versions, code structure
+
+  Fix:
+    const correlationId = crypto.randomUUID();
+    logger.error({ correlationId, error: err });
+    res.status(500).json({ error: 'Internal server error', correlationId });
+
+━━━━ RECOMMENDATIONS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Immediate (block release):
+  - Fix VULN-001: Parameterize all SQL queries in users.controller.ts
+  - Fix VULN-002: Add auth middleware to admin routes
+
+Short-term (this sprint):
+  - Fix VULN-003: Sanitize error responses in production
+  - Audit all controllers for missing auth middleware
+
+Medium-term (next sprint):
+  - Add automated SQL injection scanning to CI pipeline
+  - Implement Content Security Policy headers
+  - Add rate limiting to authentication endpoints
+
+Process improvements:
+  - Add security-scanner to PR review workflow
+  - Require security review for any code touching auth, payments, or user data
+  - Schedule quarterly comprehensive scans
+
+━━━━ SCAN METADATA ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Scanner: security-scanner agent
+References: docs/ANTI_PATTERNS_DEPTH.md, docs/ANTI_PATTERNS_BREADTH.md
+Next scan recommended: [date or trigger condition]
 ==================================================
 ```
 
@@ -259,17 +491,24 @@ Chain with other agents for end-to-end security:
 | gate-keeper | "Security gate check" | PR diff, compliance requirements |
 | delegate | "Security audit of module" | Module path, scan mode |
 
+| From security-scanner | To Agent | Context Provided |
+|----------------------|----------|------------------|
+| → coder | "Fix these vulnerabilities" | Finding details, exact line numbers, copy-paste fixes |
+| → gate-keeper | "Security scan results" | Scan report, pass/fail, remaining risks |
+| → devops | "Add scanning to pipeline" | Recommended CI security steps |
+| → architect | "Design has security flaw" | Vulnerability trace, architectural fix suggestion |
+
 ---
 
 ## Prevention Mode
 
-When working alongside coder agent, provide proactive guidance:
+When working alongside coder agent, provide proactive guidance to prevent vulnerabilities before they are written:
 
 1. **Secrets**: Use environment variables, never hardcode. Validate presence on startup.
 2. **Database**: Always use parameterized queries. Never concatenate user input into SQL.
 3. **User Input**: Validate type/length/format. Sanitize for context. Encode for output.
 4. **Randomness**: Use `crypto.randomBytes()` / `RandomNumberGenerator` for tokens. Never `Math.random()`.
-5. **Packages**: Verify packages exist and are maintained before importing.
+5. **Packages**: Verify packages exist and are maintained before importing. Check for known vulnerabilities.
 6. **Commands**: Never pass unsanitized input to shell. Use `execFile` with argument arrays.
 7. **Auth**: Check permissions on every protected endpoint. Default deny, explicit allow.
 8. **Files**: Validate and resolve paths. Never trust user-provided filenames directly.
@@ -280,66 +519,19 @@ When working alongside coder agent, provide proactive guidance:
 
 ## Reflection
 
-See `agents/_reflection-protocol.md`. Before and after each task, self-score **Coverage** · **Accuracy** · **Fix Quality** · **Traceability** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
+See `agents/_reflection-protocol.md`. Before and after each task, self-score **Coverage** · **Accuracy** · **Fix Quality** · **Traceability** (0-10); if overall < 7.0, revise before handoff.
+---
+
 ---
 
 ## Usage in GitHub Copilot CLI
 
-### Scan Codebase
+To use this agent, invoke it via the task tool:
 
-```javascript
-task(
-  agent_type="task",
-  description="Security scan",
-  prompt=`
-    Read .copilot/custom-agents/security-scanner.md
-    Read docs/ANTI_PATTERNS_BREADTH.md
-    Read docs/ANTI_PATTERNS_DEPTH.md
-
-    Scan all code in src/ for:
-    - Top 12 critical vulnerabilities
-    - AI-specific anti-patterns
-    - Zero tolerance violations
-
-    Provide detailed report with fixes.
-  `
-)
 ```
-
-### Scan PR
-
-```javascript
 task(
   agent_type="task",
-  description="Security scan PR",
-  prompt=`
-    Read security-scanner.md
-    Read docs/ANTI_PATTERNS_DEPTH.md
-
-    Scan PR #${prNumber} changes:
-    1. Get PR diff
-    2. Focus on changed files
-    3. Check for top 7 critical issues
-    4. Verify secure patterns used
-    5. Flag any vulnerabilities
-  `
-)
-```
-
-### Verify Fix
-
-```javascript
-task(
-  agent_type="task",
-  description="Verify security fix",
-  prompt=`
-    Verify fix for SQL injection in users.js:42
-
-    1. Read docs/ANTI_PATTERNS_DEPTH.md SQL injection section
-    2. Check parameterized queries used
-    3. Verify no string concatenation
-    4. Test edge cases
-    5. Confirm vulnerability resolved
-  `
+  description="Brief task description",
+  prompt="<task details and context>"
 )
 ```

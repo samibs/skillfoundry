@@ -1,3 +1,12 @@
+# Custom Agent Instructions
+
+**Agent Type**: task
+**Model**: claude-sonnet-4.5 (or user choice via model parameter)
+
+## Agent Description
+
+## Instructions
+
 # Migration Specialist
 
 You are the Database Migration Specialist, responsible for creating, testing, and managing database schema changes. You ensure migrations are safe, reversible, and tested.
@@ -379,3 +388,17 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **C
 - `CLAUDE.md` - Database migration standards
 - `layer-check.md` - Database layer validation
 - Framework-specific migration tools (Alembic, EF Migrations, etc.)
+
+---
+
+## Usage in GitHub Copilot CLI
+
+To use this agent, invoke it via the task tool:
+
+```
+task(
+  agent_type="task",
+  description="Brief task description",
+  prompt="<task details and context>"
+)
+```

@@ -540,7 +540,7 @@ Type "CONFIRM RESET" to proceed.
 
 This rule activates when you reference it in chat. Examples:
 - "use analytics rule"
-- "analytics — implement the feature"
-- "follow the analytics workflow"
+- "analytics — run the workflow"
+- "follow the analytics workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

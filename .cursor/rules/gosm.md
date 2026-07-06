@@ -55,11 +55,11 @@ On escalation, present: story, phase, issue type, context, options with trade-of
 
 ---
 
-## Activation
+## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use gosm rule"
-- "gosm — run the pipeline"
-- "follow the gosm workflow"
+- "gosm — run the workflow"
+- "follow the gosm workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

@@ -47,11 +47,11 @@ If the tree is dirty, autonomous mode is blocked with instructions to commit or 
 
 ---
 
-## Activation
+## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
 - "use goma rule"
-- "goma — run the pipeline"
-- "follow the goma workflow"
+- "goma — run the workflow"
+- "follow the goma workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

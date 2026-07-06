@@ -96,7 +96,7 @@ When no argument is given, find all test files by pattern (`test_*.py`, `*.spec.
 
 This rule activates when you reference it in chat. Examples:
 - "use doc-tests rule"
-- "doc-tests — implement the feature"
-- "follow the doc-tests workflow"
+- "doc-tests — run the workflow"
+- "follow the doc-tests workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.

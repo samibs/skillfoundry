@@ -630,7 +630,7 @@ IF breaking change deployed:
 
 This rule activates when you reference it in chat. Examples:
 - "use api-design rule"
-- "api-design — implement the feature"
-- "follow the api-design workflow"
+- "api-design — run the workflow"
+- "follow the api-design workflow for this task"
 
 Cursor loads this rule as context. It does NOT use /slash-command syntax.
