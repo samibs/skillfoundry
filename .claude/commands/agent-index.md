@@ -3,13 +3,14 @@
 
 ## Enterprise Agent Architecture
 
-**Last Updated:** 2026-07-05
-**Total Agents:** 60 (58 v2.0 + hotfix + health)
+**Last Updated:** 2026-07-06
+**Total Agents:** 60 (AGENT_REGISTRY) · 56 persona files · 52 slash-command skills
 **New Agents (Pass 2):** hotfix, health
 **New Protocol Modules (Pass 2):** _convention-discovery, _evaluator-calibration, _audit-export, _profile-resolution
 **New Protocol Modules (v5.20.0):** _ralph-loop-protocol, _self-prompt-protocol
 **New Commands (v5.20.0):** /improve (continuous improvement loop)
 **New Capability (v5.21.0):** /docs wiki — Codebase Agent Wiki (documentation-codifier Phase 7)
+**Refinement Pass (v5.22.0):** reflection/peer/context boilerplate collapsed, /gosm·/goma·/blitz thin aliases, Anvil tiers → A-namespace (distinct from CLI gates T0–T7)
 **State Isolation:** .claude/local/ (gitignored) + .claude/shared/ (committed)
 **Governance Model:** 5-tier hierarchy with escalation protocols
 **Loop Engine:** Ralph Loop (_ralph-loop-protocol.md) — agent-prompts-self pattern

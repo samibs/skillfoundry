@@ -15,7 +15,7 @@ alwaysApply: false
 ## Enterprise Agent Architecture
 
 **Last Updated:** 2026-07-06
-**Total Agents:** 60 (58 v2.0 + hotfix + health)
+**Total Agents:** 60 (AGENT_REGISTRY) · 56 persona files · 52 slash-command skills
 **New Agents (Pass 2):** hotfix, health
 **New Protocol Modules (Pass 2):** _convention-discovery, _evaluator-calibration, _audit-export, _profile-resolution
 **New Protocol Modules (v5.20.0):** _ralph-loop-protocol, _self-prompt-protocol
