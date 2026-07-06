@@ -524,17 +524,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/cost` | Token usage metrics feed into cost analysis |
 | `/analytics` | Deeper agent-level analytics complement metrics |
 
-### Peer Improvement Signals
-
-- **From `/go`**: Execution completion events trigger metric recording
-- **From `/anvil`**: Per-tier pass/fail data enriches quality metrics
-- **From `/fixer`**: Auto-fix success rates indicate remediation effectiveness
-- **To `/health`**: Provide health indicator data (success rate, error rate)
-- **To `/status`**: Provide summary KPIs for project dashboard
-- **To `/cost`**: Provide token usage data for cost projections
-
----
-
 ## REMEMBER
 
 > "Metrics are the mirror of your process. Look honestly."

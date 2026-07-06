@@ -380,21 +380,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **S
 | `/go --rollback` | Framework rollback | Rollback full /go execution (heavier than undo) |
 | `/fixer` | Post-undo repair | Fix regressions introduced by undo |
 
-### Peer Improvement Signals
-
-**Upstream (feeds into undo)**:
-- `/replay` -- Provides the action history that undo operates on
-- `/memory` -- Provides context for understanding what was done and why
-- Git history -- The primary data source for undo operations
-
-**Downstream (undo feeds into)**:
-- `/fixer` -- May need to fix regressions after undo
-- `/go --resume` -- May need to re-run from a different point after undo
-
-**Reviewers**:
-- `/gate-keeper` -- Can validate post-undo state
-- `/tester` -- Can verify no regressions after undo
-
 ### Required Challenge
 
 Before any multi-step undo (`--steps=N` where N >= 3), undo MUST challenge:

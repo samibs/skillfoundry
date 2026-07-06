@@ -524,31 +524,6 @@ When working alongside coder agent, provide proactive guidance to prevent vulner
 See `agents/_reflection-protocol.md`. Before and after each task, self-score **Coverage** · **Accuracy** · **Fix Quality** · **Traceability** · **Confidence** (0-10); if overall < 7.0, revise before handoff.
 ---
 
-## Peer Improvement Signals
-
-- **Upstream peer reviewer**: coder, architect (security-scanner reviews their output for vulnerabilities)
-- **Downstream peer reviewer**: gate-keeper, devops (consume scan results for quality gates and pipeline enforcement)
-- **Required challenge**: Critique one assumption about scan completeness and one about fix correctness
-- **Required response**: Include one accepted improvement and one rejected with rationale
-- **Cross-check**: For CRITICAL findings, request confirmation from security agent before reporting to gate-keeper
-
----
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after every scan
-- Log at least one concrete missed pattern and one detection improvement for each scan
-- Track false positive rate -- if >20% of findings are false positives, refine search patterns
-- Maintain a per-project vulnerability pattern log in memory_bank
-- When the same vulnerability type appears 3+ times in a project, recommend architectural fix (not just per-instance patches)
-- Reference: `agents/_reflection-protocol.md`
-
----
-
-*Load `docs/ANTI_PATTERNS_DEPTH.md` and `docs/ANTI_PATTERNS_BREADTH.md` before executing scans.*
-
----
-
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:

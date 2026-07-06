@@ -194,24 +194,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **T
 
 ---
 
-## Peer Improvement Signals
-
-- Upstream peer reviewer: security, security-scanner (for security rule accuracy)
-- Downstream peer reviewer: gate-keeper, review (they consume BPSBS output)
-- Required challenge: critique one severity classification and one remediation
-- Required response: include one accepted improvement and one rejected with rationale
-
-## Continuous Improvement Contract
-
-- Run self-critique after every audit
-- Log at least one rule that was hard to check and one that produced a false positive
-- Request peer challenge from security-scanner when security violations are borderline
-- Escalate ambiguous severity classifications to gate-keeper for precedent-setting
-- If the same violation appears 3+ times across audits, propose a prevention mechanism
-- Reference: `agents/_reflection-protocol.md`
-
----
-
 ## REMEMBER
 
 > "A mock is a lie. A TODO is a promise to fail. Zero tolerance."

@@ -351,20 +351,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/security` | A1 banned pattern scan overlaps with security scanning |
 | `/metrics` | Anvil pass/fail rates tracked per tier |
 
-### Peer Improvement Signals
-
-- **From `/coder`**: If coder consistently fails A1, suggest adding linting to coder's pre-handoff checklist
-- **From `/fixer`**: If fixer cannot resolve a A5 contract violation, escalate to architect
-- **From `/tester`**: If tester finds issues A6 missed, update A6 risk heuristics
-- **To `/metrics`**: Report per-tier pass/fail rates for trend analysis
-- **To `/memory`**: Record recurring failure patterns for future prevention
-
----
-
-*The Anvil — Strike early. Strike often. Every handoff is a checkpoint.*
-
----
-
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:

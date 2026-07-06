@@ -327,17 +327,9 @@ The Context Manager works alongside `/go`:
 See `agents/_reflection-protocol.md`. Before and after each task, self-score **Estimation Accuracy** · **Compaction Timing** · **Context Preservation** · **Budget Health** (0-10); if overall < 7.0, revise before handoff.
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Report current context state
-- **After Acting**: Show budget change, recommend actions
-- **Token Awareness**: This skill exists FOR token awareness
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Context Status
 
 ### Budget: [X]K / 200K tokens ([STATUS])

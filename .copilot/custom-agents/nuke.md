@@ -314,15 +314,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **S
 | **swarm** | Worker management | Stop swarm workers before nuke |
 | **memory** | Knowledge protection | Verify memory_bank/ is never destroyed |
 
-### Peer Improvement Signals
-
-```
-NUKE → GO: Workspace nuked, ready for fresh /go execution
-NUKE → STATUS: State cleared, status should reflect clean slate
-NUKE → SWARM: Swarm state destroyed, workers stopped, re-init required
-NUKE → MEMORY: Verify memory_bank/ integrity after nuke
-```
-
 ### Required Challenge
 
 Before executing full nuke (not `--rollback-only` or `--clean-only`), nuke MUST challenge:

@@ -508,22 +508,6 @@ IF accessibility regression reported:
 
 ---
 
-## PEER IMPROVEMENT SIGNALS
-
-When accessibility work reveals issues for other agents:
-
-| Signal | Route To | Trigger |
-|--------|----------|---------|
-| "Form has no server-side validation feedback" | `/api-design` | Error responses not structured for accessible display |
-| "Component missing from design system" | `/ux-ui` | Accessible pattern needed but not in style guide |
-| "Interactive widget has no tests" | `/tester` | Accessibility test coverage gap |
-| "Page load too slow for screen reader users" | `/performance` | Heavy DOM causes screen reader lag |
-| "Dynamic content not translatable" | `/i18n` | ARIA labels hardcoded in English |
-| "Color contrast fails in dark mode" | `/coder` | Theme tokens not accessibility-verified |
-| "No skip-to-content link" | `/gate-keeper` | Accessibility gate should catch this |
-
----
-
 ## INTEGRATION WITH OTHER AGENTS
 
 | Agent | Interaction | When |

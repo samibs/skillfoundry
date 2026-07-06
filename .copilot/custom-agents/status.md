@@ -336,22 +336,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **C
 | `/security` | Security posture | Security performs deep audit; status summarizes security posture |
 | `/ship` | Readiness data provider | Status provides the data ship uses to decide readiness |
 
-### Peer Improvement Signals
-
-**Upstream (feeds into status)**:
-- `/health` -- If framework health is degraded, status includes a framework health warning banner
-- `/gate-keeper` -- If recent gate-keeper runs show repeated failures, status highlights the pattern
-- `/metrics` -- If execution metrics show declining success rates, status surfaces this in performance
-
-**Downstream (status feeds into)**:
-- `/ship` -- Status data feeds directly into ship readiness checks; FAIL blocks shipping
-- `/go` -- If status shows blocked stories, `/go --resume` skips to unblocked work
-- `/workflow` -- Status informs workflow about blockers and current project state
-
-**Reviewers**:
-- `/evaluator` -- Can assess whether status report is complete and accurate
-- Developer -- Reviews dashboard for project health decisions
-
 ### Required Challenge
 
 When ALL subsystems show PASS, status MUST still verify:

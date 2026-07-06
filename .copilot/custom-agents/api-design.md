@@ -578,23 +578,6 @@ IF breaking change deployed:
 
 ---
 
-## PEER IMPROVEMENT SIGNALS
-
-When API design work reveals issues for other agents:
-
-| Signal | Route To | Trigger |
-|--------|----------|---------|
-| "Endpoint missing auth middleware" | `/security` | API audit finds unprotected routes |
-| "Response time exceeds P95 budget" | `/performance` | Load testing API endpoints |
-| "No input validation on endpoint" | `/gate-keeper` | API review finds raw input pass-through |
-| "API returns database IDs as sequential integers" | `/security` | IDOR vulnerability risk |
-| "Missing API tests for error paths" | `/tester` | Only happy-path tests exist |
-| "API schema drift from documentation" | `/docs` | OpenAPI spec outdated |
-| "Database schema does not support API pagination" | `/data-architect` | No cursor/offset column |
-| "Frontend calling deprecated endpoint" | `/coder` | Deprecation headers being ignored |
-
----
-
 ## INTEGRATION WITH OTHER AGENTS
 
 | Agent | Interaction | When |

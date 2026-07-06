@@ -486,15 +486,3 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/replay` | Forge state is replayable via `/replay` |
 | `/metrics` | Forge execution metrics tracked automatically |
 | `/context` | Budget monitored throughout; compaction triggered as needed |
-
-### Peer Improvement Signals
-
-- **From `/anvil`**: If T3 (self-adversarial) frequently finds vulnerabilities, suggest adding security stories to PRD
-- **From `/fixer`**: If same fix type recurs across forges, suggest adding it to coding standards
-- **From `/layer-check`**: If frontend layer consistently fails, suggest `/ux-ui` review before forge
-- **To `/metrics`**: Report forge duration, success rate, auto-fix count for trend analysis
-- **To `/memory`**: Record forge outcomes for future decision-making
-
----
-
-*The Forge — 46 Cold-Blooded Agents — Claude AS Framework*

@@ -1203,101 +1203,9 @@ See `docs/story-state-folders.md` for the full workflow.
 
 ---
 
-## CONTEXT DISCIPLINE
+## Context Discipline
 
-### Token Conservation Rules
-
-1. **Load CLAUDE-SUMMARY.md** not full CLAUDE.md
-2. **One story at a time** - clear previous story context
-3. **Sub-agent responses** must be <500 tokens
-4. **Compaction triggers** are mandatory, not optional
-5. **Scratchpad updates** happen after every story
-
-### Session End Protocol
-
-Before ending or when context is full:
-
-```
-SESSION SUMMARY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-PRDs Processed: [X] complete, [Y] in-progress, [Z] pending
-
-Stories Completed This Session:
-| Story | Outcome | Key Changes |
-|-------|---------|-------------|
-| STORY-XXX | SUCCESS | [1-line summary] |
-
-Decisions Made:
-- [Decision 1]: [rationale]
-
-Blockers (if any):
-- [Blocker 1]: [status]
-
-Resume Point:
-- PRD: [filename]
-- Story: [STORY-XXX]
-- Phase: [phase]
-
-Context Compactions: [N] times
-Final Budget: [X]K tokens
-```
-
-### Emergency Compaction
-
-If context approaches limit mid-story:
-
-```
-⚠️ CONTEXT LIMIT APPROACHING
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Current: ~[X]K tokens (approaching limit)
-
-EMERGENCY PROTOCOL:
-1. Saving current progress to scratchpad
-2. Summarizing completed work
-3. Clearing non-essential context
-4. Preserving: current story + blockers + decisions
-
-Resume instructions will be provided.
-```
-
-### Context Exhaustion Prevention (Batch-Aware)
-
-When the pipeline detects it cannot complete all remaining stories in the current
-session (context budget too low, or batch boundary reached with high usage):
-
-```
-⏸️  PIPELINE CHECKPOINT — BATCH [N] COMPLETE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Completed: [X] / [Y] stories ([Z]%)
-Remaining: [R] stories in [B] batches
-
-State saved to: .claude/state.json
-
-TO RESUME in a new session:
-  /go --resume
-
-Resume will:
-  1. Read .claude/state.json
-  2. Skip completed stories (STORY-001 through STORY-[X])
-  3. Continue from STORY-[X+1]
-  4. Run delivery audit on completion
-
-DO NOT start a fresh /go — it will re-execute completed stories.
-```
-
-**CRITICAL**: Always output resume instructions when:
-- More than 60% of context budget is consumed
-- Current batch completes but more batches remain
-- Any context compaction fails or is insufficient
-- The pipeline has been running for 8+ stories
-
-This prevents the user from losing work when context runs out silently.
-
----
-
+See `agents/_context-discipline.md`.
 ## STATE MACHINE INTEGRATION
 
 The /go skill uses a state machine for reliable execution. See `agents/_state-machine.md` for full details.
@@ -1453,17 +1361,9 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **O
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Check context budget, load CLAUDE-SUMMARY.md
-- **After Acting**: Update scratchpad, summarize outcomes (<500 tokens)
-- **Token Awareness**: Compact every 5 stories or at 100K tokens
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## /go Status Update
 
 ### Current Phase: [DISCOVERY/VALIDATION/IMPLEMENTATION/COMPLETION]

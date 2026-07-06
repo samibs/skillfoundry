@@ -315,20 +315,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **D
 | `/metrics` | Metrics data | Execution metrics feed into cost calculations |
 | `/go` | Primary data generator | /go execution generates most cost data |
 
-### Peer Improvement Signals
-
-**Upstream (feeds into cost)**:
-- `/go`, `/gosm`, `/goma`, `/blitz` -- Generate token usage during execution
-- `/metrics` -- Provides structured metrics data
-
-**Downstream (cost feeds into)**:
-- `/profile` -- Cost data informs model routing decisions
-- `/context` -- Cost trends inform compaction frequency
-
-**Reviewers**:
-- Developer -- Reviews cost reports for budget decisions
-- `/evaluator` -- Can assess cost-efficiency of execution
-
 ### Required Challenge
 
 When a single story exceeds 40% of total session cost, cost MUST challenge:

@@ -556,23 +556,6 @@ IF optimization causes regression:
 
 ---
 
-## PEER IMPROVEMENT SIGNALS
-
-When performance work reveals issues for other agents:
-
-| Signal | Route To | Trigger |
-|--------|----------|---------|
-| "N+1 query pattern detected" | `/data-architect` | Query profiling shows repeated DB calls |
-| "Bundle size exceeds budget" | `/dependency` | Frontend performance audit |
-| "Missing database indexes" | `/data-architect` | Slow query log analysis |
-| "API endpoint exceeds P95 budget" | `/api-design` | Load test results |
-| "Memory leak in component" | `/debugger` | Soak test shows growing memory |
-| "Cache invalidation race condition" | `/security` | Concurrent load reveals stale auth data |
-| "Missing /health or /metrics endpoint" | `/sre` | No observability for performance monitoring |
-| "Frontend re-renders excessively" | `/coder` | React/Angular profiler output |
-
----
-
 ## INTEGRATION WITH OTHER AGENTS
 
 | Agent | Interaction | When |

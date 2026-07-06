@@ -214,17 +214,9 @@ Reject and explain if:
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Verify implementation exists and is working. Check for existing technical docs.
-- **After Acting**: Summarize materials created (<500 tokens), list file paths, report coverage.
-- **Token Awareness**: Reference source material by path, don't duplicate full implementations in guides.
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Guides Created
 
 ### Summary

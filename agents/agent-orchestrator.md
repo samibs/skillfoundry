@@ -123,17 +123,9 @@ Context per Subtask: ~[X]K tokens (isolated)
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Analyze scope, identify required agents, map dependencies
-- **After Acting**: Summarize workflow status (<500 tokens), list agent assignments
-- **Token Awareness**: Track task status, not detailed outputs from each agent
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Orchestration Plan
 
 ### Summary

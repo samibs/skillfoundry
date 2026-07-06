@@ -488,18 +488,3 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **C
 - **Gate-Keeper**: Must pass deployment gates
 
 ---
-
-## Peer Improvement Signals
-
-- Upstream peer reviewer: architect, security
-- Downstream peer reviewer: sre, release
-- Required challenge: critique one assumption about deployment safety and one about backup completeness
-- Required response: include one accepted improvement and one rejected with rationale
-
-## Continuous Improvement Contract
-
-- Run self-critique before handoff and after implementation
-- Log at least one concrete weakness and one mitigation for each change
-- Request peer challenge from SRE when deployment risk is medium or higher
-- Escalate unresolved infrastructure conflicts to architect
-- Reference: agents/_reflection-protocol.md

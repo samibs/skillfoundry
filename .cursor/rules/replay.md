@@ -276,19 +276,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/context` | Budget check before replay to avoid token waste |
 | `/memory` | Replay outcomes recorded to memory bank |
 
-### Peer Improvement Signals
-
-- **From `/go`**: If `/go` reports repeated failures on same story, suggest `/replay --failed` with targeted fixes
-- **From `/fixer`**: If fixer resolved issues, recommend replay to verify fixes
-- **To `/metrics`**: Report replay success rates for trend analysis
-- **To `/memory`**: Record what changed between original run and replay
-
----
-
-*Replay Manager - The Forge - Claude AS Framework*
-
----
-
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:
