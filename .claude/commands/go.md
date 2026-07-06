@@ -46,7 +46,7 @@ EXECUTION MODES (NEW v1.7.0):
 
 ---
 
-## NEW IN v1.7.0 (Auto-Remediation & Autonomous Execution)
+## EXECUTION MODES & AUTO-REMEDIATION
 
 ### Execution Modes
 Three levels of autonomy to balance speed and control:
@@ -139,16 +139,9 @@ Phase 1 Complete
   → Phase 2 begins autonomously
 ```
 
-### Benefits
-- **90%+ reduction** in user interruptions (routine violations auto-fixed)
-- **Faster execution** (no waiting for user to fix tests/docs/headers)
-- **Consistent quality** (standards enforced automatically)
-- **User time focused** on decisions requiring domain/business expertise
-- **Full audit trail** of what was auto-fixed vs. escalated
-
 ---
 
-## NEW IN v1.3.0
+## STATE, RECOVERY & METRICS
 
 ### State Machine & Recovery
 - **Persistent state**: Execution state saved to `.claude/state.json`
@@ -180,46 +173,13 @@ Phase 1 Complete
 
 ---
 
-## NEW IN v1.1.0 (Security Enhanced)
+## SECURITY VALIDATION
 
 ### Security Validation Integration
 - **Mandatory security checks**: All code validated against ANTI_PATTERNS
 - **Top 12 vulnerabilities**: Automatic scanning during implementation
 - **Security scanner integration**: Available for security audits
 - Reference: `docs/ANTI_PATTERNS_BREADTH.md`, `docs/ANTI_PATTERNS_DEPTH.md`
-
-### Platform Support
-- **Dual-platform**: Supports both Claude Code and GitHub Copilot CLI
-- **Security documents**: Available in all installations
-- **BPSBS integration**: Updated with AI-specific security patterns
-
----
-
-## NEW IN v1.3.1
-
-### TDD Enforcement
-- **RED-GREEN-REFACTOR**: All /coder invocations follow TDD cycle
-- **Test-first requirement**: Implementation blocked until failing test exists
-- **Enforcement levels**: STRICT (block), WARN (log), OFF (track only)
-- See: `agents/_tdd-protocol.md`
-
-### Parallel Agent Dispatch
-- **Wave execution**: Independent stories run simultaneously
-- **Speedup calculation**: Track parallel performance gains
-- **Conflict detection**: Prevent file overlap issues
-- See: `agents/_parallel-dispatch.md`
-
-### Git Worktree Isolation
-- **Safe development**: Each PRD executes in isolated worktree
-- **Easy rollback**: Just delete the worktree folder
-- **Parallel PRDs**: Multiple PRDs can develop simultaneously
-- See: `agents/_git-worktrees.md`
-
-### Systematic Debugging
-- **Four phases**: Observe → Hypothesize → Test → Verify
-- **Five Whys**: Trace to root cause, not symptoms
-- **Defense in depth**: Add guards after every fix
-- See: `agents/_systematic-debugging.md`
 
 ---
 
