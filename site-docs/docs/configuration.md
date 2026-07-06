@@ -36,7 +36,7 @@ Below is every section and key recognized by the framework. Keys marked *(auto)*
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `installed` | string[] | `["claude"]` | List of active AI platforms. Determines which agent config files are generated. Supported values: `claude`, `copilot`, `cursor`. |
+| `installed` | string[] | `["claude"]` | List of active AI platforms. Determines which agent config files are generated. Supported values: `claude`, `copilot`, `cursor`, `codex`, `gemini`, `grok`. |
 
 Example:
 
@@ -211,7 +211,7 @@ Common flags accepted by most SkillFoundry CLI commands:
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--yes` | `-y` | Skip all confirmation prompts. Accept defaults for every interactive question. Essential for CI/CD pipelines. |
-| `--platform=<name>` | — | Target a specific platform (`claude`, `copilot`, `cursor`). Overrides the `[platforms].installed` config for this invocation. |
+| `--platform=<name>` | — | Target a specific platform (`claude`, `copilot`, `cursor`, `codex`, `gemini`, `grok`). Overrides the `[platforms].installed` config for this invocation. |
 | `--html` | — | Generate gate reports in HTML format in addition to the default terminal output. Reports are saved to `.skillfoundry/reports/`. |
 | `--baseline` | — | Capture current gate results as the baseline for future comparisons. Subsequent runs highlight regressions against this baseline. |
 | `--verbose` | — | Enable verbose output. Equivalent to `SF_LOG_LEVEL=debug`. Shows detailed gate execution steps, timing, and intermediate results. |

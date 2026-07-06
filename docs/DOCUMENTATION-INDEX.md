@@ -1,10 +1,10 @@
-# Documentation Index - SkillFoundry Framework v2.0.78
+# Documentation Index - SkillFoundry Framework v5.21.0
 
 Complete guide to all documentation in the framework.
 
 **Version:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-**53 Agents (Core Roster) / 60 Skills** | **Penta Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini) | **Auto-Remediation** | **Knowledge Exchange** | **Swarm Coordination** | **DX Tooling** | **Advanced Intelligence**
+**53 Agents (Core Roster) / 60 Skills** | **Hexa Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, Grok Build) | **Auto-Remediation** | **Knowledge Exchange** | **Swarm Coordination** | **DX Tooling** | **Advanced Intelligence**
 
 ---
 
@@ -535,7 +535,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 2.0.52
+**Framework Version**: 5.21.0
 **Documentation Updated**: March 15, 2026
 **Total Agents**: 56 core agents / 64 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)

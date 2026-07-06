@@ -134,7 +134,7 @@ skillfoundry/
 1. Create `agents/your-agent-name.md` following the existing contract format
 2. The installer auto-discovers agents and generates platform-specific files
 3. Add a corresponding skill in `.claude/commands/your-agent-name.md`
-4. Test that it generates correctly for all 5 platforms by running `install.sh --dry-run`
+4. Test that it generates correctly for all 6 platforms by running `install.sh --dry-run`
 
 ---
 

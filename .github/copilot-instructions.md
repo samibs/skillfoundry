@@ -52,7 +52,7 @@ Asking "want me to build the UI?" after doing only the backend is a violation of
 
 **Do NOT use Copilot's built-in `memory-tool` for this project.**
 
-This project uses `memory_bank/` — version-controlled, portable across all 5 platforms (Claude Code, Copilot, Cursor, Codex, Gemini). Copilot's `WorkspaceStorage/` is local-only and invisible to other platforms.
+This project uses `memory_bank/` — version-controlled, portable across all 6 platforms (Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build). Copilot's `WorkspaceStorage/` is local-only and invisible to other platforms.
 
 Save knowledge via `/gohm` (Phase 5 in `/forge`), or write directly:
 

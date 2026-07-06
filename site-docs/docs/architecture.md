@@ -305,7 +305,7 @@ SkillFoundry uses local-first event logging. All telemetry data stays on disk in
 
 ## Platform Distribution
 
-SkillFoundry agent prompts are distributed across 5 AI coding platforms. Each platform uses the same 88 agent prompt files, adapted to the platform's configuration format:
+SkillFoundry agent prompts are distributed across 6 AI coding platforms (Grok Build reuses the OpenAI Codex format). Each platform uses the same 88 agent prompt files, adapted to the platform's configuration format:
 
 | Platform | Integration Method | Configuration |
 |----------|-------------------|---------------|
