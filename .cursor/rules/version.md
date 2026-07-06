@@ -172,9 +172,9 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.22.0**
+**SkillFoundry v5.22.1**
 
-- **60 Agents, 130+ Skills** - Complete development lifecycle coverage
+- **61 Agents, 107 Skills/platform** - Complete lifecycle coverage (130+ total incl. CLI)
 - **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
 - **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
 - **171 Deviation Patterns** - LLM failure prevention across 16 categories
@@ -190,6 +190,7 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 5.22.1 | 2026-07-06 | Consistency follow-up: skill/agent counts reconciled (61 agents · 107 skills), sf_cli dist rebuilt |
 | 5.22.0 | 2026-07-06 | Refinement Pass: prompt tightening, /gosm-/goma-/blitz aliases, Anvil A-namespace, drift fixes |
 | 5.21.0 | 2026-07-05 | Codebase Agent Wiki: /docs wiki, grounded agent-facing docs, surgical updates |
 | 5.20.0 | 2026-06-23 | Autonomous Loop Engine: Ralph Loop, /improve, self-prompt protocol |

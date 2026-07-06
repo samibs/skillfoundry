@@ -55,7 +55,7 @@ sf --version
 Expected output:
 
 ```
-SkillFoundry CLI v5.22.0
+SkillFoundry CLI v5.22.1
 ```
 
 The `sf` binary is the primary entry point for all CLI operations.
