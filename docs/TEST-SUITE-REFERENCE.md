@@ -444,7 +444,7 @@ All TypeScript tests live in `sf_cli/src/__tests__/` and use **Vitest** with `vi
 
 | # | Test | How | Expected Result | Value |
 |---|------|-----|-----------------|-------|
-| 1 | 60 agents registered | `Object.keys(AGENT_REGISTRY).length` | `60` | All agents present after any refactor |
+| 1 | 61 agents registered | `Object.keys(AGENT_REGISTRY).length` | `61` | All agents present after any refactor |
 | 2 | Names sorted | Check alphabetical ordering | Sorted | Consistent display order |
 | 3 | Valid toolCategory | Each agent's `toolCategory` | One of `FULL/CODE/REVIEW/OPS/INSPECT/NONE` | No typos in category assignment |
 | 4 | System prompts under 150 words | Word count each prompt | All ≤ 150 | Prompts fit in context efficiently |
@@ -464,7 +464,7 @@ All TypeScript tests live in `sf_cli/src/__tests__/` and use **Vitest** with `vi
 | 23 | Get unknown agent | `getAgent('nonexistent')` | `undefined` | Graceful miss |
 | 24 | Category counts sum to 60 | Sum agents per category | Total = 60 | Every agent has exactly one category |
 
-**Value:** The agent registry is the brain of the multi-agent system. 60 agents with wrong tool access could either be powerless (can't do their job) or dangerous (too much access).
+**Value:** The agent registry is the brain of the multi-agent system. 61 agents with wrong tool access could either be powerless (can't do their job) or dangerous (too much access).
 
 ---
 

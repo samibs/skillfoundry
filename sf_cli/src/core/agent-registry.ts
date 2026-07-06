@@ -55,11 +55,11 @@ function advisorPrompt(displayName: string, role: string, domain: string): strin
 }
 
 // ---------------------------------------------------------------------------
-// Registry: all 60 agents
+// Registry: all 61 agents
 // ---------------------------------------------------------------------------
 
 export const AGENT_REGISTRY: Record<string, AgentDefinition> = {
-  // ── FULL (21 agents) ─────────────────────────────────────────────────
+  // ── FULL (23 agents) ─────────────────────────────────────────────────
   auto: {
     name: 'auto', displayName: 'Auto Pilot', toolCategory: 'FULL',
     systemPrompt: implementerPrompt('Auto Pilot', 'Master workflow orchestrator that classifies intent and executes full pipelines', 'autonomous execution, pipeline routing, intent classification'),
