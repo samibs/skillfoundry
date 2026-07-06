@@ -2,7 +2,7 @@
   "name": "skillfoundry",
   "displayName": "SkillFoundry",
   "description": "Quality gates, telemetry dashboard, dependency scanning, and forge pipeline — directly in VS Code",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "publisher": "skillfoundry",
   "license": "MIT",
   "icon": "icon.png",
@@ -45,7 +45,8 @@
   ],
   "activationEvents": [
     "workspaceContains:.skillfoundry/config.toml",
-    "onCommand:skillfoundry.setup"
+    "onCommand:skillfoundry.setup",
+    "onCommand:skillfoundry.runExample"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -100,6 +101,10 @@
         "title": "SkillFoundry: Start Forge Pipeline"
       },
       {
+        "command": "skillfoundry.runExample",
+        "title": "SkillFoundry: Run the Example Project"
+      },
+      {
         "command": "skillfoundry.metrics",
         "title": "SkillFoundry: Show Metrics"
       },
@@ -137,6 +142,19 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        { "command": "skillfoundry.gateAll", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.gate", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.gateFile", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.metrics", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.report", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.benchmark", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.hook", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.memory", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.scanDeps", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.openReport", "when": "config.skillfoundry.showAdvancedCommands" },
+        { "command": "skillfoundry.refresh", "when": "config.skillfoundry.showAdvancedCommands" }
+      ],
       "editor/context": [
         {
           "command": "skillfoundry.gateFile",
@@ -150,6 +168,53 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "sf.forge",
+        "contents": "Watch a SkillFoundry pipeline run start to finish on a known-good PRD.\n[Run the Example Project](command:skillfoundry.runExample)\nThen point it at your own idea.\n[Create a PRD](command:skillfoundry.prd)\n[Open the Getting Started walkthrough](command:workbench.action.openWalkthrough?%22skillfoundry.skillfoundry%23skillfoundry.gettingStarted%22)"
+      },
+      {
+        "view": "sf.gates",
+        "contents": "No gate results yet. Run the example project to see the Anvil quality gates light up live.\n[Run the Example Project](command:skillfoundry.runExample)"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "skillfoundry.gettingStarted",
+        "title": "Get Started with SkillFoundry",
+        "description": "Go from install to your first quality-gated build in about five minutes — no need to read the docs first.",
+        "steps": [
+          {
+            "id": "setup",
+            "title": "Connect your AI provider",
+            "description": "Add your provider key once — stored encrypted in VS Code SecretStorage.\n[Run Setup](command:skillfoundry.setup)",
+            "media": { "markdown": "walkthroughs/setup.md" },
+            "completionEvents": ["onCommand:skillfoundry.setup"]
+          },
+          {
+            "id": "runExample",
+            "title": "Run the example project",
+            "description": "Scaffold a ready-made Todo API PRD and run the full pipeline — no configuration needed.\n[Run the Example Project](command:skillfoundry.runExample)",
+            "media": { "markdown": "walkthroughs/run-example.md" },
+            "completionEvents": ["onCommand:skillfoundry.runExample"]
+          },
+          {
+            "id": "watchGates",
+            "title": "Watch the gates run",
+            "description": "Open the SkillFoundry view and watch the Forge Monitor light up each phase and gate in real time.\n[Open SkillFoundry](command:workbench.view.extension.skillfoundry)",
+            "media": { "markdown": "walkthroughs/watch-gates.md" },
+            "completionEvents": ["onView:sf.forge"]
+          },
+          {
+            "id": "yourPrd",
+            "title": "Forge your own PRD",
+            "description": "Now describe your own idea and build it the same way.\n[Create a PRD](command:skillfoundry.prd)",
+            "media": { "markdown": "walkthroughs/your-prd.md" },
+            "completionEvents": ["onCommand:skillfoundry.prd"]
+          }
+        ]
+      }
+    ],
     "configuration": {
       "title": "SkillFoundry",
       "properties": {
@@ -177,6 +242,11 @@
           "type": "number",
           "default": 10,
           "description": "Default metrics window (last N forge runs)"
+        },
+        "skillfoundry.showAdvancedCommands": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show all advanced commands (gates, metrics, benchmark, hooks, memory, dependency scan) in the Command Palette. When off, only the core commands — Setup, Run the Example Project, Start Forge Pipeline, and Create PRD — are shown."
         }
       }
     }
