@@ -27,14 +27,17 @@ export function registerForgeCommands(
         return;
       }
 
-      const options = ['Full Pipeline', 'Full Pipeline (Blitz/TDD)', 'Dry Run'];
-      const choice = await vscode.window.showQuickPick(options, {
-        placeHolder: `Forge ${prdFiles.length} PRD(s) — select mode`,
+      // Full Pipeline is the default (first item is pre-highlighted in the
+      // QuickPick, so Enter runs it). Dry Run is the only alternative. The old
+      // "Full Pipeline (Blitz/TDD)" option sent `--blitz`, which `sf forge` does
+      // not parse — it fell through to the PRD filter and matched zero PRDs,
+      // silently forging nothing. Removed.
+      const choice = await vscode.window.showQuickPick(['Full Pipeline', 'Dry Run'], {
+        placeHolder: `Forge ${prdFiles.length} PRD(s) — Full Pipeline (default), or Dry Run to preview`,
       });
       if (!choice) return;
 
-      const flag = choice === 'Full Pipeline (Blitz/TDD)' ? ' --blitz' :
-                   choice === 'Dry Run' ? ' --dry-run' : '';
+      const flag = choice === 'Dry Run' ? ' --dry-run' : '';
 
       await vscode.window.withProgress(
         {
