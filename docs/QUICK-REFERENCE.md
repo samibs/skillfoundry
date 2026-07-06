@@ -1,8 +1,8 @@
-# SkillFoundry v5.22.1 - Quick Reference Card
+# SkillFoundry v5.23.0 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-## The Forge (61 Core Agents / 107 Skills)
+## The Forge (61 Core Agents / 108 Skills)
 
 ```
 LEADERSHIP     ARCHITECTURE    IMPLEMENTATION   QUALITY         SECURITY
@@ -792,4 +792,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v5.22.1 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 107 Skills)*
+*SkillFoundry Framework v5.23.0 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 108 Skills)*
