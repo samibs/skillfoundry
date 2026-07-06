@@ -5,7 +5,7 @@ title: Architecture
 
 # Architecture
 
-SkillFoundry is a CLI framework that orchestrates AI agents through a governed pipeline. It ships with 88 agent prompt files, an 8-tier quality gate system, a JSONL-based memory system, automatic session harvesting, and local-first telemetry. This page explains how each component works and how they connect.
+SkillFoundry is a CLI framework that orchestrates AI agents through a governed pipeline. It ships with 112 agent prompt files, an 8-tier quality gate system, a JSONL-based memory system, automatic session harvesting, and local-first telemetry. This page explains how each component works and how they connect.
 
 ## System Overview
 
@@ -140,7 +140,7 @@ flowchart TD
 
 ### Agent Prompt System
 
-The 88 agent prompt files in `agents/` are Markdown documents with YAML frontmatter. At runtime, the `agent-prompt-loader.ts` module reads these files and injects them as system prompts. If a file cannot be loaded, the system falls back to a hardcoded one-liner from the agent registry.
+The 112 agent prompt files in `agents/` are Markdown documents with YAML frontmatter. At runtime, the `agent-prompt-loader.ts` module reads these files and injects them as system prompts. If a file cannot be loaded, the system falls back to a hardcoded one-liner from the agent registry.
 
 Agent prompts include protocols for:
 - Context discipline and scope boundaries
@@ -305,7 +305,7 @@ SkillFoundry uses local-first event logging. All telemetry data stays on disk in
 
 ## Platform Distribution
 
-SkillFoundry agent prompts are distributed across 6 AI coding platforms (Grok Build reuses the OpenAI Codex format). Each platform uses the same 88 agent prompt files, adapted to the platform's configuration format:
+SkillFoundry agent prompts are distributed across 6 AI coding platforms (Grok Build reuses the OpenAI Codex format). Each platform uses the same 112 agent prompt files, adapted to the platform's configuration format:
 
 | Platform | Integration Method | Configuration |
 |----------|-------------------|---------------|
