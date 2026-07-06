@@ -52,194 +52,20 @@ IF input is NEW_FEATURE and no PRD exists:
 
 ---
 
-## FULL PIPELINE (NEW_FEATURE / PRD_FEATURE)
+## FULL PIPELINE (NEW_FEATURE / PRD_FEATURE) — dispatches to /forge
 
-Execute these phases sequentially. Do not proceed if a phase fails.
+`/auto` does not run its own feature pipeline. For NEW_FEATURE and PRD_FEATURE it ensures a PRD exists, then **dispatches to `/forge`**, which owns the canonical pipeline: PRD validation → story generation → per-story implementation → Anvil (A0–A6) gates at every handoff → delivery audit → security audit → knowledge harvest → debrief. `/auto` feature runs therefore get the same gates and delivery audit as a direct `/forge` run — not a separate, drifting copy of the pipeline.
 
-### PHASE 0: PRD CREATION (if needed)
 ```
-[PRD MODE]
+PRD_FEATURE  (a PRD path is given, or a PRD already exists in genesis/):
+    → /forge [prd-file]
 
-Check: Does a PRD exist for this feature?
-
-IF NO PRD EXISTS:
-    1. Run PRD Architect interrogation
-    2. Extract requirements from user
-    3. Generate full PRD document
-    4. Save to: genesis/[YYYY-MM-DD]-[feature-slug].md
-    5. Present PRD for user approval
-
-IF PRD EXISTS:
-    → Load PRD
-    → Verify status is APPROVED or IMPLEMENTING
-    → Proceed to Phase 0.5
-
-OUTPUT: Approved PRD document
-GATE: PRD must be complete and approved before proceeding
+NEW_FEATURE  (no PRD yet):
+    → /prd "description"        # create the PRD in genesis/ (per PRD Detection Logic above)
+    → /forge                    # then run the full pipeline
 ```
 
-### PHASE 0.5: STORY GENERATION (if needed)
-```
-[STORY MODE]
-
-Check: Do implementation stories exist for this PRD?
-
-IF NO STORIES EXIST:
-    1. Parse PRD for user stories and functional requirements
-    2. Group into implementation stories
-    3. Generate hyper-detailed story files
-    4. Create dependency graph
-    5. Save to: docs/stories/[prd-slug]/
-
-IF STORIES EXIST:
-    → Load story index
-    → Identify next TODO story
-    → Check dependencies are satisfied
-
-OUTPUT: Story set with INDEX.md
-GATE: At least one story must be ready for implementation
-```
-
-### PHASE 1: REQUIREMENTS & ARCHITECTURE
-```
-[ARCHITECT MODE]
-
-Using PRD and current story as context:
-
-1. Validate story completeness
-   - Clear inputs and outputs
-   - Data models required
-   - User roles and permissions
-   - Error cases to handle
-
-2. Security review
-   - Authentication requirements
-   - Input validation needs
-   - Data exposure risks
-
-3. Architecture decision
-   - Components to create/modify
-   - Dependencies needed
-   - Integration points
-
-OUTPUT: Approved architecture for current story
-GATE: Architecture must align with PRD and story requirements
-```
-
-### PHASE 2: IMPLEMENTATION
-```
-[CODER MODE]
-
-Using the approved specification:
-1. Implement the feature
-   - Follow existing patterns in codebase
-   - Add comprehensive comments
-   - Include logging for all error paths
-   - No magic strings or hardcoded values
-
-2. Create test scaffolds
-   - Unit test file with structure
-   - Key test cases identified
-
-OUTPUT: Implementation code + test scaffolds
-GATE: Code must compile/parse without errors
-```
-
-### PHASE 3: TESTING
-```
-[TESTER MODE]
-
-Create and conceptualize tests:
-1. Positive test cases (happy path)
-2. Negative test cases (invalid inputs)
-3. Edge cases (boundaries, null, empty)
-4. Security probes (injection, XSS, auth bypass)
-
-OUTPUT: Test file with all cases
-GATE: All critical paths must have test coverage
-```
-
-### PHASE 4: VALIDATION
-```
-[GATE-KEEPER MODE] + [LAYER-CHECK MODE]
-
-STEP 1: BANNED PATTERN SCAN (BLOCKING)
-Run scan for: TODO, FIXME, PLACEHOLDER, STUB, MOCK, COMING SOON, NOT IMPLEMENTED
-ANY MATCH IN PRODUCTION CODE = IMMEDIATE REJECTION
-
-STEP 2: THREE-LAYER VALIDATION
-For each affected layer:
-
-DATABASE (if affected):
-□ Migration runs successfully
-□ Schema matches PRD data model
-□ Rollback tested
-□ Constraints and indexes in place
-
-BACKEND (if affected):
-□ All endpoints respond correctly
-□ Unit tests pass
-□ Integration tests pass
-□ Auth/authz enforced
-□ Input validation complete
-
-FRONTEND (if affected):
-□ Connected to REAL API (no mocks)
-□ All UI states implemented
-□ No placeholder text
-□ Accessibility verified
-
-STEP 3: ITERATION GATES
-□ Documentation complete
-□ Security scan clean
-□ Audit log entry created
-
-OUTPUT: Layer validation matrix + Gate status
-GATE: ALL affected layers must PASS, ALL iteration gates must PASS
-```
-
-### PHASE 4.5: SECURITY AUDIT
-```
-[SECURITY MODE]
-
-Mandatory security checks:
-1. No secrets in code (grep for passwords, api_key, secret)
-2. Input validation on all user inputs
-3. SQL injection prevention verified
-4. XSS prevention verified
-5. Auth tokens handled securely
-6. No sensitive data in logs
-7. CSRF protection in place
-
-OUTPUT: Security audit report
-GATE: Zero security violations allowed
-```
-
-### PHASE 5: DOCUMENTATION
-```
-[DOCS MODE]
-
-Create documentation:
-1. Feature purpose and usage
-2. API reference (if applicable)
-3. Code examples
-4. Known limitations
-
-OUTPUT: Documentation file
-```
-
-### PHASE 6: FINAL EVALUATION
-```
-[EVALUATOR MODE]
-
-Final review against BPSBS:
-1. Security compliance
-2. Code quality standards
-3. Test coverage
-4. Documentation completeness
-
-OUTPUT: Final verdict and any recommendations
-```
+The phases, gates, and delivery audit are `/forge`'s — see `/forge`. `/auto`'s role here is classification and dispatch, not re-implementing the pipeline.
 
 ---
 
@@ -421,25 +247,7 @@ Waiting for response...
 
 ## STORY LOOP
 
-When multiple stories exist, Auto Pilot loops through them:
-
-```
-FOR EACH story in dependency order:
-    IF story.status == TODO:
-        story.status = IN_PROGRESS
-        Execute PHASE 1-6 for this story
-        IF all phases pass:
-            story.status = DONE
-            Update INDEX.md
-        ELSE:
-            story.status = BLOCKED
-            Report blocker
-            Ask: Continue to next story or stop?
-
-    IF all stories DONE:
-        Run FINAL EVALUATION on complete feature
-        Generate feature completion report
-```
+Multi-story iteration for feature work is `/forge`'s responsibility, not `/auto`'s. When `/auto` dispatches a NEW_FEATURE / PRD_FEATURE to `/forge`, `/forge` loops through the generated stories in dependency order, gates each at every Anvil handoff, and produces the delivery audit and completion report. `/auto` does not run its own per-story phase loop.
 
 ---
 
@@ -452,18 +260,10 @@ User says:
 
 Auto Pilot executes:
 1. ✓ Classify: NEW_FEATURE (complex)
-2. ✓ PRD: Interrogate user, generate full PRD
-3. ✓ USER APPROVAL: Present PRD for sign-off
-4. ✓ STORIES: Generate 5 implementation stories
-5. ✓ STORY-001: Auth models → Architect → Code → Test → Gate → Docs
-6. ✓ STORY-002: Login API → Architect → Code → Test → Gate → Docs
-7. ✓ STORY-003: Logout → Architect → Code → Test → Gate → Docs
-8. ✓ STORY-004: Auth middleware → Architect → Code → Test → Gate → Docs
-9. ✓ STORY-005: Login UI → Architect → Code → Test → Gate → Docs
-10. ✓ EVALUATOR: Final BPSBS compliance check
-11. ✓ REPORT: Summary of all deliverables
+2. ✓ PRD: no PRD exists → run `/prd` to interrogate and generate it in genesis/ (user sign-off)
+3. ✓ Dispatch `/forge` — validates the PRD, generates stories, and runs the full gated pipeline (implement → Anvil gates → delivery audit → security → docs → harvest → debrief) for every story
 
-User receives: Complete, tested, documented authentication system with full PRD and story trail.
+User receives: Complete, tested, documented authentication system — with the same gates and delivery audit as a direct `/forge` run.
 
 ### Example 2: From Existing PRD
 
@@ -472,10 +272,7 @@ User says:
 
 Auto Pilot executes:
 1. ✓ Classify: PRD_FEATURE
-2. ✓ Load PRD (skip creation)
-3. ✓ STORIES: Generate or load existing stories
-4. ✓ Execute story loop
-5. ✓ REPORT
+2. ✓ Dispatch `/forge genesis/2026-01-16-user-auth.md` — PRD validation → stories → full gated pipeline → report
 
 ### Example 3: Simple Feature (Skip PRD)
 

@@ -11,6 +11,8 @@ min_model: opus
 
 > The full pipeline: validate, implement, test, audit, and harvest — all in one command.
 
+> **Runtime note — two forges, one metaphor.** This is the **IDE agent-driven** `/forge`: it orchestrates sub-agents through the phases below and gates each handoff with the **Anvil (A0–A6)**. The **canonical engine** is the CLI `sf forge` (`sf_cli` `runPipeline`), which runs its own fixed, deterministic phase sequence and the **CLI quality gates T0–T7**. Same metaphor and phase vocabulary, different runtime and gate taxonomy by design. Use this skill inside an AI IDE; use `sf forge` for a self-contained CLI run.
+
 ---
 
 ## Usage
