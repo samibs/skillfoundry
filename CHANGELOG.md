@@ -21,6 +21,8 @@ Tightening and consolidation of the existing framework for precise modern LLMs: 
 
 ### Fixed
 
+- **Item 7/10 — Stale version mastheads corrected to current state.** Headline docs were pinned 15–19 minor releases behind and one file contradicted itself. Updated the current-version mastheads/footers to `5.21.0` and reconciled platform count to Hexa/6 in: `AGENTS.md` (header `5.2.0`→`5.21.0`; footer `v2.0.10 — Penta-Platform`→`v5.21.0 — Hexa-Platform`, resolving the header-says-Hexa/footer-says-Penta contradiction), `docs/AGENTS.md` (`5.2.0`→`5.21.0`, `Penta Platform` [5, omitted Grok] → `Hexa Platform` [6]; footer `v2.0.10`→`v5.21.0`), `docs/QUICK-REFERENCE.md` (`v2.0.78`→`v5.21.0`, footer), `docs/HOW-TO.md` (`2.0.78`→`5.21.0`, footer), and `site-docs/docs/getting-started.md` (`v5.2.0`→`v5.21.0`). Historical "New in v2.0.10 / Added in vX" annotations were deliberately left unchanged (they are correct history). Docs only.
+
 - **Item 3/10 — VS Code forge "Blitz/TDD" option silently forged nothing.** `skillfoundry-vscode/src/commands/forge.ts` offered a "Full Pipeline (Blitz/TDD)" mode that sent `sf forge --blitz`, but the CLI's `forge` only parses `--dry-run`/`--skip-prd-review` — `--blitz` fell through into the PRD name filter and matched zero PRDs, so the pipeline ran on nothing. Removed the fabricated option (no `--blitz` mode exists in `sf forge`); the picker is now **Full Pipeline** (the pre-highlighted default) or **Dry Run**. Fix delta: a broken CLI/IDE contract mismatch and a silently-empty run are eliminated; the common action is one keystroke.
 
 ## [5.21.0] - 2026-07-05

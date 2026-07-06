@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 2.0.78** | Last Updated: 2026-03-18
+> **Version 5.21.0** | Last Updated: 2026-07-06
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -2017,4 +2017,4 @@ The auto-harvest cron (`scripts/auto-harvest-cron.sh`) automatically:
 ---
 
 *Created by SBS with Claude Code*
-*Framework Version: 2.0.78*
+*Framework Version: 5.21.0*
