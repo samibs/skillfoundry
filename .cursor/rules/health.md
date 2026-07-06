@@ -315,22 +315,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **T
 | `/profile` | Profile validation | Profile reads .claude/profiles/*.json; health verifies validity |
 | `/ship` | Release gate | Ship should refuse to release if health shows FAIL status |
 
-### Peer Improvement Signals
-
-**Upstream (feeds into health)**:
-- `/status` -- If status reports UNKNOWN for subsystems, it may indicate framework health issues
-- `/version` -- After version bumps, health should verify .version consistency
-- `/anvil` -- If anvil T1 shell checks fail with "script not found", health flags the missing script
-
-**Downstream (health feeds into)**:
-- `/status` -- Health results feed into the status dashboard's framework health indicator
-- `/ship` -- Ship reads health results; FAIL status blocks release
-- `/profile` -- Health reports profile schema violations for remediation
-
-**Reviewers**:
-- `/evaluator` -- Can audit whether health checks are comprehensive
-- Developer -- Reviews health report for installation integrity
-
 ### Required Challenge
 
 When health reports all PASS but platform sync counts differ, health MUST challenge:

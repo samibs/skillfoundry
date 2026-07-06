@@ -837,67 +837,9 @@ Default: All tiers enabled. In supervised mode, T1 always runs.
 
 ---
 
-## CONTEXT DISCIPLINE
+## Context Discipline
 
-### Token Conservation Rules
-
-1. **Load CLAUDE-SUMMARY.md** not full CLAUDE.md
-2. **One story at a time** - clear previous story context
-3. **Sub-agent responses** must be <500 tokens
-4. **Compaction triggers** are mandatory, not optional
-5. **Scratchpad updates** happen after every story
-
-### Session End Protocol
-
-Before ending or when context is full:
-
-```
-SESSION SUMMARY
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-PRDs Processed: [X] complete, [Y] in-progress, [Z] pending
-
-Stories Completed This Session:
-| Story | Outcome | Key Changes |
-|-------|---------|-------------|
-| STORY-XXX | SUCCESS | [1-line summary] |
-
-Decisions Made:
-- [Decision 1]: [rationale]
-
-Blockers (if any):
-- [Blocker 1]: [status]
-
-Resume Point:
-- PRD: [filename]
-- Story: [STORY-XXX]
-- Phase: [phase]
-
-Context Compactions: [N] times
-Final Budget: [X]K tokens
-```
-
-### Emergency Compaction
-
-If context approaches limit mid-story:
-
-```
-⚠️ CONTEXT LIMIT APPROACHING
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Current: ~[X]K tokens (approaching limit)
-
-EMERGENCY PROTOCOL:
-1. Saving current progress to scratchpad
-2. Summarizing completed work
-3. Clearing non-essential context
-4. Preserving: current story + blockers + decisions
-
-Resume instructions will be provided.
-```
-
----
-
+See `agents/_context-discipline.md`.
 ## STATE MACHINE INTEGRATION
 
 The /go skill uses a state machine for reliable execution. See `agents/_state-machine.md` for full details.
@@ -1053,17 +995,9 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **O
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Check context budget, load CLAUDE-SUMMARY.md
-- **After Acting**: Update scratchpad, summarize outcomes (<500 tokens)
-- **Token Awareness**: Compact every 5 stories or at 100K tokens
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## /go Status Update
 
 ### Current Phase: [DISCOVERY/VALIDATION/IMPLEMENTATION/COMPLETION]

@@ -503,25 +503,6 @@ All agents --(append events)--> agent-stats.jsonl
 
 ---
 
-## Peer Improvement Signals
-
-- **Upstream peer reviewer**: orchestrate, architect (validate that routing recommendations are architecturally sound)
-- **Downstream peer reviewer**: metrics, health (verify that analytics output is consumable by display agents)
-- **Required challenge**: Critique one assumption about trend detection (is the 7-day window appropriate?) and one about recommendation thresholds (is 25% failure rate the right HIGH threshold?)
-- **Required response**: Include one accepted improvement and one rejected with rationale
-
----
-
-## Continuous Improvement Contract
-
-- Run self-critique before every dashboard generation
-- Log at least one data quality concern per analysis cycle
-- Request peer challenge from orchestrate when routing recommendations could change pipeline behavior
-- Escalate contradictory trends to architect for investigation
-- Reference: `agents/_reflection-protocol.md`
-
----
-
 ## Read-Only (except reset)
 
 All commands are read-only except `reset`, which requires confirmation:

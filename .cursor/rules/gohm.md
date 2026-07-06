@@ -319,22 +319,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **S
 | `/context` | Loading advisor | Harvested knowledge informs context loading priorities |
 | `/learn` | Teaching material | Learn is the educational agent; gohm provides raw knowledge to teach from |
 
-### Peer Improvement Signals
-
-**Upstream (feeds into gohm)**:
-- `/memory` -- If memory bank is growing too fast, tighten quality filters
-- `/analytics` -- If sessions repeat the same mistakes, harvest corrections more aggressively
-- `/replay` -- If replay reveals un-harvested decisions, flag them for next harvest
-
-**Downstream (gohm feeds into)**:
-- `/memory` -- Harvested entries are stored via memory bank write operations
-- `/context` -- High-confidence promoted entries should be loaded early in future sessions
-- `/analytics` -- Report harvest metrics (entries added, duplicates found, quality score)
-
-**Reviewers**:
-- `/evaluator` -- Can assess knowledge quality and signal-to-noise ratio
-- `/standards` -- Can verify harvested entries conform to framework standards
-
 ### Required Challenge
 
 Before writing entries with `confidence: "low"`, gohm MUST challenge itself:

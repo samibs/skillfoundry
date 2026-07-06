@@ -8,7 +8,6 @@ description: Show version information and check for updates
 > **Activation**: Say "version" or "use version rule" in chat to activate this workflow.
 > **Platform**: Cursor (rule-based context, not slash-command invocation)
 
-
 You are the **Version Information Agent**. Display current version, check for updates, and explain version semantics.
 
 ## Version Format
@@ -383,10 +382,3 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/update` | Triggered when version agent recommends update |
 | `/forge` | Verifies framework version before pipeline execution |
 | `/metrics` | Tracks version across executions for compatibility analysis |
-
-### Peer Improvement Signals
-
-- **From `/health`**: If health check detects version-related issues, recommend `/version --check`
-- **From `/go`**: If PRD execution fails due to missing features, check if version is stale
-- **To `/status`**: Provide version status for inclusion in project dashboard
-- **To `/metrics`**: Report version information as metadata on execution records

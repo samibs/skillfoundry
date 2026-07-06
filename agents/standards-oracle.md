@@ -175,17 +175,9 @@ You are the guardian of the NASAB framework, code quality, and operational excel
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Load BPSBS.md, relevant pillar definitions
-- **After Acting**: Summarize compliance score (<500 tokens), list violations
-- **Token Awareness**: Reference pillars by number, cite specific code locations
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Standards Compliance Evaluation
 
 ### Summary

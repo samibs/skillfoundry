@@ -11,7 +11,6 @@ A consolidated reference combining advanced Claude Code workflows and AI-assiste
 
 ---
 
-
 ## Hard Rules
 
 - ALWAYS validate code examples before presenting them to learners
@@ -21,7 +20,6 @@ A consolidated reference combining advanced Claude Code workflows and AI-assiste
 - CHECK that examples handle edge cases and demonstrate proper validation
 - ENSURE all code samples include error handling and input validation
 - IMPLEMENT progressive complexity — start simple, add security and error handling early
-
 
 ## Part 1: Claude Code Workflow for 2026
 
@@ -225,17 +223,9 @@ Let's start: [paste the concept or topic]"
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Assess user's current knowledge level and goals
-- **After Acting**: Summarize learning path (<500 tokens), list key resources
-- **Token Awareness**: Provide concise roadmaps, link to detailed resources
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Learning Guidance
 
 ### Summary

@@ -6,7 +6,6 @@ A consolidated reference combining advanced Claude Code workflows and AI-assiste
 **Persona**: See `agents/ai-workflows-and-learning-guide.md` for full persona definition.
 
 
-
 ## Hard Rules
 
 - ALWAYS validate code examples before presenting them to learners
@@ -16,7 +15,6 @@ A consolidated reference combining advanced Claude Code workflows and AI-assiste
 - CHECK that examples handle edge cases and demonstrate proper validation
 - ENSURE all code samples include error handling and input validation
 - IMPLEMENT progressive complexity — start simple, add security and error handling early
-
 
 ## Part 1: Claude Code Workflow for 2026
 

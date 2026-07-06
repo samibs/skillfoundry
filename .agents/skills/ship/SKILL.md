@@ -439,23 +439,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **T
 | `/status` | Readiness data | Status provides project overview for readiness check |
 | `/version` | Version management | Version manages numbers; ship invokes bump during Phase 2 |
 
-### Peer Improvement Signals
-
-**Upstream (feeds into ship)**:
-- `/status` -- If status shows FAIL on any subsystem, ship refuses to proceed
-- `/security` -- If security scanner finds critical issues, ship blocks at Phase 1
-- `/gate-keeper` -- If gate-keeper has recent rejections, ship re-validates those areas
-- `/layer-check` -- If layer-check detects incomplete layers, ship blocks at Phase 1
-
-**Downstream (ship feeds into)**:
-- `/release` -- Ship delegates version bumping and changelog generation to release
-- `/analytics` -- Ship reports release metrics (duration, checks passed/failed, rollback usage)
-- `/memory` -- Ship records release decisions in memory bank
-
-**Reviewers**:
-- `/evaluator` -- Can assess release quality post-ship
-- Developer -- Reviews release artifacts and confirms deployment
-
 ### Required Challenge
 
 Before executing Phase 4 (release), ship MUST challenge:

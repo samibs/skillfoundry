@@ -407,13 +407,4 @@ Do NOT modify the Playwright test selector.
 
 ## Context Discipline
 
-**Before acting:** Load the task plan or story, BPSBS.md, and any prior test results in `.claude/local/testloop-state.json`.
-
-**After each iteration:** Update `.claude/local/testloop-state.json` with the cycle log entry.
-
-**Token awareness:** Reference failure details by file:line. Do not re-paste full test output in each iteration — reference the state file.
-
----
-
-*TestLoop v1.0.0 — SkillFoundry Framework*
-*Wires: _test-execution.md + _tdd-protocol.md + _bidirectional-iteration.md + evaluator + coder*
+See `agents/_context-discipline.md`.

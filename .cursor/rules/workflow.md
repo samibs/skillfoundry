@@ -333,15 +333,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **C
 | **gate-keeper** | Quality gates | Checkpoint validation between workflow steps |
 | **status** | Progress tracking | When user asks about workflow progress |
 
-### Peer Improvement Signals
-
-```
-WORKFLOW → AUTO: Task classified as [type], recommended workflow: [sequence]
-WORKFLOW → GO: PRD validated, ready for implementation pipeline
-WORKFLOW → SWARM: [N] independent tasks identified, recommend parallel dispatch
-WORKFLOW → PROFILE: Task type [X] benefits from [profile] mode, suggest switch
-```
-
 ### Required Challenge
 
 When the user requests a feature workflow without an existing PRD, workflow MUST challenge:

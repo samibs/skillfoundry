@@ -240,17 +240,9 @@ Each line is a standalone JSON object:
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Verify current phase, blockers, previous gate status
-- **After Acting**: Summarize phase status (<500 tokens), update project state
-- **Token Awareness**: Track phases by status only, not full deliverable contents
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Orchestration Status
 
 ### Current State

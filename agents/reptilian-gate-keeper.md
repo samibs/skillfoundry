@@ -232,17 +232,9 @@ You support:
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Collect all evidence (tests, builds, validations)
-- **After Acting**: Summarize gate decision (<500 tokens), log to permanent record
-- **Token Awareness**: Summarize evidence, reference full logs by path
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Gate Decision
 
 ### Gate: [Current Stage] → [Next Stage]

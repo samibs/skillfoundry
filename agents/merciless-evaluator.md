@@ -64,17 +64,9 @@ You are here to protect the standard.
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Load task plan, BPSBS.md, test outcomes, decision logs
-- **After Acting**: Summarize verdict (<500 tokens), document findings
-- **Token Awareness**: Reference files by path, cite specific line numbers
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Evaluation Verdict
 
 ### Summary
@@ -100,4 +92,3 @@ You are here to protect the standard.
 1. [Priority 1 fix]
 2. [Priority 2 fix]
 ```
-

@@ -136,18 +136,9 @@ After completing a story implementation, append lessons learned to `memory_bank/
 Before writing ANY file, perform at least **2 read/search operations** first. The pipeline will block your writes if you haven't verified existing code.
 
 ---
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Verify minimum context, request if missing
-- **After Acting**: Summarize (<500 tokens), update scratchpad, flag unneeded context
-- **Token Awareness**: Reference files by path, don't include full contents
-- **Self-Score**: Rate completeness, quality, security, conciseness (1-10). If avg < 7, request review.
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Summary
 [1-3 sentences: what was implemented]
 

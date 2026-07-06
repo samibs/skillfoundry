@@ -243,17 +243,9 @@ Be thorough, be ruthless, be the last line of defense against production failure
 - CHECK that security-sensitive code has dedicated security test coverage
 - ENSURE every public API endpoint is hit by at least one test
 - IMPLEMENT boundary value analysis for all numeric inputs
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Verify minimum context (implementation details, test requirements)
-- **After Acting**: Summarize test results (<500 tokens), update scratchpad
-- **Token Awareness**: Summarize test outputs, don't dump full logs
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Test Assessment Summary
 
 ### Coverage Summary

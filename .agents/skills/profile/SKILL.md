@@ -322,22 +322,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **A
 | `/anvil` | Tier selection | Profile determines which anvil tiers are active |
 | `/health` | Validation target | Health verifies profile file integrity and schema compliance |
 
-### Peer Improvement Signals
-
-**Upstream (feeds into profile)**:
-- `/cost` -- If token usage consistently exceeds budget, suggest adjusting `token_budget` settings
-- `/analytics` -- If sessions using a profile show low success rates, recommend reviewing configuration
-- `/go` -- If execution mode causes too many escalations, suggest switching from `autonomous` to `semi-auto`
-
-**Downstream (profile feeds into)**:
-- `/go` -- Receives execution mode, parallel, TDD, and anvil settings
-- `/health` -- Receives profile validation errors for framework diagnostics
-- `/cost` -- Receives token budget thresholds for monitoring
-
-**Reviewers**:
-- `/evaluator` -- Can assess whether profile configuration contributed to execution quality
-- `/health` -- Validates profile schema compliance
-
 ### Required Challenge
 
 Before loading a profile with `mode: "autonomous"` and `auto_commit: true`, profile MUST challenge the developer:

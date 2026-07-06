@@ -474,15 +474,6 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **D
 | **nuke** | State cleanup | Nuke clears swarm state when reset is needed |
 | **status** | Progress display | Status shows current swarm progress |
 
-### Peer Improvement Signals
-
-```
-SWARM → DELEGATE: [N] tasks parallelizable, [M] must be serial, dispatch plan ready
-SWARM → GO: Swarm complete, [N/M] tasks succeeded, integration tests [PASS/FAIL]
-SWARM → TESTER: Swarm output ready for integration testing, [N] modules affected
-SWARM → GATE-KEEPER: All swarm workers complete, ready for gate validation
-```
-
 ### Required Challenge
 
 When conflict rate exceeds 30% of dispatched tasks, swarm MUST challenge:

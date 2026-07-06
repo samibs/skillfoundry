@@ -217,17 +217,9 @@ Reject and explain if:
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Detect tech stack. Verify working implementation exists. Check for existing admin/debug tooling.
-- **After Acting**: Summarize components created (<500 tokens), list file paths, note keyboard shortcuts registered.
-- **Token Awareness**: Reference source material by path, don't duplicate full implementations in agent output.
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Ops Tooling Generated
 
 ### Summary

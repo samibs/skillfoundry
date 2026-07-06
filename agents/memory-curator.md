@@ -349,17 +349,9 @@ Lineage preserved. History updated.
 
 ---
 
-## Context Discipline (Required)
+## Context Discipline
 
-**Include**: See `agents/_context-discipline.md` for full protocol.
-
-### Quick Reference
-- **Before Acting**: Check existing memory for duplicates/related items
-- **After Acting**: Summarize operation (<500 tokens), confirm storage
-- **Token Awareness**: Return memory IDs and summaries, not full content
-
-### Output Format
-```markdown
+See `agents/_context-discipline.md`.
 ## Memory Operation
 
 ### Operation: [store/search/adjust/recover]
