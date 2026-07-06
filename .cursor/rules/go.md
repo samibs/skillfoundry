@@ -807,19 +807,19 @@ The Anvil is a 6-tier quality gate system that runs between every agent handoff.
 FOR EACH story:
 
   1. Architect designs solution
-     └── ANVIL T1: Run scripts/anvil.sh (validate file references)
+     └── ANVIL A1: Run scripts/anvil.sh (validate file references)
          └── FAIL? → Route to Fixer, don't start Coder
 
   2. Coder implements (+ T6 Shadow Tester in parallel if --parallel)
-     └── ANVIL T1: Run scripts/anvil.sh on ALL changed files
+     └── ANVIL A1: Run scripts/anvil.sh on ALL changed files
          └── FAIL? → Route to Fixer, don't start Tester
-     └── ANVIL T2: Canary smoke test (can module import/compile?)
+     └── ANVIL A2: Canary smoke test (can module import/compile?)
          └── FAIL? → Skip Tester, route directly to Fixer
-     └── ANVIL T3: Self-adversarial review (3+ failure modes)
+     └── ANVIL A3: Self-adversarial review (3+ failure modes)
          └── VULNERABLE? → Route to Fixer
 
   3. Tester writes tests (receives T6 risk list as input)
-     └── ANVIL T1: Run scripts/anvil.sh on test files
+     └── ANVIL A1: Run scripts/anvil.sh on test files
          └── FAIL? → Route to Fixer
 
   4. Gate-Keeper validates (integrates T4 + T5)

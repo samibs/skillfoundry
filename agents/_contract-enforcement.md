@@ -84,7 +84,7 @@ Find the route/controller files in the codebase:
 ## Output Format
 
 ```markdown
-ANVIL CHECK: T5 Contract Enforcement — [story ID]
+ANVIL CHECK: A5 Contract Enforcement — [story ID]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Contract: [N] endpoints declared
@@ -137,7 +137,7 @@ Logged but does not block. Tester should write a test verifying the correct stat
 
 Endpoints found in code but not in contract are logged as INFO. May indicate:
 - Contract is outdated (update it)
-- Coder added extra endpoints (scope creep — see T4)
+- Coder added extra endpoints (scope creep — see A4)
 
 ---
 
@@ -150,4 +150,4 @@ Contract enforcement is skipped when:
 
 ---
 
-*The Anvil T5 — The contract is the promise. The code is the proof.*
+*The Anvil A5 — The contract is the promise. The code is the proof.*

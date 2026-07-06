@@ -19,9 +19,9 @@ Run ONE quick smoke test after the Coder finishes, before invoking the full Test
 
 - After Coder completes implementation
 - Before Tester is invoked
-- After Anvil T1 (shell pre-flight) passes
+- After Anvil A1 (shell pre-flight) passes
 
-If T1 already detected syntax errors, T2 is skipped (code is already blocked).
+If A1 already detected syntax errors, A2 is skipped (code is already blocked).
 
 ---
 
@@ -87,7 +87,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:<port>/<endpoint>
 ## Output Format
 
 ```markdown
-ANVIL CHECK: T2 Canary Smoke Test — [module/endpoint]
+ANVIL CHECK: A2 Canary Smoke Test — [module/endpoint]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Status: PASS / FAIL
@@ -140,7 +140,7 @@ The canary answers ONE question: **"Can this code even run?"**
 
 After Coder step, before Tester:
 ```
-Coder -> ANVIL T1 -> ANVIL T2 (canary) -> Tester
+Coder -> ANVIL A1 -> ANVIL A2 (canary) -> Tester
                          |
                          └── FAIL? -> Skip Tester -> Fixer -> Coder (retry)
 ```
@@ -151,4 +151,4 @@ Pre-condition: "Canary smoke test must pass before testing begins. If canary fai
 
 ---
 
-*The Anvil T2 — If it can't import, it can't ship.*
+*The Anvil A2 — If it can't import, it can't ship.*

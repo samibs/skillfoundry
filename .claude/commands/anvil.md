@@ -1,6 +1,8 @@
 # /anvil - The Anvil Quality Gate
 
-> 6-tier validation system that catches issues between every agent phase.
+> 7-tier (A0–A6) agent-handoff validation system that catches issues between every agent phase.
+
+> **Namespace**: Anvil tiers are **A0–A6** — distinct from the CLI quality gates **T0–T7** (`sf_cli/core/gates.ts`). Same count, different checks (e.g. Anvil A3 = Self-Adversarial Review, CLI gate T3 = Tests). Canonical definition: `agents/_anvil-protocol.md`.
 
 ---
 
@@ -29,38 +31,38 @@ You are **The Anvil** — the quality gate that strikes between every agent hand
 
 | Tier | Name | Type | What It Catches |
 |------|------|------|-----------------|
-| T1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files, Semgrep SAST (if installed) |
-| T2 | Canary Smoke Test | Quick execution test | Module won't import, won't compile |
-| T3 | Self-Adversarial Review | Coder self-critique | Untested failure modes, blind spots |
-| T4 | Scope + SAST | Diff comparison + Semgrep deep scan | Scope creep, incomplete implementation, OWASP Top 10, hardcoded secrets |
-| T5 | Contract Enforcement | API contract check | API drift, wrong signatures |
-| T6 | Shadow Tester | Risk assessment | Priority risks for Tester |
+| A1 | Shell Pre-Flight | Shell script (no LLM) | Syntax errors, banned patterns, missing files, Semgrep SAST (if installed) |
+| A2 | Canary Smoke Test | Quick execution test | Module won't import, won't compile |
+| A3 | Self-Adversarial Review | Coder self-critique | Untested failure modes, blind spots |
+| A4 | Scope + SAST | Diff comparison + Semgrep deep scan | Scope creep, incomplete implementation, OWASP Top 10, hardcoded secrets |
+| A5 | Contract Enforcement | API contract check | API drift, wrong signatures |
+| A6 | Shadow Tester | Risk assessment | Priority risks for Tester |
 
 ### When invoked with no arguments (run all):
 
 1. **Identify changed files**: Run `git diff --name-only` to find what changed
-2. **T1 — Shell Pre-Flight**: Run `scripts/anvil.sh check` on changed files
+2. **A1 — Shell Pre-Flight**: Run `scripts/anvil.sh check` on changed files
    - Syntax validation (Python, JS, Shell, JSON)
    - Banned pattern scan (zero-tolerance list)
    - Import resolution check
-3. **T2 — Canary Smoke Test**: See `agents/_canary-smoke-test.md`
+3. **A2 — Canary Smoke Test**: See `agents/_canary-smoke-test.md`
    - Try to import/compile the main changed module
    - PASS/FAIL with single-line reason
-4. **T3 — Self-Adversarial Review**: See `agents/_self-adversarial-review.md`
+4. **A3 — Self-Adversarial Review**: See `agents/_self-adversarial-review.md`
    - List 3+ failure modes for recently implemented code
    - Each must have a mitigation (test/guard/validation)
    - Verdict: RESILIENT or VULNERABLE
-5. **T4 — Scope Validation + SAST**: See `agents/_scope-validation.md`
+5. **A4 — Scope Validation + SAST**: See `agents/_scope-validation.md`
    - Compare expected_changes from story vs git diff
    - Flag missing or unexpected changes
    - Run `scripts/anvil.sh sast <changed-files>` for Semgrep OWASP Top 10 + secrets scan
    - If `semgrep` not installed: WARN and skip (non-blocking unless HIGH findings present)
    - HIGH severity findings → FAIL (route to secure-coder); MEDIUM → WARN
    - For deep LLM-assisted SAST: invoke `sf_security_scan` tool with the changed file list
-6. **T5 — Contract Enforcement**: See `agents/_contract-enforcement.md`
+6. **A5 — Contract Enforcement**: See `agents/_contract-enforcement.md`
    - If story has API contract, validate endpoints exist
    - Check methods, request/response models, status codes
-7. **T6 — Shadow Risk Assessment**: See `agents/_shadow-tester.md`
+7. **A6 — Shadow Risk Assessment**: See `agents/_shadow-tester.md`
    - Read changed files, generate prioritized risk list
 
 ### When invoked with specific tier:
@@ -73,12 +75,12 @@ Run only the requested tier. Useful for debugging or spot-checking.
 The Anvil — Quality Gate Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  T1 (Shell Pre-Flight):      PASS / WARN / FAIL
-  T2 (Canary Smoke Test):     PASS / FAIL / SKIP
-  T3 (Self-Adversarial):      RESILIENT / VULNERABLE / SKIP
-  T4 (Scope Validation):      PASS / WARN / FAIL / SKIP
-  T5 (Contract Enforcement):  PASS / WARN / FAIL / SKIP
-  T6 (Shadow Risk):           [N] HIGH, [N] MEDIUM, [N] LOW
+  A1 (Shell Pre-Flight):      PASS / WARN / FAIL
+  A2 (Canary Smoke Test):     PASS / FAIL / SKIP
+  A3 (Self-Adversarial):      RESILIENT / VULNERABLE / SKIP
+  A4 (Scope Validation):      PASS / WARN / FAIL / SKIP
+  A5 (Contract Enforcement):  PASS / WARN / FAIL / SKIP
+  A6 (Shadow Risk):           [N] HIGH, [N] MEDIUM, [N] LOW
 
   Overall: PASS / WARN / FAIL
   Action: CONTINUE / FIX_REQUIRED / BLOCK
@@ -88,9 +90,9 @@ The Anvil — Quality Gate Report
 
 ## WORKED EXAMPLES BY TIER
 
-### T1 — Shell Pre-Flight (Example)
+### A1 — Shell Pre-Flight (Example)
 ```
-T1 SHELL PRE-FLIGHT
+A1 SHELL PRE-FLIGHT
 ━━━━━━━━━━━━━━━━━━━
 Files checked: src/auth/jwt.ts, src/auth/middleware.ts, test/auth/jwt.spec.ts
 
@@ -109,13 +111,13 @@ Files checked: src/auth/jwt.ts, src/auth/middleware.ts, test/auth/jwt.spec.ts
     ✓ No banned patterns
     ✗ MISSING IMPORT: "describe" not imported (jest globals)
 
-T1 Result: FAIL (1 banned pattern, 1 missing import)
+A1 Result: FAIL (1 banned pattern, 1 missing import)
 Action: FIX_REQUIRED — Route to Fixer
 ```
 
-### T2 — Canary Smoke Test (Example)
+### A2 — Canary Smoke Test (Example)
 ```
-T2 CANARY SMOKE TEST
+A2 CANARY SMOKE TEST
 ━━━━━━━━━━━━━━━━━━━━
 Module: src/auth/index.ts
 
@@ -124,12 +126,12 @@ Module: src/auth/index.ts
   ✓ Exports: JwtService, authenticate, authorize
   ✓ No runtime exceptions on import
 
-T2 Result: PASS
+A2 Result: PASS
 ```
 
-### T3 — Self-Adversarial Review (Example)
+### A3 — Self-Adversarial Review (Example)
 ```
-T3 SELF-ADVERSARIAL REVIEW
+A3 SELF-ADVERSARIAL REVIEW
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 Target: src/auth/jwt.ts (JwtService)
 
@@ -145,12 +147,12 @@ Target: src/auth/jwt.ts (JwtService)
     Risk: MEDIUM
     Mitigation: Multi-key verification supports old + new keys — test: jwt.spec.ts#L78
 
-T3 Verdict: RESILIENT (3 failure modes identified, all mitigated)
+A3 Verdict: RESILIENT (3 failure modes identified, all mitigated)
 ```
 
-### T4 — Scope Validation (Example)
+### A4 — Scope Validation (Example)
 ```
-T4 SCOPE VALIDATION
+A4 SCOPE VALIDATION
 ━━━━━━━━━━━━━━━━━━━
 Story: STORY-003 (JWT Authentication)
 
@@ -165,13 +167,13 @@ Story: STORY-003 (JWT Authentication)
   Missing changes:
     ✗ src/auth/types.ts — EXPECTED but not created
 
-T4 Result: WARN (1 unexpected change, 1 missing change)
+A4 Result: WARN (1 unexpected change, 1 missing change)
 Action: Review unexpected change; implement missing file
 ```
 
-### T5 — Contract Enforcement (Example)
+### A5 — Contract Enforcement (Example)
 ```
-T5 CONTRACT ENFORCEMENT
+A5 CONTRACT ENFORCEMENT
 ━━━━━━━━━━━━━━━━━━━━━━━
 Story: STORY-003 (JWT Authentication)
 
@@ -186,13 +188,13 @@ Story: STORY-003 (JWT Authentication)
       ✓ Endpoint exists
       ✗ Response 200: Missing "expiresIn" field (contract requires it)
 
-T5 Result: FAIL (1 contract violation)
+A5 Result: FAIL (1 contract violation)
 Action: FIX_REQUIRED — Add expiresIn to refresh response
 ```
 
-### T6 — Shadow Risk Assessment (Example)
+### A6 — Shadow Risk Assessment (Example)
 ```
-T6 SHADOW RISK ASSESSMENT
+A6 SHADOW RISK ASSESSMENT
 ━━━━━━━━━━━━━━━━━━━━━━━━━
 Changed files: 3 files, 245 lines added
 
@@ -208,7 +210,7 @@ Changed files: 3 files, 245 lines added
   3. src/auth/jwt.ts:78 — Key rotation reads from filesystem
      → Test: Verify graceful handling of missing key file
 
-T6 Result: 1 HIGH, 1 MEDIUM, 1 LOW
+A6 Result: 1 HIGH, 1 MEDIUM, 1 LOW
 Action: Tester should prioritize HIGH risk item first
 ```
 
@@ -223,12 +225,12 @@ Action: Tester should prioritize HIGH risk item first
 The Anvil — Quality Gate Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  T1 (Shell Pre-Flight):      PASS
-  T2 (Canary Smoke Test):     SKIP (no entry point found)
-  T3 (Self-Adversarial):      SKIP (no recent implementation)
-  T4 (Scope Validation):      SKIP (no story context)
-  T5 (Contract Enforcement):  SKIP (no API contract)
-  T6 (Shadow Risk):           SKIP (no changed files)
+  A1 (Shell Pre-Flight):      PASS
+  A2 (Canary Smoke Test):     SKIP (no entry point found)
+  A3 (Self-Adversarial):      SKIP (no recent implementation)
+  A4 (Scope Validation):      SKIP (no story context)
+  A5 (Contract Enforcement):  SKIP (no API contract)
+  A6 (Shadow Risk):           SKIP (no changed files)
 
   Overall: PASS
   Action: CONTINUE
@@ -242,20 +244,20 @@ Problem: 5 of 6 tiers skipped. This is not a quality gate — it's a rubber stam
 The Anvil — Quality Gate Report
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-  T1 (Shell Pre-Flight):      WARN — 1 banned pattern in src/auth/jwt.ts:42
-  T2 (Canary Smoke Test):     PASS — Module imports cleanly
-  T3 (Self-Adversarial):      RESILIENT — 3 failure modes, all mitigated
-  T4 (Scope Validation):      WARN — 1 unexpected file modified
-  T5 (Contract Enforcement):  FAIL — Missing "expiresIn" in refresh response
-  T6 (Shadow Risk):           1 HIGH, 1 MEDIUM, 1 LOW
+  A1 (Shell Pre-Flight):      WARN — 1 banned pattern in src/auth/jwt.ts:42
+  A2 (Canary Smoke Test):     PASS — Module imports cleanly
+  A3 (Self-Adversarial):      RESILIENT — 3 failure modes, all mitigated
+  A4 (Scope Validation):      WARN — 1 unexpected file modified
+  A5 (Contract Enforcement):  FAIL — Missing "expiresIn" in refresh response
+  A6 (Shadow Risk):           1 HIGH, 1 MEDIUM, 1 LOW
 
   Overall: FAIL
   Action: FIX_REQUIRED
 
   Fixes needed:
-  1. Remove TODO on line 42 of src/auth/jwt.ts (T1)
-  2. Add expiresIn to POST /auth/refresh response (T5)
-  3. Review unexpected modification to src/config/database.ts (T4)
+  1. Remove TODO on line 42 of src/auth/jwt.ts (A1)
+  2. Add expiresIn to POST /auth/refresh response (A5)
+  3. Review unexpected modification to src/config/database.ts (A4)
 ```
 
 ---
@@ -269,15 +271,15 @@ When Anvil detects failures, route to the Fixer Orchestrator with structured con
 ANVIL -> FIXER HANDOFF
 ━━━━━━━━━━━━━━━━━━━━━━
 Story: STORY-XXX
-Failed Tiers: [T1, T5]
+Failed Tiers: [A1, A5]
 
-Violation 1 (T1):
+Violation 1 (A1):
   File: src/auth/jwt.ts
   Line: 42
   Issue: Banned pattern "TODO"
   Fix Type: REMOVE_BANNED_PATTERN (auto-fixable)
 
-Violation 2 (T5):
+Violation 2 (A5):
   File: src/auth/routes.ts
   Endpoint: POST /auth/refresh
   Issue: Missing "expiresIn" field in response
@@ -292,18 +294,18 @@ ANVIL -> GATE-KEEPER HANDOFF
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Story: STORY-XXX
 Anvil Result: PASS (all 6 tiers)
-T6 Risk List: [attached for tester reference]
+A6 Risk List: [attached for tester reference]
 Ready for: Final gate-keeper validation
 ```
 
-### Anvil -> Coder (on T3 VULNERABLE)
+### Anvil -> Coder (on A3 VULNERABLE)
 When self-adversarial review finds unmitigated failure modes:
 
 ```
 ANVIL -> CODER HANDOFF
 ━━━━━━━━━━━━━━━━━━━━━━
 Story: STORY-XXX
-T3 Verdict: VULNERABLE
+A3 Verdict: VULNERABLE
 
 Unmitigated Failure Modes:
 1. [failure mode] — needs guard/validation at [location]
@@ -321,8 +323,8 @@ Action: Implement mitigations, then re-run /anvil t3
 | No changed files detected | `git diff` returns empty | Check if changes are committed; use `git diff HEAD~1` |
 | Script not found | `scripts/anvil.sh` missing | Run `/health` to verify framework integrity |
 | Story context missing | No current story in state | Run with explicit file: `/anvil t1 src/auth/jwt.ts` |
-| T2 import fails | Missing dependencies | Run package install before retrying |
-| T5 no contract found | Story has no API contract section | Skip T5 (not all stories have API contracts) |
+| A2 import fails | Missing dependencies | Run package install before retrying |
+| A5 no contract found | Story has no API contract section | Skip A5 (not all stories have API contracts) |
 | Tier timeout | Check takes too long | Skip tier with TIMEOUT status, log for investigation |
 
 ---
@@ -338,18 +340,18 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 |-------|------------|
 | `/go` | Anvil runs at every handoff during story execution |
 | `/forge` | Anvil is embedded in Phase 2 (Forge) pipeline |
-| `/coder` | Anvil T1-T3 run after coder produces implementation |
-| `/tester` | Anvil T1 runs after tester produces tests; T6 feeds risk list to tester |
-| `/gate-keeper` | T4+T5 integrated into gate-keeper validation |
+| `/coder` | Anvil A1-A3 run after coder produces implementation |
+| `/tester` | Anvil A1 runs after tester produces tests; A6 feeds risk list to tester |
+| `/gate-keeper` | A4+A5 integrated into gate-keeper validation |
 | `/fixer` | Receives structured violation reports from Anvil on FAIL |
-| `/security` | T1 banned pattern scan overlaps with security scanning |
+| `/security` | A1 banned pattern scan overlaps with security scanning |
 | `/metrics` | Anvil pass/fail rates tracked per tier |
 
 ### Peer Improvement Signals
 
-- **From `/coder`**: If coder consistently fails T1, suggest adding linting to coder's pre-handoff checklist
-- **From `/fixer`**: If fixer cannot resolve a T5 contract violation, escalate to architect
-- **From `/tester`**: If tester finds issues T6 missed, update T6 risk heuristics
+- **From `/coder`**: If coder consistently fails A1, suggest adding linting to coder's pre-handoff checklist
+- **From `/fixer`**: If fixer cannot resolve a A5 contract violation, escalate to architect
+- **From `/tester`**: If tester finds issues A6 missed, update A6 risk heuristics
 - **To `/metrics`**: Report per-tier pass/fail rates for trend analysis
 - **To `/memory`**: Record recurring failure patterns for future prevention
 

@@ -18,7 +18,7 @@ By making the Coder switch from "builder" to "breaker" mode, we catch blind spot
 ## When to Run
 
 - After Coder completes implementation
-- After Anvil T1 and T2 pass
+- After Anvil A1 and A2 pass
 - Before handoff to Tester
 
 ---
@@ -175,4 +175,4 @@ The Self-Adversarial Review extends the existing Reflection Protocol (`agents/_r
 
 ---
 
-*The Anvil T3 — If you can't break it, you haven't tested it. If you can break it, fix it first.*
+*The Anvil A3 — If you can't break it, you haven't tested it. If you can break it, fix it first.*

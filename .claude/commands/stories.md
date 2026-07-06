@@ -149,7 +149,7 @@ Each story follows this exact format:
 
 ---
 
-## Expected Changes (Anvil T4)
+## Expected Changes (Anvil A4)
 
 Files this story should create or modify (used by Anvil Scope Validation):
 - **Create**: [`path/to/new_file.py`, `path/to/new_test.py`]
@@ -616,7 +616,7 @@ Feature: Auth database schema
     Then tables "users", "roles", "user_roles", "sessions" do not exist
 ```
 
-## Expected Changes (Anvil T4)
+## Expected Changes (Anvil A4)
 - **Create**: [`backend/models/auth.py`, `backend/migrations/001_auth_tables.sql`]
 - **Modify**: [`backend/models/__init__.py`]
 ```

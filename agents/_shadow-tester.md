@@ -155,4 +155,4 @@ Analyzed [N] files from Coder output. Found [X] high, [Y] medium, [Z] low risks.
 
 ---
 
-*The Anvil T6 — The shadow sees what the builder overlooks.*
+*The Anvil A6 — The shadow sees what the builder overlooks.*
