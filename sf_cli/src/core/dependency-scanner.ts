@@ -7,6 +7,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join } from 'node:path';
 import { getLogger } from '../utils/logger.js';
+import { runCommand } from '../utils/run-command.js';
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -69,23 +70,9 @@ function readdirHas(dir: string, predicate: (f: string) => boolean): boolean {
 
 // ── Scanner Implementations ─────────────────────────────────────
 
-function runCmd(cmd: string, cwd: string, timeoutMs: number = 30_000): { ok: boolean; output: string } {
-  try {
-    const output = execSync(cmd, {
-      cwd,
-      timeout: timeoutMs,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 5 * 1024 * 1024,
-    });
-    return { ok: true, output: output || '' };
-  } catch (err: unknown) {
-    const execErr = err as { stdout?: string; stderr?: string; status?: number; message?: string };
-    // npm audit exits non-zero when vulnerabilities found — that's expected
-    const combined = (execErr.stdout || '') + (execErr.stderr || '');
-    return { ok: false, output: combined || execErr.message || 'Command failed' };
-  }
-}
+// npm/pip/dotnet audit tools exit non-zero when vulnerabilities are found —
+// runCommand returns { ok: false } with the output the callers parse.
+const runCmd = runCommand;
 
 const ALLOWED_AUDIT_COMMANDS = new Set(['npm', 'pip-audit', 'dotnet', 'cargo-audit', 'go']);
 
