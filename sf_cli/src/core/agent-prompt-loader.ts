@@ -1,6 +1,13 @@
-// Agent prompt loader — reads agent markdown files at runtime so the CLI
-// uses the same detailed prompts as IDE slash-commands. Falls back to the
-// hardcoded one-liner in agent-registry.ts if the file can't be loaded.
+// Agent prompt loader — DEFERRED / lazy loading of agent definitions.
+//
+// The registry (agent-registry.ts) holds only a cheap one-liner per agent,
+// which is enough for discovery and selection (getAllAgentNames /
+// getAgentsByCategory). The full markdown prompt is read from the agent's file
+// ONLY when that agent is actually invoked, and cached (_promptCache) so each
+// file is read at most once. This keeps all agent prompts out of context until
+// one is needed — the same deferred-tool pattern IDE hosts use for
+// slash-commands: the name is always available, the definition loads on demand.
+// Falls back to the registry one-liner if the file can't be loaded.
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
