@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.22.1-blue)
+![Version](https://img.shields.io/badge/version-5.23.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,20 +25,21 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.22.x
+### What's New in v5.23.0
 
-**Refinement Pass — Tighter, Clearer, More Consistent**
+**Verification Layer — the gates, turned outward**
 
-The v5.22 line is a refinement release: **no new features** — every change tightens or corrects what already existed, targeting precise modern LLMs that don't need verbose scaffolding. Roughly **12,000 lines of repeated ceremony removed** across all six platform trees, overlapping entry points consolidated, and long-standing drift corrected.
+2026's defining problem in AI coding isn't capability, it's trust: ~84% of developers use AI code tools, ~29% trust the output, and **96% won't ship it unchecked**. v5.23.0 leans into exactly that — three additions that reuse SkillFoundry's existing gates, applied more widely and earlier. No new surface beyond one command.
 
-> **v5.22.1 (patch):** reconciled the skill/agent counts to verifiable ground truth (**61 agents · 107 skills/platform**, sourced from `AGENT_REGISTRY` + `install.sh`) and rebuilt the `sf_cli` dist to match source (comment-only). Docs/build hygiene — no behavior change.
+- **`/verify` — verify any agent's code.** Run SkillFoundry's gates (Anvil static + SAST, `/security`, `/layer-check`, adversarial review) against **any** diff — `--staged`, working-tree, or `--since <branch>` — not just `/forge` output. Point it at code from Cursor, Copilot, Claude Code, or written by hand, and get a `PASS / WARN / BLOCK` verdict. The portable trust layer no single-agent tool can copy.
+- **PRD contradiction + gap detection.** `/prd-lint` now reasons over your requirements for logical *contradictions* (conflicts the pipeline would resolve arbitrarily) and *gaps* (undefined error/auth/edge-case behavior) — catching wrong requirements before a line of code exists.
+- **Property-based testing.** The `/tester` gate now asserts invariants across *generated* inputs (fast-check / Hypothesis / jqwik) — round-trip, idempotence, bounds — not just hand-picked examples.
 
-- **Prompt tightening** — Restated reflection blocks, peer/context ceremony, and `go.md`'s embedded version-changelog collapsed to single references. Behavior preserved; the repeated scaffolding is gone.
-- **Entry-point consolidation** — `/gosm`, `/goma`, `/blitz` are now thin aliases over `/go` (each was ~400 lines of duplicated pipeline docs); each keeps only its real differentiator.
-- **Gate disambiguation** — Anvil agent-handoff tiers renamed to the **A-namespace (A0–A6)**, ending the collision with the CLI quality gates (T0–T7) where "T3" meant two different things.
-- **Correctness & consistency** — Fixed a VS Code forge option that silently forged nothing, restored 3 skills missing on 4 platforms, made the sync engine generate standalone commands to all six platforms, and reconciled stale version mastheads and platform counts (Penta→Hexa) across the docs.
+Full breakdown in the CHANGELOG under `[5.23.0]`.
 
-Full item-by-item breakdown in the CHANGELOG under `[5.22.0]`.
+#### Previous: Refinement Pass (v5.22.x)
+
+- ~12,000 lines of repeated prompt ceremony removed; `/gosm`·`/goma`·`/blitz` collapsed to thin `/go` aliases; Anvil tiers moved to the A-namespace (ending the T-number collision with the CLI gates); several correctness/consistency fixes. v5.22.1 reconciled skill/agent counts to verifiable ground truth.
 
 #### Previous: Codebase Agent Wiki (v5.21.0)
 
@@ -220,7 +221,7 @@ Or use autonomous mode — just type what you want in plain English:
 
 SkillFoundry has two independent systems. They share the same agents and philosophy, but work differently:
 
-| | **Standalone CLI** (`sf`) | **IDE Skills** (107 skills) |
+| | **Standalone CLI** (`sf`) | **IDE Skills** (108 skills) |
 |---|---|---|
 | **What it is** | Terminal app with its own AI connection | Markdown instruction files your AI reads |
 | **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build |
@@ -689,7 +690,7 @@ These work inside the `sf` terminal app:
 | `/prd review <path>` | Score a PRD on 4 dimensions with actionable feedback |
 | `/lessons` | Query and manage knowledge bank entries |
 
-### IDE Skills (107 — Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build)
+### IDE Skills (108 — Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build)
 
 These work inside your AI coding tool, not in the `sf` CLI:
 
@@ -710,7 +711,7 @@ These work inside your AI coding tool, not in the `sf` CLI:
 | `/memory` | Knowledge management |
 | `/gohm` | Harvest lessons from current session |
 | `/autonomous` | Toggle autonomous developer loop |
-| *...and 92 more* | See `/help` in your IDE for the full list |
+| *...and 93 more* | See `/help` in your IDE for the full list |
 
 > **Note:** `/forge` exists in both systems but they are different implementations. The IDE skill orchestrates sub-agents; the CLI command runs a self-contained pipeline.
 
@@ -722,11 +723,11 @@ The framework generates platform-specific configurations during install. Each pl
 
 | Platform | What Gets Installed | How to Invoke | Notes |
 |----------|-------------------|---------------|-------|
-| **Claude Code** | `.claude/commands/` (107 skills) | `/command` | Slash commands in Claude Code CLI |
-| **GitHub Copilot** | `.copilot/custom-agents/` (107 agents) | `@agent` in chat | Custom agents in Copilot Chat |
-| **Cursor** | `.cursor/rules/` (107 rules) | Auto-loaded | Rules activate based on context |
-| **OpenAI Codex** | `.agents/skills/` (107 skills) | `$command` | Dollar-prefix commands in Codex CLI |
-| **Google Gemini** | `.gemini/skills/` (107 skills) | Skill invocation | Available in Gemini sessions |
+| **Claude Code** | `.claude/commands/` (108 skills) | `/command` | Slash commands in Claude Code CLI |
+| **GitHub Copilot** | `.copilot/custom-agents/` (108 agents) | `@agent` in chat | Custom agents in Copilot Chat |
+| **Cursor** | `.cursor/rules/` (108 rules) | Auto-loaded | Rules activate based on context |
+| **OpenAI Codex** | `.agents/skills/` (108 skills) | `$command` | Dollar-prefix commands in Codex CLI |
+| **Google Gemini** | `.gemini/skills/` (108 skills) | Skill invocation | Available in Gemini sessions |
 
 Install multiple platforms at once:
 
@@ -774,11 +775,11 @@ skillfoundry/
 ├── observability/           Audit logging, metrics collection, trace viewer
 │
 │  Platform skill files (generated by installer):
-├── .claude/commands/        Claude Code (107 skills)
-├── .copilot/custom-agents/  GitHub Copilot (107 agents)
-├── .cursor/rules/           Cursor (107 rules)
-├── .agents/skills/          OpenAI Codex (107 skills)
-└── .gemini/skills/          Google Gemini (107 skills)
+├── .claude/commands/        Claude Code (108 skills)
+├── .copilot/custom-agents/  GitHub Copilot (108 agents)
+├── .cursor/rules/           Cursor (108 rules)
+├── .agents/skills/          OpenAI Codex (108 skills)
+└── .gemini/skills/          Google Gemini (108 skills)
 ```
 
 ---

@@ -167,12 +167,15 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.22.1**
+**SkillFoundry v5.23.0**
 
-- **61 Agents, 107 Skills/platform** - Complete lifecycle coverage (130+ total incl. CLI)
+- **61 Agents, 108 Skills/platform** - Complete lifecycle coverage (130+ total incl. CLI)
 - **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
 - **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
 - **171 Deviation Patterns** - LLM failure prevention across 16 categories
+- **`/verify`** - Agent-agnostic verification gate: run the quality gates against ANY code diff (Cursor/Copilot/hand-written), not just /forge output
+- **PRD contradiction + gap detection** - `/prd-lint` reasons over requirements for conflicts and gaps before code exists
+- **Property-based testing** - the `/tester` gate asserts invariants across generated inputs, not just examples
 - **Codebase Agent Wiki** - `/docs wiki` generates a repo-wide, agent-facing wiki grounded in source + git evidence
 - **Autonomous Loop Engine** - Ralph Loop: agent prompts itself, judges its own output, stops when done
 - **`/improve` command** - Continuous codebase improvement loop: scan → fix → verify → loop
@@ -185,6 +188,7 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 5.23.0 | 2026-07-07 | Verification Layer: /verify agent-agnostic gate, PRD contradiction/gap detection, property-based testing |
 | 5.22.1 | 2026-07-06 | Consistency follow-up: skill/agent counts reconciled (61 agents · 107 skills), sf_cli dist rebuilt |
 | 5.22.0 | 2026-07-06 | Refinement Pass: prompt tightening, /gosm-/goma-/blitz aliases, Anvil A-namespace, drift fixes |
 | 5.21.0 | 2026-07-05 | Codebase Agent Wiki: /docs wiki, grounded agent-facing docs, surgical updates |

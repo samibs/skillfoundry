@@ -6,7 +6,7 @@ Gemini skill for `prd-lint`.
 
 # /prd-lint — PRD Linter
 
-> Validates a PRD against the SkillFoundry template structure before /go or /forge runs on it.
+> Validates a PRD before /go or /forge runs on it — structural checks (template) **and** a semantic reasoning pass that catches requirement contradictions and gaps before a line of code exists.
 
 ---
 
@@ -17,7 +17,10 @@ Gemini skill for `prd-lint`.
 /prd-lint <file>              Lint a specific PRD file
 /prd-lint --strict <file>     Fail on warnings too (CI mode)
 /prd-lint --fix <file>        Auto-fix common issues (add missing sections as stubs)
+/prd-lint --reason <file>     Semantic pass only: reason over content for contradictions + gaps
 ```
+
+A full lint runs **two phases**: structural checks (the `scripts/prd-lint.sh` script) *then* the semantic consistency pass below. Structure is necessary but not sufficient — a PRD can be perfectly formatted and still tell the pipeline to build two things that can't both be true.
 
 ---
 
@@ -63,6 +66,39 @@ After running the linter, auto-fix issues you can address without user input:
 | §8 Regression Surface rows | WARN | Must list at least one feature at risk |
 | §11.1 GuardLoop DoD item | WARN | Missing `/guardloop scan` clean check |
 | §2 FR-IDs column | WARN | User story table missing traceability column |
+
+---
+
+## Semantic Consistency — Contradictions & Gaps (reasoning pass)
+
+The structural script above cannot read meaning. After it runs, **reason over the PRD's actual content** for the two failure classes that silently produce wrong code — the requirements the pipeline will otherwise resolve arbitrarily. Read every requirement, story, data model, and contract, then check them against each other.
+
+### Contradictions (a requirement conflicts with another) → **ERROR**
+
+The pipeline cannot satisfy both; it will pick one side at random. Look for:
+
+- **Architectural** — "stateless service" vs. "store session server-side"; "no external dependencies" vs. a story integrating a third-party API.
+- **Data** — a field a story reads/writes that the data model never defines (or defines with a conflicting type); an entity created in one story and assumed pre-existing in another.
+- **Behavioral / authz** — the same route described as both public and admin-only; conflicting rate limits, retention periods, or status codes for one endpoint.
+- **Non-functional vs. functional** — a stated "p99 < 100ms" against a story that makes N synchronous external calls in the hot path.
+
+### Gaps (under-specification the pipeline will guess at) → **WARN** (security/data gaps → **ERROR**)
+
+- **Error behavior** — a flow or endpoint with no defined failure/error response.
+- **Authorization** — a protected resource with no stated who-can-access rule.
+- **Edge cases** — empty / null / max-size / concurrent inputs unaddressed for a stated operation.
+- **Unmeasurable acceptance criteria** — "fast", "secure", "scalable" with no number or testable definition.
+- **Data lifecycle** — creation without deletion/retention; a stateful entity with no defined transitions.
+- **Referenced-but-undefined** — a story cites an entity, endpoint, role, or config the PRD never specifies.
+
+### Report each finding as
+
+```
+[CONTRADICTION] §<a> ↔ §<b> — <the conflict> — will implement <one side> arbitrarily — DECISION NEEDED: <the choice the PRD must make>
+[GAP]           §<x>          — <what's undefined> — pipeline will assume <default> — SPECIFY: <what to add>
+```
+
+A PRD with any **CONTRADICTION** is `FAIL` regardless of structural score — resolve it before `/go` or `/forge`, because no downstream gate can catch a requirement that was wrong on purpose. This is verification moved to the cheapest possible point: before a line of code exists.
 
 ---
 
