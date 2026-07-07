@@ -69,6 +69,11 @@ function mockProvider(): ProviderAdapter {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // clearAllMocks clears call history but NOT mockReturnValue implementations,
+  // so restore the permissive default each test — otherwise the deny test's
+  // `mockReturnValue({decision:'ask'})` bleeds into later tests (which now
+  // correctly fail-close instead of silently executing).
+  vi.mocked(checkPermission).mockReturnValue({ decision: 'allow', reason: '' });
   const provider = mockProvider();
   vi.mocked(createProvider).mockReturnValue(provider);
 });
@@ -186,6 +191,33 @@ describe('runAgentLoop', () => {
 
     expect(result.content).toBe('Permission was denied.');
     expect(executeTool).not.toHaveBeenCalled();
+  });
+
+  it('fails CLOSED on an ask verdict when no requestPermission callback exists (headless)', async () => {
+    // Regression guard for S2: previously an `ask` with no interactive channel
+    // fell through and executed. It must now be denied without executing.
+    vi.mocked(checkPermission).mockReturnValue({ decision: 'ask', reason: 'Write tool requires approval' });
+
+    vi.mocked(streamWithRetry)
+      .mockResolvedValueOnce({
+        result: {
+          content: [{ type: 'tool_use', id: 'tc1', name: 'write', input: { file_path: 'x.ts', content: 'y' } }],
+          inputTokens: 100, outputTokens: 50, costUsd: 0.001, stopReason: 'tool_use',
+        },
+      })
+      .mockResolvedValueOnce({
+        result: {
+          content: [{ type: 'text', text: 'done' }],
+          inputTokens: 10, outputTokens: 5, costUsd: 0.001, stopReason: 'end_turn',
+        },
+      });
+
+    const messages: AnthropicMessage[] = [{ role: 'user', content: 'write a file' }];
+    // No requestPermission callback supplied — headless/autonomous run.
+    const result = await runAgentLoop(messages, { config: mockConfig, policy: mockPolicy }, {});
+
+    expect(executeTool).not.toHaveBeenCalled();
+    expect(result).toBeDefined();
   });
 
   it('respects maxTurns limit', async () => {
