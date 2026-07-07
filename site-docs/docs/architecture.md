@@ -140,7 +140,7 @@ flowchart TD
 
 ### Agent Prompt System
 
-The 112 agent prompt files in `agents/` are Markdown documents with YAML frontmatter. At runtime, the `agent-prompt-loader.ts` module reads these files and injects them as system prompts. If a file cannot be loaded, the system falls back to a hardcoded one-liner from the agent registry.
+The 112 agent prompt files in `agents/` are Markdown documents with YAML frontmatter, loaded **lazily**. The agent registry (`agent-registry.ts`) holds only a cheap one-liner per agent — enough for discovery and selection — while `agent-prompt-loader.ts` reads an agent's full Markdown prompt from disk *only when that agent is invoked*, caching it so each file is read at most once. The CLI therefore never pays to hold all agent prompts in context at once; the definition loads on demand, the same deferred pattern IDE hosts use for slash-commands. If a file cannot be loaded, the system falls back to the registry one-liner.
 
 Agent prompts include protocols for:
 - Context discipline and scope boundaries
