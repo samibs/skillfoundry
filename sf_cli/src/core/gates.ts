@@ -512,6 +512,7 @@ function runT4(workDir: string, target: string): GateResult {
   // Uses exported pure synchronous helpers from gitleaks-scanner.ts directly
   // to avoid introducing async/await into the synchronous gate pipeline.
   let gitleaksDetail = '';
+  let gitleaksRan = false; // true only when a real gitleaks scan completed
   try {
     const {
       findGitleaksBinary,
@@ -593,6 +594,7 @@ function runT4(workDir: string, target: string): GateResult {
           gitleaksDetail = suppressedCount > 0
             ? `[gitleaks] Clean (${suppressedCount} suppressed)`
             : '[gitleaks] Clean';
+          gitleaksRan = true; // a real scan completed with no active findings
           log.info('gate', 'gitleaks_clean', { suppressedCount });
         } finally {
           try { if (pexists(reportPath)) punlink(reportPath); } catch { /* best-effort cleanup */ }
@@ -640,14 +642,32 @@ function runT4(workDir: string, target: string): GateResult {
       // Dependency scanner not available — non-blocking
     }
 
+    // Distinguish "scanner ran & clean" from "scanner unavailable". A clean
+    // PASS is only honest when BOTH mandatory scanners actually ran; if
+    // gitleaks was skipped (not installed / old / errored) or Semgrep fell
+    // back to regex, real coverage is incomplete — downgrade PASS to WARN so
+    // the gap is surfaced loudly instead of reported as a green pass.
+    const semgrepRan = report.scannerVersion !== 'regex-fallback';
+    const degraded: string[] = [];
+    if (!gitleaksRan) degraded.push('secrets scan (gitleaks) did not run');
+    if (!semgrepRan) degraded.push('SAST (semgrep) did not run — regex fallback only');
+
+    let status: GateStatus = report.verdict === 'FAIL' ? 'fail' : report.verdict === 'WARN' ? 'warn' : 'pass';
+    if (status === 'pass' && degraded.length > 0) {
+      status = 'warn';
+    }
+    const degradedNote = degraded.length > 0
+      ? `\n[DEGRADED] ${degraded.join('; ')} — install the scanners for full coverage`
+      : '';
+
     const fullDetail = gitleaksDetail
-      ? `${gitleaksDetail}\n${detail}${findingSummary}${depDetail}`
-      : `${detail}${findingSummary}${depDetail}`;
+      ? `${gitleaksDetail}\n${detail}${findingSummary}${depDetail}${degradedNote}`
+      : `${detail}${findingSummary}${depDetail}${degradedNote}`;
 
     return {
       tier: 'T4',
       name: 'Security Scan',
-      status: report.verdict === 'FAIL' ? 'fail' : (report.verdict === 'WARN' ? 'warn' : 'pass'),
+      status,
       detail: fullDetail.slice(0, 800),
       durationMs: Date.now() - start,
     };
