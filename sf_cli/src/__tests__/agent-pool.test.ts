@@ -242,6 +242,40 @@ describe('AgentPool — failure recovery', () => {
     await expect(p2).resolves.toMatchObject({ status: 'completed' });
   });
 
+  it('force-settles a hung agent that never resolves and ignores abort (S10)', async () => {
+    // The mock agent's abort is a no-op and execute never resolves — the exact
+    // non-cooperative case that used to deadlock the pool (slot never freed).
+    // Fake timers drive the (unref'd) per-task timeout deterministically.
+    vi.useFakeTimers();
+    try {
+      const pool = new AgentPool(bus, { maxConcurrency: 1, taskTimeout: 40 });
+
+      const hung = deferred<AgentResult>(); // never resolved
+      const d2 = deferred<AgentResult>();
+      let callCount = 0;
+      mockAgentExecute.mockImplementation(() => (callCount++ === 0 ? hung.promise : d2.promise));
+
+      const p1 = pool.submit(makeTask({ id: 'hung-task' }));
+      const p2 = pool.submit(makeTask({ id: 'next-task' }));
+      const p1Settled = p1.then(() => 'resolved', (e) => e);
+
+      // Advance past the task timeout — it must settle p1 even though execute()
+      // never resolves and abort is a no-op.
+      await vi.advanceTimersByTimeAsync(60);
+
+      const p1Result = await p1Settled;
+      expect(p1Result).toBeInstanceOf(TaskTimeoutError);
+
+      // Slot recovered — the queued task now runs instead of deadlocking.
+      expect(pool.getStatus().running).toBe(1);
+
+      d2.resolve(makeResult());
+      await expect(p2).resolves.toMatchObject({ status: 'completed' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('increments failed counter when agent throws', async () => {
     const pool = new AgentPool(bus, { maxConcurrency: 2, taskTimeout: 30_000 });
     mockAgentExecute.mockRejectedValueOnce(new Error('oops'));
