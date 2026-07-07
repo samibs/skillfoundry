@@ -5,6 +5,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getLogger } from '../utils/logger.js';
+import { deriveProject, UNIVERSAL_PROJECT } from './memory.js';
 
 const KNOWLEDGE_DIR = join('memory_bank', 'knowledge');
 const DEFAULT_LIMIT = 20;
@@ -25,6 +26,7 @@ interface KnowledgeEntry {
   id: string;
   type: string;
   content: string;
+  project?: string;
   created_at: string;
   created_by?: string;
   session_id?: string;
@@ -351,7 +353,11 @@ function loadAllEntries(workDir: string): KnowledgeEntry[] {
     }
   }
 
-  return entries;
+  // Project isolation (S4): drop entries stamped for a different project. This
+  // is the single chokepoint for all three recall modes (index/preview/full).
+  // Legacy unstamped entries and the UNIVERSAL_PROJECT sentinel stay shared.
+  const active = deriveProject(workDir);
+  return entries.filter((e) => !e.project || e.project === UNIVERSAL_PROJECT || e.project === active);
 }
 
 function truncate(text: string, maxLen: number): string {
