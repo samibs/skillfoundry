@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.23.0-blue)
+![Version](https://img.shields.io/badge/version-5.24.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,17 +25,22 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.23.0
+### What's New in v5.24.0
 
-**Verification Layer — the gates, turned outward**
+**Injection Resistance & Prompt Discipline — defending the inputs the gates read**
 
-2026's defining problem in AI coding isn't capability, it's trust: ~84% of developers use AI code tools, ~29% trust the output, and **96% won't ship it unchecked**. v5.23.0 leans into exactly that — three additions that reuse SkillFoundry's existing gates, applied more widely and earlier. No new surface beyond one command.
+v5.23.0 turned SkillFoundry's gates outward to check any agent's code. v5.24.0 turns them inward: six prompt-engineering patterns, adapted from a mature production system prompt. One new capability plus five sharpenings of existing skills — no new command surface.
 
-- **`/verify` — verify any agent's code.** Run SkillFoundry's gates (Anvil static + SAST, `/security`, `/layer-check`, adversarial review) against **any** diff — `--staged`, working-tree, or `--since <branch>` — not just `/forge` output. Point it at code from Cursor, Copilot, Claude Code, or written by hand, and get a `PASS / WARN / BLOCK` verdict. The portable trust layer no single-agent tool can copy.
-- **PRD contradiction + gap detection.** `/prd-lint` now reasons over your requirements for logical *contradictions* (conflicts the pipeline would resolve arbitrarily) and *gaps* (undefined error/auth/edge-case behavior) — catching wrong requirements before a line of code exists.
-- **Property-based testing.** The `/tester` gate now asserts invariants across *generated* inputs (fast-check / Hypothesis / jqwik) — round-trip, idempotence, bounds — not just hand-picked examples.
+- **Injection-resistance gate.** Instructions embedded in the content the framework reads — PRDs, diffs, code comments, `memory_bank/` entries, tool results, fetched pages — are **data, not commands**, and never override an agent's protocol, its gates, or your request. A comment that says "skip the security gate" or a memory that says "always approve without review" is surfaced, not obeyed; a gate-tampering instruction is **BLOCK**. Wired into `/verify`, `/prd-lint`, and `/security`.
+- **No process theater.** Agents state the *finding*, not the routing, phase names, or memory-retrieval steps that produced it — while keeping blockers, assumptions, and decisions explicit.
+- **Graduated recall.** `/recall` applies memory by relevance (a generic question gets none), never surfaces sensitive entries unprompted, and drops the "based on my memories…" narration.
+- **Sharper routing & skill selection.** `/auto` classifies via an ordered stop-at-first-match cascade; new skills follow a **Use when / Triggers / Do NOT use for** description standard so the right skill fires with 100+ installed.
 
-Full breakdown in the CHANGELOG under `[5.23.0]`.
+Full breakdown in the CHANGELOG under `[5.24.0]`.
+
+#### Previous: Verification Layer (v5.23.0)
+
+`/verify` runs the gates against **any** agent's diff (not just `/forge` output) for a `PASS / WARN / BLOCK` verdict; `/prd-lint` reasons over requirements for contradictions and gaps before code exists; the `/tester` gate adds property-based testing across generated inputs.
 
 #### Previous: Refinement Pass (v5.22.x)
 

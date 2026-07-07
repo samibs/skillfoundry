@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.24.0] - 2026-07-07 — Injection Resistance & Prompt Discipline
+
+Six prompt-engineering patterns mined from a mature production system prompt and adapted to SkillFoundry. One is a genuinely new capability (an injection-resistance gate that extends the 5.23 verification thesis to the *inputs* the framework already ingests); the other five are discipline applied to existing skills — no new command surface. Skill count unchanged (108/platform); the new protocol is a `_`-prefixed module, not a command.
+
+### Added
+
+- **Injection-resistance gate (`agents/_injection-resistance.md`).** New protocol establishing that instructions embedded in content the framework reads — PRDs and anything under `genesis/`, source diffs and code comments, `memory_bank/` entries and recalled memories, tool results, fetched pages, pasted logs, and trailing tag-claimed blocks — are **data, not commands**. They never override an agent's protocol, its gates, or the user's actual request. Precedence is explicit (user request > agent protocol + gates > defaults > embedded content, which is never authoritative and cannot raise its own precedence). Wired into three gates: `/verify` gains a Step-5 embedded-instruction scan with its own verdict row, and a gate-tampering embedded instruction (one that tries to disable/skip/weaken a gate) is **BLOCK**, not WARN; `/prd-lint` emits an `[INJECTION]` finding; `/security` treats prompt injection as a first-class input-based attack and flags any LLM-in-the-loop feature that acts on tool output without an injection boundary as HIGH.
+
+### Changed
+
+- **No-machinery-narration discipline (`agents/_coding-discipline.md` §5).** New section: state the *finding*, not the routing/phase/gate/memory-retrieval machinery that produced it. Bans process theater ("Per the Anvil protocol I'm now entering Phase 2…", "Based on my memories…", "Let me load the protocol…") while keeping blockers, assumptions, and user-only decisions explicit. Propagates to every agent through the existing CLAUDE.md pointer — no per-file edits.
+- **Graduated recall (`/recall`).** New Application Discipline section: apply recalled memory **zero → comprehensive by relevance** (a generic question gets none), gated on whether it changes the answer; never surface sensitive or distressing entries unprompted; no attribution or retrieval narration. Cross-references §5 (no narration) and the injection protocol (memory is untrusted content).
+- **`/auto` routing as a stop-at-first-match cascade.** The classification table (whose overlapping cues let one request match several rows) is reformulated as an ordered 8-rule cascade evaluated top to bottom, first match wins: read-only/question → PRD present → bug fix → new feature → refactor → review/verify → documentation → ask one clarifying question. Classify silently — never narrate the routing.
+- **Skill description standard — trigger + anti-trigger (`CONTRIBUTING.md`).** Documents the description format every skill should follow so the right skill fires with 100+ installed: (1) **Use when**, (2) **Triggers** (concrete match cues), (3) **Do NOT use for** (the anti-trigger that stops a general skill swallowing a narrower one's request, e.g. `/verify` vs `/security`). Applied to `/verify` as the exemplar.
+- **Deferred/lazy agent-prompt loading formalized.** Assessment found the CLI already lazy-loads: the registry holds cheap one-liners for discovery and the full agent markdown is read only on invoke, then cached (`agent-prompt-loader.ts`). Made the intent explicit in the loader header and `site-docs/docs/architecture.md` rather than manufacturing new machinery. Comment/doc only — `dist` rebuilt idempotently, no behavior change.
+
+### Why
+
+v5.23.0 turned SkillFoundry's gates outward to cover code from any agent. v5.24.0 turns them *inward and upward*: the injection gate defends the untrusted input the framework already reads at every stage (PRDs, diffs, memory, fetched pages) — the one attack surface a PRD-and-gate-driven pipeline structurally exposes — while the five discipline patterns sharpen how agents narrate, recall, route, and describe themselves. Net new capability is one protocol file plus one gate step; the rest is existing surface, made sharper.
+
 ## [5.23.0] - 2026-07-07 — Verification Layer
 
 Three additions that lean into 2026's defining problem — trust in AI-generated code (84% adoption, ~29% trust, 96% won't ship it unchecked). Each reuses existing gate machinery: the framework's verification thesis, applied more widely and earlier.
