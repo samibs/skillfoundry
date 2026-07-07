@@ -2,7 +2,17 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { recall, capture, captureLesson, captureDecision, getMemoryStats } from '../core/memory.js';
+import {
+  recall,
+  capture,
+  captureLesson,
+  captureDecision,
+  getMemoryStats,
+  deriveProject,
+  isVisibleToProject,
+  UNIVERSAL_PROJECT,
+} from '../core/memory.js';
+import type { MemoryEntry } from '../core/memory.js';
 
 const TEST_DIR = join(tmpdir(), 'sf-memory-test-' + Date.now());
 
@@ -110,5 +120,53 @@ describe('getMemoryStats', () => {
   it('should return empty stats when no knowledge exists', () => {
     const stats = getMemoryStats(TEST_DIR);
     expect(stats.totalEntries).toBe(0);
+  });
+});
+
+describe('project isolation (S4)', () => {
+  const mk = (over: Partial<MemoryEntry>): MemoryEntry => ({
+    id: 'x', type: 'lesson', content: 'c', tags: [], created_at: '2026-01-01T00:00:00Z', ...over,
+  });
+
+  afterEach(() => { delete process.env.SF_PROJECT; });
+
+  it('derives the project namespace from the workDir basename', () => {
+    expect(deriveProject('/home/u/Elyxen')).toBe('Elyxen');
+    expect(deriveProject('/a/b/webmon')).toBe('webmon');
+  });
+
+  it('honors the SF_PROJECT override', () => {
+    process.env.SF_PROJECT = 'custom-scope';
+    expect(deriveProject('/home/u/anything')).toBe('custom-scope');
+  });
+
+  it('capture stamps the entry with the active project', () => {
+    process.env.SF_PROJECT = 'proj-a';
+    const e = captureLesson(TEST_DIR, 'scoped lesson', ['t']);
+    expect(e.project).toBe('proj-a');
+  });
+
+  it('isVisibleToProject: unstamped and universal entries are shared; other projects are hidden', () => {
+    expect(isVisibleToProject(mk({ project: undefined }), 'proj-a')).toBe(true);
+    expect(isVisibleToProject(mk({ project: UNIVERSAL_PROJECT }), 'proj-a')).toBe(true);
+    expect(isVisibleToProject(mk({ project: 'proj-a' }), 'proj-a')).toBe(true);
+    expect(isVisibleToProject(mk({ project: 'proj-b' }), 'proj-a')).toBe(false);
+  });
+
+  it('recall does not surface another project\'s memory', () => {
+    const knowledgeDir = join(TEST_DIR, 'memory_bank', 'knowledge');
+    mkdirSync(knowledgeDir, { recursive: true });
+    const rows = [
+      mk({ id: 'a', content: 'alpha secret handling', project: 'proj-a' }),
+      mk({ id: 'b', content: 'beta secret handling', project: 'proj-b' }),
+      mk({ id: 'u', content: 'universal secret handling', project: undefined }),
+    ];
+    writeFileSync(join(knowledgeDir, 'patterns-universal.jsonl'), rows.map((r) => JSON.stringify(r)).join('\n') + '\n');
+
+    const result = recall(TEST_DIR, 'secret handling', 10, { project: 'proj-a' });
+    const ids = result.entries.map((e) => e.id).sort();
+    expect(ids).toContain('a'); // own project
+    expect(ids).toContain('u'); // universal/legacy
+    expect(ids).not.toContain('b'); // other project — isolated
   });
 });
