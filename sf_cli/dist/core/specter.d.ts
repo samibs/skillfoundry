@@ -53,10 +53,29 @@ export declare class SpecterEngine extends Agent {
     generateVectors(diff: string, prd: string, context: AgentContext): Promise<AttackVector[]>;
     /**
      * Run an adversarial simulation for a vector (STORY-003).
+     *
+     * SECURITY: the model-authored `exploitSimCommand` is NEVER executed as a
+     * command. We extract only a URL from it, validate that URL is a loopback
+     * HTTP(S) target with no userinfo, and issue a FIXED `curl` invocation via
+     * `execFileSync` (no shell, no argument taken from the model except the
+     * validated URL). Execution is opt-in: it runs only when
+     * `SF_SPECTER_SIMULATE` is truthy. When disabled (the default), the vector
+     * is reported as un-simulated so the static analysis + mitigation advice
+     * still ship, but no attacker-influenced probe fires.
      */
     runSimulation(vector: AttackVector, context: AgentContext): Promise<SimulationResult>;
     /**
-     * Basic safety check for simulation commands.
+     * Extract a safe loopback HTTP(S) URL from a model-authored command string,
+     * or return null if none is present or the URL is not a safe loopback target.
+     *
+     * Hardening applied:
+     *  - the URL is parsed with the WHATWG `URL` parser (no substring matching);
+     *  - protocol must be http:/https:;
+     *  - hostname must be an exact loopback literal (defeats the
+     *    `http://localhost@attacker.com` userinfo trick, which parses to
+     *    hostname `attacker.com`);
+     *  - any userinfo (username/password) is rejected outright.
+     * The returned value is `url.href` — a normalized string, not the raw input.
      */
-    private isSafeCommand;
+    static extractLoopbackProbe(command: string): string | null;
 }

@@ -236,7 +236,19 @@ export async function runAgentLoop(messages, options, callbacks) {
                 });
                 continue;
             }
-            if (permission.decision === 'ask' && callbacks?.requestPermission) {
+            if (permission.decision === 'ask') {
+                // Fail CLOSED: an 'ask' verdict requires an interactive approval
+                // channel. In headless/autonomous runs (forge/go) no requestPermission
+                // callback is wired, so a missing callback must DENY — never fall
+                // through to execution, which would silently auto-approve every
+                // write/shell/sensitive command with no human in the loop.
+                if (!callbacks?.requestPermission) {
+                    const denyOutput = `Permission requires approval but no interactive channel is available (headless run). Denied: ${permission.reason}`;
+                    const denyResult = { toolCallId: toolCall.id, output: denyOutput, isError: true };
+                    callbacks?.onToolComplete?.(toolCall, denyResult);
+                    toolResults.push({ type: 'tool_result', tool_use_id: toolCall.id, content: denyOutput, is_error: true });
+                    continue;
+                }
                 const response = await callbacks.requestPermission(toolCall, permission.reason);
                 if (response === 'deny') {
                     const denyResult = { toolCallId: toolCall.id, output: 'User denied permission', isError: true };
