@@ -1021,7 +1021,13 @@ export interface GateOptions {
   storyFile?: string;
   onGateStart?: (tier: string, name: string) => void;
   onGateComplete?: (result: GateResult) => void;
-  /** Run gates in parallel phases (T0+T1+T2 → T3 → T4+T5 → T6). Default false. */
+  /**
+   * Group gates into phases (T0/T1/T2 → T3 → T4/T5 → T6 → T7) instead of the
+   * strict T0..T7 order. NOTE: this does NOT run gates concurrently — each
+   * gate is a synchronous execSync that blocks the event loop, so gates within
+   * a phase still execute one after another. The flag only changes ordering.
+   * Default false.
+   */
   parallel?: boolean;
 }
 
@@ -1051,24 +1057,23 @@ export async function runAllGates(options: GateOptions): Promise<GateRunSummary>
   };
 
   if (parallel) {
-    // Parallel execution: T0+T1+T2 → T3 → T4+T5 → T6
-    // Phase 1: T0, T1, T2 run concurrently (fast, independent)
-    const [t0, t1, t2] = await Promise.all([
-      Promise.resolve(runWithCallbacks('T0', 'Correctness Contract', () => runT0(workDir))),
-      Promise.resolve(runWithCallbacks('T1', 'Banned Patterns & Syntax', () => runT1(workDir, resolvedTarget))),
-      Promise.resolve(runWithCallbacks('T2', 'Type Check', () => runT2(workDir))),
-    ]);
+    // Phase-ordered execution: T0/T1/T2 → T3 → T4/T5 → T6 → T7.
+    // These runT* functions are synchronous (execSync), so gates within a
+    // phase run one after another — this branch only changes ORDER, not
+    // concurrency. Real parallelism would require worker threads/child procs.
+    // Phase 1: T0, T1, T2 (fast, independent)
+    const t0 = runWithCallbacks('T0', 'Correctness Contract', () => runT0(workDir));
+    const t1 = runWithCallbacks('T1', 'Banned Patterns & Syntax', () => runT1(workDir, resolvedTarget));
+    const t2 = runWithCallbacks('T2', 'Type Check', () => runT2(workDir));
     gates.push(t0, t1, t2);
 
     // Phase 2: T3 (tests) — depends on T1+T2 passing for meaningful results
     const t3 = runWithCallbacks('T3', 'Tests', () => runT3(workDir));
     gates.push(t3);
 
-    // Phase 3: T4+T5 run concurrently (independent I/O operations)
-    const [t4, t5] = await Promise.all([
-      Promise.resolve(runWithCallbacks('T4', 'Security Scan', () => runT4(workDir, resolvedTarget))),
-      Promise.resolve(runWithCallbacks('T5', 'Build', () => runT5(workDir))),
-    ]);
+    // Phase 3: T4, T5 (independent I/O operations)
+    const t4 = runWithCallbacks('T4', 'Security Scan', () => runT4(workDir, resolvedTarget));
+    const t5 = runWithCallbacks('T5', 'Build', () => runT5(workDir));
     gates.push(t4, t5);
 
     // Phase 4: T6 (scope) — runs last, then T7 (deploy pre-flight)

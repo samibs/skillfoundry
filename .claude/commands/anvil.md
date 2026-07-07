@@ -1,8 +1,8 @@
 # /anvil - The Anvil Quality Gate
 
-> 7-tier (A0–A6) agent-handoff validation system that catches issues between every agent phase.
+> 6-tier (A1–A6) agent-handoff validation system that catches issues between every agent phase.
 
-> **Namespace**: Anvil tiers are **A0–A6** — distinct from the CLI quality gates **T0–T7** (`sf_cli/core/gates.ts`). Same count, different checks (e.g. Anvil A3 = Self-Adversarial Review, CLI gate T3 = Tests). Canonical definition: `agents/_anvil-protocol.md`.
+> **Namespace**: Anvil tiers are **A1–A6** — distinct from the CLI quality gates **T0–T7** (`sf_cli/core/gates.ts`). Different checks AND a different count (6 Anvil tiers vs 8 CLI gates); e.g. Anvil A3 = Self-Adversarial Review, CLI gate T3 = Tests. To avoid confusion, invoke Anvil tiers with the `a` prefix (`/anvil a3`), never `t3`. Canonical definition: `agents/_anvil-protocol.md`.
 
 ---
 
@@ -10,14 +10,14 @@
 
 ```
 /anvil                    Run all tiers on current story/changed files
-/anvil t1                 Tier 1 only (shell checks: syntax, patterns, imports, SAST)
-/anvil t1 <file>          Tier 1 on specific file
-/anvil t2                 Tier 2 (canary smoke test)
-/anvil t3                 Tier 3 (self-adversarial review of last implementation)
-/anvil t4                 Tier 4 (scope validation + Semgrep SAST deep scan)
-/anvil t4 --sast-only     Tier 4 SAST scan only (skip scope diff)
-/anvil t5                 Tier 5 (contract enforcement: API spec vs implementation)
-/anvil t6                 Tier 6 (shadow tester: risk assessment of changed code)
+/anvil a1                 Tier A1 only (shell checks: syntax, patterns, imports, SAST)
+/anvil a1 <file>          Tier A1 on specific file
+/anvil a2                 Tier A2 (canary smoke test)
+/anvil a3                 Tier A3 (self-adversarial review of last implementation)
+/anvil a4                 Tier A4 (scope validation + Semgrep SAST deep scan)
+/anvil a4 --sast-only     Tier A4 SAST scan only (skip scope diff)
+/anvil a5                 Tier A5 (contract enforcement: API spec vs implementation)
+/anvil a6                 Tier A6 (shadow tester: risk assessment of changed code)
 /anvil --report           Full Anvil report on last story
 ```
 
