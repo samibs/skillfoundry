@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — Adversarial Audit Remediation
+
+Security and robustness hardening from a full adversarial codebase audit. Fixes are grouped by the audit's finding IDs; all land with regression tests (full suite 2352 passing; the only failures are 3 pre-existing environmental flakes — provider-ping timeouts and one shell-out timeout).
+
+### Security (P0)
+
+- **S1 — Specter no longer executes model-authored shell commands.** The default pipeline's SPECTER phase ran `execSync(vector.exploitSimCommand)` on raw LLM output behind a guard that returned true for anything without "curl"/"http". Now it never runs the model's command: it extracts and validates a loopback URL (WHATWG parser, exact loopback host, no userinfo) and issues a fixed `execFileSync('curl', …)`; simulation is opt-in via `SF_SPECTER_SIMULATE` (default off).
+- **S2 — Permission `ask` fails closed in headless mode.** In `forge`/`go` runs with no interactive callback, an `ask` verdict fell through to execution (silently auto-approving write/shell/`git push`). It now denies when no approval channel exists.
+- **S3 — `grep` tool de-shelled.** `executeGrep` built a shell string with `JSON.stringify` (not a shell escaper) and ran it via `execSync`, so a `$()` pattern was RCE even with `allow_shell=false`. Now uses `execFileSync` with an argv array.
+- **S4 — Memory project isolation.** Recall had zero namespacing (0 of 650 entries stamped) and commingled 5+ private projects. `capture()` now stamps a project key; `recall`/layered-recall filter by active project (legacy/universal entries stay shared).
+- **S5 — Knowledge sanitizer catches JSON secrets, strips usernames, masks in place.** Fixed under-matching path/secret regexes (usernames + private project names were leaking to the public repo) and switched from dropping whole lines to masking values.
+- **S15 / D2 — Path-boundary escape fixed** (separator-bounded `startsWith`) and **semgrep scanner de-shelled** (`execFileSync`).
+
+### Gates & runtime (P1)
+
+- **S6 — PRD quality gate fails closed** on scoring error (was `continue`; `SF_PRD_GATE=soft` opts out).
+- **S7 — T4 security gate + anvil SAST no longer silent-pass** when scanners are absent/broken (degraded coverage → WARN/BLOCK, not clean PASS).
+- **S8 — Security micro-gate fails closed** on an unparseable verdict (advisory gates keep WARN).
+- **S9 — Certification no longer rewards absence of code** (N/A categories excluded from the average; a substance floor caps codeless projects at grade F).
+- **S10/S11/S12 — AgentPool**: a hung task's timeout now force-settles it (was a pool deadlock); `submitBatchSettled` added; shutdown cleanup moved to `finally` and `drainTimeout ≥ taskTimeout`.
+- **S13 — Honest gate parallelism**: `runAllGates(parallel)` never ran concurrently (synchronous execSync) — removed the false claim.
+- **S14 — Message bus enforces recipient isolation** for direct-addressed messages (opt-in subscriber identity).
+
+### Fragmentation (drift)
+
+- **D1** — malformed tool-call args are repaired + logged instead of silently becoming `{}` (wired the previously dead `output-repair.ts` into the provider path).
+- **D3** — consolidated three divergent `runCommand` clones into one shared util.
+- **D4 (partial)** — renamed the colliding `GateResult` type in skill-optimizer; **D8** — fixed the anvil A0–A6/tier-count contradiction and `t`-prefix collision.
+
+### Known items deferred (with rationale)
+
+- **D4 (full casing unification)**, **D5 (6-way intent router doc vs runtime gap)**, **D6 (37 registry agents on stub prompts)**, **D7 (full swallowed-catch sweep)** — either latent-not-live hazards whose broad fix risks regressions, or product decisions (author 37 personas vs trim the registry). Flagged, not force-fixed.
+
 ## [5.24.0] - 2026-07-07 — Injection Resistance & Prompt Discipline
 
 Six prompt-engineering patterns mined from a mature production system prompt and adapted to SkillFoundry. One is a genuinely new capability (an injection-resistance gate that extends the 5.23 verification thesis to the *inputs* the framework already ingests); the other five are discipline applied to existing skills — no new command surface. Skill count unchanged (108/platform); the new protocol is a `_`-prefixed module, not a command.

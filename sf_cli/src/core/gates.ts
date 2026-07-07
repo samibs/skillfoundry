@@ -6,11 +6,11 @@
 // T5: Build verification (npm run build / cargo build / etc.)
 // T6: Scope validation (anvil.sh scope)
 
-import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getFrameworkRoot } from './framework.js';
 import { getLogger } from '../utils/logger.js';
+import { runCommand } from '../utils/run-command.js';
 
 const IS_WINDOWS = process.platform === 'win32';
 const WHICH_CMD = IS_WINDOWS ? 'where' : 'which';
@@ -48,23 +48,6 @@ export interface GateRunSummary {
   skipped: number;
   totalMs: number;
   verdict: 'PASS' | 'WARN' | 'FAIL';
-}
-
-function runCommand(cmd: string, cwd: string, timeoutMs: number = 60_000): { ok: boolean; output: string } {
-  try {
-    const output = execSync(cmd, {
-      cwd,
-      timeout: timeoutMs,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 5 * 1024 * 1024,
-    });
-    return { ok: true, output: output || '' };
-  } catch (err: unknown) {
-    const execErr = err as { stdout?: string; stderr?: string; message?: string; status?: number };
-    const combined = (execErr.stdout || '') + (execErr.stderr || '');
-    return { ok: false, output: combined || execErr.message || 'Command failed' };
-  }
 }
 
 function findAnvilScript(workDir: string): string | null {
@@ -512,6 +495,7 @@ function runT4(workDir: string, target: string): GateResult {
   // Uses exported pure synchronous helpers from gitleaks-scanner.ts directly
   // to avoid introducing async/await into the synchronous gate pipeline.
   let gitleaksDetail = '';
+  let gitleaksRan = false; // true only when a real gitleaks scan completed
   try {
     const {
       findGitleaksBinary,
@@ -593,6 +577,7 @@ function runT4(workDir: string, target: string): GateResult {
           gitleaksDetail = suppressedCount > 0
             ? `[gitleaks] Clean (${suppressedCount} suppressed)`
             : '[gitleaks] Clean';
+          gitleaksRan = true; // a real scan completed with no active findings
           log.info('gate', 'gitleaks_clean', { suppressedCount });
         } finally {
           try { if (pexists(reportPath)) punlink(reportPath); } catch { /* best-effort cleanup */ }
@@ -640,14 +625,32 @@ function runT4(workDir: string, target: string): GateResult {
       // Dependency scanner not available — non-blocking
     }
 
+    // Distinguish "scanner ran & clean" from "scanner unavailable". A clean
+    // PASS is only honest when BOTH mandatory scanners actually ran; if
+    // gitleaks was skipped (not installed / old / errored) or Semgrep fell
+    // back to regex, real coverage is incomplete — downgrade PASS to WARN so
+    // the gap is surfaced loudly instead of reported as a green pass.
+    const semgrepRan = report.scannerVersion !== 'regex-fallback';
+    const degraded: string[] = [];
+    if (!gitleaksRan) degraded.push('secrets scan (gitleaks) did not run');
+    if (!semgrepRan) degraded.push('SAST (semgrep) did not run — regex fallback only');
+
+    let status: GateStatus = report.verdict === 'FAIL' ? 'fail' : report.verdict === 'WARN' ? 'warn' : 'pass';
+    if (status === 'pass' && degraded.length > 0) {
+      status = 'warn';
+    }
+    const degradedNote = degraded.length > 0
+      ? `\n[DEGRADED] ${degraded.join('; ')} — install the scanners for full coverage`
+      : '';
+
     const fullDetail = gitleaksDetail
-      ? `${gitleaksDetail}\n${detail}${findingSummary}${depDetail}`
-      : `${detail}${findingSummary}${depDetail}`;
+      ? `${gitleaksDetail}\n${detail}${findingSummary}${depDetail}${degradedNote}`
+      : `${detail}${findingSummary}${depDetail}${degradedNote}`;
 
     return {
       tier: 'T4',
       name: 'Security Scan',
-      status: report.verdict === 'FAIL' ? 'fail' : (report.verdict === 'WARN' ? 'warn' : 'pass'),
+      status,
       detail: fullDetail.slice(0, 800),
       durationMs: Date.now() - start,
     };
@@ -1001,7 +1004,13 @@ export interface GateOptions {
   storyFile?: string;
   onGateStart?: (tier: string, name: string) => void;
   onGateComplete?: (result: GateResult) => void;
-  /** Run gates in parallel phases (T0+T1+T2 → T3 → T4+T5 → T6). Default false. */
+  /**
+   * Group gates into phases (T0/T1/T2 → T3 → T4/T5 → T6 → T7) instead of the
+   * strict T0..T7 order. NOTE: this does NOT run gates concurrently — each
+   * gate is a synchronous execSync that blocks the event loop, so gates within
+   * a phase still execute one after another. The flag only changes ordering.
+   * Default false.
+   */
   parallel?: boolean;
 }
 
@@ -1031,24 +1040,23 @@ export async function runAllGates(options: GateOptions): Promise<GateRunSummary>
   };
 
   if (parallel) {
-    // Parallel execution: T0+T1+T2 → T3 → T4+T5 → T6
-    // Phase 1: T0, T1, T2 run concurrently (fast, independent)
-    const [t0, t1, t2] = await Promise.all([
-      Promise.resolve(runWithCallbacks('T0', 'Correctness Contract', () => runT0(workDir))),
-      Promise.resolve(runWithCallbacks('T1', 'Banned Patterns & Syntax', () => runT1(workDir, resolvedTarget))),
-      Promise.resolve(runWithCallbacks('T2', 'Type Check', () => runT2(workDir))),
-    ]);
+    // Phase-ordered execution: T0/T1/T2 → T3 → T4/T5 → T6 → T7.
+    // These runT* functions are synchronous (execSync), so gates within a
+    // phase run one after another — this branch only changes ORDER, not
+    // concurrency. Real parallelism would require worker threads/child procs.
+    // Phase 1: T0, T1, T2 (fast, independent)
+    const t0 = runWithCallbacks('T0', 'Correctness Contract', () => runT0(workDir));
+    const t1 = runWithCallbacks('T1', 'Banned Patterns & Syntax', () => runT1(workDir, resolvedTarget));
+    const t2 = runWithCallbacks('T2', 'Type Check', () => runT2(workDir));
     gates.push(t0, t1, t2);
 
     // Phase 2: T3 (tests) — depends on T1+T2 passing for meaningful results
     const t3 = runWithCallbacks('T3', 'Tests', () => runT3(workDir));
     gates.push(t3);
 
-    // Phase 3: T4+T5 run concurrently (independent I/O operations)
-    const [t4, t5] = await Promise.all([
-      Promise.resolve(runWithCallbacks('T4', 'Security Scan', () => runT4(workDir, resolvedTarget))),
-      Promise.resolve(runWithCallbacks('T5', 'Build', () => runT5(workDir))),
-    ]);
+    // Phase 3: T4, T5 (independent I/O operations)
+    const t4 = runWithCallbacks('T4', 'Security Scan', () => runT4(workDir, resolvedTarget));
+    const t5 = runWithCallbacks('T5', 'Build', () => runT5(workDir));
     gates.push(t4, t5);
 
     // Phase 4: T6 (scope) — runs last, then T7 (deploy pre-flight)

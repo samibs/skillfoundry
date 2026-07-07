@@ -9,6 +9,8 @@ import type {
   AnthropicMessage,
   AnthropicContentBlock,
 } from '../../types.js';
+import { repairJSON } from '../output-repair.js';
+import { getLogger } from '../../utils/logger.js';
 
 // Pricing per million tokens (approximate)
 const MODEL_PRICING: Record<string, { input: number; output: number }> = {
@@ -305,10 +307,29 @@ export class OpenAIAdapter implements ProviderAdapter {
     // Convert accumulated tool calls to ContentBlocks
     for (const [, tc] of Object.entries(toolCallAccumulator)) {
       let parsedArgs: Record<string, unknown> = {};
+      const rawArgs = tc.args || '{}';
       try {
-        parsedArgs = JSON.parse(tc.args || '{}');
+        parsedArgs = JSON.parse(rawArgs);
       } catch {
-        // Use empty object if parsing fails
+        // A truncated/malformed tool-call arg would otherwise silently become
+        // {} — the tool then runs with NO arguments and no trace. Attempt
+        // structural repair first, and if it still fails, LOG the loss instead
+        // of swallowing it (framework rule: no silent failures).
+        const repaired = repairJSON(rawArgs);
+        if (repaired.wasRepaired) {
+          try {
+            parsedArgs = JSON.parse(repaired.repaired);
+          } catch {
+            parsedArgs = {};
+          }
+        }
+        if (Object.keys(parsedArgs).length === 0) {
+          getLogger().warn('provider', 'tool_args_parse_failed', {
+            tool: tc.name,
+            rawArgsSnippet: rawArgs.slice(0, 200),
+            action: 'tool invoked with empty arguments after repair failed',
+          });
+        }
       }
       contentBlocks.push({
         type: 'tool_use',

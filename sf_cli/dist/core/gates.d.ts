@@ -30,7 +30,13 @@ export interface GateOptions {
     storyFile?: string;
     onGateStart?: (tier: string, name: string) => void;
     onGateComplete?: (result: GateResult) => void;
-    /** Run gates in parallel phases (T0+T1+T2 → T3 → T4+T5 → T6). Default false. */
+    /**
+     * Group gates into phases (T0/T1/T2 → T3 → T4/T5 → T6 → T7) instead of the
+     * strict T0..T7 order. NOTE: this does NOT run gates concurrently — each
+     * gate is a synchronous execSync that blocks the event loop, so gates within
+     * a phase still execute one after another. The flag only changes ordering.
+     * Default false.
+     */
     parallel?: boolean;
 }
 /**

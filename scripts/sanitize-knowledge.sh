@@ -60,10 +60,13 @@ ${BOLD}DESCRIPTION:${NC}
   (.env*, *.key, *.pem, *.p12, *credential*, *secret*) are skipped entirely.
 
 ${BOLD}SANITIZATION RULES:${NC}
-  - Lines matching API_KEY=, SECRET=, TOKEN=, PASSWORD=, PRIVATE_KEY=,
-    AWS_ACCESS (case insensitive) are removed
-  - Absolute home paths (/home/*/projects/*, /Users/*/code/*,
-    C:\\Users\\*\\code\\*) are replaced with \$PROJECT_ROOT/
+  - Secret VALUES are masked in place with ***REDACTED*** (the entry survives):
+    env-assignment and JSON shapes for api_key/secret/token/password/etc.,
+    plus token formats (sk-, ghp_/gho_/…, AKIA…, xox…-, sk_live_, JWTs) and
+    email addresses. Un-maskable secrets (PEM PRIVATE KEY blocks) drop the line
+  - Absolute home paths (/home/<user>/<dir>/, /Users/<user>/<dir>/,
+    C:\\Users\\*\\code\\*) are replaced with \$PROJECT_ROOT/ (strips username
+    and top-level project name); bare /home/<user> becomes \$HOME
   - /tmp/tmp.* paths are replaced with \$TMPDIR/
   - .json files must pass jq validation (skipped if invalid)
   - .jsonl files: invalid lines are removed
@@ -155,12 +158,45 @@ should_skip_file() {
 # SECRET LINE DETECTION
 # ═══════════════════════════════════════════════════════════════
 
-# Patterns that indicate a line contains secrets (case insensitive)
-SECRET_PATTERNS="API_KEY=|SECRET=|TOKEN=|PASSWORD=|PRIVATE_KEY=|AWS_ACCESS"
+# Patterns that indicate a line contains a secret (case-insensitive).
+# Covers BOTH env-assignment (KEY=) and JSON (\"key\": \"value\") shapes — the
+# stored knowledge is JSON, so the old `=`-only anchors missed every embedded
+# credential — plus concrete token formats and PEM blocks.
+SECRET_PATTERNS="(api[_-]?key|secret|token|password|passwd|access[_-]?token|refresh[_-]?token|private[_-]?key|client[_-]?secret|authorization)[\"']?[[:space:]]*[:=]|AWS_ACCESS|sk-[A-Za-z0-9_-]{16}|gh[posru]_[A-Za-z0-9]{20}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10}|sk_live_[A-Za-z0-9]{16}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{6,}|-----BEGIN[ A-Z]*PRIVATE KEY-----"
 
 line_contains_secret() {
     local line="$1"
     echo "$line" | grep -i -qE "$SECRET_PATTERNS"
+}
+
+# Raw secret VALUE formats only (no key-name indicators). Used for the
+# post-masking survival check: after redaction the key name (e.g. "api_key":)
+# legitimately remains, so re-running the full SECRET_PATTERNS would
+# false-positive. A match here means an actual unmasked credential is still
+# present (e.g. a multi-line PEM fragment) and the line must be dropped.
+RAW_SECRET_VALUE_PATTERNS="sk-[A-Za-z0-9_-]{16}|gh[posru]_[A-Za-z0-9]{20}|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10}|sk_live_[A-Za-z0-9]{16}|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{6,}|-----BEGIN[ A-Z]*PRIVATE KEY-----"
+
+line_has_raw_secret() {
+    local line="$1"
+    echo "$line" | grep -i -qE "$RAW_SECRET_VALUE_PATTERNS"
+}
+
+# Mask secret VALUES in place so the surrounding memory entry survives instead
+# of being dropped wholesale (which also corrupted .json objects). Returns the
+# line with credential values replaced by ***REDACTED***.
+redact_secrets_in_line() {
+    local line="$1"
+    line="$(printf '%s' "$line" | sed -E \
+        -e 's/sk-[A-Za-z0-9_-]{16,}/sk-***REDACTED***/g' \
+        -e 's/gh[posru]_[A-Za-z0-9]{20,}/ghX_***REDACTED***/g' \
+        -e 's/AKIA[0-9A-Z]{16}/AKIA***REDACTED***/g' \
+        -e 's/xox[baprs]-[A-Za-z0-9-]{10,}/xox-***REDACTED***/g' \
+        -e 's/sk_live_[A-Za-z0-9]{16,}/sk_live_***REDACTED***/g' \
+        -e 's/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{6,}/***REDACTED_JWT***/g' \
+        -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/***REDACTED_EMAIL***/g' \
+        -e 's/("?(api[_-]?key|secret|token|password|passwd|authorization|access[_-]?token|refresh[_-]?token|private[_-]?key|client[_-]?secret)"?[[:space:]]*[:=][[:space:]]*")[^"]{1,}(")/\1***REDACTED***\3/Ig' \
+    )"
+    printf '%s' "$line"
 }
 
 count_secret_lines() {
@@ -182,11 +218,18 @@ normalize_paths_in_line() {
     local line="$1"
     local result="$line"
 
-    # Replace /home/<user>/projects/<anything>/ with $PROJECT_ROOT/
-    result="$(echo "$result" | sed 's|/home/[^/]*/projects/[^/]*/|\$PROJECT_ROOT/|g')"
+    # Collapse /home/<user>/<topdir>/ and /Users/<user>/<topdir>/ to
+    # $PROJECT_ROOT/ generically. The old rules only matched a literal
+    # `projects/` / `code/` segment, so real paths like /home/<user>/redacted-project/
+    # leaked BOTH the OS username and private project names verbatim into the
+    # public repo. This strips the username and the top-level project dir name.
+    result="$(echo "$result" | sed 's|/home/[^/]*/[^/]*/|\$PROJECT_ROOT/|g')"
+    result="$(echo "$result" | sed 's|/Users/[^/]*/[^/]*/|\$PROJECT_ROOT/|g')"
 
-    # Replace /Users/<user>/code/<anything>/ with $PROJECT_ROOT/
-    result="$(echo "$result" | sed 's|/Users/[^/]*/code/[^/]*/|\$PROJECT_ROOT/|g')"
+    # Catch any remaining bare /home/<user> or /Users/<user> (no trailing dir)
+    # — still strips the identifying username.
+    result="$(echo "$result" | sed 's|/home/[^/]*|\$HOME|g')"
+    result="$(echo "$result" | sed 's|/Users/[^/]*|\$HOME|g')"
 
     # Replace C:\Users\<user>\code\<anything>\ with $PROJECT_ROOT/
     # Handle both backslash variants (literal and escaped)
@@ -276,10 +319,11 @@ sanitize_json_file() {
     local normalized=0
 
     while IFS= read -r line || [ -n "$line" ]; do
-        # Check for secret patterns
+        # Mask secret values in place — dropping a line here would break the
+        # surrounding JSON object structure.
         if line_contains_secret "$line"; then
+            line="$(redact_secrets_in_line "$line")"
             redacted=$((redacted + 1))
-            continue
         fi
 
         # Normalize paths
@@ -292,7 +336,7 @@ sanitize_json_file() {
         echo "$new_line" >> "$tmpfile"
     done < "$filepath"
 
-    # If secrets were stripped, re-validate JSON (structure may be broken)
+    # If secrets were masked, re-validate JSON (structure should be intact)
     if [ "$redacted" -gt 0 ]; then
         if ! jq empty "$tmpfile" 2>/dev/null; then
             # Try to fix by running through jq (lenient parse of the remaining content)
@@ -362,10 +406,16 @@ sanitize_jsonl_file() {
             continue
         fi
 
-        # Check for secret patterns
+        # Mask secret values in place (keeps the entry). Only drop the line if
+        # a secret pattern SURVIVES masking (e.g. a multi-line PEM fragment).
         if line_contains_secret "$line"; then
+            line="$(redact_secrets_in_line "$line")"
             redacted=$((redacted + 1))
-            continue
+            if line_has_raw_secret "$line"; then
+                log_warn "Dropping line with un-maskable secret in $relpath"
+                removed=$((removed + 1))
+                continue
+            fi
         fi
 
         # Normalize paths

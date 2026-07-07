@@ -1,6 +1,8 @@
 // OpenAI provider adapter — supports GPT-4o, GPT-4.1, o3, etc.
 // Also used as base for xAI (Grok), Ollama, and LM Studio since they use OpenAI-compatible APIs.
 import OpenAI from 'openai';
+import { repairJSON } from '../output-repair.js';
+import { getLogger } from '../../utils/logger.js';
 // Pricing per million tokens (approximate)
 const MODEL_PRICING = {
     'gpt-4o': { input: 2.5, output: 10 },
@@ -227,11 +229,31 @@ export class OpenAIAdapter {
         // Convert accumulated tool calls to ContentBlocks
         for (const [, tc] of Object.entries(toolCallAccumulator)) {
             let parsedArgs = {};
+            const rawArgs = tc.args || '{}';
             try {
-                parsedArgs = JSON.parse(tc.args || '{}');
+                parsedArgs = JSON.parse(rawArgs);
             }
             catch {
-                // Use empty object if parsing fails
+                // A truncated/malformed tool-call arg would otherwise silently become
+                // {} — the tool then runs with NO arguments and no trace. Attempt
+                // structural repair first, and if it still fails, LOG the loss instead
+                // of swallowing it (framework rule: no silent failures).
+                const repaired = repairJSON(rawArgs);
+                if (repaired.wasRepaired) {
+                    try {
+                        parsedArgs = JSON.parse(repaired.repaired);
+                    }
+                    catch {
+                        parsedArgs = {};
+                    }
+                }
+                if (Object.keys(parsedArgs).length === 0) {
+                    getLogger().warn('provider', 'tool_args_parse_failed', {
+                        tool: tc.name,
+                        rawArgsSnippet: rawArgs.slice(0, 200),
+                        action: 'tool invoked with empty arguments after repair failed',
+                    });
+                }
             }
             contentBlocks.push({
                 type: 'tool_use',

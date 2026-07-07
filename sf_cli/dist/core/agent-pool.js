@@ -37,7 +37,9 @@ export class ShutdownError extends Error {
 const DEFAULT_OPTIONS = {
     maxConcurrency: 3,
     taskTimeout: 300_000,
-    drainTimeout: 60_000,
+    // Must be >= taskTimeout, else drain() rejects while a task is still
+    // legitimately running within its own timeout budget (S12).
+    drainTimeout: 300_000,
 };
 const HEARTBEAT_INTERVAL_MS = 5_000;
 // ---------------------------------------------------------------------------
@@ -151,6 +153,18 @@ export class AgentPool {
         return Promise.all(tasks.map((t) => this.submit(t)));
     }
     /**
+     * Resilient batch submit: waits for ALL tasks and returns a settled result
+     * per task, so one failure never discards its siblings' successful results.
+     * Prefer this over submitBatch() for independent work (e.g. implementing N
+     * unrelated stories) where partial success is useful (S11).
+     *
+     * @param tasks - Array of task descriptors.
+     * @returns Promise resolving to one PromiseSettledResult per task, in order.
+     */
+    submitBatchSettled(tasks) {
+        return Promise.allSettled(tasks.map((t) => this.submit(t)));
+    }
+    /**
      * Wait until all currently queued and running tasks have finished.
      * Rejects if the drain exceeds `drainTimeout`.
      *
@@ -196,29 +210,43 @@ export class AgentPool {
         for (const entry of pending) {
             entry.reject(new ShutdownError(entry.task.id));
         }
-        // Wait for running tasks to complete (bounded by drainTimeout)
-        if (this.active.size > 0) {
-            await Promise.race([
-                this.drain(),
-                new Promise((resolve) => {
-                    const timer = setTimeout(() => {
-                        // Force-abort any still-running tasks
+        try {
+            // Wait for running tasks to complete (bounded by drainTimeout). Swallow a
+            // drain() rejection — the force-abort timer below is the real bound, and
+            // a rejecting drain must NOT skip the cleanup in the finally block (S12).
+            if (this.active.size > 0) {
+                await Promise.race([
+                    this.drain().catch(() => {
+                        // Force-abort any still-running tasks on drain timeout/rejection
                         for (const [, entry] of this.active) {
                             entry.abortSignal.aborted = true;
                             if (entry.timeoutHandle)
                                 clearTimeout(entry.timeoutHandle);
                             entry.agent.abort();
                         }
-                        resolve();
-                    }, this.options.drainTimeout);
-                    if (timer.unref)
-                        timer.unref();
-                }),
-            ]);
+                    }),
+                    new Promise((resolve) => {
+                        const timer = setTimeout(() => {
+                            for (const [, entry] of this.active) {
+                                entry.abortSignal.aborted = true;
+                                if (entry.timeoutHandle)
+                                    clearTimeout(entry.timeoutHandle);
+                                entry.agent.abort();
+                            }
+                            resolve();
+                        }, this.options.drainTimeout);
+                        if (timer.unref)
+                            timer.unref();
+                    }),
+                ]);
+            }
         }
-        // Cleanup
-        clearInterval(this.heartbeatTimer);
-        this.unsubCancelTask();
+        finally {
+            // Cleanup ALWAYS runs — otherwise a thrown drain leaks the heartbeat
+            // interval and the cancel-task bus subscription.
+            clearInterval(this.heartbeatTimer);
+            this.unsubCancelTask();
+        }
         log.info('agent-pool', 'pool_shutdown_complete', {
             completed: this.completedCount,
             failed: this.failedCount,
@@ -315,13 +343,34 @@ export class AgentPool {
             running: this.active.size,
             queued: this.queue.length,
         });
-        // Set per-task timeout
+        // Single-settlement guard. The task can settle from three places — the
+        // agent resolving, the agent rejecting, or the timeout firing — and only
+        // the FIRST may free the slot / count / dispatch. Crucially this lets the
+        // timeout settle the task itself: if the agent never honors abort (infinite
+        // loop, stuck socket), the .then/.catch never fire, so without this the
+        // slot would never free and the whole pool would deadlock.
+        let settled = false;
+        const settle = (finalize) => {
+            if (settled)
+                return;
+            settled = true;
+            clearTimeout(timeoutHandle);
+            this.active.delete(task.id);
+            finalize();
+            this.checkDrainComplete();
+            this.dispatch();
+        };
+        // Set per-task timeout — it force-settles rather than only requesting abort.
         const timeoutHandle = setTimeout(() => {
-            if (!this.active.has(task.id))
-                return; // Already completed
+            if (settled)
+                return;
             abortSignal.aborted = true;
             agent.abort();
             log.warn('agent-pool', 'task_timeout', { taskId: task.id, agentId: task.agentId, timeoutMs: this.options.taskTimeout });
+            settle(() => {
+                this.failedCount++;
+                reject(new TaskTimeoutError(task.id, task.agentId, this.options.taskTimeout));
+            });
         }, this.options.taskTimeout);
         if (timeoutHandle.unref)
             timeoutHandle.unref();
@@ -329,36 +378,32 @@ export class AgentPool {
         // Execute the agent
         agent.execute(task.input, contextWithSignal)
             .then((result) => {
-            clearTimeout(timeoutHandle);
-            this.active.delete(task.id);
-            if (abortSignal.aborted && result.status !== 'completed') {
-                // Aborted via timeout — reject with TaskTimeoutError
-                this.failedCount++;
-                log.warn('agent-pool', 'task_timed_out', { taskId: task.id, agentId: task.agentId });
-                reject(new TaskTimeoutError(task.id, task.agentId, this.options.taskTimeout));
-            }
-            else {
-                this.completedCount++;
-                log.info('agent-pool', 'task_completed', {
-                    taskId: task.id,
-                    agentId: task.agentId,
-                    status: result.status,
-                    durationMs: result.durationMs,
-                });
-                resolve(result);
-            }
-            this.checkDrainComplete();
-            this.dispatch();
+            settle(() => {
+                if (abortSignal.aborted && result.status !== 'completed') {
+                    // Aborted via timeout — reject with TaskTimeoutError
+                    this.failedCount++;
+                    log.warn('agent-pool', 'task_timed_out', { taskId: task.id, agentId: task.agentId });
+                    reject(new TaskTimeoutError(task.id, task.agentId, this.options.taskTimeout));
+                }
+                else {
+                    this.completedCount++;
+                    log.info('agent-pool', 'task_completed', {
+                        taskId: task.id,
+                        agentId: task.agentId,
+                        status: result.status,
+                        durationMs: result.durationMs,
+                    });
+                    resolve(result);
+                }
+            });
         })
             .catch((err) => {
-            clearTimeout(timeoutHandle);
-            this.active.delete(task.id);
-            this.failedCount++;
             const message = err instanceof Error ? err.message : String(err);
             log.error('agent-pool', 'task_failed', { taskId: task.id, agentId: task.agentId, error: message });
-            reject(err);
-            this.checkDrainComplete();
-            this.dispatch();
+            settle(() => {
+                this.failedCount++;
+                reject(err);
+            });
         });
     }
     /**

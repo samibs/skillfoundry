@@ -2,9 +2,34 @@
 // Lessons are structured entries that accumulate across sessions.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, appendFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, basename, resolve } from 'node:path';
 
 const KNOWLEDGE_DIR = join('memory_bank', 'knowledge');
+
+/** Sentinel project value for knowledge that is intentionally cross-project. */
+export const UNIVERSAL_PROJECT = 'universal';
+
+/**
+ * Derive the active project namespace for a workDir. Uses the SF_PROJECT
+ * environment override when set, otherwise the workDir's basename. This is the
+ * isolation key: memory captured in one project must not surface in another.
+ */
+export function deriveProject(workDir: string): string {
+  const override = process.env.SF_PROJECT?.trim();
+  if (override) return override;
+  return basename(resolve(workDir)) || 'default';
+}
+
+/**
+ * Whether a memory entry is visible to the active project. Entries with no
+ * project (legacy/unstamped corpus) or the explicit UNIVERSAL_PROJECT sentinel
+ * are shared everywhere; a stamped project-specific entry is visible only in
+ * its own project — this is what prevents cross-project bleed on recall.
+ */
+export function isVisibleToProject(entry: MemoryEntry, activeProject: string): boolean {
+  if (!entry.project || entry.project === UNIVERSAL_PROJECT) return true;
+  return entry.project === activeProject;
+}
 
 export interface MemoryEntry {
   id: string;
@@ -95,8 +120,15 @@ function scoreMatch(entry: MemoryEntry, queryTokens: string[]): number {
   return score + recencyBoost * 0.1;
 }
 
-export function recall(workDir: string, query: string, maxResults: number = 10): RecallResult {
-  const entries = loadAllKnowledge(workDir);
+export function recall(
+  workDir: string,
+  query: string,
+  maxResults: number = 10,
+  options?: { project?: string },
+): RecallResult {
+  const activeProject = options?.project ?? deriveProject(workDir);
+  // Isolation: exclude memory stamped for a different project before scoring.
+  const entries = loadAllKnowledge(workDir).filter((e) => isVisibleToProject(e, activeProject));
   const queryTokens = tokenize(query);
 
   if (queryTokens.length === 0) {
@@ -128,6 +160,10 @@ export function capture(
 
   const fullEntry: MemoryEntry = {
     ...entry,
+    // Stamp the project namespace so this entry is isolated on recall. Callers
+    // may pass an explicit project (including UNIVERSAL_PROJECT for genuinely
+    // cross-project knowledge); otherwise derive it from the workDir.
+    project: entry.project ?? deriveProject(workDir),
     id: `mem-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     created_at: new Date().toISOString(),
   };

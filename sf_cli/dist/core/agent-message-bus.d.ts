@@ -107,7 +107,7 @@ export declare class AgentMessageBus {
      * @param handler - The function called when a matching message is dispatched.
      * @returns An unsubscribe function. Call it to remove the listener.
      */
-    subscribe(topic: string, handler: SubscriberFn): UnsubscribeFn;
+    subscribe(topic: string, handler: SubscriberFn, agentId?: string): UnsubscribeFn;
     /**
      * Subscribe to a single message of a given topic, then auto-unsubscribe.
      *
@@ -115,7 +115,7 @@ export declare class AgentMessageBus {
      * @param handler - The function called once when a matching message is dispatched.
      * @returns An unsubscribe function to cancel before the message arrives.
      */
-    subscribeOnce(topic: string, handler: SubscriberFn): UnsubscribeFn;
+    subscribeOnce(topic: string, handler: SubscriberFn, agentId?: string): UnsubscribeFn;
     /**
      * Publish a message envelope to the bus.
      *
@@ -125,11 +125,10 @@ export declare class AgentMessageBus {
      * - Subscribers registered on the message's `type` are candidates for delivery.
      * - Subscribers registered on `'*'` (wildcard) are always candidates.
      * - For broadcast messages (`recipient === '*'`): all candidates receive the message.
-     * - For direct messages (`recipient !== '*'`): only candidates whose `topic` is `'*'` OR
-     *   whose associated recipient filter matches receive the message. Because subscribers are
-     *   topic-keyed (not agent-keyed), all type-matching subscribers receive direct messages
-     *   unless filtered by middleware. This is intentional — agents filter by checking
-     *   `message.recipient` in their handler.
+     * - For direct messages (`recipient !== '*'`): candidates that declared an
+     *   `agentId` receive the message only if it equals `message.recipient`; the
+     *   bus enforces this. Subscribers that did not declare an identity still
+     *   receive all type matches (legacy behavior) and may filter in-handler.
      *
      * @param message - A fully populated AgentMessage envelope.
      */

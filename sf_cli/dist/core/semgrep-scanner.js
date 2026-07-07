@@ -1,7 +1,7 @@
 // Semgrep SAST Integration
 // Provides real OWASP security scanning via Semgrep CLI.
 // Falls back to regex pattern matching when Semgrep is not installed.
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { getLogger } from '../utils/logger.js';
@@ -136,24 +136,24 @@ export function runSemgrepScan(options) {
     }
     // Add any extra configs
     configs.push(...extraConfigs);
-    const configArgs = configs.map((c) => `--config ${c}`).join(' ');
-    const excludes = [
-        '--exclude=node_modules',
-        '--exclude=dist',
-        '--exclude=.git',
-        '--exclude=coverage',
-        '--exclude=__pycache__',
-        '--exclude=.next',
-        '--exclude=.nuxt',
-    ].join(' ');
-    const cmd = `semgrep scan ${configArgs} --json --quiet ${excludes} --timeout ${Math.floor(timeout / 1000)} "${target}" 2>/dev/null`;
+    // SECURITY: pass configs and target as discrete argv elements via
+    // execFileSync — never interpolate them into a shell string. `target` and
+    // `extraConfigs`/customRulesDir are caller/repo-derived paths that could
+    // contain spaces or shell metacharacters ($(), ;, backticks); a shell
+    // string would allow argument splitting or command injection.
+    const args = ['scan'];
+    for (const c of configs) {
+        args.push('--config', c);
+    }
+    args.push('--json', '--quiet', '--exclude=node_modules', '--exclude=dist', '--exclude=.git', '--exclude=coverage', '--exclude=__pycache__', '--exclude=.next', '--exclude=.nuxt', '--timeout', String(Math.floor(timeout / 1000)), target);
     log.info('gate', 'semgrep_scan_start', { target, configs });
     try {
-        const output = execSync(cmd, {
+        const output = execFileSync('semgrep', args, {
             encoding: 'utf-8',
             timeout: timeout + 5_000, // Extra buffer for process overhead
             maxBuffer: 10 * 1024 * 1024,
             cwd: target,
+            stdio: ['ignore', 'pipe', 'pipe'],
         });
         return parseSemgrepOutput(output);
     }

@@ -118,8 +118,8 @@ export class AgentMessageBus {
      * @param handler - The function called when a matching message is dispatched.
      * @returns An unsubscribe function. Call it to remove the listener.
      */
-    subscribe(topic, handler) {
-        return this.addSubscriber(topic, handler, false);
+    subscribe(topic, handler, agentId) {
+        return this.addSubscriber(topic, handler, false, agentId);
     }
     /**
      * Subscribe to a single message of a given topic, then auto-unsubscribe.
@@ -128,8 +128,8 @@ export class AgentMessageBus {
      * @param handler - The function called once when a matching message is dispatched.
      * @returns An unsubscribe function to cancel before the message arrives.
      */
-    subscribeOnce(topic, handler) {
-        return this.addSubscriber(topic, handler, true);
+    subscribeOnce(topic, handler, agentId) {
+        return this.addSubscriber(topic, handler, true, agentId);
     }
     // ---------------------------------------------------------------------------
     // Publish
@@ -143,11 +143,10 @@ export class AgentMessageBus {
      * - Subscribers registered on the message's `type` are candidates for delivery.
      * - Subscribers registered on `'*'` (wildcard) are always candidates.
      * - For broadcast messages (`recipient === '*'`): all candidates receive the message.
-     * - For direct messages (`recipient !== '*'`): only candidates whose `topic` is `'*'` OR
-     *   whose associated recipient filter matches receive the message. Because subscribers are
-     *   topic-keyed (not agent-keyed), all type-matching subscribers receive direct messages
-     *   unless filtered by middleware. This is intentional — agents filter by checking
-     *   `message.recipient` in their handler.
+     * - For direct messages (`recipient !== '*'`): candidates that declared an
+     *   `agentId` receive the message only if it equals `message.recipient`; the
+     *   bus enforces this. Subscribers that did not declare an identity still
+     *   receive all type matches (legacy behavior) and may filter in-handler.
      *
      * @param message - A fully populated AgentMessage envelope.
      */
@@ -282,12 +281,13 @@ export class AgentMessageBus {
     // ---------------------------------------------------------------------------
     // Private helpers
     // ---------------------------------------------------------------------------
-    addSubscriber(topic, handler, once) {
+    addSubscriber(topic, handler, once, agentId) {
         const entry = {
             id: randomUUID(),
             topic,
             handler,
             once,
+            agentId,
         };
         const existing = this.subscribers.get(topic) ?? [];
         existing.push(entry);
@@ -342,7 +342,15 @@ export class AgentMessageBus {
             }
         }
         const log = getLogger();
+        // Recipient isolation: a direct-addressed message (recipient !== '*') must
+        // not reach a subscriber that declared a DIFFERENT agent identity. This is
+        // enforced here rather than left to voluntary in-handler checks. Undeclared
+        // subscribers (no agentId) retain the legacy receive-all behavior.
+        const isDirect = message.recipient !== undefined && message.recipient !== '*';
         for (const entry of candidates) {
+            if (isDirect && entry.agentId !== undefined && entry.agentId !== message.recipient) {
+                continue;
+            }
             // Remove `once` subscribers before invoking (prevents double-call on re-entrant publish)
             if (entry.once) {
                 const current = this.subscribers.get(entry.topic) ?? [];
