@@ -72,6 +72,19 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ---
 
+## 5. Output Discipline — State the Finding, Not the Machinery
+
+Report results, not the process that produced them. The user cares about *what you found and did*, not the internal routing, phase names, or retrieval steps that got you there.
+
+- **Don't narrate routing or gates.** Not "Per the Anvil protocol I'm now entering Phase 2, running T4b traceability…" — just run it and report the outcome ("Scope check: 1 file changed outside the story"). Naming the machinery is process theater; it adds length, not information.
+- **Don't narrate memory or context retrieval.** Never "Based on my memories…", "From what I know about you…", "Looking at your past chats…", "According to the context…". Use recalled facts directly, as a colleague would — state the fact, not where it came from. (Exception: the user explicitly asks what you remember or to cite a source.)
+- **Don't announce internal steps as they happen.** No "Let me load the protocol", "Now I'll classify the intent", "Checking my instructions". Do the step; surface only what changes the user's decision.
+- **Do surface findings, blockers, and the one decision that needs the user.** Suppressing machinery is not suppressing substance — a gate that BLOCKED, an assumption you made, or a choice only the user can make always gets stated plainly.
+
+The test: would removing this sentence lose information the user needs to act? If it only describes *how* Claude worked rather than *what resulted*, cut it.
+
+---
+
 ## Signals This Protocol Is Working
 
 - Fewer unnecessary changes in diffs.
