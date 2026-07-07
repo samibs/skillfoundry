@@ -3,6 +3,7 @@
 
 import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
+import { runCommand } from '../utils/run-command.js';
 import { join, basename } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { runAgentLoop } from './ai-runner.js';
@@ -217,23 +218,6 @@ function checkTestFilesExist(workDir: string): { hasTests: boolean; testFiles: s
     testFiles: [],
     detail: 'No test files created or modified for this story',
   };
-}
-
-// ── Shell command runner (shared with gates.ts) ────────────────
-
-function runCommand(cmd: string, cwd: string, timeoutMs: number = 30_000): { ok: boolean; output: string } {
-  try {
-    const output = execSync(cmd, {
-      cwd,
-      timeout: timeoutMs,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-    return { ok: true, output: output || '' };
-  } catch (err: unknown) {
-    const execErr = err as { stdout?: string; stderr?: string };
-    return { ok: false, output: (execErr.stdout || '') + (execErr.stderr || '') };
-  }
 }
 
 // ── Error similarity detection (circuit breaker) ───────────────

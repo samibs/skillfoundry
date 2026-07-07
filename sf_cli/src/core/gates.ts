@@ -6,11 +6,11 @@
 // T5: Build verification (npm run build / cargo build / etc.)
 // T6: Scope validation (anvil.sh scope)
 
-import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { getFrameworkRoot } from './framework.js';
 import { getLogger } from '../utils/logger.js';
+import { runCommand } from '../utils/run-command.js';
 
 const IS_WINDOWS = process.platform === 'win32';
 const WHICH_CMD = IS_WINDOWS ? 'where' : 'which';
@@ -48,23 +48,6 @@ export interface GateRunSummary {
   skipped: number;
   totalMs: number;
   verdict: 'PASS' | 'WARN' | 'FAIL';
-}
-
-function runCommand(cmd: string, cwd: string, timeoutMs: number = 60_000): { ok: boolean; output: string } {
-  try {
-    const output = execSync(cmd, {
-      cwd,
-      timeout: timeoutMs,
-      encoding: 'utf-8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-      maxBuffer: 5 * 1024 * 1024,
-    });
-    return { ok: true, output: output || '' };
-  } catch (err: unknown) {
-    const execErr = err as { stdout?: string; stderr?: string; message?: string; status?: number };
-    const combined = (execErr.stdout || '') + (execErr.stderr || '');
-    return { ok: false, output: combined || execErr.message || 'Command failed' };
-  }
 }
 
 function findAnvilScript(workDir: string): string | null {
