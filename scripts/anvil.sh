@@ -382,15 +382,34 @@ run_sast() {
         return 1
     fi
 
-    # Run semgrep OWASP Top 10 + security audit rule packs
-    local semgrep_out
+    # Parsing the JSON requires python3 — without it, severity counts would be
+    # silently 0 (a false "clean"). Fail loudly instead of pretending.
+    if ! command -v python3 &>/dev/null; then
+        echo -e "  ${YELLOW}[WARN]${NC} python3 unavailable — cannot parse SAST severities; coverage incomplete"
+        WARNINGS=$((WARNINGS + 1))
+        return 0
+    fi
+
+    # Run semgrep OWASP Top 10 + security audit rule packs. Capture the exit
+    # code: 0 = no findings, 1 = findings present (both fine to parse), >1 = a
+    # real scanner error that must NOT be swallowed into a clean verdict.
+    local semgrep_out semgrep_exit
+    set +e
     semgrep_out=$(semgrep \
         --config "p/owasp-top-ten" \
         --config "p/secrets" \
         --json \
         --no-git-ignore \
         --timeout 30 \
-        "$target" 2>/dev/null || true)
+        "$target" 2>/dev/null)
+    semgrep_exit=$?
+    set -e
+
+    if [ "$semgrep_exit" -gt 1 ]; then
+        echo -e "  ${RED}[BLOCK]${NC} Semgrep failed (exit $semgrep_exit) — SAST could not run; not certifying as clean"
+        ERRORS=$((ERRORS + 1))
+        return 1
+    fi
 
     if [ -z "$semgrep_out" ]; then
         echo -e "  ${YELLOW}[SKIP]${NC} Semgrep returned no output (network issue or offline mode)"
