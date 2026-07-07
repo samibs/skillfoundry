@@ -21,6 +21,13 @@ export interface CategoryResult {
     weight: number;
     findings: CertFinding[];
     durationMs: number;
+    /**
+     * False when the category had nothing to evaluate (e.g. no HTML files for
+     * accessibility). Such a category must NOT contribute a perfect 100 to the
+     * overall score — it is excluded from the weighted average instead of
+     * inflating the grade for an absence of code (S9).
+     */
+    applicable?: boolean;
 }
 export type CertGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 export interface CertificationResult {

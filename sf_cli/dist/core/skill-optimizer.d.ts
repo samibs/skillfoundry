@@ -26,7 +26,7 @@ export interface MutationStrategy {
     description: string;
     apply: (body: string, rng?: () => number) => MutationResult | null;
 }
-export interface GateResult {
+export interface SkillGateResult {
     gate: string;
     status: 'pass' | 'warn' | 'fail' | 'skip';
     detail?: string;
@@ -35,7 +35,7 @@ export interface IterationResult {
     iteration: number;
     strategy: string;
     mutationDetail: string;
-    gateResults: GateResult[];
+    gateResults: SkillGateResult[];
     gatePassCount: number;
     gateFailCount: number;
     durationMs: number;
@@ -116,7 +116,7 @@ export declare function reassembleSections(sections: Section[]): string;
  *
  * Weights: gate quality 70%, duration efficiency 15%, token efficiency 15%.
  */
-export declare function computeCompositeScore(gateResults: GateResult[], durationMs: number, tokenEstimate: number): number;
+export declare function computeCompositeScore(gateResults: SkillGateResult[], durationMs: number, tokenEstimate: number): number;
 /**
  * Estimate token count from text (chars / 4 approximation).
  */
@@ -164,7 +164,7 @@ export declare function getStrategyByName(name: string): MutationStrategy | unde
  * In production this would invoke the real Anvil gates.
  * For now, it evaluates structural quality heuristics.
  */
-export declare function evaluateSkillPrompt(body: string): GateResult[];
+export declare function evaluateSkillPrompt(body: string): SkillGateResult[];
 /**
  * Run a full optimization experiment on a skill file.
  */

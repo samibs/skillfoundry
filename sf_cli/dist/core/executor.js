@@ -1,8 +1,8 @@
 // Tool executor — runs tools requested by the AI provider.
 // Handles Bash (child_process), Read/Write (fs), Glob/Grep (Node APIs).
-import { execSync } from 'node:child_process';
+import { execSync, execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, statSync, lstatSync, } from 'node:fs';
-import { resolve, isAbsolute, dirname } from 'node:path';
+import { resolve, isAbsolute, dirname, sep } from 'node:path';
 import { globSync } from 'glob';
 import { getLogger } from '../utils/logger.js';
 import { DEBUG_TOOL_NAMES, executeDebugTool } from './debugger-tools.js';
@@ -50,19 +50,30 @@ function isSymlink(filePath) {
         return false;
     }
 }
+/**
+ * True iff `child` is `parent` itself or a descendant of it. Uses a path
+ * separator boundary so `/home/u/proj` does NOT match `/home/u/proj-secrets`
+ * (a plain `startsWith` prefix check would — a sibling-directory escape).
+ */
+function isWithin(child, parent) {
+    if (child === parent)
+        return true;
+    const base = parent.endsWith(sep) ? parent : parent + sep;
+    return child.startsWith(base);
+}
 function isPathAllowed(filePath, policy, workDir) {
     const resolved = resolvePath(filePath, workDir);
     const workDirResolved = resolve(workDir);
     // Block symlinks — prevents /allowed/link -> /forbidden/file traversal
     if (isSymlink(resolved))
         return false;
-    // Always allow paths within the project root
-    if (resolved.startsWith(workDirResolved))
+    // Always allow paths within the project root (separator-bounded)
+    if (isWithin(resolved, workDirResolved))
         return true;
     // Check allowed paths from policy
     for (const allowed of policy.allow_paths) {
         const allowedResolved = resolve(workDir, allowed);
-        if (resolved.startsWith(allowedResolved))
+        if (isWithin(resolved, allowedResolved))
             return true;
     }
     return false;
@@ -255,30 +266,43 @@ function executeGrep(input, ctx) {
             args.push(`--include=${input.glob}`);
         }
         args.push('--', input.pattern, searchPath);
-        // Try ripgrep first, then grep (cross-platform tool detection)
-        let cmd;
+        // SECURITY: never build a shell string from these args. The pattern and
+        // path come from model output; `JSON.stringify` is NOT a shell escaper
+        // (bash runs `$()`/backticks inside double quotes), so we invoke the
+        // binary directly with an argv array via execFileSync (no shell) — the
+        // pattern is a literal argument and can never be evaluated as a command.
+        let bin;
+        let binArgs;
+        let hasRg = false;
         try {
-            execSync(`${WHICH_CMD} rg`, { encoding: 'utf-8', stdio: 'pipe' });
-            const rgArgs = ['-n'];
-            if (input.context && input.context > 0) {
-                rgArgs.push(`-C${input.context}`);
-            }
-            if (input.glob) {
-                rgArgs.push(`--glob=${input.glob}`);
-            }
-            rgArgs.push('--', input.pattern, searchPath);
-            cmd = `rg ${rgArgs.map((a) => JSON.stringify(a)).join(' ')}`;
+            execFileSync(WHICH_CMD, ['rg'], { stdio: 'pipe' });
+            hasRg = true;
         }
         catch {
-            // On Windows without rg, try findstr as last resort
-            if (IS_WINDOWS) {
-                cmd = `findstr /s /n ${JSON.stringify(input.pattern)} ${JSON.stringify(searchPath + '\\*')}`;
-            }
-            else {
-                cmd = `grep ${args.map((a) => JSON.stringify(a)).join(' ')}`;
-            }
+            hasRg = false;
         }
-        const result = execSync(cmd, {
+        if (hasRg) {
+            bin = 'rg';
+            binArgs = ['-n'];
+            if (input.context && input.context > 0) {
+                binArgs.push(`-C${input.context}`);
+            }
+            if (input.glob) {
+                binArgs.push(`--glob=${input.glob}`);
+            }
+            binArgs.push('--', input.pattern, searchPath);
+        }
+        else if (IS_WINDOWS) {
+            // findstr has no `--` end-of-options; pattern/path are still passed as
+            // discrete argv elements (no shell), so metacharacters are inert.
+            bin = 'findstr';
+            binArgs = ['/s', '/n', input.pattern, searchPath + '\\*'];
+        }
+        else {
+            bin = 'grep';
+            binArgs = args;
+        }
+        const result = execFileSync(bin, binArgs, {
             cwd: ctx.workDir,
             timeout: 30_000,
             maxBuffer: 10 * 1024 * 1024,

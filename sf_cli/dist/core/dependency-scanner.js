@@ -6,6 +6,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join } from 'node:path';
 import { getLogger } from '../utils/logger.js';
+import { runCommand } from '../utils/run-command.js';
 export function detectPlatforms(workDir) {
     return {
         npm: existsSync(join(workDir, 'package-lock.json')) || existsSync(join(workDir, 'package.json')),
@@ -25,24 +26,9 @@ function readdirHas(dir, predicate) {
     }
 }
 // ── Scanner Implementations ─────────────────────────────────────
-function runCmd(cmd, cwd, timeoutMs = 30_000) {
-    try {
-        const output = execSync(cmd, {
-            cwd,
-            timeout: timeoutMs,
-            encoding: 'utf-8',
-            stdio: ['pipe', 'pipe', 'pipe'],
-            maxBuffer: 5 * 1024 * 1024,
-        });
-        return { ok: true, output: output || '' };
-    }
-    catch (err) {
-        const execErr = err;
-        // npm audit exits non-zero when vulnerabilities found — that's expected
-        const combined = (execErr.stdout || '') + (execErr.stderr || '');
-        return { ok: false, output: combined || execErr.message || 'Command failed' };
-    }
-}
+// npm/pip/dotnet audit tools exit non-zero when vulnerabilities are found —
+// runCommand returns { ok: false } with the output the callers parse.
+const runCmd = runCommand;
 const ALLOWED_AUDIT_COMMANDS = new Set(['npm', 'pip-audit', 'dotnet', 'cargo-audit', 'go']);
 function isCommandAvailable(cmd) {
     if (!ALLOWED_AUDIT_COMMANDS.has(cmd))

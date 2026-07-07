@@ -271,7 +271,7 @@ export function auditAccessibility(projectPath) {
     const files = walkFiles(projectPath);
     const htmlFiles = files.filter((f) => ['.html', '.htm', '.jsx', '.tsx', '.vue', '.svelte'].includes(extname(f).toLowerCase()));
     if (htmlFiles.length === 0) {
-        return { category: 'accessibility', score: 100, pass: true, weight: CATEGORY_WEIGHTS.accessibility, findings: [{ severity: 'info', category: 'accessibility', title: 'No HTML/UI files found', description: 'Skipped — no HTML/JSX/TSX files', recommendation: 'N/A' }], durationMs: Date.now() - start };
+        return { category: 'accessibility', score: 100, pass: true, applicable: false, weight: CATEGORY_WEIGHTS.accessibility, findings: [{ severity: 'info', category: 'accessibility', title: 'No HTML/UI files found', description: 'Skipped — no HTML/JSX/TSX files', recommendation: 'N/A' }], durationMs: Date.now() - start };
     }
     for (const file of htmlFiles.slice(0, 50)) {
         const content = readSafe(file);
@@ -346,7 +346,7 @@ export function auditSeo(projectPath) {
     const files = walkFiles(projectPath);
     const htmlFiles = files.filter((f) => extname(f).toLowerCase() === '.html');
     if (htmlFiles.length === 0) {
-        return { category: 'seo', score: 100, pass: true, weight: CATEGORY_WEIGHTS.seo, findings: [{ severity: 'info', category: 'seo', title: 'No HTML files', description: 'SEO checks skipped — no HTML files', recommendation: 'N/A' }], durationMs: Date.now() - start };
+        return { category: 'seo', score: 100, pass: true, applicable: false, weight: CATEGORY_WEIGHTS.seo, findings: [{ severity: 'info', category: 'seo', title: 'No HTML files', description: 'SEO checks skipped — no HTML files', recommendation: 'N/A' }], durationMs: Date.now() - start };
     }
     if (!fileExists(projectPath, 'robots.txt')) {
         findings.push({ severity: 'medium', category: 'seo', title: 'No robots.txt', description: 'Missing robots.txt for search crawlers', recommendation: 'Add robots.txt' });
@@ -763,10 +763,13 @@ export function computeGrade(score) {
     return 'F';
 }
 export function computeOverallScore(categories) {
-    const totalWeight = categories.reduce((s, c) => s + c.weight, 0);
+    // Exclude non-applicable categories (nothing to evaluate) so an absence of
+    // code cannot contribute a perfect 100 and inflate the grade (S9).
+    const scored = categories.filter((c) => c.applicable !== false);
+    const totalWeight = scored.reduce((s, c) => s + c.weight, 0);
     if (totalWeight === 0)
         return 0;
-    return categories.reduce((s, c) => s + c.score * c.weight, 0) / totalWeight;
+    return scored.reduce((s, c) => s + c.score * c.weight, 0) / totalWeight;
 }
 // ── Main Runner ─────────────────────────────────────────────────
 export function runCertification(options) {
@@ -783,9 +786,29 @@ export function runCertification(options) {
             continue;
         categories.push(fn(projectPath));
     }
-    const overallScore = computeOverallScore(categories);
+    let overallScore = computeOverallScore(categories);
+    // Substance floor (S9): the per-category scores are `100 - deductions`, so a
+    // project with little/no code scans nothing, incurs no deductions, and would
+    // otherwise be graded as near-perfect. You cannot certify code that isn't
+    // there — if the project has essentially no source files, cap the score so
+    // the grade reflects "insufficient code to certify" rather than "clean".
+    const MIN_SOURCE_FILES = 3;
+    const SUBSTANCE_CAP = 39; // keeps the grade at F (computeGrade F < 40)
+    const SOURCE_EXT = new Set(['.ts', '.tsx', '.js', '.jsx', '.py', '.cs', '.java', '.go', '.rb', '.php', '.rs', '.vue', '.svelte']);
+    const sourceFileCount = walkFiles(projectPath).filter((f) => SOURCE_EXT.has(extname(f).toLowerCase())).length;
+    const substanceFinding = [];
+    if (sourceFileCount < MIN_SOURCE_FILES && overallScore > SUBSTANCE_CAP) {
+        overallScore = SUBSTANCE_CAP;
+        substanceFinding.push({
+            severity: 'high',
+            category: 'coverage',
+            title: 'Insufficient code to certify',
+            description: `Only ${sourceFileCount} source file(s) found — certification score capped at ${SUBSTANCE_CAP} (an absence of code is not a passing grade).`,
+            recommendation: 'Certify a project with real source code.',
+        });
+    }
     const grade = computeGrade(overallScore);
-    const allFindings = categories.flatMap((c) => c.findings);
+    const allFindings = [...substanceFinding, ...categories.flatMap((c) => c.findings)];
     const findingsBySeverity = {};
     for (const f of allFindings) {
         findingsBySeverity[f.severity] = (findingsBySeverity[f.severity] || 0) + 1;

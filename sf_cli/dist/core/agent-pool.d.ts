@@ -132,6 +132,16 @@ export declare class AgentPool {
      */
     submitBatch(tasks: AgentTask[]): Promise<AgentResult[]>;
     /**
+     * Resilient batch submit: waits for ALL tasks and returns a settled result
+     * per task, so one failure never discards its siblings' successful results.
+     * Prefer this over submitBatch() for independent work (e.g. implementing N
+     * unrelated stories) where partial success is useful (S11).
+     *
+     * @param tasks - Array of task descriptors.
+     * @returns Promise resolving to one PromiseSettledResult per task, in order.
+     */
+    submitBatchSettled(tasks: AgentTask[]): Promise<PromiseSettledResult<AgentResult>[]>;
+    /**
      * Wait until all currently queued and running tasks have finished.
      * Rejects if the drain exceeds `drainTimeout`.
      *

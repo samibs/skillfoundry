@@ -1,5 +1,5 @@
 import type { SfConfig, SfPolicy, MicroGateResult, MicroGateVerdict, MicroGateFinding } from '../types.js';
-export declare function parseMicroGateResponse(content: string): {
+export declare function parseMicroGateResponse(content: string, defaultVerdict?: MicroGateVerdict): {
     verdict: MicroGateVerdict;
     findings: MicroGateFinding[];
     summary: string;
