@@ -53,6 +53,16 @@ Use conventional commit prefixes: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:
 - **Skills** live in `.claude/commands/` and are generated for other platforms by the installer
 - **Install/update scripts** are `install.sh`, `install.ps1`, `update.sh`, `update.ps1`
 
+#### Skill & agent descriptions — trigger + anti-trigger
+
+A skill's `description` (agent frontmatter, or the standalone command's lead paragraph) is what the model reads to decide *whether to select the skill at all*. With 100+ skills, a vague description causes the wrong skill to fire or the right one to be missed. Every description must answer three things, in this order:
+
+1. **Use when** — the one-line purpose: what the skill does and the situation it's for.
+2. **Triggers** — the concrete phrasings or conditions that should invoke it (verbs, nouns, filenames, states the user describes). These are match cues, not marketing.
+3. **Do NOT use for** — the adjacent cases it must *not* claim. This anti-trigger is the most valuable and most often omitted part: it's what stops a general skill from swallowing a request that belongs to a narrower one (e.g. `/quick` vs `/feature`, `/verify` vs `/security`).
+
+Keep it factual and specific — "Triggers: 'verify this diff', pre-commit checks, reviewing AI-written code" beats "helps with code quality". Prefer this format for new skills and when you touch an existing skill's description; a repo-wide rewrite is not required.
+
 ### 3. Write tests
 
 Every change needs tests. The project uses **Vitest**:

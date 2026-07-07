@@ -30,30 +30,26 @@ When the user provides a request, you:
 
 ## REQUEST CLASSIFICATION
 
-First, classify the incoming request:
+Walk these rules **in order** and act on the **first** that matches. Do not re-evaluate lower rules once one fires. Most requests resolve in the first two or three steps. Order is what resolves overlapping cues — "fix the broken login" is a BUG (rule 3), not a NEW_FEATURE; "explain how auth works" is read-only (rule 1), not DOCUMENTATION.
 
-| Type | Indicators | Pipeline |
-|------|------------|----------|
-| **PRD_FEATURE** | Path to PRD file, "from PRD" | PRD → Stories → Implementation |
-| **NEW_FEATURE** | "build", "create", "add", "implement" | PRD → Stories → Full pipeline |
-| **BUG_FIX** | "fix", "broken", "error", "not working" | Debug → Code → Test |
-| **REFACTOR** | "refactor", "improve", "optimize", "clean up" | Evaluate → Code → Test |
-| **DOCUMENTATION** | "document", "explain", "write docs" | Docs only |
-| **REVIEW** | "review", "check", "audit" | Evaluate → Standards |
-| **LEARNING** | "learn", "understand", "explain", "how does" | Learn mode |
+1. **Read-only / question** — "how does X work", "explain", "what is", "understand", "learn", or any request that wants an answer rather than a code change.
+   → Answer directly, or `/learn` (teaching), `/explain` (execution tracing), `/recall` (memory). No pipeline, no files changed. **Stop.**
+2. **PRD_FEATURE** — the input names a PRD file (a `.md` under `genesis/`) or says "from the PRD".
+   → Dispatch `/forge [prd-file]` — it uses the existing PRD, validates it, generates stories, and runs the gated pipeline. **Stop.**
+3. **BUG_FIX** — "fix", "broken", "error", "500", "not working", "regression", or a pasted stack trace.
+   → `/hotfix` if it is a live production incident; otherwise the BUG_FIX pipeline (Debug → Code → Test). **Stop.**
+4. **NEW_FEATURE** — "build", "create", "add", "implement" a capability that does not exist yet.
+   → No PRD yet: `/prd "description"` to create one in `genesis/`, then `/forge`. PRD already exists: `/forge`. (See FULL PIPELINE below.) **Stop.**
+5. **REFACTOR** — "refactor", "optimize", "clean up", "improve" existing working code.
+   → `/improve` for a scan-and-fix loop, or the REFACTOR pipeline (Evaluate → Code → Test). **Stop.**
+6. **REVIEW / VERIFY** — "review", "check", "audit", "is this safe to ship".
+   → `/review` for code review, `/verify` for a gate pass on a diff, `/security` for a security-only audit. **Stop.**
+7. **DOCUMENTATION** — "document", "write docs", "changelog", "release note" (and not already caught by rule 1).
+   → `/docs`. **Stop.**
+8. **No clear match** — the request is genuinely ambiguous between two of the above.
+   → Ask one clarifying question naming the two candidates; do not guess. **Stop.**
 
-### PRD Detection Logic
-
-```
-IF input contains path to .md file in genesis/:
-    → Type = PRD_FEATURE
-    → Skip PRD creation, use existing
-    → Check for existing stories
-
-IF input is NEW_FEATURE and no PRD exists:
-    → Ask: "Create PRD first?" (default: yes for complex features)
-    → Complex = multi-component, user auth, data models, integrations
-```
+Classify silently — never narrate the routing to the user (see `agents/_coding-discipline.md` §5).
 
 ---
 
