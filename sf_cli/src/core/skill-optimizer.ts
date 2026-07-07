@@ -37,7 +37,7 @@ export interface MutationStrategy {
   apply: (body: string, rng?: () => number) => MutationResult | null;
 }
 
-export interface GateResult {
+export interface SkillGateResult {
   gate: string;
   status: 'pass' | 'warn' | 'fail' | 'skip';
   detail?: string;
@@ -47,7 +47,7 @@ export interface IterationResult {
   iteration: number;
   strategy: string;
   mutationDetail: string;
-  gateResults: GateResult[];
+  gateResults: SkillGateResult[];
   gatePassCount: number;
   gateFailCount: number;
   durationMs: number;
@@ -187,7 +187,7 @@ export function reassembleSections(sections: Section[]): string {
  * Weights: gate quality 70%, duration efficiency 15%, token efficiency 15%.
  */
 export function computeCompositeScore(
-  gateResults: GateResult[],
+  gateResults: SkillGateResult[],
   durationMs: number,
   tokenEstimate: number,
 ): number {
@@ -531,8 +531,8 @@ export function getStrategyByName(name: string): MutationStrategy | undefined {
  * In production this would invoke the real Anvil gates.
  * For now, it evaluates structural quality heuristics.
  */
-export function evaluateSkillPrompt(body: string): GateResult[] {
-  const results: GateResult[] = [];
+export function evaluateSkillPrompt(body: string): SkillGateResult[] {
+  const results: SkillGateResult[] = [];
 
   // T1: Structure — has sections, frontmatter refs, clear layout
   const sections = parseSections(body);
