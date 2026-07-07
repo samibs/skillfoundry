@@ -91,21 +91,31 @@ async function validatePrdQuality(
         log.warn('pipeline', 'prd_not_detected', { prdPath });
         continue;
       }
-      if (err instanceof PrdScoringError) {
-        // Scoring failed after retry — warn and continue (don't block on LLM failure)
+      // Scoring failure (PrdScoringError after retry, or any unknown error):
+      // FAIL CLOSED by default. Previously this `continue`d, so degrading the
+      // model bypassed the "no PRD ships below threshold" guarantee entirely.
+      // An explicit SF_PRD_GATE=soft opt-out preserves the old non-blocking
+      // behavior for deliberately offline/degraded runs.
+      const errMessage = err instanceof Error ? err.message : String(err);
+      const softGate = process.env.SF_PRD_GATE === 'soft';
+      if (softGate) {
         log.warn('pipeline', 'prd_quality_scoring_failed', {
           prdPath,
-          error: err.message,
-          action: 'Proceeding without quality gate — LLM scoring unavailable',
+          error: errMessage,
+          action: 'SF_PRD_GATE=soft — proceeding without quality gate (scoring unavailable)',
         });
         continue;
       }
-      // Unknown error — warn and continue
-      log.warn('pipeline', 'prd_quality_check_error', {
+      log.error('pipeline', 'prd_quality_scoring_failed', {
         prdPath,
-        error: err instanceof Error ? err.message : String(err),
+        error: errMessage,
+        action: 'Blocking — PRD quality gate could not run (set SF_PRD_GATE=soft to override)',
       });
-      continue;
+      throw new PrdQualityBlockError(
+        `PRD gate could not evaluate ${prd.file}: ${errMessage}\n` +
+        `The quality gate failed to run, so the PRD cannot be certified. ` +
+        `Fix the scoring provider or set SF_PRD_GATE=soft to proceed without the gate.`,
+      );
     }
 
     if (!score.pass) {
