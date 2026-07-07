@@ -21,7 +21,7 @@ import {
   readdirSync,
   unlinkSync,
 } from 'node:fs';
-import { join, resolve, normalize } from 'node:path';
+import { join, resolve, normalize, sep } from 'node:path';
 import type { EmbeddingService } from './embedding-service.js';
 import { EmbeddingUnavailableError } from './embedding-service.js';
 import { getLogger } from '../utils/logger.js';
@@ -221,11 +221,14 @@ export class VectorStore {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.storePath = join(this.workDir, this.options.persistPath);
 
-    // Validate sourceDirs are confined within workDir (prevent path traversal)
+    // Validate sourceDirs are confined within workDir (prevent path traversal).
+    // Separator-bounded so a sibling like `../workDir-secrets` cannot pass a
+    // bare prefix check.
+    const workDirBoundary = this.workDir.endsWith(sep) ? this.workDir : this.workDir + sep;
     for (const dir of this.options.sourceDirs) {
       const resolved = resolve(this.workDir, dir);
       const normalised = normalize(resolved);
-      if (!normalised.startsWith(this.workDir)) {
+      if (normalised !== this.workDir && !normalised.startsWith(workDirBoundary)) {
         throw new TypeError(
           `sourceDirs: "${dir}" resolves outside of workDir — path traversal rejected`,
         );
