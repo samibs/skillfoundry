@@ -77,6 +77,33 @@ describe('AgentMessageBus — publish/subscribe', () => {
     expect(received).toHaveLength(0);
   });
 
+  it('isolates direct messages to the declared recipient agent (S14)', () => {
+    const toA: AgentMessage[] = [];
+    const toB: AgentMessage[] = [];
+    const undeclared: AgentMessage[] = [];
+    bus.subscribe('task:delegate', (m) => toA.push(m), 'agent-a');
+    bus.subscribe('task:delegate', (m) => toB.push(m), 'agent-b');
+    bus.subscribe('task:delegate', (m) => undeclared.push(m)); // legacy, no identity
+
+    bus.publish(makeMessage({ type: 'task:delegate', recipient: 'agent-a' }));
+
+    expect(toA).toHaveLength(1); // matching recipient
+    expect(toB).toHaveLength(0); // other agent — isolated
+    expect(undeclared).toHaveLength(1); // legacy subscriber still receives
+  });
+
+  it('still broadcasts recipient="*" to all declared subscribers (S14)', () => {
+    const toA: AgentMessage[] = [];
+    const toB: AgentMessage[] = [];
+    bus.subscribe('task:delegate', (m) => toA.push(m), 'agent-a');
+    bus.subscribe('task:delegate', (m) => toB.push(m), 'agent-b');
+
+    bus.publish(makeMessage({ type: 'task:delegate', recipient: '*' }));
+
+    expect(toA).toHaveLength(1);
+    expect(toB).toHaveLength(1);
+  });
+
   it('message envelope contains all required fields', () => {
     let delivered: AgentMessage | null = null;
     bus.subscribe('status:heartbeat', (m) => { delivered = m; });
