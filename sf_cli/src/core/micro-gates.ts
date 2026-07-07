@@ -138,12 +138,18 @@ SUMMARY: One-line summary`,
 
 // ── Response parsing ──────────────────────────────────────────
 
-export function parseMicroGateResponse(content: string): {
+export function parseMicroGateResponse(
+  content: string,
+  defaultVerdict: MicroGateVerdict = 'WARN',
+): {
   verdict: MicroGateVerdict;
   findings: MicroGateFinding[];
   summary: string;
 } {
-  let verdict: MicroGateVerdict = 'WARN';
+  // When the model emits no parseable VERDICT line, fall back to defaultVerdict.
+  // Security-critical gates pass 'FAIL' here so an unparseable/garbage security
+  // review is NOT silently treated as an acceptable WARN (S8).
+  let verdict: MicroGateVerdict = defaultVerdict;
   const findings: MicroGateFinding[] = [];
   let summary = '';
 
@@ -282,7 +288,10 @@ async function runSingleMicroGate(
     };
   }
 
-  const parsed = parseMicroGateResponse(result.content);
+  // Security reviews fail closed on an unparseable verdict; other gates keep the
+  // advisory WARN default.
+  const unparseableDefault: MicroGateVerdict = mgConfig.agent === 'security' ? 'FAIL' : 'WARN';
+  const parsed = parseMicroGateResponse(result.content, unparseableDefault);
 
   log.info('microgate', 'gate_complete', {
     gate: mgConfig.gate,

@@ -149,6 +149,15 @@ SUMMARY: Issues found`;
     expect(result.findings[0].severity).toBe('MEDIUM');
     expect(result.findings[0].description).toContain('Some issue');
   });
+
+  it('defaults to WARN on an unparseable verdict (advisory gates)', () => {
+    expect(parseMicroGateResponse('the model rambled with no verdict line').verdict).toBe('WARN');
+  });
+
+  it('fails closed on an unparseable verdict when the default is FAIL (S8 security gate)', () => {
+    // A garbage/unparseable security review must not read as an acceptable WARN.
+    expect(parseMicroGateResponse('garbage output, no verdict', 'FAIL').verdict).toBe('FAIL');
+  });
 });
 
 // ── Runner tests ──────────────────────────────────────────────
