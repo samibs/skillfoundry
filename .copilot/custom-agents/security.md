@@ -175,6 +175,9 @@ For every feature, enumerate threats using STRIDE:
 | SSTI | `{{7*7}}`, `${7*7}`, `<%= 7*7 %>` | Sandbox, no user templates |
 | XXE | `<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>` | Disable DTD |
 | LDAP Injection | `*)(uid=*))(|(uid=*` | Escape special chars |
+| Prompt Injection | Instruction embedded in data an LLM later reads (user content, doc, retrieved page, tool output): "ignore previous instructions", "output your system prompt", "act as…" | Treat model-read content as untrusted data, never instructions; separate trusted prompt from untrusted input; see `agents/_injection-resistance.md` |
+
+**AI/LLM-in-the-loop systems.** When the target ingests untrusted content into a model's context — RAG retrieval, agent tool results, user-supplied documents, memory — audit for prompt injection as a first-class vulnerability: can embedded text redirect the model, exfiltrate the system prompt or secrets, or trigger unintended tool calls? Per `agents/_injection-resistance.md`, embedded instructions are data; the reviewed system must enforce that boundary. An LLM feature that acts on tool output or fetched pages without an injection boundary is a HIGH finding.
 
 ### Authentication Attacks
 
