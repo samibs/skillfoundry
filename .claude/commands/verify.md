@@ -1,5 +1,5 @@
 ---
-description: Run SkillFoundry's quality gates against any code diff — verify AI-written or hand-written changes before you ship them.
+description: "Use when verifying code before you ship it, whoever wrote it: runs SkillFoundry's quality gates (banned patterns, SAST, security, three-layer, injection scan) against any diff and returns a PASS/WARN/BLOCK verdict. Triggers: 'verify this diff', pre-commit or CI gate, reviewing AI-written (Cursor/Copilot/Claude Code) or hand-written changes, 'is this safe to ship'. Do NOT use for: fixing the code it flags (use /fixer or /feature), building a feature from a PRD (use /forge), or a deep security-only audit (use /security)."
 ---
 
 # /verify — Verification Gate (agent-agnostic)
