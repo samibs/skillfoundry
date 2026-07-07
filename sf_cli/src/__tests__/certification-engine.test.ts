@@ -73,6 +73,33 @@ describe('computeOverallScore', () => {
   it('returns 0 for empty', () => {
     expect(computeOverallScore([])).toBe(0);
   });
+
+  it('excludes non-applicable categories from the average (S9)', () => {
+    const cats = [
+      { category: 'a', score: 40, pass: false, weight: 10, findings: [], durationMs: 0 },
+      // N/A category with a perfect 100 must NOT drag the average up
+      { category: 'b', score: 100, pass: true, weight: 10, findings: [], durationMs: 0, applicable: false },
+    ];
+    expect(computeOverallScore(cats)).toBe(40);
+  });
+});
+
+describe('substance floor (S9)', () => {
+  it('caps the grade at F for a project with essentially no source code', () => {
+    const emptyDir = mkdtempSync(join(tmpdir(), 'cert-empty-'));
+    try {
+      writeFileSync(join(emptyDir, 'README.md'), '# Empty project\n');
+      writeFileSync(join(emptyDir, 'LICENSE'), 'MIT\n');
+      const result = runCertification({ projectPath: emptyDir });
+      // Without the floor this scored ~B; now it cannot pass on an absence of code.
+      expect(result.overallScore).toBeLessThanOrEqual(39);
+      expect(result.grade).toBe('F');
+      expect(result.categories.map((c) => c.category)).toHaveLength(15); // no synthetic category
+      expect(result.totalFindings).toBeGreaterThan(0);
+    } finally {
+      rmSync(emptyDir, { recursive: true, force: true });
+    }
+  });
 });
 
 // ── Security ────────────────────────────────────────────────────
