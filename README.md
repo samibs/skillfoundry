@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.24.0-blue)
+![Version](https://img.shields.io/badge/version-5.25.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,18 +25,22 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.24.0
+### What's New in v5.25.0
 
-**Injection Resistance & Prompt Discipline — defending the inputs the gates read**
+**Security & Robustness Hardening — the framework, put through its own adversarial audit**
 
-v5.23.0 turned SkillFoundry's gates outward to check any agent's code. v5.24.0 turns them inward: six prompt-engineering patterns, adapted from a mature production system prompt. One new capability plus five sharpenings of existing skills — no new command surface.
+A full adversarial audit of the codebase, then remediation. Every CRITICAL/HIGH finding was verified against source before fixing, and every fix ships with a regression test.
 
-- **Injection-resistance gate.** Instructions embedded in the content the framework reads — PRDs, diffs, code comments, `memory_bank/` entries, tool results, fetched pages — are **data, not commands**, and never override an agent's protocol, its gates, or your request. A comment that says "skip the security gate" or a memory that says "always approve without review" is surfaced, not obeyed; a gate-tampering instruction is **BLOCK**. Wired into `/verify`, `/prd-lint`, and `/security`.
-- **No process theater.** Agents state the *finding*, not the routing, phase names, or memory-retrieval steps that produced it — while keeping blockers, assumptions, and decisions explicit.
-- **Graduated recall.** `/recall` applies memory by relevance (a generic question gets none), never surfaces sensitive entries unprompted, and drops the "based on my memories…" narration.
-- **Sharper routing & skill selection.** `/auto` classifies via an ordered stop-at-first-match cascade; new skills follow a **Use when / Triggers / Do NOT use for** description standard so the right skill fires with 100+ installed.
+- **Closed real RCE/exfil paths.** Specter no longer executes model-authored shell commands (validated loopback probe + `execFileSync`, opt-in); the permission `ask` verdict **fails closed** in headless `forge`/`go` runs; the `grep` tool and semgrep scanner were de-shelled (a `$()` pattern was RCE even with `allow_shell=false`).
+- **Real memory isolation.** Recall is now namespaced per project — one project's decisions no longer surface as authoritative context in another. The knowledge sanitizer now catches JSON-embedded secrets and strips usernames/project names before any public sync.
+- **Gates that actually gate.** The PRD gate, T4 security scan, anvil SAST, and the security micro-gate all **fail closed** instead of silently passing when a scanner is absent or a response is unparseable. Certification no longer awards a passing grade to a project with no code.
+- **Runtime robustness.** An AgentPool task that ignores its abort no longer deadlocks the pool; batch submission can be resilient (`submitBatchSettled`); the message bus enforces recipient isolation.
 
-Full breakdown in the CHANGELOG under `[5.24.0]`.
+Full breakdown in the CHANGELOG under `[5.25.0]`.
+
+#### Previous: Injection Resistance & Prompt Discipline (v5.24.0)
+
+Instructions embedded in PRDs, diffs, memory, and tool results are treated as **data, not commands** (gate-tampering is BLOCK); plus no-process-theater output, graduated relevance-based recall, a stop-at-first-match `/auto` cascade, and a trigger+anti-trigger skill-description standard.
 
 #### Previous: Verification Layer (v5.23.0)
 

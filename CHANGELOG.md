@@ -7,9 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Adversarial Audit Remediation
+## [5.25.0] - 2026-07-07 — Security & Robustness Hardening
 
-Security and robustness hardening from a full adversarial codebase audit. Fixes are grouped by the audit's finding IDs; all land with regression tests (full suite 2352 passing; the only failures are 3 pre-existing environmental flakes — provider-ping timeouts and one shell-out timeout).
+Security and robustness hardening from a full adversarial codebase audit. Fixes are grouped by the audit's finding IDs; all land with regression tests (full suite 2352 passing; the only failures are 3 pre-existing environmental flakes — provider-ping timeouts and one shell-out timeout). New surface is behavioral, not commands: `SF_SPECTER_SIMULATE` and `SF_PRD_GATE` env flags and the `submitBatchSettled` pool API. Skill count unchanged (108/platform).
 
 ### Security (P0)
 

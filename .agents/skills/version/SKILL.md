@@ -167,12 +167,13 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.24.0**
+**SkillFoundry v5.25.0**
 
 - **61 Agents, 108 Skills/platform** - Complete lifecycle coverage (130+ total incl. CLI)
 - **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
 - **6 Providers** - Anthropic, OpenAI, xAI, Google, Ollama, LM Studio
 - **171 Deviation Patterns** - LLM failure prevention across 16 categories
+- **Security hardening (audit remediation)** - Specter no longer executes model-authored shell commands; permission `ask` fails closed in headless runs; grep/semgrep de-shelled; per-project memory isolation; sanitizer catches JSON secrets + strips usernames; PRD/T4/SAST/security-micro gates fail closed; AgentPool hung-task deadlock fixed
 - **Injection-resistance gate** - embedded instructions in PRDs/diffs/memory/tool results are data, not commands; gate-tampering is BLOCK (`agents/_injection-resistance.md`, wired into /verify, /prd-lint, /security)
 - **Prompt discipline** - no process-theater narration, graduated relevance-based recall, stop-at-first-match /auto routing, trigger+anti-trigger skill descriptions
 - **`/verify`** - Agent-agnostic verification gate: run the quality gates against ANY code diff (Cursor/Copilot/hand-written), not just /forge output
@@ -190,6 +191,7 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 5.25.0 | 2026-07-07 | Security & Robustness Hardening: adversarial-audit remediation — Specter RCE, headless permission fail-closed, grep/semgrep de-shell, memory isolation, sanitizer, gate fail-closed, AgentPool deadlock |
 | 5.24.0 | 2026-07-07 | Injection Resistance & Prompt Discipline: embedded-instruction gate, no-narration, graduated recall, routing cascade, trigger+anti-trigger descriptions |
 | 5.23.0 | 2026-07-07 | Verification Layer: /verify agent-agnostic gate, PRD contradiction/gap detection, property-based testing |
 | 5.22.1 | 2026-07-06 | Consistency follow-up: skill/agent counts reconciled (61 agents · 107 skills), sf_cli dist rebuilt |
