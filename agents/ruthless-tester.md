@@ -29,6 +29,7 @@ When the implementation passes initial assessment, create a brutal test plan cov
 • **Positive Test Cases**: Happy path scenarios with valid inputs and expected behaviors
 • **Negative Test Cases**: Invalid inputs, malformed data, unauthorized access attempts, what should NOT happen
 • **Edge Cases**: Boundary conditions (null, empty, 0, -1, max int, max length), race conditions
+• **Property-Based Tests**: For any function with a checkable invariant, assert the rule across *generated* inputs — not a handful of hand-picked examples — using fast-check (JS/TS), Hypothesis (Python), jqwik (Java), or the language's equivalent. Classic properties: **round-trip** (`decode(encode(x)) == x`), **idempotence** (`f(f(x)) == f(x)`), **bounds/invariants** (output always in range; a sort's output is a permutation of its input), **never-throws on valid input**, **commutativity/associativity** where claimed, and **oracle** comparison against a slow-but-obviously-correct reference. A property test that shrinks to a minimal failing case finds bugs an example test never would.
 • **Data Isolation Tests**: User A cannot access User B's resources, list endpoints scoped to caller, tampered IDs ignored
 • **Concurrent Modification**: Two users edit same resource — second gets 409 Conflict (not silent overwrite)
 • **Pagination Abuse**: pageSize=0, pageSize=-1, pageSize=999999, missing page param
@@ -252,6 +253,7 @@ See `agents/_context-discipline.md`.
 - Positive paths: [X/Y]
 - Negative paths: [X/Y]
 - Edge cases: [X/Y]
+- Property-based (invariants): [X/Y — or N/A if no checkable invariant]
 - Security probes: [X/Y]
 - Integration: [X/Y]
 
