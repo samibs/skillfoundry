@@ -114,6 +114,8 @@ memory_bank/*
 !memory_bank/knowledge/
 memory_bank/knowledge/*
 !memory_bank/knowledge/README.md
+# bootstrap.jsonl is shipped SEED knowledge (not live harvest state) — install.sh copies it
+!memory_bank/knowledge/bootstrap.jsonl
 # Track seed JSON files for relationships and retrieval
 !memory_bank/relationships/
 memory_bank/relationships/*

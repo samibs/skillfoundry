@@ -862,10 +862,14 @@ if [ ! -f "$TARGET_DIR/docs/ANTI_PATTERNS_DEPTH.md" ]; then
     echo -e "${GREEN}  ✓ docs/ANTI_PATTERNS_DEPTH.md installed${NC}"
 fi
 
-# Copy knowledge bootstrap for memory/harvest system
+# Copy knowledge bootstrap for memory/harvest system (optional seed file)
 if [ ! -f "$TARGET_DIR/memory_bank/knowledge/bootstrap.jsonl" ]; then
-    cp "$SCRIPT_DIR/memory_bank/knowledge/bootstrap.jsonl" "$TARGET_DIR/memory_bank/knowledge/"
-    echo -e "${GREEN}  ✓ memory_bank/knowledge/ initialized with bootstrap${NC}"
+    if [ -f "$SCRIPT_DIR/memory_bank/knowledge/bootstrap.jsonl" ]; then
+        cp "$SCRIPT_DIR/memory_bank/knowledge/bootstrap.jsonl" "$TARGET_DIR/memory_bank/knowledge/"
+        echo -e "${GREEN}  ✓ memory_bank/knowledge/ initialized with bootstrap${NC}"
+    else
+        echo -e "${YELLOW}  → bootstrap.jsonl not found in source; skipping (memory system will seed on first harvest)${NC}"
+    fi
 fi
 
 # ═══════════════════════════════════════════════════════════════
