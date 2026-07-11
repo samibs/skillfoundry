@@ -174,3 +174,4 @@ compliance/evidence/*
 
 # Test temp directories
 /tmp/claude-as-*
+.npmrc
