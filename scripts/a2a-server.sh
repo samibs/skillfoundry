@@ -171,7 +171,7 @@ get_agent_skills() {
 extract_frontmatter() {
     local file="$1"
     local field="$2"
-    sed -n '/^---$/,/^---$/p' "$file" | grep "^${field}:" | sed "s/^${field}:[[:space:]]*//" | head -1
+    sed -n '/^---$/,/^---$/p' "$file" | grep "^${field}:" | sed "s/^${field}:[[:space:]]*//" | head -1 || true
 }
 
 # Get framework version
