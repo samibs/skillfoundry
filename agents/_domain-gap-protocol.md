@@ -110,6 +110,21 @@ bash scripts/domain-gap-scan.sh from-prd genesis/<prd>.md
 Each declared non-IT, uncovered domain is reported as a synthesis candidate — the same
 guard/slug rules apply, so IT domains in the list are silently skipped.
 
+## FR-007 — Cross-project promotion
+
+A reviewer earned on one project stays project-local. When the **same domain is synthesized
+in 3+ distinct projects**, it graduates to the shared framework so every future project
+inherits it. This runs inside `/evolve` (Step 3.5):
+
+```
+bash scripts/promote-experts.sh scan                 # list domains in ≥3 projects, not yet shared
+bash scripts/promote-experts.sh promote --domain <slug>   # copy to agents/<slug>-expert.md (framework)
+```
+
+Provenance is aggregated from each registered project's `memory_bank/knowledge/experts.jsonl`
+(written by `synth-expert.sh`). The promoted reviewer keeps its review-only mandate; only its
+scope changes to `framework`.
+
 ---
 
 ## Hard rules (inherited by every synthesized reviewer)

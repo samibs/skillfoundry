@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Domain Expert Synthesis (Phases 1–2)
+## [Unreleased] — Domain Expert Synthesis (Phases 1–3)
 
 > Targets 5.26.0. Not yet released — `package.json` bump + doc version locations happen at release time.
+
+### Added — Phase 3 (cross-project promotion)
+
+- **`scripts/promote-experts.sh`** — `scan` aggregates each registered project's
+  `experts.jsonl` and counts distinct provenance projects per domain; `promote` copies a
+  reviewer synthesized in **3+ distinct projects** from project-local into the shared
+  framework (`agents/<slug>-expert.md`, scope=framework) and scaffolds a framework pack.
+  Idempotent; keeps the review-only mandate. Implements FR-007.
+- **`/evolve` Step 3.5** — surfaces promotion candidates and promotes on confirmation
+  (all four platform copies, in parity).
+- **`scripts/tests/test-promote-experts.sh`** — 13 shell tests (threshold, generalization,
+  idempotency, clean failure), all passing.
 
 ### Added — Phase 2 (detection triggers)
 

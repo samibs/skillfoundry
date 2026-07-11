@@ -45,6 +45,21 @@ Show what was imported:
 - Tech stack preferences
 - Rules injected into `_quality-primer.md`
 
+**Step 3.5: Promote domain reviewers (FR-007)**
+Surface domain reviewers that have been synthesized across enough projects to graduate from
+project-local to framework-shared:
+```
+bash scripts/promote-experts.sh scan
+```
+For each candidate (a reviewer synthesized in ≥ 3 distinct registered projects, not yet
+framework-shared), propose promotion; on confirmation:
+```
+bash scripts/promote-experts.sh promote --domain <slug>
+```
+This copies the review-only reviewer into `agents/<slug>-expert.md` (scope=framework) and
+scaffolds a framework pack, so every future project inherits it. See
+`agents/_domain-gap-protocol.md`.
+
 **Step 4: Propagation guidance**
 After evolution:
 ```
