@@ -21,6 +21,8 @@ Gemini skill for `domain`.
 /domain matrix <name> [--pack name]      Get structured data table (e.g., VAT rates)
 /domain validate <file> --pack <name>    Validate code against domain rules
 /domain prd <description>                Generate domain-aware PRD with regulatory requirements
+/domain expert <description>             Synthesize a review-only domain reviewer (+ knowledge pack)
+/domain experts                          List synthesized reviewers in this project
 ```
 
 ---
@@ -68,6 +70,22 @@ Packs are installed in `packs/<name>/` and contain:
 2. Generate a PRD template with regulatory requirements pre-populated
 3. Save to `genesis/` directory
 4. Include disclaimer about consulting qualified professionals
+
+### For `/domain expert <description>`:
+
+Synthesize a **review-only domain reviewer** (never an advisor) for a specialized non-IT
+field, paired with an auto-scaffolded knowledge pack. Delegate to the script:
+
+1. Canonicalize: `slug=$(bash scripts/synth-expert.sh slug "<description>")`
+2. Guard (skip IT/covered domains): `bash scripts/synth-expert.sh guard --domain "$slug"` — on exit 10, name the existing skill and stop.
+3. Synthesize (interactive y/N gate, or pass `--confirm` when the user's command is itself the confirmation): `bash scripts/synth-expert.sh synthesize --domain "$slug" --jurisdiction <j> --language <l> --signal manual`
+4. Report the created reviewer + pack, and remind the user to populate `packs/<slug>/rules.jsonl` with real, cited terminology.
+
+The reviewer reviews vocabulary, terminology, register, and way-of-working — it does NOT give
+advice or make determinations (FR-010). See `agents/_domain-gap-protocol.md`.
+
+### For `/domain experts`:
+List synthesized reviewers in this project: `bash scripts/synth-expert.sh list`
 
 ### Hard Rules
 

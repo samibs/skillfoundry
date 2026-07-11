@@ -1,0 +1,16 @@
+# Sources — {{DOMAIN_TITLE}} ({{JURISDICTION}} / {{LANGUAGE}})
+
+> Citation index for `packs/{{DOMAIN_SLUG}}/rules.jsonl`. Every rule the reviewer cites must
+> trace to an entry here. Empty on scaffold — populate with real, human-reviewed sources
+> before relying on citations.
+
+| Source ID | Title | Publisher / Authority | URL or reference | last_verified |
+|-----------|-------|-----------------------|------------------|---------------|
+| _(none yet — add real sources; do not fabricate)_ | | | | |
+
+## How to add a rule
+
+1. Add the authoritative source as a row above.
+2. Append a rule to `rules.jsonl`, e.g.:
+   `{"id":"{{DOMAIN_SLUG}}-001","term":"…","preferred":"…","register":"…","note":"…","source_id":"…","last_verified":"YYYY-MM-DD"}`
+3. The reviewer cites `{{DOMAIN_SLUG}}-001`; anything without a rule is `⚠ unverified`.
