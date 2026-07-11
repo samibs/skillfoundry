@@ -7,6 +7,83 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.26.0] - 2026-07-11 — Domain Expert Synthesis
+
+Project-scoped, **review-only** domain reviewers for specialized non-IT fields — synthesized
+on demand, grounded in citable packs, promoted to the framework when they recur. All three
+phases (detection → synthesis → cross-project promotion) shipped together. Skill count
+unchanged for IT work; adds `/domain expert`, `/domain experts`, and reviewer skills per project.
+
+### Added — Phase 3 (cross-project promotion)
+
+- **`scripts/promote-experts.sh`** — `scan` aggregates each registered project's
+  `experts.jsonl` and counts distinct provenance projects per domain; `promote` copies a
+  reviewer synthesized in **3+ distinct projects** from project-local into the shared
+  framework (`agents/<slug>-expert.md`, scope=framework) and scaffolds a framework pack.
+  Idempotent; keeps the review-only mandate. Implements FR-007.
+- **`/evolve` Step 3.5** — surfaces promotion candidates and promotes on confirmation
+  (all four platform copies, in parity).
+- **`scripts/tests/test-promote-experts.sh`** — 13 shell tests (threshold, generalization,
+  idempotency, clean failure), all passing.
+
+### Added — Phase 2 (detection triggers)
+
+- **`scripts/domain-gap-scan.sh`** — two more triggers beyond the self-flag:
+  - `record` + `scan` — **behavioral** trigger (FR-012): agents log a domain-correction each
+    time they revise their own specialized non-IT output; `scan` surfaces any domain reaching
+    the threshold (default 3) that passes the guard and lacks a reviewer.
+  - `from-prd` — **declared** trigger (FR-013): reads a PRD's front-matter `domains: [..]`
+    (inline or block list) and reports each non-IT, uncovered domain as a candidate.
+- **`domains:` field** added to `genesis/TEMPLATE.md` front matter.
+- **`/onboard` Step 5b** — asks whether the project touches specialized non-IT domains
+  (all four platform copies, in parity).
+- **`scripts/tests/test-domain-gap-scan.sh`** — 11 shell tests (behavioral threshold, IT
+  filtering, existing-reviewer suppression, inline + block-list PRD parsing), all passing.
+
+Both triggers reuse Phase 1's `synth-expert.sh` slug/guard, so IT domains are never surfaced.
+
+Adds **project-scoped, review-only domain reviewers** synthesized on demand for specialized
+non-IT fields (legal, accounting, real-estate, medical, …). Origin: generic model output in
+such fields is *technically correct but professionally wrong* — the vocabulary/register a
+practitioner would never sign off. PRD: `genesis/2026-07-10-domain-expert-synthesis.md`.
+
+### Added
+
+- **`scripts/synth-expert.sh`** — the synthesis engine. Subcommands: `slug` (canonicalize
+  free text → validated slug, strips accents and path-injection), `guard` (IT/registry
+  collision check — exit 10 blocks IT domains and already-covered skills), `synthesize`
+  (confirm-gated creation of a reviewer skill + auto-scaffolded knowledge pack, idempotent),
+  and `list`.
+- **`agents/_domain-gap-protocol.md`** — shared module: agents self-flag a
+  `domain-expertise-gap` on specialized non-IT output (FR-001) and activate the reviewer as a
+  review pass (FR-011). Review-only mandate inherited by every synthesized reviewer.
+- **`templates/expert-persona.md.tmpl`** + **`templates/pack.scaffold/`** — the reviewer
+  persona template and pack skeleton (`pack.json`, empty `rules.jsonl`, `SOURCES.md`).
+- **`/domain expert <description>`** and **`/domain experts`** subcommands, wired across all
+  four platform copies of `domain.md` (parity maintained).
+- **`scripts/tests/test-synth-expert.sh`** — 24 shell tests (slug/guard/gate/synthesis/pack/
+  provenance/idempotency/review-only), all passing.
+
+### Safety
+
+- **Review-only, never advisory.** Reviewers check vocabulary, terminology, register, and
+  way-of-working; they never give advice, make legal/financial/medical determinations, or
+  author substantive content (FR-010). Every finding is cite-or-flag; every response carries a
+  "not legal/tax/financial/medical advice" disclaimer.
+- **Never creates unattended.** Synthesis requires an explicit human decision — non-interactive
+  runs without `--confirm` log the gap and exit 20 without writing.
+- **IT domains are never re-synthesized** (denylist + registry guard), so the framework's
+  existing ~113 IT skills are reused, not duplicated.
+
+### Scope (Phase 1)
+
+Detection ships as the **agent self-flag** trigger. Behavioral (3+ corrections) and declared
+(PRD `domains:` tag) triggers, plus cross-project promotion into the shared framework at the
+3-project threshold, are Phases 2–3. Scaffolded packs ship empty — real, cited terminology is
+authored separately and human-reviewed.
+
+---
+
 ## [5.25.0] - 2026-07-07 — Security & Robustness Hardening
 
 Security and robustness hardening from a full adversarial codebase audit. Fixes are grouped by the audit's finding IDs; all land with regression tests (full suite 2352 passing; the only failures are 3 pre-existing environmental flakes — provider-ping timeouts and one shell-out timeout). New surface is behavioral, not commands: `SF_SPECTER_SIMULATE` and `SF_PRD_GATE` env flags and the `submitBatchSettled` pool API. Skill count unchanged (108/platform).
