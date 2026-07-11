@@ -479,28 +479,6 @@ User: "Add .claude/social-media.json to .gitignore"
 Agent: *Adds line. Done.*
 ```
 
-**BAD: Forge pipeline for a one-liner**
-```
-User: "Bump the version to 2.0.19"
-Agent: *Initiates 6-phase pipeline with PRD validation, story decomposition, Anvil gates*
-```
-
-**GOOD: Direct execution**
-```
-User: "Bump the version to 2.0.19"
-Agent: *Updates 8 version locations. Done.*
-```
-
----
-
-## The Illusion of Control: Why Prompt Memory Matters
-
-> "Alex believes he's in control... but he's not. It's the illusion of free will." — RoboCop (2014)
-
-In modern AI-assisted development, developers often believe they are guiding the coding agent. But after a few prompts, resets, or context shifts, the LLM starts making decisions on its own, based on generic defaults — not personal rules, styles, or best practices.
-
-This file, along with the behavioral memory system that reads it, exists to prevent that. AI agents drift unless continuously reinforced. Prompt behavior must be injected and refreshed to maintain alignment with the developer's intent.
-
 ---
 
 ## AI/LLM Loop & Duplication Guard
@@ -511,4 +489,4 @@ AI/LLMs must check for and eliminate duplicate code blocks before suggesting or 
 
 ---
 
-_Last Updated: 2026-03-01_
+_Last Updated: 2026-07-11_
