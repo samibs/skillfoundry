@@ -485,15 +485,12 @@ promote_knowledge() {
                 entry=$(echo "$entry" | jq -c '.promotion_status = "PROMOTED"')
                 promoted=$((promoted + 1))
 
-                # Also add to bootstrap for future project installations
-                local content
-                content=$(echo "$entry" | jq -r '.content // ""' 2>/dev/null)
-                local bootstrap_file="$CENTRAL_KNOWLEDGE/bootstrap.jsonl"
-                if [ -f "$bootstrap_file" ]; then
-                    if ! grep -qF "$content" "$bootstrap_file" 2>/dev/null; then
-                        echo "$entry" >> "$bootstrap_file"
-                    fi
-                fi
+                # NOTE: bootstrap.jsonl is a CURATED, SHIPPED seed — it is intentionally
+                # NOT an auto-append sink. Appending raw harvested entries here leaked
+                # private fields (source_project, signature, harvested_at) into the public
+                # repo (the exact regression PR #25 fixed). Promotion is reflected by the
+                # PROMOTED status on the universal file above; the deliberate path into the
+                # framework seed is /evolve + the human-reviewed promotion-review queue.
             elif [ "$status" = "CANDIDATE" ] || [ "$promo_count" -ge 2 ] 2>/dev/null; then
                 local content
                 content=$(echo "$entry" | jq -r '.content // ""' 2>/dev/null)
