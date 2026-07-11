@@ -176,6 +176,28 @@ Same logic, different language. You can change this later in .claude/config.json
 
 Write the chosen tone to `.claude/shared/config.json`.
 
+### Step 5b: Specialized domain check
+
+Ask whether the project touches specialized **non-IT** fields where generic output is often
+*correct but not professionally right* (legal, accounting, real-estate, medical, insurance,
+tax, notarial). This is the declared trigger for Domain Expert Synthesis (FR-013).
+
+```
+SPECIALIZED DOMAINS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Does this project produce specialized non-IT professional content
+(contracts, filings, accounting, medical/legal text)?
+
+  Enter domains (comma-separated), or leave blank for none.
+  e.g.  legal-fr, accounting-lu, real-estate
+```
+
+- Record the answer in each PRD's `domains:` front-matter field (and/or note it for later).
+- For any declared domain, surface synthesis candidates (review-only reviewers, never
+  advisors): `bash scripts/domain-gap-scan.sh from-prd genesis/<prd>.md`
+- Skip cleanly for pure-IT projects (blank answer). IT domains are auto-filtered by the guard.
+
 ### Step 6: Semgrep check
 
 ```bash

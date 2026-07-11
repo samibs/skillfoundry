@@ -72,6 +72,46 @@ the wording instead, deferring the substantive judgement to a qualified human (F
 
 ---
 
+## FR-012 — Behavioral trigger (same domain corrected 3+ times)
+
+Detection does not rely on the self-flag alone. Each time you **revise your own specialized
+non-IT output** in a domain (the user rewrites it, or you correct register/terminology on
+review), record it:
+
+```
+bash scripts/domain-gap-scan.sh record --domain "<domain free text or slug>"
+```
+
+Then surface accumulated gaps (default threshold = 3 corrections for one domain):
+
+```
+bash scripts/domain-gap-scan.sh scan
+```
+
+`scan` reports only domains that reach the threshold, pass the guard (non-IT, uncovered), and
+have no reviewer yet — each as a synthesis candidate. This catches the exact pattern behind
+this feature's origin: the same French-legal phrasing corrected three times before anyone
+noticed a reviewer was needed.
+
+## FR-013 — Declared trigger (PRD `domains:` field)
+
+A PRD may declare the specialized domains it touches in its front matter:
+
+```yaml
+domains: [legal-fr, accounting-lu, real-estate]
+```
+
+At project kickoff (or in `/onboard`), surface declared candidates:
+
+```
+bash scripts/domain-gap-scan.sh from-prd genesis/<prd>.md
+```
+
+Each declared non-IT, uncovered domain is reported as a synthesis candidate — the same
+guard/slug rules apply, so IT domains in the list are silently skipped.
+
+---
+
 ## Hard rules (inherited by every synthesized reviewer)
 
 - **Review-only.** Vocabulary, terminology, register, way-of-working. No advice, no

@@ -17,6 +17,9 @@ dependencies:
 tags: []              # Categorization: [auth, security, core, feature, etc.]
 priority: medium      # high | medium | low
 layers: []            # Affected layers: [database, backend, frontend]
+domains: []           # Specialized NON-IT domains this project touches (declared trigger for
+                      # Domain Expert Synthesis), e.g. [legal-fr, accounting-lu, real-estate].
+                      # Leave empty for pure-IT projects. See agents/_domain-gap-protocol.md.
 ---
 
 # PRD: [Feature Name]

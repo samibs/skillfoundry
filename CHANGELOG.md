@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Domain Expert Synthesis (Phase 1 MVP)
+## [Unreleased] — Domain Expert Synthesis (Phases 1–2)
 
 > Targets 5.26.0. Not yet released — `package.json` bump + doc version locations happen at release time.
+
+### Added — Phase 2 (detection triggers)
+
+- **`scripts/domain-gap-scan.sh`** — two more triggers beyond the self-flag:
+  - `record` + `scan` — **behavioral** trigger (FR-012): agents log a domain-correction each
+    time they revise their own specialized non-IT output; `scan` surfaces any domain reaching
+    the threshold (default 3) that passes the guard and lacks a reviewer.
+  - `from-prd` — **declared** trigger (FR-013): reads a PRD's front-matter `domains: [..]`
+    (inline or block list) and reports each non-IT, uncovered domain as a candidate.
+- **`domains:` field** added to `genesis/TEMPLATE.md` front matter.
+- **`/onboard` Step 5b** — asks whether the project touches specialized non-IT domains
+  (all four platform copies, in parity).
+- **`scripts/tests/test-domain-gap-scan.sh`** — 11 shell tests (behavioral threshold, IT
+  filtering, existing-reviewer suppression, inline + block-list PRD parsing), all passing.
+
+Both triggers reuse Phase 1's `synth-expert.sh` slug/guard, so IT domains are never surfaced.
 
 Adds **project-scoped, review-only domain reviewers** synthesized on demand for specialized
 non-IT fields (legal, accounting, real-estate, medical, …). Origin: generic model output in

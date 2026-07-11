@@ -1,7 +1,7 @@
 ---
 prd_id: domain-expert-synthesis
 title: Domain Expert Synthesis
-version: 1.2
+version: 1.3
 status: READY
 created: 2026-07-10
 author: samibs
@@ -105,6 +105,8 @@ the shared framework via the existing `/evolve` promotion loop.
 | FR-007 | Cross-project promotion | Record each synthesized expert to dev-memory. When the same domain is synthesized in 3+ distinct projects, `/evolve` proposes promoting it from project-local to framework-shared (`agents/`). | Given a domain synthesized in 3 projects, When `/evolve` runs, Then it lists the domain as a promotion candidate and, on confirm, copies a generalized persona into `agents/`. |
 | FR-008 | Manual invocation | `/domain expert <description>` lets the user request synthesis directly, bypassing detection but running the same gate, guard, synthesis, and pack scaffold. | Given `/domain expert "Belgian notarial deeds"`, When invoked, Then the same propose→synthesize→scaffold flow runs. |
 | FR-009 | Provenance + listing | Every synthesized reviewer records `{domain_slug, jurisdiction, source_signal, created_at, provenance_project, scope}` in its frontmatter and in a project manifest, listable via `/domain list`. | Given synthesized reviewers exist, When `/domain list` runs, Then each shows scope (project/framework) and provenance. |
+| FR-012 | Behavioral trigger (Phase 2) | Agents record a domain-correction each time they revise their own specialized non-IT output (`domain-gap-scan.sh record`). A scan reports domains reaching a threshold (default 3) that pass the guard and lack a reviewer, as synthesis candidates. | Given 3 recorded corrections for `accounting-lu` and 2 for `legal-fr`, When `scan` runs, Then `accounting-lu` is surfaced as a candidate and `legal-fr` is not; an IT domain never surfaces. |
+| FR-013 | Declared trigger (Phase 2) | A PRD may declare `domains: [..]` in front matter; `domain-gap-scan.sh from-prd` reports each declared non-IT, uncovered domain as a synthesis candidate. Supports inline `[a, b]` and block-list YAML. | Given a PRD with `domains: [legal-fr, api-design]`, When `from-prd` runs, Then `legal-fr` is a candidate and the IT `api-design` is skipped. |
 
 ### 3.2 User Interface Requirements
 
@@ -276,8 +278,8 @@ Markdown/JSONL asset generation). No endpoints, no request/response shapes, no f
   questions, make legal/financial/medical determinations, recommend actions, or author
   substantive domain content. It reviews vocabulary, terminology, register, and
   way-of-working over content that already exists — nothing more.
-- Behavioral detection via 3+ harvested corrections (roadmap — Phase 2 trigger).
-- Declared detection via PRD `domains:` field / `/onboard` question (roadmap — Phase 2 trigger).
+- ~~Behavioral detection via 3+ corrections~~ — **delivered (Phase 2, FR-012)**.
+- ~~Declared detection via PRD `domains:` field / `/onboard` question~~ — **delivered (Phase 2, FR-013)**.
 - Auto-populating pack `rules.jsonl` with real legislation (packs are scaffolded empty; content
   authoring is a separate effort, human-reviewed).
 - Any web UI or dashboard.
@@ -315,7 +317,7 @@ Markdown/JSONL asset generation). No endpoints, no request/response shapes, no f
 | Phase | Name | Scope | Prerequisites |
 |-------|------|-------|---------------|
 | 1 | MVP: self-flag → propose → synthesize + pack + review pass | FR-001–006, FR-008, FR-009, FR-010, FR-011; `_domain-gap-protocol.md`, `synth-expert.sh`, `expert-persona.md.tmpl`, pack scaffold, `/domain expert` manual path | None |
-| 2 | Additional triggers | Behavioral 3+-correction detection; PRD `domains:` tag + `/onboard` question | Phase 1 |
+| 2 ✅ | Additional triggers (DONE) | Behavioral 3+-correction detection (FR-012); PRD `domains:` tag + `/onboard` question (FR-013) — `scripts/domain-gap-scan.sh` + 11 tests | Phase 1 |
 | 3 | Cross-project promotion | FR-007 in `/evolve`; `experts.jsonl` provenance; promote at 3 projects | Phases 1–2, dev-memory configured |
 
 ### 10.2 Effort Estimate
@@ -381,3 +383,4 @@ Markdown/JSONL asset generation). No endpoints, no request/response shapes, no f
 | 1.0 | 2026-07-10 | samibs | Initial draft — MVP = agent self-flag trigger + persona-with-pack grounding |
 | 1.1 | 2026-07-11 | samibs | Scoped to REVIEW-ONLY: reviews vocabulary/terminology/register/way-of-working, never gives advice or makes determinations (added FR-010, review-only mandate, cite-or-flag) |
 | 1.2 | 2026-07-11 | samibs | prd-lint semantic pass fixes: added FR-011 (reviewer activation/review pass), canonical `domain_slug` identity key (idempotency + promotion counting), IT-domain determination (FR-006), confidence threshold 0.7 + non-interactive gate (FR-002/003); resolved cite-or-abstain→cite-or-flag drift, `project`→`provenance_project`, stale R-001 wording; FR-010/011 added to Phase 1 |
+| 1.3 | 2026-07-11 | samibs | Phase 2 built: FR-012 (behavioral 3+-correction trigger) + FR-013 (declared PRD `domains:` trigger) via `scripts/domain-gap-scan.sh` (record/scan/from-prd) + `domains:` template field + `/onboard` question; 11 tests. Moved from out-of-scope to delivered. |
