@@ -83,6 +83,7 @@ jobs:
 
       - name: Publish to npm
         run: npm publish --provenance --access public
+        working-directory: sf_cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
