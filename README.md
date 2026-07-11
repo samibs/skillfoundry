@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.25.0-blue)
+![Version](https://img.shields.io/badge/version-5.26.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,18 +25,22 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.25.0
+### What's New in v5.26.0
 
-**Security & Robustness Hardening — the framework, put through its own adversarial audit**
+**Domain Expert Synthesis — project-scoped, review-only domain reviewers**
 
-A full adversarial audit of the codebase, then remediation. Every CRITICAL/HIGH finding was verified against source before fixing, and every fix ships with a regression test.
+When you build for a specialized non-IT field (legal, accounting, real-estate, medical), generic output is often *correct but not professionally right* — the vocabulary or register a practitioner would never sign. SkillFoundry now synthesizes a **review-only domain reviewer** for that field, on demand.
 
-- **Closed real RCE/exfil paths.** Specter no longer executes model-authored shell commands (validated loopback probe + `execFileSync`, opt-in); the permission `ask` verdict **fails closed** in headless `forge`/`go` runs; the `grep` tool and semgrep scanner were de-shelled (a `$()` pattern was RCE even with `allow_shell=false`).
-- **Real memory isolation.** Recall is now namespaced per project — one project's decisions no longer surface as authoritative context in another. The knowledge sanitizer now catches JSON-embedded secrets and strips usernames/project names before any public sync.
-- **Gates that actually gate.** The PRD gate, T4 security scan, anvil SAST, and the security micro-gate all **fail closed** instead of silently passing when a scanner is absent or a response is unparseable. Certification no longer awards a passing grade to a project with no code.
-- **Runtime robustness.** An AgentPool task that ignores its abort no longer deadlocks the pool; batch submission can be resilient (`submitBatchSettled`); the message bus enforces recipient isolation.
+- **Three ways it's detected.** An agent self-flags while producing specialized non-IT content; the same domain corrected 3+ times is surfaced; or a PRD declares `domains:` up front.
+- **Review-only, never advisory.** Reviewers check terminology, register, and way-of-working, and cite a knowledge pack or flag it unverified — they never give advice or make legal/financial/medical determinations.
+- **Earns its way into the framework.** A reviewer synthesized across 3+ projects is promoted from project-local to framework-shared, so every future project inherits it.
+- **Never recreates IT skills.** IT domains are auto-filtered — only genuine non-IT gaps get a reviewer.
 
-Full breakdown in the CHANGELOG under `[5.25.0]`.
+Full breakdown in the CHANGELOG under `[5.26.0]`.
+
+#### Previous: Security & Robustness Hardening (v5.25.0)
+
+A full adversarial audit of the codebase, then remediation — RCE/exfil paths closed, per-project memory isolation, and gates that fail closed. Details in the CHANGELOG under `[5.25.0]`.
 
 #### Previous: Injection Resistance & Prompt Discipline (v5.24.0)
 

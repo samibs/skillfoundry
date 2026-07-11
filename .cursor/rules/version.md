@@ -172,7 +172,7 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.25.0**
+**SkillFoundry v5.26.0**
 
 - **61 Agents, 108 Skills/platform** - Complete lifecycle coverage (130+ total incl. CLI)
 - **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
@@ -196,6 +196,7 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+| 5.26.0 | 2026-07-11 | Domain Expert Synthesis — review-only, project-scoped domain reviewers for specialized non-IT fields (self-flag / behavioral / declared detection + cross-project promotion) |
 | 5.25.0 | 2026-07-07 | Security & Robustness Hardening: adversarial-audit remediation — Specter RCE, headless permission fail-closed, grep/semgrep de-shell, memory isolation, sanitizer, gate fail-closed, AgentPool deadlock |
 | 5.24.0 | 2026-07-07 | Injection Resistance & Prompt Discipline: embedded-instruction gate, no-narration, graduated recall, routing cascade, trigger+anti-trigger descriptions |
 | 5.23.0 | 2026-07-07 | Verification Layer: /verify agent-agnostic gate, PRD contradiction/gap detection, property-based testing |

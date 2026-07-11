@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — Domain Expert Synthesis (Phases 1–3)
+## [5.26.0] - 2026-07-11 — Domain Expert Synthesis
 
-> Targets 5.26.0. Not yet released — `package.json` bump + doc version locations happen at release time.
+Project-scoped, **review-only** domain reviewers for specialized non-IT fields — synthesized
+on demand, grounded in citable packs, promoted to the framework when they recur. All three
+phases (detection → synthesis → cross-project promotion) shipped together. Skill count
+unchanged for IT work; adds `/domain expert`, `/domain experts`, and reviewer skills per project.
 
 ### Added — Phase 3 (cross-project promotion)
 
