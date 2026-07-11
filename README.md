@@ -669,6 +669,22 @@ scripts/evolve.sh iterate                  Refine through multiple rounds
 scripts/evolve.sh run                      Full evolution cycle
 ```
 
+### Domain Experts (v5.26.0)
+
+Building for a specialized non-IT field (law, accounting, real estate, medical)? Generic output there is often *correct but not professionally right* — the vocabulary or register a practitioner would never sign. SkillFoundry synthesizes a **review-only domain reviewer** for the field, on demand.
+
+```bash
+/domain expert "French legal contract drafting"   # synthesize a reviewer + knowledge pack
+/domain experts                                    # list reviewers in this project
+```
+
+- **Detected three ways** — an agent self-flags a gap, the same domain corrected 3+ times, or a PRD declares `domains:`.
+- **Review-only** — checks terminology, register, and way-of-working, cites a pack or flags it unverified; **never gives advice or makes determinations**.
+- **Earns its way in** — a reviewer synthesized across 3+ projects is promoted to the framework, so every future project inherits it.
+- **Never recreates IT skills** — IT domains are auto-filtered.
+
+Full guide: [docs/DOMAIN-EXPERTS.md](docs/DOMAIN-EXPERTS.md).
+
 ---
 
 ## Command Reference

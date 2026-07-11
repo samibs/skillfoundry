@@ -2016,5 +2016,49 @@ The auto-harvest cron (`scripts/auto-harvest-cron.sh`) automatically:
 
 ---
 
+## 23. Domain Experts (Review-Only Reviewers)
+
+**Since v5.26.0.** When you build for a specialized non-IT field (law, accounting, real
+estate, medical, insurance, tax), generic output is often *correct but not professionally
+right*. SkillFoundry synthesizes a **review-only domain reviewer** for the field — it checks
+terminology, register, and way-of-working, and **never gives advice or makes determinations**.
+
+### Create a reviewer
+
+```bash
+/domain expert "French legal contract drafting"
+#  or directly:
+bash scripts/synth-expert.sh synthesize --domain "French legal contract drafting" \
+  --jurisdiction FR --language fr --signal manual
+```
+
+This creates `.claude/commands/<slug>-expert.md` (mirrored to every platform) plus a knowledge
+pack `packs/<slug>/`. Populate `packs/<slug>/rules.jsonl` with **real, human-reviewed**
+terminology — until you do, findings are flagged `⚠ unverified` (cite-or-flag).
+
+### Detection (three ways)
+
+```bash
+bash scripts/domain-gap-scan.sh record --domain "Comptabilité LU"   # log a correction
+bash scripts/domain-gap-scan.sh scan                                 # behavioral: 3+ corrections
+bash scripts/domain-gap-scan.sh from-prd genesis/my-prd.md           # declared: PRD `domains:`
+```
+
+An agent also self-flags a gap automatically while producing specialized non-IT output.
+IT domains are always skipped — the guard reuses existing IT skills instead of duplicating them.
+
+### Promote to the framework
+
+A reviewer synthesized in **3+ distinct projects** graduates to framework-shared (via `/evolve`):
+
+```bash
+bash scripts/promote-experts.sh scan                     # candidates in ≥3 projects
+bash scripts/promote-experts.sh promote --domain <slug>  # → agents/<slug>-expert.md
+```
+
+Full reference: [DOMAIN-EXPERTS.md](DOMAIN-EXPERTS.md).
+
+---
+
 *Created by SBS with Claude Code*
 *Framework Version: 5.26.0*

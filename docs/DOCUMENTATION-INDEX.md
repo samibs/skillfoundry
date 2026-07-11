@@ -23,6 +23,8 @@ Start here for installation and basic usage:
 | **[docs/DOCS-VERSIONING-STRATEGY.md](docs/DOCS-VERSIONING-STRATEGY.md)** | - | **NEW (FR-DOCS-104)** - Docs versioning, release-triggered review, WCAG 2.1 AA baseline |
 | **[docs/ESCALATION-CRITERIA.md](docs/ESCALATION-CRITERIA.md)** | 18 KB | **NEW v1.7.0** - Auto-fix vs. escalation decision matrix |
 | **[docs/AUTONOMOUS-EXECUTION.md](docs/AUTONOMOUS-EXECUTION.md)** | 10 KB | **NEW v1.7.0.2** - Autonomous execution setup, permission profiles, safety hooks |
+| **[docs/DOMAIN-EXPERTS.md](docs/DOMAIN-EXPERTS.md)** | - | **NEW v5.26.0** - Review-only domain reviewers for specialized non-IT fields: detection (self-flag / behavioral / declared), synthesis + packs, cross-project promotion |
+| **[V5.26.0-RELEASE-NOTES.md](docs/V5.26.0-RELEASE-NOTES.md)** | - | What's new in v5.26.0 — Domain Expert Synthesis (review-only reviewers for law/accounting/etc., three-way detection, cross-project promotion; + bootstrap seed & harvest privacy fixes) |
 | **[V5.25.0-RELEASE-NOTES.md](docs/V5.25.0-RELEASE-NOTES.md)** | - | What's new in v5.25.0 — Security & Robustness Hardening (adversarial-audit remediation: Specter RCE, headless permission fail-closed, memory isolation, gate fail-closed, AgentPool deadlock) |
 | **[V5.24.0-RELEASE-NOTES.md](docs/V5.24.0-RELEASE-NOTES.md)** | - | What's new in v5.24.0 — Injection Resistance & Prompt Discipline (embedded-instruction gate, no-narration, graduated recall, routing cascade) |
 | **[V5.23.0-RELEASE-NOTES.md](docs/V5.23.0-RELEASE-NOTES.md)** | - | What's new in v5.23.0 — Verification Layer (`/verify`, PRD contradiction/gap detection, property-based tests) |

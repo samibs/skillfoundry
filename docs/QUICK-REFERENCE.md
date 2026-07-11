@@ -180,6 +180,18 @@ Auto-generates: HTML report, Markdown report, Word-compatible report, remediatio
 | `/domain validate <file> --pack <name>` | Check code against domain rules |
 | `/domain prd <description>` | Generate domain-aware PRD |
 | `/domain cite <rule-id>` | Full citation for a specific rule |
+| `/domain expert <description>` | **v5.26.0** — synthesize a review-only reviewer (+ pack) for a non-IT domain |
+| `/domain experts` | **v5.26.0** — list synthesized reviewers in this project |
+
+### Domain Experts (review-only reviewers — v5.26.0)
+
+| Command / script | Purpose |
+|------------------|---------|
+| `synth-expert.sh synthesize --domain <slug> --jurisdiction <j> --language <l>` | Create a project-scoped reviewer + knowledge pack |
+| `domain-gap-scan.sh record\|scan\|from-prd` | Detect gaps: behavioral (3+ corrections) or declared (PRD `domains:`) |
+| `promote-experts.sh scan\|promote --domain <slug>` | Promote a reviewer to the framework after 3+ projects |
+
+> Reviewers check terminology/register/way-of-working and **never give advice or make determinations**. See [DOMAIN-EXPERTS.md](DOMAIN-EXPERTS.md).
 
 ### Installed Packs
 
