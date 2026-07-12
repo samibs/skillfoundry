@@ -7,7 +7,7 @@
 |-------|----------------|-------|
 | `production-orchestrator` | Final veto on all deployments | All production changes |
 | `compliance-verifier` | Veto on compliance violations | Regulatory requirements |
-| `security-guardian` | Veto on security issues | Security posture |
+| `security-specialist` | Veto on security issues | Security posture |
 
 ### Architectural Tier (Design Authority)
 | Agent | Decision Rights | Scope |
@@ -53,13 +53,13 @@ Execution → Monitoring (observability requirements)
 
 ### Who Can Veto Changes
 - `production-orchestrator` → ANY deployment
-- `security-guardian` → Security-related
+- `security-specialist` → Security-related
 - `compliance-verifier` → Compliance-related
 - `test-coverage-guardian` → Coverage-related
 - `web-security-checker` → Production promotion (public-facing URL projects)
 
 ### Who Must Review Changes
-- ALL code → `security-guardian` + `gate-keeper`
+- ALL code → `security-specialist` + `gate-keeper`
 - ALL deployments → `production-orchestrator`
 - ALL architecture changes → `architect` + `refactoring-strategist`
 
@@ -85,7 +85,7 @@ Execution → Monitoring (observability requirements)
 
 | Issue Type | First Response | Escalation Path | SLA |
 |------------|---------------|-----------------|-----|
-| Critical security vulnerability | STOP deployment | `security-guardian` → human | Immediate |
+| Critical security vulnerability | STOP deployment | `security-specialist` → human | Immediate |
 | Compliance violation | STOP deployment | `compliance-verifier` → human | Immediate |
 | Coverage <95% | BLOCK deployment | `test-coverage-guardian` → `secure-coder` | 1 hour |
 | Web security BLOCKER | STOP promotion | `web-security-checker` → `production-orchestrator` → human | Immediate |

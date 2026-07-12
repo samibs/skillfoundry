@@ -40,7 +40,7 @@ Guide refactoring decisions to preserve system integrity.
 ## Inputs
 - Refactoring proposals from `refactor`
 - Architecture from `architect`
-- Security requirements from `security-guardian`
+- Security requirements from `security-specialist`
 
 ## Outputs
 - Refactoring approval/denial
@@ -56,7 +56,7 @@ Guide refactoring decisions to preserve system integrity.
 
 ## Escalation Rules
 - Risk score >7 → REQUIRE phased rollout
-- Security contract conflict → ESCALATE to `security-guardian`
+- Security contract conflict → ESCALATE to `security-specialist`
 - Architecture violation → ESCALATE to `architect`
 
 ## Self-check Procedures

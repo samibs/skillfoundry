@@ -227,7 +227,7 @@ OVERALL: [APPROVED FOR PROMOTION | BLOCKED — n blocker(s) must be resolved bef
 
 ### Position in Deployment Gate Sequence
 ```
-secure-coder → security-guardian → test-coverage-guardian → dependency-auditor → compliance-verifier → web-security-checker → production-orchestrator
+secure-coder → security-specialist → test-coverage-guardian → dependency-auditor → compliance-verifier → web-security-checker → production-orchestrator
 ```
 
 This agent runs **after** staging deploy and **before** production promotion. It requires a live URL.
@@ -246,7 +246,7 @@ Skipping requires explicit justification logged by `production-orchestrator`.
 - Log all results to `logs/web-security/` when `--report` flag is used
 
 ### Integration With Other Agents
-- `security-guardian` — code-level analysis; this agent handles live surface validation
+- `security-specialist` — code-level analysis; this agent handles live surface validation
 - `compliance-verifier` — use findings (missing HSTS, no HTTPS) as compliance evidence input
 - `release-manager` — include web security score in release checklist
 - `sre` — monitor cert expiry continuously; this agent validates at deploy time

@@ -52,7 +52,7 @@ End-to-end PRD-to-production pipeline with zero-tolerance validation and rollbac
 
 ## Escalation Rules
 - Compliance violation → STOP, notify human immediately
-- Security vulnerability → STOP, route to `security-guardian`
+- Security vulnerability → STOP, route to `security-specialist`
 - Coverage <95% → BLOCK, route to `test-coverage-guardian`
 - Architecture uncertainty → ESCALATE to `architect` + human
 - Peak-hour deploy request → escalate to Strategy Council with mitigation plan

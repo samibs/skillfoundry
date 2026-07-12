@@ -44,7 +44,7 @@ Transform incidents into institutional knowledge through systematic analysis.
 
 ## Escalation Rules
 - Pattern detected across 3+ incidents → ESCALATE to `production-orchestrator`
-- Security-related incident → ROUTE to `security-guardian`
+- Security-related incident → ROUTE to `security-specialist`
 - Data loss incident → IMMEDIATE escalation to human
 - Repeat pattern (≥3 similar RCAs) → mandate architecture change proposal with `architect` + `sre`
 

@@ -33,7 +33,7 @@ Ensure ≥95% test coverage across all code with meaningful assertions.
 ## Inputs
 - Coverage reports from `tester`
 - Code changes from `secure-coder`
-- Risk assessments from `security-guardian`
+- Risk assessments from `security-specialist`
 
 ## Outputs
 - Coverage analysis report

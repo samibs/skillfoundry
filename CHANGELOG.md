@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — security cluster consolidation, pass 2b (rationalization)
+
+- **`security-guardian` retired** (103 skills). It was a thin 61-line governance *role card*
+  (Identity / VETO authority / escalation boilerplate) whose claimed capabilities (SAST, CVE,
+  SBOM) overlap `/verify` and `/security`. Its **governance role — security veto authority and
+  escalation target — was reassigned to `security-specialist` (`/security`)** across
+  `_governance-model.md`, `_escalation-procedures.md`, `_bpsbs-production-rules.md`,
+  `failure-analysis`, `production-orchestrator`, `secure-coder`, `test-coverage-guardian`,
+  `refactoring-strategist`, and `web-security-checker` (~18 references). `/security` is now the
+  single security authority.
+- **`security-scanner` kept** — 514 lines of real scan patterns (overlaps `/verify`'s SAST, but
+  folding it is a content merge for a later pass, not a delete).
+
 ### Changed — security cluster consolidation (rationalization, pass 2a)
 
 - **`/pentest` folded into `/security`** (104 skills). `/security` already had a `pentest` mode
