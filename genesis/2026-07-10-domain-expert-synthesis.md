@@ -2,7 +2,7 @@
 prd_id: domain-expert-synthesis
 title: Domain Expert Synthesis
 version: 1.4
-status: READY
+status: COMPLETED
 created: 2026-07-10
 author: samibs
 last_updated: 2026-07-11

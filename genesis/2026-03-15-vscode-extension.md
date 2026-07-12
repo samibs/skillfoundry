@@ -4,7 +4,7 @@
 prd_id: vscode-extension
 title: SkillFoundry VS Code Extension
 version: 1.0
-status: DRAFT
+status: COMPLETED
 created: 2026-03-15
 author: SBS + PRD Architect
 last_updated: 2026-03-15

@@ -4,7 +4,7 @@
 prd_id: skillfoundry-v3-mcp-agent-server
 title: SkillFoundry v3 — MCP Agent Server
 version: 1.0
-status: DRAFT
+status: COMPLETED
 created: 2026-03-28
 author: redacted-user + PRD Architect
 last_updated: 2026-03-28

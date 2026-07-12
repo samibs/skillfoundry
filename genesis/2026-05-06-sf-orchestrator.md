@@ -4,7 +4,7 @@
 prd_id: sf-orchestrator
 title: SkillFoundry Web Orchestrator
 version: 1.0
-status: READY
+status: COMPLETED
 created: 2026-05-06
 author: samibs
 last_updated: 2026-05-06
