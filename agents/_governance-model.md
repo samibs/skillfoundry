@@ -28,7 +28,7 @@
 ### Execution Tier (Task Completion)
 | Agent | Decision Rights | Scope |
 |-------|----------------|-------|
-| `secure-coder` | Implementation approach | Feature delivery |
+| `coder` | Implementation approach | Feature delivery |
 | `tester` | Test strategy | Validation approach |
 | `refactor` | Refactoring execution | Code improvement |
 | `migration` | Migration execution | Schema changes |
@@ -85,7 +85,7 @@ Execution → Monitoring (observability requirements)
 |------------|---------------|-----------------|-----|
 | Critical security vulnerability | STOP deployment | `security-specialist` → human | Immediate |
 | Compliance violation | STOP deployment | `compliance-verifier` → human | Immediate |
-| Coverage <95% | BLOCK deployment | `tester` → `secure-coder` | 1 hour |
+| Coverage <95% | BLOCK deployment | `tester` → `coder` | 1 hour |
 | Web security BLOCKER | STOP promotion | `web-security-checker` → `production-orchestrator` → human | Immediate |
 | Web security WARN | HOLD promotion | `web-security-checker` → lead sign-off | 4 hours |
 | Architecture conflict | HOLD decision | `architect` → Strategic tier | 4 hours |

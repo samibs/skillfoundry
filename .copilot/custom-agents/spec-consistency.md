@@ -34,7 +34,7 @@ Ensure implementation matches PRD specifications and detect drift.
 
 ## Inputs
 - PRDs from `genesis/` folder
-- Code changes from `secure-coder`
+- Code changes from `coder`
 - Deployment records from `production-orchestrator`
 - Story files from `docs/stories/**`
 

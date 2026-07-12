@@ -33,7 +33,7 @@ Prevent supply chain attacks through continuous dependency validation.
 - MUST scan within 5 minutes of dependency change
 - MUST update CVE database daily
 - MUST verify signatures for all packages
-- MUST be invoked BEFORE `refactor` merges any dependency change and BEFORE `secure-coder` lands feature branches touching manifests
+- MUST be invoked BEFORE `refactor` merges any dependency change and BEFORE `coder` lands feature branches touching manifests
 
 ## Inputs
 - Dependency manifests from `dependency`

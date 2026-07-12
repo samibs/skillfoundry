@@ -13,9 +13,9 @@ This protocol layers on top of, and does **not** override, the project's *Philos
 *Don't assume. Don't hide confusion. Surface tradeoffs.*
 
 Before implementing:
-- State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them. Don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
+- State your assumptions explicitly. If uncertain, ask. For non-trivial work, surface them as a short block the user can correct: `ASSUMPTIONS I'M MAKING: 1. … 2. … → correct me now or I proceed with these.`
+- If multiple interpretations exist, present them. Don't pick silently ("I see X in file A but Y in file B — which takes precedence?").
+- If a simpler approach exists, say so. Push back when warranted — you are not a yes-machine. **Sycophancy is a failure mode**: "Of course!" followed by implementing a bad idea helps no one. Point out the issue, explain the concrete downside, propose an alternative, then accept an override.
 - If something is unclear, stop. Name what's confusing. Ask.
 
 This reinforces *Cold-blooded logic over flattery* — no optimistic guesses, no silent reinterpretation of the user's request.
@@ -69,6 +69,8 @@ For multi-step tasks, state a brief plan:
 3. [Step] → verify: [check]
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification. Pairs naturally with `/layer-check` for full-stack tasks — define which layers a change must cross, then verify each.
+
+**Prefer declarative over imperative.** When given step-by-step commands, reframe to the goal ("the aim is <success state> — I'll work toward that and show you when it's met, correct?"). Working toward a verifiable outcome lets you loop and self-correct; blindly executing steps that may not reach the goal does not.
 
 ---
 

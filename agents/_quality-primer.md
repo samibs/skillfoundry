@@ -93,7 +93,7 @@ _No learned rules yet. Rules will appear here as gate-keeper rejections are trac
 
 ## How to Use This Module
 
-Code-generating agents (coder, senior-engineer, refactor, fixer) should reference this module:
+Code-generating agents (coder, coder, refactor, fixer) should reference this module:
 
 ```markdown
 ## Required Context

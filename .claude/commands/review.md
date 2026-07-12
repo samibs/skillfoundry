@@ -392,7 +392,7 @@ ESCALATION REQUIRED
 Issue: [description]
 Attempts: [what was tried]
 Root cause hypothesis: [best guess]
-Suggested next steps: [for user or senior-engineer]
+Suggested next steps: [for user or coder]
 ```
 
 ---

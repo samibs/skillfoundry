@@ -14,7 +14,7 @@ For each story, spawn 2-3 independent agent runs:
 |-----------|-------|-------|-----------|
 | A | coder | opus | Maximum quality |
 | B | coder | sonnet | Cost-efficient alternative |
-| C | senior-engineer | opus | Different perspective |
+| C | coder | opus | Different perspective |
 
 The orchestrator determines contestants based on story complexity and cost-routing config.
 
