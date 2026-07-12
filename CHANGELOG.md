@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — security cluster consolidation (rationalization, pass 2a)
+
+- **`/pentest` folded into `/security`** (104 skills). `/security` already had a `pentest` mode
+  plus OWASP Top 10, STRIDE, and attack-vector enumeration, so the standalone `pentest-specialist`
+  was redundant. Its unique bits — white-hat authorized-scope rules and the CVSS finding format —
+  were grafted into `/security pentest`. References redirected (`web-security-check`,
+  `red-team-researcher`).
+- **`red-team-researcher` kept** — on review it is the best-written security skill in the repo
+  (deep attacker-primitive analysis with a `references/` library), not a merge target. The
+  earlier plan to fold it in was wrong; it stays.
+- Next security pass (separate PR): `security-guardian` / `security-scanner` overlap `/verify`'s
+  SAST but are woven into `_governance-model` / `_cost-routing` as roles — needs governance rewiring.
+
 ### Removed — skill-registry cruft (rationalization, pass 1)
 
 Deleted four non-capability skills that polluted the registry and A2A cards without doing any

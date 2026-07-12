@@ -19,8 +19,19 @@ Full security audit of component/system. Output structured vulnerability report.
 ### `/security threat-model [feature]`
 STRIDE-based threat modeling for new features.
 
-### `/security pentest [endpoint]`
-Penetration testing mindset - enumerate attack vectors.
+### `/security pentest [target]` — white-hat penetration testing
+Penetration-testing mindset: enumerate the attack surface and test for OWASP Top 10
+vulnerabilities. Sub-actions: `scan [target]` (full OWASP sweep of a codebase/endpoint spec),
+`endpoint [url]` (injection / auth-bypass / rate-limit on one API), `report` (findings writeup).
+
+**Authorized-scope rules (non-negotiable):** operate only within authorized scope — never test
+systems without explicit permission; test for vulnerability *existence*, do not execute
+destructive exploits; refuse attacks on production systems without documented authorization.
+
+Every finding: `[SEVERITY] title · CVSS X.X (vector) · location (file:line/endpoint) ·
+description · proof-of-concept to reproduce · specific remediation · CWE-XXX / OWASP-AYYY`.
+
+> For attacker-primitive-level deep analysis of specific findings, chain with `/red-team-researcher`.
 
 ### `/security review [code]`
 Security-focused code review (beyond standard review).

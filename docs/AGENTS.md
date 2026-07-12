@@ -1,6 +1,6 @@
 # SkillFoundry - Complete Agent Team Reference
 
-**Version 5.26.0** | **The Forge: 61 Core Agents / 105 Skills / 20 MCP Tool Agents** | **Hexa Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, Grok Build) | **62 A2A Cards** | **37 Compliance Checks**
+**Version 5.26.0** | **The Forge: 61 Core Agents / 104 Skills / 20 MCP Tool Agents** | **Hexa Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, Grok Build) | **62 A2A Cards** | **37 Compliance Checks**
 
 ---
 
@@ -10,7 +10,7 @@ Your complete AI development team, covering the full software development lifecy
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                     THE FORGE (61 Core Agents / 105 Skills)                   │
+│                     THE FORGE (61 Core Agents / 104 Skills)                   │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
 │  LEADERSHIP        ARCHITECTURE         IMPLEMENTATION       QUALITY       │
