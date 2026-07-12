@@ -4,7 +4,7 @@
 prd_id: native-debugger-integration
 title: Native Debugger Integration — Runtime State Inspection for AI Agents
 version: 1.0
-status: DRAFT
+status: COMPLETED
 created: 2026-03-12
 author: redacted-user
 last_updated: 2026-03-12

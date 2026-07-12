@@ -4,7 +4,7 @@
 prd_id: folder-state-and-checkbox-reconciler
 title: Story Folder State Machine & Checkbox Reconciler
 version: 1.0
-status: DRAFT
+status: COMPLETED
 created: 2026-05-08
 author: redacted-user
 last_updated: 2026-05-08

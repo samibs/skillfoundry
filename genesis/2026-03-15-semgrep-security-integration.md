@@ -4,7 +4,7 @@
 prd_id: semgrep-security-integration
 title: Semgrep Security Integration
 version: 1.0
-status: DRAFT
+status: COMPLETED
 created: 2026-03-15
 author: SkillFoundry Team
 last_updated: 2026-03-15
