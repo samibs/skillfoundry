@@ -302,7 +302,7 @@ module.exports = {
 
 ## 7. Observability Stack
 
-**Referenced by:** `sre-specialist`, `performance-guardian`, `ops-tooling-generator`
+**Referenced by:** `sre-specialist`, `sre`, `ops-tooling-generator`
 
 ### Required Metrics (RED Method)
 
@@ -329,6 +329,32 @@ module.exports = {
   "error": "Connection refused"
 }
 ```
+
+---
+
+## Production Guardrail Thresholds
+
+Concrete thresholds preserved from the retired guardian role cards. The owning skill enforces
+each.
+
+**Test coverage (owner: `tester`).**
+- ≥95% coverage before deployment; **<80% BLOCKS**, 80–95% is conditional with documented risk.
+- Every error-handling path and every security-critical path must be covered.
+- A test must carry a `## Test:` documentation header and at least one assertion — a test with
+  zero assertions fails the coverage check.
+
+**Performance (owner: `sre`).**
+- SLO-breach alert within 1 minute; maintain the stated availability target (e.g. 99.9%).
+- Approve a performance-sensitive change only after a production-scale load test (≥1000
+  concurrent users or documented peak); monitor 48 hours post-deploy against baseline.
+- Any index/table change requires a concurrency test before approval.
+
+**Change safety (owner: `verify`).**
+- Assess blast radius / change impact before shipping; risk-based test selection scaled to the
+  affected surface (pair with `/preflight diff-impact`).
+
+**Pipeline health (owner: `sre`).**
+- CI/CD failures are detected and triaged, not ignored; a red pipeline blocks promotion.
 
 ---
 

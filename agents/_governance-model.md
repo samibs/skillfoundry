@@ -20,9 +20,9 @@
 | Agent | Decision Rights | Scope |
 |-------|----------------|-------|
 | `gate-keeper` | Code quality approval | Implementation quality |
-| `test-coverage-guardian` | Coverage enforcement | Test completeness |
+| `tester` | Coverage enforcement | Test completeness |
 | `dependency-auditor` | Dependency approval | Supply chain |
-| `regression-prevention` | Risk-based testing | Change safety |
+| `verify` | Risk-based testing | Change safety |
 | `web-security-checker` | Live URL surface approval | Public-facing web projects |
 
 ### Execution Tier (Task Completion)
@@ -36,10 +36,8 @@
 ### Monitoring Tier (Production Observation)
 | Agent | Decision Rights | Scope |
 |-------|----------------|-------|
-| `sre` | Production health | System reliability |
-| `performance-guardian` | Performance SLOs | Latency/capacity |
+| `sre` | Production health, performance SLOs, pipeline reliability | Reliability, latency/capacity, CI/CD |
 | `failure-analysis` | Incident analysis | Root cause |
-| `build-stability` | Pipeline health | CI/CD reliability |
 
 ## 2. Communication Rules
 
@@ -55,7 +53,7 @@ Execution → Monitoring (observability requirements)
 - `production-orchestrator` → ANY deployment
 - `security-specialist` → Security-related
 - `compliance-verifier` → Compliance-related
-- `test-coverage-guardian` → Coverage-related
+- `tester` → Coverage-related
 - `web-security-checker` → Production promotion (public-facing URL projects)
 
 ### Who Must Review Changes
@@ -87,11 +85,11 @@ Execution → Monitoring (observability requirements)
 |------------|---------------|-----------------|-----|
 | Critical security vulnerability | STOP deployment | `security-specialist` → human | Immediate |
 | Compliance violation | STOP deployment | `compliance-verifier` → human | Immediate |
-| Coverage <95% | BLOCK deployment | `test-coverage-guardian` → `secure-coder` | 1 hour |
+| Coverage <95% | BLOCK deployment | `tester` → `secure-coder` | 1 hour |
 | Web security BLOCKER | STOP promotion | `web-security-checker` → `production-orchestrator` → human | Immediate |
 | Web security WARN | HOLD promotion | `web-security-checker` → lead sign-off | 4 hours |
 | Architecture conflict | HOLD decision | `architect` → Strategic tier | 4 hours |
-| Performance SLO breach | ALERT | `performance-guardian` → `sre` | 5 minutes |
+| Performance SLO breach | ALERT | `sre` → human | 5 minutes |
 | Incident pattern detected | ANALYZE | `failure-analysis` → Strategic tier | 24 hours |
 
 ## 5. Decision Authority Levels

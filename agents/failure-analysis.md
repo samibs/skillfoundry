@@ -29,7 +29,7 @@ Transform incidents into institutional knowledge through systematic analysis.
 ## Inputs
 - Production incident logs from `sre`
 - Deployment records from `production-orchestrator`
-- System metrics from `performance-guardian`
+- System metrics from `sre`
 
 ## Outputs
 - Root cause analysis report (RCA)

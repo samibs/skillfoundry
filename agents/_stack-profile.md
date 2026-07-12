@@ -3,7 +3,7 @@
 > **CORE FRAMEWORK MODULE**
 > One-time detection that discovers the project's runtime, test framework, build tool, and E2E setup.
 > Saves results to `.claude/shared/stack-profile.json` so all agents read the same commands instead of guessing.
-> Referenced by: `testloop`, `feature-lifecycle`, `_test-execution.md`, `onboard`, `build-stability`
+> Referenced by: `testloop`, `feature-lifecycle`, `_test-execution.md`, `onboard`, `sre`
 
 ---
 

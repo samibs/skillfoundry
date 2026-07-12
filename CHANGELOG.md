@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — governance model + guardian role-cards (rationalization, pass 3)
+
+Retired four thin "guardian" role-card agents (103 → 99 skills) — identical ~65-line
+Identity/Mission/VETO/Escalation boilerplate ("enterprise agent architecture" scaffolding),
+each duplicating a real skill that does the actual work. Their governance roles were reassigned
+to the owning skill and the `_governance-model.md` tiers were simplified (no duplicate rows).
+
+- `test-coverage-guardian` → **`tester`** (coverage authority)
+- `regression-prevention` → **`verify`** (change-safety gate)
+- `performance-guardian` + `build-stability` → **`sre`** (SLOs, reliability, pipeline health);
+  the three collapsed Monitoring-tier rows became one.
+- **Threshold rules preserved**, not lost — the concrete numbers embedded in the role cards
+  (≥95% coverage + `## Test:` header + assertions; load-test ≥1000 users + 48h post-deploy
+  monitoring + index concurrency test; blast-radius change safety; red-pipeline blocks) are now
+  a **"Production Guardrail Thresholds"** section in `agents/_bpsbs-production-rules.md`, each
+  tagged with its owning skill.
+
+All prompt-text role reassignment (~30 references across governance/escalation/pipeline
+modules); no dispatch logic changed. sync-platforms clean; full suite 198/0.
+
 ### Changed — security cluster consolidation, pass 2b (rationalization)
 
 - **`security-guardian` retired** (103 skills). It was a thin 61-line governance *role card*
