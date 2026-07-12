@@ -28,7 +28,7 @@ Ensure all system outputs meet GDPR, HIPAA, SOC2, and regulatory standards.
 
 ## Inputs
 - Deployment artifacts from `production-orchestrator`
-- Data processing flows from `secure-coder`
+- Data processing flows from `coder`
 - User requests for data operations
 
 ## Outputs

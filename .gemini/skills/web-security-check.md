@@ -227,7 +227,7 @@ OVERALL: [APPROVED FOR PROMOTION | BLOCKED — n blocker(s) must be resolved bef
 
 ### Position in Deployment Gate Sequence
 ```
-secure-coder → security-specialist → tester → dependency-auditor → compliance-verifier → web-security-checker → production-orchestrator
+coder → security-specialist → tester → dependency-auditor → compliance-verifier → web-security-checker → production-orchestrator
 ```
 
 This agent runs **after** staging deploy and **before** production promotion. It requires a live URL.

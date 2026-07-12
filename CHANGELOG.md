@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — coder cluster merged to one (rationalization, pass 4)
+
+Collapsed the three implementation personas into **`/coder`** (99 → 97 skills). A capable
+model is already a senior engineer who writes secure code — three separate personas were
+scaffolding.
+
+- **`secure-coder` retired** → `/coder`. It was mostly role-card boilerplate; its security-first
+  stance is covered by `/security` and the auth/token rules in `_bpsbs-production-rules.md`. Its
+  one unique asset — the **Documentation Contract** (`[DOC] Purpose/Security/Performance/Returns`
+  inline headers) — was grafted into `/coder`.
+- **`senior-software-engineer` retired** → universalized. Its core discipline (assumption-
+  surfacing, simplicity, scope, goal-driven) already lived in the shared `_coding-discipline.md`
+  (applied to *every* agent). Its unique bits — the explicit assumption-block format, the
+  anti-sycophancy push-back framing, and declarative-over-imperative leverage — were grafted
+  into `_coding-discipline.md`, so **all** agents get them, not one opt-in skill.
+- Reassigned ~25 references (`secure-coder`/`senior-engineer` → `coder`) across governance,
+  pipeline, and peer skills; `_governance-model` Execution tier now lists `coder`. Governance is
+  documentation, not dispatch — nothing executable changed. sync clean; full suite 198/0.
+
 ### Changed — governance model + guardian role-cards (rationalization, pass 3)
 
 Retired four thin "guardian" role-card agents (103 → 99 skills) — identical ~65-line

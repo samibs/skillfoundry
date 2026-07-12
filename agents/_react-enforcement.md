@@ -57,6 +57,6 @@ Forcing a minimum of 2 reads before any write ensures the agent has context abou
 
 ---
 
-**Agents subject to this protocol:** coder, secure-coder, data-architect, refactor
+**Agents subject to this protocol:** coder, coder, data-architect, refactor
 
 **Agents exempt:** tester (generates new test files), docs (generates documentation), ops (generates scripts)

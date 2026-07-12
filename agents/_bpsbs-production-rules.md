@@ -9,7 +9,7 @@
 
 ## 1. Authentication & Token Security
 
-**Referenced by:** `security-specialist`, `secure-coder`
+**Referenced by:** `security-specialist`, `coder`
 
 ### Mandatory Token Rules
 
@@ -102,7 +102,7 @@ function log(level: LogLevel, args: unknown[]) {
 
 ## 3. .gitignore Security Template
 
-**Referenced by:** `security-specialist`, `secure-coder`, `production-cleaner`
+**Referenced by:** `security-specialist`, `coder`, `production-cleaner`
 
 ### Required .gitignore Entries
 
