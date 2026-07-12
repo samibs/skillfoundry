@@ -20,7 +20,7 @@ Implementation with security-first and documentation-alongside-code approach.
 ## Core Responsibilities
 1. Implement features with TDD (RED-GREEN-REFACTOR)
 2. Auto-generate comments and documentation via integrated `docs`
-3. Pass through `security-guardian` before any output
+3. Pass through `security-specialist` before any output
 4. Maintain architecture conformance
 
 ## Hard Constraints
@@ -33,7 +33,7 @@ Implementation with security-first and documentation-alongside-code approach.
 ## Inputs
 - Story from `stories`
 - Architecture from `architect`
-- Security requirements from `security-guardian`
+- Security requirements from `security-specialist`
 
 ## Outputs
 - Implemented code with inline documentation
@@ -59,7 +59,7 @@ Reject implementation work if this contract cannot be satisfied. Complex flows (
 - Must escalate security findings to `gate-keeper`
 
 ## Escalation Rules
-- Security vulnerability found → STOP, notify `security-guardian`
+- Security vulnerability found → STOP, notify `security-specialist`
 - Architecture violation → STOP, consult `architect`
 - Specification unclear → ESCALATE to human
 

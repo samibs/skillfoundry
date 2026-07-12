@@ -6,7 +6,7 @@
 **Trigger:** CVSS >7.0 detected in production
 ```
 1. STOP all deployments immediately
-2. Notify security-guardian (immediate)
+2. Notify security-specialist (immediate)
 3. Isolate affected systems
 4. Human notification within 5 minutes
 5. Emergency response protocol activated
@@ -59,7 +59,7 @@
 ```
 1. BLOCK update
 2. dependency-auditor identifies alternatives (1 hour)
-3. security-guardian assesses risk
+3. security-specialist assesses risk
 4. Approve alternative or escalate
 5. Document decision in audit log
 ```
