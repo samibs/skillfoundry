@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Added — `/prune` (Dead Code & Duplication Remover)
+
+- **New skill `/prune`** (`agents/prune.md`, all platforms) — finds and safely removes dead
+  code and duplicate code in any codebase, backed by a real detection engine.
+- **`scripts/prune-scan.sh`** — dependency-free detection: duplicate blocks (N-line window
+  matching), unused imports (JS/TS/Python), and unused-export candidates (JS/TS). With `--deep`
+  it also runs `jscpd` / `knip` / `depcheck` when present via `npx`.
+- **Safe-by-default removal.** `deadcode --fix` removes only import statements whose every
+  binding is unused (whole-line, high precision, applied in descending line order so deletions
+  can't corrupt each other). Partial imports, unused exports, and duplicate blocks are
+  **reported for review, never auto-deleted** — exports may be entry points/dynamic refs, and
+  de-duplication is a refactor (extract a shared function), not a deletion.
+- Excludes vendored/generated trees (`node_modules`, `dist`, `build`, `.next`, `vendor`,
+  `__pycache__`, `*.min.js`, `*.d.ts`).
+- **`scripts/tests/test-prune-scan.sh`** — 16 shell tests, all passing.
+
+Skill count: 108 → 109 per platform.
+
+---
+
 ## [5.26.0] - 2026-07-11 — Domain Expert Synthesis
 
 Project-scoped, **review-only** domain reviewers for specialized non-IT fields — synthesized

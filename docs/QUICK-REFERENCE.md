@@ -2,7 +2,7 @@
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-## The Forge (61 Core Agents / 108 Skills)
+## The Forge (61 Core Agents / 109 Skills)
 
 ```
 LEADERSHIP     ARCHITECTURE    IMPLEMENTATION   QUALITY         SECURITY
@@ -47,6 +47,7 @@ math-check     memory
 | `/security audit` | Security audit |
 | `/security-scanner` | AI vulnerability scan |
 | `/review` | Code review |
+| `/prune` ★NEW | Remove dead code & duplicate code (unused imports/exports, copy-paste blocks) |
 | `/tester` | Run tests |
 | `/layer-check` | Validate DB/Backend/Frontend |
 | `/metrics` | View execution dashboard |
@@ -374,7 +375,7 @@ Claude-AS-Gate: anvil-pass
 ## New in v1.9.0.14: OpenAI Codex Platform Support
 
 ### 4th Platform: OpenAI Codex
-- OpenAI Codex added as 4th supported platform with 107 skills in `.agents/skills/`, native SKILL.md format
+- OpenAI Codex added as 4th supported platform with 108 skills in `.agents/skills/`, native SKILL.md format
 - Sync engine: `sync-platforms.sh` now generates 4 platform files
 - Invocation: `$go`, `$coder`, `$tester` etc. with auto-discovery of available skills
 
@@ -804,4 +805,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v5.26.0 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 108 Skills)*
+*SkillFoundry Framework v5.26.0 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 109 Skills)*
