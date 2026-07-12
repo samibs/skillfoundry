@@ -101,7 +101,7 @@ Real security analysis has uncertainty. State it. "This *looks* like an SSRF but
 ## Integration with SkillFoundry agents
 
 - **`/security`**: Broader STRIDE threat modeling and compliance checklists. Use `/red-team-researcher` when you need attacker-primitive-level depth on specific findings.
-- **`/pentest`**: Pre-engagement scoping and structured test plans. `/red-team-researcher` handles the deep-dive analysis after enumeration.
+- **`/security pentest`**: Pre-engagement scoping and structured test plans. `/red-team-researcher` handles the deep-dive analysis after enumeration.
 - **`/review`**: General code quality review. Chain with `/red-team-researcher` for a dedicated security pass.
 - **`/specter`**: Automated pipeline threat analysis. Use `/red-team-researcher` for human-readable findings reports from Specter output.
 

@@ -2,7 +2,7 @@
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
-## The Forge (61 Core Agents / 105 Skills)
+## The Forge (61 Core Agents / 104 Skills)
 
 ```
 LEADERSHIP     ARCHITECTURE    IMPLEMENTATION   QUALITY         SECURITY
@@ -805,4 +805,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v5.26.0 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 105 Skills)*
+*SkillFoundry Framework v5.26.0 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 104 Skills)*
