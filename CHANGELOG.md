@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed — skill-registry cruft (rationalization, pass 1)
+
+Deleted four non-capability skills that polluted the registry and A2A cards without doing any
+work (skill count 109 → 105 per platform, no capability lost):
+
+- `/upgrade-production-orchestrator`, `/upgrade-secure-coder`, `/upgrade-security-guardian` —
+  these were **migration notes** ("Upgrade documentation… evolution from X to Y"), not agents.
+  Their history belongs in this CHANGELOG, not the skill list.
+- `/agent-index` (source `INDEX-v2.md`) — a static reference index of the agent architecture;
+  documentation, not a runnable skill.
+
+Verified nothing depended on them; `agents/agent-profile.md` was kept (it backs the live
+`/profile` skill). Full test suite remains green (198 passed / 0 failed).
+
 ### Added — `/prune` (Dead Code & Duplication Remover)
 
 - **New skill `/prune`** (`agents/prune.md`, all platforms) — finds and safely removes dead
