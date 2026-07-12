@@ -2,7 +2,7 @@
 
 > **CORE FRAMEWORK MODULE**
 > Run this BEFORE any agent that claims to execute shell commands, run tests, or read live process output.
-> Referenced by: `testloop`, `feature-lifecycle`, `build-stability`, `sre`, `performance`
+> Referenced by: `testloop`, `feature-lifecycle`, `sre`, `performance`
 
 ---
 

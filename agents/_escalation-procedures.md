@@ -38,7 +38,7 @@
 **Trigger:** Coverage <95% at deployment
 ```
 1. BLOCK deployment
-2. Route to test-coverage-guardian (1 hour SLA)
+2. Route to tester (1 hour SLA)
 3. Generate missing tests
 4. Re-validate coverage
 5. Approve or escalate to human
