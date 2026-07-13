@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.26.0-blue)
+![Version](https://img.shields.io/badge/version-5.27.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,18 +25,18 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.26.0
+### What's New in v5.27.0
 
-**Domain Expert Synthesis — project-scoped, review-only domain reviewers**
+**Skill Rationalization & `/prune` — leaner, sharper, and a new dead-code remover**
 
-When you build for a specialized non-IT field (legal, accounting, real-estate, medical), generic output is often *correct but not professionally right* — the vocabulary or register a practitioner would never sign. SkillFoundry now synthesizes a **review-only domain reviewer** for that field, on demand.
+- **New `/prune` skill** — finds and safely removes **dead code and duplicate code** (unused imports/exports, copy-paste blocks) with a real detection engine. Only fully-unused imports are auto-removed; exports and duplicates are reported for review, never blind-deleted.
+- **Skill rationalization: 109 → 97 skills, zero capability lost.** SkillFoundry had accumulated prompt-era scaffolding — redundant personas and thin "guardian" role cards built to strong-arm weaker models. Smarter models need fewer, sharper tools. Removed the scaffolding (migration-note "skills", four `*-guardian` role cards, redundant security/coder personas); **kept or universalized the good content** (the senior-engineer discipline is now applied to *every* agent, not one opt-in skill).
 
-- **Three ways it's detected.** An agent self-flags while producing specialized non-IT content; the same domain corrected 3+ times is surfaced; or a PRD declares `domains:` up front.
-- **Review-only, never advisory.** Reviewers check terminology, register, and way-of-working, and cite a knowledge pack or flag it unverified — they never give advice or make legal/financial/medical determinations.
-- **Earns its way into the framework.** A reviewer synthesized across 3+ projects is promoted from project-local to framework-shared, so every future project inherits it.
-- **Never recreates IT skills.** IT domains are auto-filtered — only genuine non-IT gaps get a reviewer.
+Full breakdown in the CHANGELOG under `[5.27.0]`.
 
-Full breakdown in the CHANGELOG under `[5.26.0]`.
+#### Previous: Domain Expert Synthesis (v5.26.0)
+
+Project-scoped, review-only domain reviewers for specialized non-IT fields (legal, accounting, medical) — three-way detection, grounded in citable packs, promoted to the framework when they recur. Details in the CHANGELOG under `[5.26.0]`.
 
 #### Previous: Security & Robustness Hardening (v5.25.0)
 
