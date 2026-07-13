@@ -332,7 +332,7 @@ Lineage preserved. History updated.
 ## Integration with Other Pillars
 
 **Pillar 2 (Generational Learning)**: Track which generation created knowledge
-**Pillar 3 (Reptilian Gates)**: Store evidence of gate passages
+**Pillar 3 (Capability Gates)**: Store evidence of gate passages
 **Pillar 4 (Collective Validation)**: Track validation history
 **Pillar 7 (Mathematical Ground)**: Store proof status of formulas
 **Pillar 9 (Bidirectional Iteration)**: Preserve failure-fix cycles

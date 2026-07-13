@@ -176,4 +176,4 @@ NEVER guess at < 50% confidence.
 
 ---
 
-*Cold-blooded classification. No assumptions. Ask if unclear.*
+*Rigorous classification. No assumptions. Ask if unclear.*
