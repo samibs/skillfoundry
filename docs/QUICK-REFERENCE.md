@@ -1,4 +1,4 @@
-# SkillFoundry v5.27.0 - Quick Reference Card
+# SkillFoundry v5.28.0 - Quick Reference Card
 
 **Version Format:** MAJOR.FEATURE.DATABASE.ITERATION (1=breaking, 9=features, 0=db, 0=patches)
 
@@ -181,10 +181,10 @@ Auto-generates: HTML report, Markdown report, Word-compatible report, remediatio
 | `/domain validate <file> --pack <name>` | Check code against domain rules |
 | `/domain prd <description>` | Generate domain-aware PRD |
 | `/domain cite <rule-id>` | Full citation for a specific rule |
-| `/domain expert <description>` | **v5.27.0** — synthesize a review-only reviewer (+ pack) for a non-IT domain |
-| `/domain experts` | **v5.27.0** — list synthesized reviewers in this project |
+| `/domain expert <description>` | **v5.28.0** — synthesize a review-only reviewer (+ pack) for a non-IT domain |
+| `/domain experts` | **v5.28.0** — list synthesized reviewers in this project |
 
-### Domain Experts (review-only reviewers — v5.27.0)
+### Domain Experts (review-only reviewers — v5.28.0)
 
 | Command / script | Purpose |
 |------------------|---------|
@@ -805,4 +805,4 @@ Install: `scripts/setup-auto-harvest.sh`
 
 ---
 
-*SkillFoundry Framework v5.27.0 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 96 Skills)*
+*SkillFoundry Framework v5.28.0 - July 2026 - The Forge Pipeline Engine (61 Core Agents / 96 Skills)*

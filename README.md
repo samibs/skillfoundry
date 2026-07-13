@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.27.0-blue)
+![Version](https://img.shields.io/badge/version-5.28.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,14 +25,18 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.27.0
+### What's New in v5.28.0
 
-**Skill Rationalization & `/prune` — leaner, sharper, and a new dead-code remover**
+**Rationalization tail — de-theater & a unified gate-keeper**
 
-- **New `/prune` skill** — finds and safely removes **dead code and duplicate code** (unused imports/exports, copy-paste blocks) with a real detection engine. Only fully-unused imports are auto-removed; exports and duplicates are reported for review, never blind-deleted.
-- **Skill rationalization: 109 → 96 skills, zero capability lost.** SkillFoundry had accumulated prompt-era scaffolding — redundant personas and thin "guardian" role cards built to strong-arm weaker models. Smarter models need fewer, sharper tools. Removed the scaffolding (migration-note "skills", four `*-guardian` role cards, redundant security/coder personas); **kept or universalized the good content** (the senior-engineer discipline is now applied to *every* agent, not one opt-in skill).
+- **Persona de-theater.** The "ruthless / merciless / cold-blooded / reptilian" weak-model coercion language is gone framework-wide — replaced with plain, professional tone that keeps every bit of the rigor. A capable model gives honest, exacting assessments without being told it's a reptile.
+- **One gate-keeper.** Retired the duplicate `reptilian-gate-keeper` (its capability-gate function was already in `/gate-keeper`) → **96 skills**.
 
-Full breakdown in the CHANGELOG under `[5.27.0]`.
+Full breakdown in the CHANGELOG under `[5.28.0]`.
+
+#### Previous: Skill Rationalization & `/prune` (v5.27.0)
+
+New `/prune` (dead-code & duplication remover) plus a rationalization pass — **109 → 96 skills, zero capability lost**: removed prompt-era scaffolding (redundant personas, guardian role cards), kept or universalized the good content. Details in the CHANGELOG under `[5.27.0]`.
 
 #### Previous: Domain Expert Synthesis (v5.26.0)
 

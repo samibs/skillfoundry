@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [5.28.0] - 2026-07-13 — Rationalization Tail: De-Theater & Gate-Keeper Unification
+
+The finishing pass on the skill rationalization. Retired the duplicate `reptilian-gate-keeper`
+(its function was already in `/gate-keeper`) — **96 skills** — and de-theatered the whole
+framework's persona framing: the "ruthless / merciless / cold-blooded / reptilian" weak-model
+coercion language became plain, professional tone that keeps the rigor without the theater.
 
 ### Removed — duplicate gate-keeper (rationalization)
 
