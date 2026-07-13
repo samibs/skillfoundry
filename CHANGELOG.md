@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed — duplicate gate-keeper (rationalization)
+
+Retired `reptilian-gate-keeper` (96 skills). The framework had **two** "gate keepers":
+`/gate-keeper` (quality gating + auto-fix + an evolved, quantified capability-gate model with
+evidence levels/thresholds) and the standalone `reptilian-gate-keeper` — the *original*
+NASAB-Pillar-3 capability agent whose function `/gate-keeper` had already absorbed ("Adapted
+from NASAB Pillar 3"). The reptilian one was referenced by nothing (zero-cascade retire). Its
+one unique asset — the four-dimension **Evidence Collection Protocol** (Execution / Validation /
+Integration / Reality anchors) — was grafted into `/gate-keeper`. `/gate-keeper` is now the
+single gate authority.
+
 ### Changed — de-theater persona framing (cosmetic)
 
 Softened the theatrical, weak-model-coercion framing in the core persona agents (`/coder`,

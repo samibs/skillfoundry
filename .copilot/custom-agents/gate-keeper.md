@@ -166,6 +166,15 @@ Evidence Summary:
   Domain Problem-Solving: 5/30  ACCUMULATING (17%)
 ```
 
+### Evidence Collection Protocol
+
+When gathering capability evidence, collect across four dimensions — not just "tests pass":
+
+- **Execution** — test output (all pass), build output (no prod-build warnings), runtime behavior (no crashes, proper error handling), performance within targets.
+- **Validation** — review approval, all validators pass (syntax, security, domain), no critical/high issues, accurate documentation exists.
+- **Integration** — interfaces with other components correctly, handles dependency failures, maintains backwards compatibility, integration tests demonstrate behavior.
+- **Reality anchors** — works in the *target* environment (not just the dev machine), handles *real* data (not just fixtures), survives error conditions (network failures, bad input), is observable.
+
 ## THREE-LAYER ENFORCEMENT
 
 Every full-stack story must pass validation on ALL affected layers:
