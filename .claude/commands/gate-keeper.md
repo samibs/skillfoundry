@@ -107,7 +107,7 @@ grep -rn "TODO\|FIXME\|PLACEHOLDER\|STUB\|NOT IMPLEMENTED\|COMING SOON" \
 
 > Adapted from NASAB Pillar 3 (Capability Gates). Capability proves maturity, not time.
 
-Instead of binary pass/fail, track accumulated **evidence** of capability across 5 levels. Gates unlock when sufficient proof has been demonstrated — like a predator graduating when it makes its first kill, not when it turns a certain age.
+Instead of binary pass/fail, track accumulated **evidence** of capability across 5 levels. Gates unlock when sufficient proof has been demonstrated — when sufficient proof exists, not when enough time has passed.
 
 ### Capability Levels
 
@@ -217,11 +217,11 @@ Every story completion requires:
 
 | Stage | Gate Requirement | Evidence Demanded |
 |-------|------------------|-------------------|
-| **Hatchling** | Syntactically valid code | Code compiles without errors |
-| **Juvenile** | Code executes correctly | All unit tests pass, no panics |
-| **Adolescent** | Solves domain problems | Integration tests pass |
-| **Hunter** | Handles ambiguous tasks | Edge cases handled, graceful degradation |
-| **Apex** | Operates autonomously | Production-ready, monitored, documented |
+| **Syntax** | Syntactically valid code | Code compiles without errors |
+| **Execution** | Code executes correctly | All unit tests pass, no panics |
+| **Domain** | Solves domain problems | Integration tests pass |
+| **Ambiguity** | Handles ambiguous tasks | Edge cases handled, graceful degradation |
+| **Autonomy** | Operates autonomously | Production-ready, monitored, documented |
 
 ## Auto-Fix Integration
 

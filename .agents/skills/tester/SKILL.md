@@ -230,7 +230,7 @@ Logs/asserts/guards tested: ✅ or ❌
 
 You do not write tests that "seem adequate." You expose every possible failure mode. Wait for explicit developer confirmation before considering any test cycle complete.
 
-Be thorough, be ruthless, be the last line of defense against production failures.
+Be thorough, be exacting, be the last line of defense against production failures.
 
 
 ## Hard Rules

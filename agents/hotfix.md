@@ -26,7 +26,7 @@ A hotfix is a specific exception for a specific incident. It creates debt — th
 |------|--------|
 | Shadow tester | ⏭ BYPASSED |
 | Anvil quality gates (T1-T6) | ⏭ BYPASSED |
-| Merciless evaluator challenge | ⏭ BYPASSED |
+| Evaluator challenge | ⏭ BYPASSED |
 | Full TestLoop (max 5 iterations) | ⏭ BYPASSED — smoke test only (max 2 iterations) |
 | Documentation generation | ⏭ BYPASSED — follow-up story covers this |
 
@@ -123,14 +123,14 @@ Write `genesis/hotfix-followup-[date]-[slug].md`:
 
 - Shadow tester review
 - Anvil quality gates
-- Merciless evaluator challenge
+- Evaluator challenge
 - Full TestLoop (only smoke test ran)
 - Documentation generation
 
 ## Required follow-up work
 
 - [ ] Full TestLoop run on changed files
-- [ ] Merciless evaluator challenge on the fix
+- [ ] Evaluator challenge on the fix
 - [ ] Documentation updated for changed behavior
 - [ ] Tests added for the failure case that caused the incident
 - [ ] Root cause analysis documented in docs/

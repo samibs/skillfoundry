@@ -91,7 +91,7 @@ color: red
 |------|--------|
 | Shadow tester review | ⏭ BYPASSED |
 | Anvil quality gates | ⏭ BYPASSED |
-| Merciless evaluator | ⏭ BYPASSED |
+| Evaluator | ⏭ BYPASSED |
 | Full TestLoop (5 iter) | ⏭ BYPASSED — smoke test only |
 | Documentation codifier | ⏭ BYPASSED — follow-up covers this |
 | **Semgrep HARD BLOCK** | **✅ ALWAYS ACTIVE** |

@@ -20,14 +20,19 @@ one unique asset — the four-dimension **Evidence Collection Protocol** (Execut
 Integration / Reality anchors) — was grafted into `/gate-keeper`. `/gate-keeper` is now the
 single gate authority.
 
-### Changed — de-theater persona framing (cosmetic)
+### Changed — de-theater persona framing (cosmetic, framework-wide)
 
-Softened the theatrical, weak-model-coercion framing in the core persona agents (`/coder`,
-`/tester`, `/architect`, `/evaluator`, `/gate-keeper`) — "ruthless / merciless / cold-blooded /
-brutal / reptilian" → plain, professional language ("rigorous", "exacting", "unsparingly
-honest") that keeps the rigor without the theater. Consistent with `_coding-discipline.md §5`
-(which already bans process theater). No renames, no capability change; `command` ids unchanged.
-The `reptilian-gate-keeper` id is kept pending the separate two-gate-keeper merge.
+Softened the theatrical, weak-model-coercion framing across **all** persona agents and commands
+(`/coder`, `/tester`, `/architect`, `/evaluator`, `/gate-keeper`, `/security`, `/data-architect`,
+`/ux-ui`, `/refactor`, `/review`, `/performance`, `/web-security-check`, `/layer-check`,
+`/standards`, `/orchestrate`, `/bpsbs`, `/analytics`, and the NASAB modules) — "ruthless /
+merciless / cold-blooded / brutal / reptilian / crocodile / apex-predator" → plain, professional
+language ("rigorous", "exacting", "unsparingly honest") and the NASAB "Reptilian Gates" / animal
+capability stages (Hatchling→Apex) renamed to plain "Capability Gates" / (Syntax→Autonomy). Keeps
+the rigor without the theater — consistent with `_coding-discipline.md §5` (which already bans
+process theater). **Deliberately kept:** brand names (Forge/Anvil/Specter/ColdStart), the
+`cold-blooded` *tone-config value* (renaming it would break existing `config.json` files), agent
+`command` ids, and the `Zero Tolerance Banned Patterns` policy. No renames, no capability change.
 
 ---
 

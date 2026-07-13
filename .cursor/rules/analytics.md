@@ -11,7 +11,7 @@ alwaysApply: false
 
 # /analytics - Agent Usage Analytics
 
-> View agent invocation statistics, performance trends, failure patterns, and actionable recommendations. The cold-blooded truth about how your agents are performing.
+> View agent invocation statistics, performance trends, failure patterns, and actionable recommendations. The unvarnished truth about how your agents are performing.
 
 ---
 

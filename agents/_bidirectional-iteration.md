@@ -88,4 +88,4 @@ When oscillation is detected:
 
 > "Oscillation is not failure — it's information. The system is telling you the problem is architectural, not local."
 
-> "A crocodile doesn't chase prey in circles. It waits, reassesses, and strikes differently."
+> "Don't retry the same failing approach in a loop. Pause, reassess, and change the strategy."
