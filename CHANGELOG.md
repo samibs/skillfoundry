@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [5.27.0] - 2026-07-13 — Skill Rationalization & `/prune`
+
+A capability + a cleanup. **New `/prune` skill** removes dead code and duplicate code with a
+real detection engine. And a **skill-rationalization pass** — SkillFoundry had accumulated
+prompt-era scaffolding (redundant personas, thin "guardian" role cards) built to force weaker
+models into rigor; smarter models need fewer, sharper tools. **109 → 97 skills, zero capability
+lost** — the good content was kept or promoted to universal modules, only the scaffolding was
+removed. Details below.
 
 ### Changed — coder cluster merged to one (rationalization, pass 4)
 
