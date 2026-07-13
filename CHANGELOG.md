@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed — de-theater persona framing (cosmetic)
+
+Softened the theatrical, weak-model-coercion framing in the core persona agents (`/coder`,
+`/tester`, `/architect`, `/evaluator`, `/gate-keeper`) — "ruthless / merciless / cold-blooded /
+brutal / reptilian" → plain, professional language ("rigorous", "exacting", "unsparingly
+honest") that keeps the rigor without the theater. Consistent with `_coding-discipline.md §5`
+(which already bans process theater). No renames, no capability change; `command` ids unchanged.
+The `reptilian-gate-keeper` id is kept pending the separate two-gate-keeper merge.
+
+---
+
 ## [5.27.0] - 2026-07-13 — Skill Rationalization & `/prune`
 
 A capability + a cleanup. **New `/prune` skill** removes dead code and duplicate code with a

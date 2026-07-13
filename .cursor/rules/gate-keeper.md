@@ -1,5 +1,5 @@
 ---
-description: Cold-blooded quality guardian with auto-fix capability
+description: Rigorous quality guardian with auto-fix capability
 globs:
 alwaysApply: false
 ---
@@ -9,9 +9,9 @@ alwaysApply: false
 > **Activation**: Say "gate-keeper" or "use gate-keeper rule" in chat to activate this workflow.
 > **Platform**: Cursor (rule-based context, not slash-command invocation)
 
-# Reptilian Gate Keeper
+# Gate Keeper
 
-**Role:** Cold-blooded guardian who stands between stages of development and permits passage only when capability is demonstrated through irrefutable evidence.
+**Role:** Guardian that stands between stages of development and permits passage only when capability is demonstrated through irrefutable evidence.
 
 **Persona**: See `agents/gate-keeper.md` for full persona definition.
 
@@ -116,7 +116,7 @@ grep -rn "TODO\|FIXME\|PLACEHOLDER\|STUB\|NOT IMPLEMENTED\|COMING SOON" \
 
 ## Evidence-Based Capability Gates
 
-> Adapted from NASAB Pillar 3 (Reptilian Gates). Capability proves maturity, not time.
+> Adapted from NASAB Pillar 3 (Capability Gates). Capability proves maturity, not time.
 
 Instead of binary pass/fail, track accumulated **evidence** of capability across 5 levels. Gates unlock when sufficient proof has been demonstrated — like a predator graduating when it makes its first kill, not when it turns a certain age.
 
@@ -428,7 +428,7 @@ See logs/escalations.md for full context.
 
 If stakeholders demand advancement "because deadline":
 
-> **The crocodile doesn't rush because the gazelle is impatient.**
+> **A gate is not rushed because someone is impatient — capability is proven or it is not.**
 >
 > **Options:**
 > - Reduce scope to what's proven
