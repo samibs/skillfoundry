@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — AgentOS hard output enforcement
+
+Completes the AgentOS graduated rollout: the final observe → warn → **enforce** stage.
+Opt-in and off by default.
+
+### Added
+
+- **`enforce` contract mode** — a fourth, hardest tier for `message_contracts`
+  (`off | permissive | strict | enforce`) and `SF_BUS_CONTRACTS`. In `enforce`, agent
+  output contracts become **binding**: an agent whose structured result violates its
+  contract is downgraded to `failed` (the violation is appended to its output), instead
+  of only being logged as in `permissive`/`strict`. `enforce` also implies the `strict`
+  fail-closed bus behavior.
+- **Additive structured-output elicitation** — in `enforce`, agent system prompts gain a
+  contract instruction asking the agent to *append* a fenced ```json block matching its
+  output contract. It is additive: the agent still produces its normal prose/code, so
+  existing text consumers are unaffected while the contract becomes checkable. Applied
+  across all four archetypes (implementer/reviewer/operator/advisor).
+- **`enforceOutputContract()`** — a pure decision function (extract → validate → decide
+  stand/fail by mode) that the `Agent.execute()` hook applies; unit-tested independently
+  of the runner. `structuredOutputInstruction()` builds the prompt suffix from the
+  agent's required contract fields.
+
+### Safety
+
+- Off by default; `enforce` is the opt-in top tier. Prose-only results (no structured
+  output) are never a violation, so free-text agents are never failed. The elicited JSON
+  block is additive, not a replacement — no existing output consumer changes behavior.
+
+### Tests
+
+- +11 unit tests (7 pure-decision/instruction in agent-contracts, 4 end-to-end in
+  Agent.execute). Full AgentOS + pipeline/bus/config suites green (197); `tsc` clean.
+
+---
+
 ## [5.30.0] - 2026-07-17 — AgentOS Follow-ups: Streaming, Flag-Gated Contracts & Per-Agent Enforcement
 
 Completes the three deliberate follow-ups flagged in v5.29.0. All additive; the bus

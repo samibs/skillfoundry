@@ -110,8 +110,8 @@ export function installMessageContracts(
   return registry;
 }
 
-/** Bus contract enforcement modes (flag-gated rollout). */
-export type ContractMode = 'off' | 'permissive' | 'strict';
+/** Contract enforcement modes (flag-gated rollout; `enforce` is the hard top tier). */
+export type ContractMode = 'off' | 'permissive' | 'strict' | 'enforce';
 
 /**
  * Resolve the effective contract mode: the `SF_BUS_CONTRACTS` env var overrides the
@@ -119,7 +119,7 @@ export type ContractMode = 'off' | 'permissive' | 'strict';
  */
 export function resolveContractMode(configured: ContractMode | undefined): ContractMode {
   const env = process.env.SF_BUS_CONTRACTS;
-  if (env === 'off' || env === 'permissive' || env === 'strict') return env;
+  if (env === 'off' || env === 'permissive' || env === 'strict' || env === 'enforce') return env;
   return configured ?? 'off';
 }
 
@@ -156,6 +156,6 @@ export function installContractsForMode(
   if (mode === 'off') return null;
   return installMessageContracts(bus, buildDefaultRegistry(), {
     ...options,
-    failClosed: mode === 'strict',
+    failClosed: mode === 'strict' || mode === 'enforce',
   });
 }

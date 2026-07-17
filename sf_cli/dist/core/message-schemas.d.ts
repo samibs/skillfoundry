@@ -68,8 +68,8 @@ export declare function buildDefaultRegistry(extra?: ContractEntry[]): MessageCo
  * @param options - Reject-handling options forwarded to the middleware.
  */
 export declare function installMessageContracts(bus: AgentMessageBus, registry?: MessageContractRegistry, options?: ContractMiddlewareOptions): MessageContractRegistry;
-/** Bus contract enforcement modes (flag-gated rollout). */
-export type ContractMode = 'off' | 'permissive' | 'strict';
+/** Contract enforcement modes (flag-gated rollout; `enforce` is the hard top tier). */
+export type ContractMode = 'off' | 'permissive' | 'strict' | 'enforce';
 /**
  * Resolve the effective contract mode: the `SF_BUS_CONTRACTS` env var overrides the
  * configured mode when set to a valid value (useful for staged rollout / testing).

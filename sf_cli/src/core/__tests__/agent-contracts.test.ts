@@ -6,6 +6,8 @@ import {
   registerAgentResultContracts,
   extractStructuredOutput,
   validateAgentResultText,
+  structuredOutputInstruction,
+  enforceOutputContract,
   ARCHETYPE_OUTPUT_CONTRACTS,
   AGENT_OUTPUT_OVERRIDES,
 } from '../agent-contracts.js';
@@ -158,5 +160,64 @@ describe('runtime enforcement helpers (thing 2: extract → validate → warn)',
     expect(bad.enforced).toBe(true);
     expect(bad.valid).toBe(false);
     expect(bad.errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('structuredOutputInstruction (hard: additive elicitation)', () => {
+  it('names the contract required fields for the agent', () => {
+    // reviewer → findings; gate-keeper → verdict; tester → status, tests_run
+    expect(structuredOutputInstruction('security')).toMatch(/findings/);
+    expect(structuredOutputInstruction('gate-keeper')).toMatch(/verdict/);
+    const tester = structuredOutputInstruction('tester');
+    expect(tester).toMatch(/status/);
+    expect(tester).toMatch(/tests_run/);
+  });
+
+  it('asks for an additive fenced json block (does not replace prose)', () => {
+    const instr = structuredOutputInstruction('coder');
+    expect(instr).toMatch(/in addition to your normal response/i);
+    expect(instr).toMatch(/```json/);
+  });
+});
+
+describe('enforceOutputContract (hard: pure decision function)', () => {
+  const valid = '```json\n{"findings":[{"severity":"HIGH","file":"a.ts"}]}\n```';
+  const invalid = '```json\n{"notes":"lgtm"}\n```';
+  const prose = 'I reviewed the code and it looks fine.';
+
+  it('off → never a violation, result stands', () => {
+    const d = enforceOutputContract('security', invalid, 'off');
+    expect(d.status).toBe('completed');
+    expect(d.violation).toBe(false);
+  });
+
+  it('permissive/strict → violation reported but result STANDS (warn stage)', () => {
+    for (const mode of ['permissive', 'strict'] as const) {
+      const d = enforceOutputContract('security', invalid, mode);
+      expect(d.violation).toBe(true);
+      expect(d.hardFailed).toBe(false);
+      expect(d.status).toBe('completed'); // not downgraded
+    }
+  });
+
+  it('enforce → violation FAILS the result (hard)', () => {
+    const d = enforceOutputContract('security', invalid, 'enforce');
+    expect(d.violation).toBe(true);
+    expect(d.hardFailed).toBe(true);
+    expect(d.status).toBe('failed');
+    expect(d.errors.length).toBeGreaterThan(0);
+  });
+
+  it('enforce + valid structured output → passes', () => {
+    const d = enforceOutputContract('security', valid, 'enforce');
+    expect(d.violation).toBe(false);
+    expect(d.status).toBe('completed');
+  });
+
+  it('enforce + prose (no structured output) → not a violation, result stands', () => {
+    const d = enforceOutputContract('security', prose, 'enforce');
+    expect(d.enforced).toBe(false);
+    expect(d.violation).toBe(false);
+    expect(d.status).toBe('completed');
   });
 });

@@ -112,7 +112,7 @@ export interface SfConfig {
     data_jurisdiction: 'none' | 'eu' | 'strict';
     quality_fallback: boolean;
     routing_rules: Record<string, 'local' | 'cloud' | 'auto'>;
-    message_contracts?: 'off' | 'permissive' | 'strict';
+    message_contracts?: 'off' | 'permissive' | 'strict' | 'enforce';
 }
 /** Gate threshold overrides per tier */
 export interface GateThresholds {

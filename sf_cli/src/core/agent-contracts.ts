@@ -18,7 +18,7 @@ import {
   AGENT_ARCHETYPE_MAP,
   type AgentArchetype,
 } from './agent-registry.js';
-import { FINDING_SCHEMA, FILE_REF_SCHEMA } from './message-schemas.js';
+import { FINDING_SCHEMA, FILE_REF_SCHEMA, type ContractMode } from './message-schemas.js';
 import type { MessageContractRegistry } from './message-contracts.js';
 
 // ── Per-archetype output contracts (built from shared types) ───────────────
@@ -217,6 +217,73 @@ export function validateAgentResultText(agentName: string, text: string): AgentR
   }
   const result = validateAgentOutput(agentName, obj);
   return { enforced: true, valid: result.valid, archetype, errors: result.errors };
+}
+
+// ── Hard enforcement (top tier: elicit structured output + fail on violation) ──
+
+/** The required-field names of an agent's output contract (for the prompt instruction). */
+function requiredFields(agentName: string): string[] {
+  const schema = getAgentOutputContract(agentName) as { required?: unknown };
+  return Array.isArray(schema.required) ? (schema.required as string[]) : [];
+}
+
+/**
+ * An ADDITIVE prompt instruction (used only in `enforce` mode) asking the agent to end
+ * its message with a fenced ```json block matching its output contract. It is additive:
+ * the agent keeps producing its normal prose/code, then appends the structured block —
+ * so existing text consumers are unaffected while the contract becomes checkable.
+ */
+export function structuredOutputInstruction(agentName: string): string {
+  const fields = requiredFields(agentName);
+  const fieldList = fields.length ? fields.join(', ') : 'your structured result';
+  return [
+    '',
+    'OUTPUT CONTRACT (required): In addition to your normal response, end your message with',
+    'a single fenced ```json code block containing a JSON object that includes at least',
+    `these fields: ${fieldList}. The block is validated against your agent contract; a`,
+    'missing or invalid block will fail the task.',
+  ].join('\n');
+}
+
+/** The decision made about an agent result under the active contract mode. */
+export interface ContractEnforcementDecision {
+  /** Final status: 'failed' only when a violation is hard-enforced. */
+  status: 'completed' | 'failed';
+  /** True when the agent emitted structured output that the contract could check. */
+  enforced: boolean;
+  valid: boolean;
+  /** enforced && !valid — a real contract violation occurred. */
+  violation: boolean;
+  /** violation && mode === 'enforce' — the violation fails the task. */
+  hardFailed: boolean;
+  archetype: AgentArchetype;
+  errors: string[];
+}
+
+/**
+ * Pure decision function for the runtime output-contract hook. Given an agent's result
+ * text and the active mode, decide whether the result stands or is downgraded to
+ * `failed`. In `off` nothing happens; in `permissive`/`strict` a violation is reported
+ * but the result stands (warn stage); in `enforce` a violation downgrades to `failed`.
+ * Prose results (no structured output) are never a violation.
+ */
+export function enforceOutputContract(
+  agentName: string,
+  text: string,
+  mode: ContractMode,
+): ContractEnforcementDecision {
+  const check = validateAgentResultText(agentName, text);
+  const violation = mode !== 'off' && check.enforced && !check.valid;
+  const hardFailed = violation && mode === 'enforce';
+  return {
+    status: hardFailed ? 'failed' : 'completed',
+    enforced: check.enforced,
+    valid: check.valid,
+    violation,
+    hardFailed,
+    archetype: check.archetype,
+    errors: check.errors,
+  };
 }
 
 /** Every distinct agent name that has a declared contract (via the archetype map). */

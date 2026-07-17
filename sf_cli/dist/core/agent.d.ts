@@ -159,6 +159,12 @@ export declare abstract class Agent {
     protected setProgress(current: number, total: number, label: string): void;
     protected getRemainingBudget(): number;
     protected buildResult(status: AgentResult['status'], output: string): AgentResult;
+    /**
+     * Append the AgentOS structured-output instruction to a system prompt when the active
+     * contract mode is `enforce`. Additive — the agent keeps producing its normal output
+     * and appends a fenced ```json block the contract can validate. No-op otherwise.
+     */
+    protected applyContractInstruction(systemPrompt: string): string;
     private createInitialState;
 }
 export declare class ImplementerAgent extends Agent {
