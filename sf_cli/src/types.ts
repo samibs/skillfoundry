@@ -134,6 +134,11 @@ export interface SfConfig {
   data_jurisdiction: 'none' | 'eu' | 'strict'; // none=no restrictions, eu=prefer local, strict=never cloud
   quality_fallback: boolean; // re-route to cloud if local output fails quality check
   routing_rules: Record<string, 'local' | 'cloud' | 'auto'>; // per-task-type overrides
+  // Message-bus contract enforcement (AgentOS, v5.30.0). Flag-gated rollout:
+  //   off        — no enforcement (default)
+  //   permissive — validate registered contracts; unregistered handoffs pass through
+  //   strict     — as permissive, plus fail-closed: unregistered handoffs are rejected
+  message_contracts?: 'off' | 'permissive' | 'strict';
 }
 
 // ── Team Configuration (Epic 9: Team & Cloud Mode) ────────────────────────────

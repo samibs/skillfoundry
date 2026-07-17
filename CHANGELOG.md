@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — AgentOS follow-ups
+
+Completes the three deliberate follow-ups flagged in v5.29.0. All additive; the bus
+enforcement is off by default.
+
+### Added
+
+- **Per-story slice streaming** (follow-up 1) — the forge pipeline creates the run state
+  kernel up front and streams one slice per story as it finishes, so
+  `.skillfoundry/runs/<id>/state/state.json` reflects progress mid-run, not only at the
+  end. Completed stories commit metrics; failed/circuit-broken stories mark their slice
+  `FAILED` with `error_logs` and flip `build_status` to `FAILING` (per-slice halt). State
+  logic extracted to `pipeline-state.ts`; every entry point is advisory.
+- **Flag-gated bus contract enforcement** (follow-up 2) — new
+  `SfConfig.message_contracts: 'off' | 'permissive' | 'strict'` (default `off`), with a
+  `SF_BUS_CONTRACTS` env override for staged rollout. `permissive` validates registered
+  contracts and lets unregistered handoffs through; `strict` is fail-closed (unregistered
+  handoff rejected). Wired into the runtime via `useSession` on `AgentMessageBus.global()`.
+- **Strict per-agent output contracts** (follow-up 3) — every registered agent is mapped
+  to a strict output contract through its archetype (implementer/reviewer/operator/advisor)
+  from the single source `AGENT_ARCHETYPE_MAP`, built from the shared `Finding`/`FileRef`
+  types. New `validateAgentOutput(name, output)` API; `registerAgentResultContracts()`
+  composes an agent-result contract onto the bus registry so `result:complete` handoffs
+  must be structured agent results, not narrative prose (enforced under the same flag).
+- **Per-agent contract overrides** — a layered resolver: `getAgentOutputContract()` uses a
+  per-agent override when present (`AGENT_OUTPUT_OVERRIDES`) and the archetype default
+  otherwise. Two grounded overrides ship: `gate-keeper` (verdict shape: APPROVE/WARN/
+  REJECT/BLOCK) and `tester` (test metrics: status + tests_run/failures/coverage). The
+  archetype map remains the single source; overrides stay small and evidence-based.
+- **Advisory runtime output-contract check** — the graduated-rollout observe/warn stage.
+  `Agent.execute()` extracts structured output from a completed agent result
+  (`extractStructuredOutput` — fenced ```json or bare JSON) and validates it against the
+  agent's contract, logging a violation. Flag-gated (off by default), prose results are
+  unenforced, and it never throws or blocks a run. Hard rejection is a later escalation.
+
+### Tests
+
+- +33 unit tests (11 pipeline-state, 9 strict-bus, 13 agent-contracts). Full AgentOS suite
+  plus pipeline/bus/config regressions green; `tsc --noEmit` clean. (Two pre-existing
+  `agent-prompt-loader` failures on `main` are unrelated to this work.)
+
+### Still incremental
+
+- HARD runtime enforcement (rejecting/failing an agent on an invalid structured result)
+  and forcing every agent to emit JSON remain a deliberate later escalation; this release
+  ships the observe/warn stage of that rollout.
+
+---
+
 ## [5.29.0] - 2026-07-17 — AgentOS: Shared State Kernel & Schema-Validated Handoffs
 
 Introduces an **AgentOS** substrate under the CLI: a durable, versioned, human-inspectable

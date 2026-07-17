@@ -42,6 +42,7 @@ const DEFAULT_CONFIG = {
     data_jurisdiction: 'none',
     quality_fallback: false,
     routing_rules: {},
+    message_contracts: 'off',
 };
 const DEFAULT_POLICY = {
     allow_shell: false,

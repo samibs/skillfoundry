@@ -79,4 +79,44 @@ export function installMessageContracts(bus, registry = buildDefaultRegistry(), 
     bus.use(createContractMiddleware(registry, options));
     return registry;
 }
+/**
+ * Resolve the effective contract mode: the `SF_BUS_CONTRACTS` env var overrides the
+ * configured mode when set to a valid value (useful for staged rollout / testing).
+ */
+export function resolveContractMode(configured) {
+    const env = process.env.SF_BUS_CONTRACTS;
+    if (env === 'off' || env === 'permissive' || env === 'strict')
+        return env;
+    return configured ?? 'off';
+}
+// Process-level active contract mode. Set once at session start from config so runtime
+// consumers (e.g. the agent output-contract hook) can read it cheaply without re-reading
+// config or the bus. Falls back to the env-resolved mode when unset.
+let activeContractMode = null;
+/** Set the process-level active contract mode (called once at session start). */
+export function setActiveContractMode(mode) {
+    activeContractMode = mode;
+}
+/** The active contract mode, or the env-resolved default when not explicitly set. */
+export function getActiveContractMode() {
+    return activeContractMode ?? resolveContractMode(undefined);
+}
+/**
+ * Install bus contract enforcement per the resolved mode. Returns the registry when
+ * enforcement is active, or `null` for `off`. `strict` is fail-closed: handoffs with no
+ * registered contract are rejected.
+ *
+ * @param bus - The message bus to guard (typically `AgentMessageBus.global()`).
+ * @param configured - Mode from config; may be overridden by `SF_BUS_CONTRACTS`.
+ * @param options - Reject-handling options (onReject) forwarded to the middleware.
+ */
+export function installContractsForMode(bus, configured, options = {}) {
+    const mode = resolveContractMode(configured);
+    if (mode === 'off')
+        return null;
+    return installMessageContracts(bus, buildDefaultRegistry(), {
+        ...options,
+        failClosed: mode === 'strict',
+    });
+}
 //# sourceMappingURL=message-schemas.js.map

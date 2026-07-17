@@ -81,19 +81,25 @@ function formatErrors(errors) {
 export function createContractMiddleware(registry, options = {}) {
     return (message, next) => {
         const result = registry.validate(message);
-        if (result.valid) {
+        // Fail-closed (strict): an unenforced message (no registered contract) is rejected.
+        const rejectUnenforced = options.failClosed === true && !result.enforced;
+        if (result.valid && !rejectUnenforced) {
             next();
             return;
         }
+        const errors = rejectUnenforced
+            ? [`no registered contract for ${message.type} → ${message.recipient} (fail-closed)`]
+            : result.errors;
         logger.warn('message-bus', 'contract_rejected', {
             type: message.type,
             sender: message.sender,
             recipient: message.recipient,
             correlationId: message.correlationId,
-            errors: result.errors,
+            failClosed: rejectUnenforced,
+            errors,
         });
-        options.onReject?.(message, result.errors);
-        // Do NOT call next() — the invalid message is dropped, never delivered as-is.
+        options.onReject?.(message, errors);
+        // Do NOT call next() — the message is dropped, never delivered as-is.
     };
 }
 //# sourceMappingURL=message-contracts.js.map

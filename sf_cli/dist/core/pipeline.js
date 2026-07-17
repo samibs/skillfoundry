@@ -13,8 +13,7 @@ import { SessionRecorder } from './session-recorder.js';
 import { scorePrd, PrdNotDetectedError } from './prd-scorer.js';
 import { AnthropicAdapter } from './provider.js';
 import { ALL_TOOLS } from './tools.js';
-import { StateKernel } from './state.js';
-import { GateBarrier, fromGateSummary } from './state-gate-barrier.js';
+import { initRunState, streamStorySlice, recordRunOutcome } from './pipeline-state.js';
 import { getLogger } from '../utils/logger.js';
 const RUNS_DIR = '.skillfoundry/runs';
 const MAX_FIXER_ATTEMPTS = 2;
@@ -511,6 +510,9 @@ export async function runPipeline(options) {
     const storyExecutions = {};
     let gateVerdict = 'UNKNOWN';
     let gateSummary = null;
+    // AgentOS State Kernel for this run — streamed per story, finalized at completion.
+    // Advisory: initRunState returns null on failure and every call is a no-op then.
+    const stateKernel = initRunState(join(workDir, RUNS_DIR), runId);
     const allMicroGateResults = [];
     function updatePhase(name, status, durationMs, detail) {
         const phase = phases.find((p) => p.name === name);
@@ -720,6 +722,12 @@ export async function runPipeline(options) {
             storiesFailed++;
             log.warn('pipeline', 'story_skipped_circuit_breaker', { story: haltedStory, reason: haltReason });
             callbacks?.onStoryComplete?.(haltedStory, false, 0);
+            streamStorySlice(stateKernel, haltedStory, {
+                status: 'failed',
+                costUsd: 0,
+                turnCount: 0,
+                reason: 'skipped by circuit breaker',
+            });
             continue;
         }
         const { storyFile, storyPath } = pendingStoryFiles[i];
@@ -828,6 +836,12 @@ export async function runPipeline(options) {
                     consecutiveFailures = 1; // New error pattern — reset counter
                 }
                 lastErrorSignature = currentSignature;
+                streamStorySlice(stateKernel, storyFile, {
+                    status: 'failed',
+                    costUsd: execution.costUsd,
+                    turnCount: execution.turnCount,
+                    reason: currentSignature.slice(0, 3).join(' | ') || 'story gates failed',
+                });
                 if (consecutiveFailures >= CONSECUTIVE_FAILURE_HALT_THRESHOLD) {
                     pipelineHalted = true;
                     haltReason = `Circuit breaker: ${consecutiveFailures} consecutive stories failed with the same error pattern. ` +
@@ -906,6 +920,12 @@ export async function runPipeline(options) {
         markStoryDone(storyPath);
         log.info('pipeline', 'story_complete', { story: storyFile, passed: true, cost: execution.costUsd, turns: execution.turnCount });
         callbacks?.onStoryComplete?.(storyFile, true, execution.costUsd);
+        streamStorySlice(stateKernel, storyFile, {
+            status: 'completed',
+            costUsd: execution.costUsd,
+            turnCount: execution.turnCount,
+            testsMissing: execution.testsMissing,
+        });
     }
     const forgeStatus = pipelineHalted ? 'failed' : (storiesFailed === 0 ? 'passed' : (storiesCompleted > 0 ? 'passed' : 'failed'));
     const forgeStatusDetail = pipelineHalted
@@ -1145,42 +1165,16 @@ export async function runPipeline(options) {
     const runsDir = join(workDir, RUNS_DIR);
     if (!existsSync(runsDir))
         mkdirSync(runsDir, { recursive: true });
-    // ── AgentOS State Kernel: record the run's deterministic outcome ──
-    // Advisory (like the codemap pre-flight): a failure here logs a warning and never
-    // breaks the run. Writes an inspectable <runId>/state/state.json whose build_status
-    // is gate-controlled — the barrier marks the slice FAILED on a failing gate and only
-    // a clean gate PASS with zero failed stories flips the run to PASSING (§4.2).
+    // ── AgentOS State Kernel: finalize the run's deterministic outcome ──
+    // Per-story slices were streamed during execution; here we record the run-level
+    // forge_state through the gate barrier and set the gate-controlled build_status.
+    // Advisory — never breaks the run (recordRunOutcome swallows and logs failures).
     if (gateSummary) {
-        try {
-            const runStateDir = join(runsDir, runId);
-            mkdirSync(runStateDir, { recursive: true });
-            const kernel = StateKernel.create(runStateDir, runId);
-            const barrier = new GateBarrier(kernel, () => fromGateSummary(gateSummary));
-            const outcome = await barrier.commit({
-                slice: 'forge_state',
-                owner: 'forge',
-                data: {
-                    stories_total: allStoryFiles.length,
-                    stories_completed: storiesCompleted,
-                    stories_failed: storiesFailed,
-                    gates_passed: gateSummary.passed,
-                    gates_failed: gateSummary.failed,
-                    gates_warned: gateSummary.warned,
-                },
-            }, 0);
-            if (gateSummary.verdict === 'PASS' && storiesFailed === 0) {
-                kernel.setBuildStatus('PASSING');
-            }
-            log.info('pipeline', 'state_kernel_recorded', {
-                runId,
-                path: kernel.path,
-                committed: outcome.committed,
-                buildStatus: kernel.getBuildStatus(),
-            });
-        }
-        catch (err) {
-            log.warn('pipeline', 'state_kernel_failed', { runId, error: String(err) });
-        }
+        await recordRunOutcome(stateKernel, gateSummary, {
+            storiesTotal: allStoryFiles.length,
+            storiesCompleted,
+            storiesFailed,
+        });
     }
     const runBundle = {
         run_id: runId,
