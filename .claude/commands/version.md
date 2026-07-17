@@ -161,7 +161,7 @@ See CHANGELOG.md for full details
 
 ## Current Version Details
 
-**SkillFoundry v5.28.0**
+**SkillFoundry v5.29.0**
 
 - **61 Agents, 108 Skills/platform** - Complete lifecycle coverage (130+ total incl. CLI)
 - **6 Platforms** - Claude Code, GitHub Copilot, Cursor, OpenAI Codex, Google Gemini, Grok Build
@@ -185,6 +185,8 @@ See CHANGELOG.md for full details
 
 | Version | Date | Milestone |
 |---------|------|-----------|
+
+| 5.29.0 | 2026-07-17 | AgentOS: shared run-state kernel (versioned slices, atomic writes, CAS, refs-not-blobs), gate barrier (agents cannot self-certify a passing build), ajv schema-validated handoffs, lazy language projection |
 | 5.28.0 | 2026-07-13 | Rationalization tail: retired duplicate reptilian-gate-keeper (96 skills), framework-wide persona de-theater (plain professional tone, kept the rigor) |
 | 5.27.0 | 2026-07-13 | Skill Rationalization: 109→97 skills (removed cruft, guardian role-cards, redundant security/coder personas; universalized senior-engineer discipline) + new /prune (dead-code & duplication remover) |
 | 5.26.0 | 2026-07-11 | Domain Expert Synthesis — review-only, project-scoped domain reviewers for specialized non-IT fields (self-flag / behavioral / declared detection + cross-project promotion) |

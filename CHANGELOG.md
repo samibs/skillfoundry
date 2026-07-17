@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [5.29.0] - 2026-07-17 — AgentOS: Shared State Kernel & Schema-Validated Handoffs
+
+Introduces an **AgentOS** substrate under the CLI: a durable, versioned, human-inspectable
+run-state document plus schema-validated agent-to-agent handoffs — built *on top of* the
+existing message bus and gate engine, not a rewrite. The design principle is a terse,
+semantic, schema-validated JSON intermediate representation (not opaque vectors/embeddings)
+that both a developer's eyes and the model's reasoning are native to. Implements PRD
+`genesis/2026-07-17-agentos-state-kernel.md` across 5 stories.
+
+### Added
+
+- **Project State Kernel** (`sf_cli/src/core/state.ts`) — one authoritative
+  `.skillfoundry/runs/<id>/state/state.json` per run, partitioned into owner-scoped slices
+  (`coder_state`, `tester_state`, …). Monotonic per-slice versions, atomic temp+rename
+  writes (crash leaves the last valid document intact), and optimistic-concurrency writes:
+  a stale-version commit is rejected and `updateSlice()` rebases + retries (CAS). Oversized
+  string fields spill transparently to `state/artifacts/<sha256>` and are replaced with a
+  `{ref,hash,bytes}` pointer — references, never blobs. `build_status` is gate-controlled;
+  an agent-authored slice can never self-certify a passing build.
+- **Gate barrier** (`state-gate-barrier.ts`) — the write "MMU". Agents *propose* slice
+  updates; only a deterministic gate pass commits them. On failure the proposal is not
+  merged — the owning slice is marked `{status:FAILED, error_logs}` and `build_status`
+  flips to `FAILING`, forcing a retry. Per-slice halt keeps sibling slices unaffected.
+  `fromGateSummary()` adapts the existing `GateRunSummary` so the pipeline plugs in directly.
+- **Schema-validated handoffs** (`message-contracts.ts`) — `ajv`-backed
+  `MessageContractRegistry` + bus middleware. Invalid payloads are dropped and logged, never
+  delivered as a narrative; message types with no registered contract pass through
+  unenforced (incremental adoption). Recipient-specific contracts beat wildcard.
+- **Capability schemas** (`message-schemas.ts`) — shared JSON-Schema types
+  (`Severity`, `Finding`, `FileRef`) as a single source of truth, a permissive default
+  registry covering all 8 message types, and an opt-in `installMessageContracts(bus)`.
+- **Lazy language projection** (`state-projection.ts`) — `projectState()` renders run state
+  to a compact success summary or a failure post-mortem (from `error_logs`) at the human
+  boundary only; spilled fields show as `<spilled NB>` rather than dumping the blob.
+
+### Changed
+
+- **Pipeline integration** — `pipeline.ts` now records each forge run's deterministic
+  outcome to the state kernel via the gate barrier. It is **advisory** (like the codemap
+  pre-flight): wrapped in try/catch, a state-write failure logs a warning and never breaks
+  a run. `build_status` becomes `PASSING` only on a clean gate PASS with zero failed stories.
+- Runs are now per-run **directories** (`.skillfoundry/runs/<id>/`) alongside the existing
+  flat `<id>.json` bundle (backward-compatible).
+
+### Dependencies
+
+- Added `ajv ^8.17.1` (JSON-Schema validation; imported as `{ Ajv }` for NodeNext).
+
+### Tests
+
+- 47 new unit tests across the kernel, barrier, contracts, schemas, and projection.
+  111 existing bus/gate/pipeline tests unchanged and green; `tsc --noEmit` clean.
+
+### Not yet done (deliberate incremental follow-ups)
+
+- Per-**story** slice streaming through the pipeline loop (currently run-level only).
+- Contract middleware is opt-in and permissive; **not** auto-installed on the global bus —
+  strict, flag-gated, telemetry-driven rollout is the next step.
+- The 102 markdown agents are not yet converted to strict per-agent contracts.
+
+---
+
 ## [5.28.0] - 2026-07-13 — Rationalization Tail: De-Theater & Gate-Keeper Unification
 
 The finishing pass on the skill rationalization. Retired the duplicate `reptilian-gate-keeper`

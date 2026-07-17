@@ -13,6 +13,8 @@ import { SessionRecorder } from './session-recorder.js';
 import { scorePrd, PrdNotDetectedError } from './prd-scorer.js';
 import { AnthropicAdapter } from './provider.js';
 import { ALL_TOOLS } from './tools.js';
+import { StateKernel } from './state.js';
+import { GateBarrier, fromGateSummary } from './state-gate-barrier.js';
 import { getLogger } from '../utils/logger.js';
 const RUNS_DIR = '.skillfoundry/runs';
 const MAX_FIXER_ATTEMPTS = 2;
@@ -1143,6 +1145,43 @@ export async function runPipeline(options) {
     const runsDir = join(workDir, RUNS_DIR);
     if (!existsSync(runsDir))
         mkdirSync(runsDir, { recursive: true });
+    // ── AgentOS State Kernel: record the run's deterministic outcome ──
+    // Advisory (like the codemap pre-flight): a failure here logs a warning and never
+    // breaks the run. Writes an inspectable <runId>/state/state.json whose build_status
+    // is gate-controlled — the barrier marks the slice FAILED on a failing gate and only
+    // a clean gate PASS with zero failed stories flips the run to PASSING (§4.2).
+    if (gateSummary) {
+        try {
+            const runStateDir = join(runsDir, runId);
+            mkdirSync(runStateDir, { recursive: true });
+            const kernel = StateKernel.create(runStateDir, runId);
+            const barrier = new GateBarrier(kernel, () => fromGateSummary(gateSummary));
+            const outcome = await barrier.commit({
+                slice: 'forge_state',
+                owner: 'forge',
+                data: {
+                    stories_total: allStoryFiles.length,
+                    stories_completed: storiesCompleted,
+                    stories_failed: storiesFailed,
+                    gates_passed: gateSummary.passed,
+                    gates_failed: gateSummary.failed,
+                    gates_warned: gateSummary.warned,
+                },
+            }, 0);
+            if (gateSummary.verdict === 'PASS' && storiesFailed === 0) {
+                kernel.setBuildStatus('PASSING');
+            }
+            log.info('pipeline', 'state_kernel_recorded', {
+                runId,
+                path: kernel.path,
+                committed: outcome.committed,
+                buildStatus: kernel.getBuildStatus(),
+            });
+        }
+        catch (err) {
+            log.warn('pipeline', 'state_kernel_failed', { runId, error: String(err) });
+        }
+    }
     const runBundle = {
         run_id: runId,
         status: storiesFailed === 0 && gateVerdict !== 'FAIL' ? 'COMPLETED' : 'PARTIAL',
