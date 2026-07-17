@@ -61,6 +61,44 @@ export const ARCHETYPE_OUTPUT_CONTRACTS = {
     operator: OPERATOR_OUTPUT_SCHEMA,
     advisor: ADVISOR_OUTPUT_SCHEMA,
 };
+// ── Per-agent overrides (stricter than the archetype default where justified) ──
+/**
+ * Gate-keeper is a reviewer, but its output is a gate VERDICT, not a findings list.
+ * Verdict vocabulary is grounded in the gate-keeper agent (APPROVE / WARN / REJECT / BLOCK).
+ */
+export const GATE_KEEPER_OUTPUT_SCHEMA = {
+    type: 'object',
+    required: ['verdict'],
+    properties: {
+        verdict: { type: 'string', enum: ['APPROVE', 'WARN', 'REJECT', 'BLOCK'] },
+        findings: { type: 'array', items: FINDING_SCHEMA },
+    },
+    additionalProperties: true,
+};
+/**
+ * Tester is an operator, but its report is structured test metrics — grounded in the
+ * tester agent's output (tests run, failures, coverage).
+ */
+export const TESTER_OUTPUT_SCHEMA = {
+    type: 'object',
+    required: ['status', 'tests_run'],
+    properties: {
+        status: { type: 'string' },
+        tests_run: { type: 'integer' },
+        failures: { type: 'integer' },
+        coverage: { type: 'number' },
+    },
+    additionalProperties: true,
+};
+/**
+ * Per-agent contract overrides. An agent whose real output shape differs from its
+ * archetype's generic shape is listed here; everything else uses the archetype default.
+ * Kept deliberately small and grounded — the archetype map is still the single source.
+ */
+export const AGENT_OUTPUT_OVERRIDES = {
+    'gate-keeper': GATE_KEEPER_OUTPUT_SCHEMA,
+    tester: TESTER_OUTPUT_SCHEMA,
+};
 /**
  * A structured agent result on the bus must match at least one archetype's key shape —
  * enough to reject a stray narrative string handoff while accepting any real result.
@@ -77,24 +115,67 @@ export const AGENT_RESULT_SCHEMA = {
 };
 // ── Validation ─────────────────────────────────────────────────────────────
 const ajv = new Ajv({ allErrors: true, strict: false });
-const compiled = new Map();
-for (const [archetype, schema] of Object.entries(ARCHETYPE_OUTPUT_CONTRACTS)) {
-    compiled.set(archetype, ajv.compile(schema));
+// Validators are compiled per unique schema object (archetype defaults + overrides) and
+// cached, so a per-agent override validates against its own schema.
+const validatorCache = new Map();
+function validatorFor(schema) {
+    let validate = validatorCache.get(schema);
+    if (!validate) {
+        validate = ajv.compile(schema);
+        validatorCache.set(schema, validate);
+    }
+    return validate;
 }
-/** The output contract for an agent, resolved via its archetype. */
+/** The output contract for an agent: a per-agent override if present, else the archetype default. */
 export function getAgentOutputContract(agentName) {
-    return ARCHETYPE_OUTPUT_CONTRACTS[getAgentArchetype(agentName)];
+    return AGENT_OUTPUT_OVERRIDES[agentName] ?? ARCHETYPE_OUTPUT_CONTRACTS[getAgentArchetype(agentName)];
 }
-/** Validate a structured agent output against its archetype's contract. */
+/** Validate a structured agent output against its (override or archetype) contract. */
 export function validateAgentOutput(agentName, output) {
     const archetype = getAgentArchetype(agentName);
-    const validate = compiled.get(archetype);
+    const schema = getAgentOutputContract(agentName);
+    const validate = validatorFor(schema);
     const valid = validate(output);
     return {
         valid,
         archetype,
+        override: agentName in AGENT_OUTPUT_OVERRIDES,
         errors: valid ? [] : formatErrors(validate.errors),
     };
+}
+// ── Runtime enforcement (graduated rollout: observe → warn → enforce) ──────
+/**
+ * Extract a structured object from an agent's free-text output: a fenced ```json block
+ * if present, otherwise the whole text when it is itself a JSON object/array. Returns
+ * `null` when the agent emitted prose (nothing to enforce).
+ */
+export function extractStructuredOutput(text) {
+    if (!text || typeof text !== 'string')
+        return null;
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+    const raw = (fenced ? fenced[1] : text).trim();
+    if (!(raw.startsWith('{') || raw.startsWith('[')))
+        return null;
+    try {
+        return JSON.parse(raw);
+    }
+    catch {
+        return null;
+    }
+}
+/**
+ * Validate an agent's raw result text against its contract, when it contains structured
+ * output. Prose results are `enforced: false` (nothing to validate) — free-text agents
+ * are never penalized. This is the extraction step the runtime hook uses.
+ */
+export function validateAgentResultText(agentName, text) {
+    const archetype = getAgentArchetype(agentName);
+    const obj = extractStructuredOutput(text);
+    if (obj === null) {
+        return { enforced: false, valid: true, archetype, errors: [] };
+    }
+    const result = validateAgentOutput(agentName, obj);
+    return { enforced: true, valid: result.valid, archetype, errors: result.errors };
 }
 /** Every distinct agent name that has a declared contract (via the archetype map). */
 export function contractedAgentNames() {

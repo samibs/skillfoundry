@@ -31,17 +31,28 @@ enforcement is off by default.
   types. New `validateAgentOutput(name, output)` API; `registerAgentResultContracts()`
   composes an agent-result contract onto the bus registry so `result:complete` handoffs
   must be structured agent results, not narrative prose (enforced under the same flag).
+- **Per-agent contract overrides** — a layered resolver: `getAgentOutputContract()` uses a
+  per-agent override when present (`AGENT_OUTPUT_OVERRIDES`) and the archetype default
+  otherwise. Two grounded overrides ship: `gate-keeper` (verdict shape: APPROVE/WARN/
+  REJECT/BLOCK) and `tester` (test metrics: status + tests_run/failures/coverage). The
+  archetype map remains the single source; overrides stay small and evidence-based.
+- **Advisory runtime output-contract check** — the graduated-rollout observe/warn stage.
+  `Agent.execute()` extracts structured output from a completed agent result
+  (`extractStructuredOutput` — fenced ```json or bare JSON) and validates it against the
+  agent's contract, logging a violation. Flag-gated (off by default), prose results are
+  unenforced, and it never throws or blocks a run. Hard rejection is a later escalation.
 
 ### Tests
 
-- +27 unit tests (11 pipeline-state, 9 strict-bus, 7 agent-contracts). Full AgentOS suite
-  plus pipeline/bus/config regressions green (149); `tsc --noEmit` clean.
+- +33 unit tests (11 pipeline-state, 9 strict-bus, 13 agent-contracts). Full AgentOS suite
+  plus pipeline/bus/config regressions green; `tsc --noEmit` clean. (Two pre-existing
+  `agent-prompt-loader` failures on `main` are unrelated to this work.)
 
 ### Still incremental
 
-- Runtime enforcement of per-agent output contracts requires agents to emit structured
-  output (force-JSON in the runner); the contracts + validation API are in place, the
-  runner wiring remains a flag-gated follow-on.
+- HARD runtime enforcement (rejecting/failing an agent on an invalid structured result)
+  and forcing every agent to emit JSON remain a deliberate later escalation; this release
+  ships the observe/warn stage of that rollout.
 
 ---
 

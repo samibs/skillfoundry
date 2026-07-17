@@ -11,7 +11,11 @@ import type {
 import { loadConfig, loadPolicy } from '../core/config.js';
 import { loadState, updateState } from '../core/session.js';
 import { AgentMessageBus } from '../core/agent-message-bus.js';
-import { installContractsForMode } from '../core/message-schemas.js';
+import {
+  installContractsForMode,
+  resolveContractMode,
+  setActiveContractMode,
+} from '../core/message-schemas.js';
 import { registerAgentResultContracts } from '../core/agent-contracts.js';
 import { initLogger } from '../utils/logger.js';
 import type { LogLevel } from '../utils/logger.js';
@@ -27,11 +31,11 @@ export function useSession(workDir: string) {
     // AgentOS: install message-bus contract enforcement per config (flag-gated,
     // default off → no-op). SF_BUS_CONTRACTS env var can override for staged rollout.
     // When active, tighten result:complete to a structured agent-result contract so
-    // agent handoffs carry data, not narrative prose.
-    const contractRegistry = installContractsForMode(
-      AgentMessageBus.global(),
-      cfg.message_contracts,
-    );
+    // agent handoffs carry data, not narrative prose. The same resolved mode drives the
+    // advisory agent output-contract check in Agent.execute().
+    const mode = resolveContractMode(cfg.message_contracts);
+    setActiveContractMode(mode);
+    const contractRegistry = installContractsForMode(AgentMessageBus.global(), mode);
     if (contractRegistry) registerAgentResultContracts(contractRegistry);
     return cfg;
   });

@@ -75,6 +75,10 @@ export type ContractMode = 'off' | 'permissive' | 'strict';
  * configured mode when set to a valid value (useful for staged rollout / testing).
  */
 export declare function resolveContractMode(configured: ContractMode | undefined): ContractMode;
+/** Set the process-level active contract mode (called once at session start). */
+export declare function setActiveContractMode(mode: ContractMode): void;
+/** The active contract mode, or the env-resolved default when not explicitly set. */
+export declare function getActiveContractMode(): ContractMode;
 /**
  * Install bus contract enforcement per the resolved mode. Returns the registry when
  * enforcement is active, or `null` for `off`. `strict` is fail-closed: handoffs with no

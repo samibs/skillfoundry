@@ -17,6 +17,8 @@ import { TOOL_SETS, type ToolCategory } from './agent-registry.js';
 import { runAgentLoop } from './ai-runner.js';
 import { getLogger } from '../utils/logger.js';
 import { AgentMessageBus, type SubscriberFn, type UnsubscribeFn } from './agent-message-bus.js';
+import { validateAgentResultText } from './agent-contracts.js';
+import { getActiveContractMode } from './message-schemas.js';
 import { AgentLogger } from './agent-logger.js';
 import { randomUUID } from 'node:crypto';
 
@@ -240,6 +242,21 @@ export abstract class Agent {
         agentLogger.fail(new Error(result.output));
       } else {
         agentLogger.complete({ status: result.status, durationMs: result.durationMs });
+        // AgentOS output-contract check (advisory, flag-gated: observe → warn stage of
+        // the graduated rollout). Only fires when the agent emitted structured output
+        // and contract enforcement is enabled; it logs a violation but never blocks.
+        const mode = getActiveContractMode();
+        if (mode !== 'off') {
+          const check = validateAgentResultText(this.name, result.output);
+          if (check.enforced && !check.valid) {
+            log.warn('runner', 'agent_output_contract_violation', {
+              agent: this.name,
+              archetype: check.archetype,
+              mode,
+              errors: check.errors,
+            });
+          }
+        }
       }
 
       return result;

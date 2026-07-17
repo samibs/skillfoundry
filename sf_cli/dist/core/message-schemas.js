@@ -89,6 +89,18 @@ export function resolveContractMode(configured) {
         return env;
     return configured ?? 'off';
 }
+// Process-level active contract mode. Set once at session start from config so runtime
+// consumers (e.g. the agent output-contract hook) can read it cheaply without re-reading
+// config or the bus. Falls back to the env-resolved mode when unset.
+let activeContractMode = null;
+/** Set the process-level active contract mode (called once at session start). */
+export function setActiveContractMode(mode) {
+    activeContractMode = mode;
+}
+/** The active contract mode, or the env-resolved default when not explicitly set. */
+export function getActiveContractMode() {
+    return activeContractMode ?? resolveContractMode(undefined);
+}
 /**
  * Install bus contract enforcement per the resolved mode. Returns the registry when
  * enforcement is active, or `null` for `off`. `strict` is fail-closed: handoffs with no
