@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — AgentOS follow-ups
+
+Completes the three deliberate follow-ups flagged in v5.29.0. All additive; the bus
+enforcement is off by default.
+
+### Added
+
+- **Per-story slice streaming** (follow-up 1) — the forge pipeline creates the run state
+  kernel up front and streams one slice per story as it finishes, so
+  `.skillfoundry/runs/<id>/state/state.json` reflects progress mid-run, not only at the
+  end. Completed stories commit metrics; failed/circuit-broken stories mark their slice
+  `FAILED` with `error_logs` and flip `build_status` to `FAILING` (per-slice halt). State
+  logic extracted to `pipeline-state.ts`; every entry point is advisory.
+- **Flag-gated bus contract enforcement** (follow-up 2) — new
+  `SfConfig.message_contracts: 'off' | 'permissive' | 'strict'` (default `off`), with a
+  `SF_BUS_CONTRACTS` env override for staged rollout. `permissive` validates registered
+  contracts and lets unregistered handoffs through; `strict` is fail-closed (unregistered
+  handoff rejected). Wired into the runtime via `useSession` on `AgentMessageBus.global()`.
+- **Strict per-agent output contracts** (follow-up 3) — every registered agent is mapped
+  to a strict output contract through its archetype (implementer/reviewer/operator/advisor)
+  from the single source `AGENT_ARCHETYPE_MAP`, built from the shared `Finding`/`FileRef`
+  types. New `validateAgentOutput(name, output)` API; `registerAgentResultContracts()`
+  composes an agent-result contract onto the bus registry so `result:complete` handoffs
+  must be structured agent results, not narrative prose (enforced under the same flag).
+
+### Tests
+
+- +27 unit tests (11 pipeline-state, 9 strict-bus, 7 agent-contracts). Full AgentOS suite
+  plus pipeline/bus/config regressions green (149); `tsc --noEmit` clean.
+
+### Still incremental
+
+- Runtime enforcement of per-agent output contracts requires agents to emit structured
+  output (force-JSON in the runner); the contracts + validation API are in place, the
+  runner wiring remains a flag-gated follow-on.
+
+---
+
 ## [5.29.0] - 2026-07-17 — AgentOS: Shared State Kernel & Schema-Validated Handoffs
 
 Introduces an **AgentOS** substrate under the CLI: a durable, versioned, human-inspectable

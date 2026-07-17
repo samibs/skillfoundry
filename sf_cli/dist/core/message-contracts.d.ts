@@ -12,6 +12,11 @@ export interface ValidationResult {
 export interface ContractMiddlewareOptions {
     /** Invoked when a message is rejected, for custom handling (metrics, dead-letter). */
     onReject?: (message: AgentMessage, errors: string[]) => void;
+    /**
+     * Fail-closed mode (strict rollout): reject a message that has NO registered
+     * contract instead of letting it pass through unenforced. Default false.
+     */
+    failClosed?: boolean;
 }
 /**
  * Compiles and stores JSON Schemas for agent-to-agent message payloads, keyed by

@@ -1,6 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import { loadConfig, loadPolicy } from '../core/config.js';
 import { loadState, updateState } from '../core/session.js';
+import { AgentMessageBus } from '../core/agent-message-bus.js';
+import { installContractsForMode } from '../core/message-schemas.js';
+import { registerAgentResultContracts } from '../core/agent-contracts.js';
 import { initLogger } from '../utils/logger.js';
 export function useSession(workDir) {
     const [messages, setMessages] = useState([]);
@@ -10,6 +13,13 @@ export function useSession(workDir) {
         const level = (cfg.log_level || 'info').toUpperCase();
         const validLevels = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
         initLogger(workDir, validLevels.includes(level) ? level : 'INFO');
+        // AgentOS: install message-bus contract enforcement per config (flag-gated,
+        // default off → no-op). SF_BUS_CONTRACTS env var can override for staged rollout.
+        // When active, tighten result:complete to a structured agent-result contract so
+        // agent handoffs carry data, not narrative prose.
+        const contractRegistry = installContractsForMode(AgentMessageBus.global(), cfg.message_contracts);
+        if (contractRegistry)
+            registerAgentResultContracts(contractRegistry);
         return cfg;
     });
     const [policy] = useState(() => loadPolicy(workDir));

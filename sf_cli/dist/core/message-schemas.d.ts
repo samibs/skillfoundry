@@ -68,3 +68,20 @@ export declare function buildDefaultRegistry(extra?: ContractEntry[]): MessageCo
  * @param options - Reject-handling options forwarded to the middleware.
  */
 export declare function installMessageContracts(bus: AgentMessageBus, registry?: MessageContractRegistry, options?: ContractMiddlewareOptions): MessageContractRegistry;
+/** Bus contract enforcement modes (flag-gated rollout). */
+export type ContractMode = 'off' | 'permissive' | 'strict';
+/**
+ * Resolve the effective contract mode: the `SF_BUS_CONTRACTS` env var overrides the
+ * configured mode when set to a valid value (useful for staged rollout / testing).
+ */
+export declare function resolveContractMode(configured: ContractMode | undefined): ContractMode;
+/**
+ * Install bus contract enforcement per the resolved mode. Returns the registry when
+ * enforcement is active, or `null` for `off`. `strict` is fail-closed: handoffs with no
+ * registered contract are rejected.
+ *
+ * @param bus - The message bus to guard (typically `AgentMessageBus.global()`).
+ * @param configured - Mode from config; may be overridden by `SF_BUS_CONTRACTS`.
+ * @param options - Reject-handling options (onReject) forwarded to the middleware.
+ */
+export declare function installContractsForMode(bus: AgentMessageBus, configured: ContractMode | undefined, options?: Omit<ContractMiddlewareOptions, 'failClosed'>): MessageContractRegistry | null;
