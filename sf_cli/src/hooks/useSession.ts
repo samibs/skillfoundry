@@ -10,6 +10,8 @@ import type {
 } from '../types.js';
 import { loadConfig, loadPolicy } from '../core/config.js';
 import { loadState, updateState } from '../core/session.js';
+import { AgentMessageBus } from '../core/agent-message-bus.js';
+import { installContractsForMode } from '../core/message-schemas.js';
 import { initLogger } from '../utils/logger.js';
 import type { LogLevel } from '../utils/logger.js';
 
@@ -21,6 +23,9 @@ export function useSession(workDir: string) {
     const level = (cfg.log_level || 'info').toUpperCase() as LogLevel;
     const validLevels: LogLevel[] = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
     initLogger(workDir, validLevels.includes(level) ? level : 'INFO');
+    // AgentOS: install message-bus contract enforcement per config (flag-gated,
+    // default off → no-op). SF_BUS_CONTRACTS env var can override for staged rollout.
+    installContractsForMode(AgentMessageBus.global(), cfg.message_contracts);
     return cfg;
   });
   const [policy] = useState<SfPolicy>(() => loadPolicy(workDir));

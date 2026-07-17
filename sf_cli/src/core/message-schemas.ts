@@ -109,3 +109,38 @@ export function installMessageContracts(
   bus.use(createContractMiddleware(registry, options));
   return registry;
 }
+
+/** Bus contract enforcement modes (flag-gated rollout). */
+export type ContractMode = 'off' | 'permissive' | 'strict';
+
+/**
+ * Resolve the effective contract mode: the `SF_BUS_CONTRACTS` env var overrides the
+ * configured mode when set to a valid value (useful for staged rollout / testing).
+ */
+export function resolveContractMode(configured: ContractMode | undefined): ContractMode {
+  const env = process.env.SF_BUS_CONTRACTS;
+  if (env === 'off' || env === 'permissive' || env === 'strict') return env;
+  return configured ?? 'off';
+}
+
+/**
+ * Install bus contract enforcement per the resolved mode. Returns the registry when
+ * enforcement is active, or `null` for `off`. `strict` is fail-closed: handoffs with no
+ * registered contract are rejected.
+ *
+ * @param bus - The message bus to guard (typically `AgentMessageBus.global()`).
+ * @param configured - Mode from config; may be overridden by `SF_BUS_CONTRACTS`.
+ * @param options - Reject-handling options (onReject) forwarded to the middleware.
+ */
+export function installContractsForMode(
+  bus: AgentMessageBus,
+  configured: ContractMode | undefined,
+  options: Omit<ContractMiddlewareOptions, 'failClosed'> = {},
+): MessageContractRegistry | null {
+  const mode = resolveContractMode(configured);
+  if (mode === 'off') return null;
+  return installMessageContracts(bus, buildDefaultRegistry(), {
+    ...options,
+    failClosed: mode === 'strict',
+  });
+}

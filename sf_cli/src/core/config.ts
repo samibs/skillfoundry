@@ -46,6 +46,7 @@ const DEFAULT_CONFIG: SfConfig = {
   data_jurisdiction: 'none',
   quality_fallback: false,
   routing_rules: {},
+  message_contracts: 'off',
 };
 
 const DEFAULT_POLICY: SfPolicy = {
