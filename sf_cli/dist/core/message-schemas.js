@@ -85,7 +85,7 @@ export function installMessageContracts(bus, registry = buildDefaultRegistry(), 
  */
 export function resolveContractMode(configured) {
     const env = process.env.SF_BUS_CONTRACTS;
-    if (env === 'off' || env === 'permissive' || env === 'strict')
+    if (env === 'off' || env === 'permissive' || env === 'strict' || env === 'enforce')
         return env;
     return configured ?? 'off';
 }
@@ -116,7 +116,7 @@ export function installContractsForMode(bus, configured, options = {}) {
         return null;
     return installMessageContracts(bus, buildDefaultRegistry(), {
         ...options,
-        failClosed: mode === 'strict',
+        failClosed: mode === 'strict' || mode === 'enforce',
     });
 }
 //# sourceMappingURL=message-schemas.js.map

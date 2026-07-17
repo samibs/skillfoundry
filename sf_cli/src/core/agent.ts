@@ -17,7 +17,7 @@ import { TOOL_SETS, type ToolCategory } from './agent-registry.js';
 import { runAgentLoop } from './ai-runner.js';
 import { getLogger } from '../utils/logger.js';
 import { AgentMessageBus, type SubscriberFn, type UnsubscribeFn } from './agent-message-bus.js';
-import { validateAgentResultText } from './agent-contracts.js';
+import { enforceOutputContract, structuredOutputInstruction } from './agent-contracts.js';
 import { getActiveContractMode } from './message-schemas.js';
 import { AgentLogger } from './agent-logger.js';
 import { randomUUID } from 'node:crypto';
@@ -231,9 +231,43 @@ export abstract class Agent {
         return this.buildResult('aborted', 'Aborted before execution');
       }
 
-      const result = await this.run(task, context);
+      let result = await this.run(task, context);
 
-      // Log based on outcome
+      // AgentOS output-contract check (graduated rollout). On a completed result that
+      // carries structured output, validate it against the agent's contract. In
+      // permissive/strict a violation is logged only (warn stage); in 'enforce' a
+      // violation downgrades the result to 'failed' so the contract is binding. Prose
+      // results (no structured output) are never a violation.
+      if (result.status === 'completed') {
+        const mode = getActiveContractMode();
+        if (mode !== 'off') {
+          const decision = enforceOutputContract(this.name, result.output, mode);
+          if (decision.violation) {
+            if (decision.hardFailed) {
+              this.state.status = 'failed';
+              log.error('runner', 'agent_output_contract_enforced', {
+                agent: this.name,
+                archetype: decision.archetype,
+                errors: decision.errors,
+              });
+              result = {
+                ...result,
+                status: 'failed',
+                output: `${result.output}\n\n[output-contract violation] ${decision.errors.join('; ')}`,
+              };
+            } else {
+              log.warn('runner', 'agent_output_contract_violation', {
+                agent: this.name,
+                archetype: decision.archetype,
+                mode,
+                errors: decision.errors,
+              });
+            }
+          }
+        }
+      }
+
+      // Log based on final outcome
       if (result.status === 'aborted') {
         agentLogger.abort('Agent run returned aborted status');
       } else if (result.status === 'budget_exceeded') {
@@ -242,21 +276,6 @@ export abstract class Agent {
         agentLogger.fail(new Error(result.output));
       } else {
         agentLogger.complete({ status: result.status, durationMs: result.durationMs });
-        // AgentOS output-contract check (advisory, flag-gated: observe → warn stage of
-        // the graduated rollout). Only fires when the agent emitted structured output
-        // and contract enforcement is enabled; it logs a violation but never blocks.
-        const mode = getActiveContractMode();
-        if (mode !== 'off') {
-          const check = validateAgentResultText(this.name, result.output);
-          if (check.enforced && !check.valid) {
-            log.warn('runner', 'agent_output_contract_violation', {
-              agent: this.name,
-              archetype: check.archetype,
-              mode,
-              errors: check.errors,
-            });
-          }
-        }
       }
 
       return result;
@@ -529,6 +548,18 @@ export abstract class Agent {
     };
   }
 
+  /**
+   * Append the AgentOS structured-output instruction to a system prompt when the active
+   * contract mode is `enforce`. Additive — the agent keeps producing its normal output
+   * and appends a fenced ```json block the contract can validate. No-op otherwise.
+   */
+  protected applyContractInstruction(systemPrompt: string): string {
+    if (getActiveContractMode() === 'enforce') {
+      return `${systemPrompt}\n${structuredOutputInstruction(this.name)}`;
+    }
+    return systemPrompt;
+  }
+
   private createInitialState(): AgentState {
     return {
       status: 'idle',
@@ -562,7 +593,7 @@ export class ImplementerAgent extends Agent {
   }
 
   protected async run(task: string, context: AgentContext): Promise<AgentResult> {
-    const systemPrompt = this.buildSystemPrompt();
+    const systemPrompt = this.applyContractInstruction(this.buildSystemPrompt());
     const result = await this.runLoop(systemPrompt, task, context);
 
     if (result.aborted) {
@@ -594,7 +625,7 @@ export class ReviewerAgent extends Agent {
   }
 
   protected async run(task: string, context: AgentContext): Promise<AgentResult> {
-    const systemPrompt = `You are ${this.displayName}, a SkillFoundry autonomous agent. ${this.role}. Analyze code in the current project. Report findings with file paths and line numbers. Do NOT modify files. Be specific, cite evidence.`;
+    const systemPrompt = this.applyContractInstruction(`You are ${this.displayName}, a SkillFoundry autonomous agent. ${this.role}. Analyze code in the current project. Report findings with file paths and line numbers. Do NOT modify files. Be specific, cite evidence.`);
     const result = await this.runLoop(systemPrompt, task, context);
 
     if (result.aborted) {
@@ -623,7 +654,7 @@ export class OperatorAgent extends Agent {
   }
 
   protected async run(task: string, context: AgentContext): Promise<AgentResult> {
-    const systemPrompt = `You are ${this.displayName}, a SkillFoundry autonomous agent. ${this.role}. Run diagnostics and report results. Do NOT modify source files. Use bash for commands, read/glob for inspection.`;
+    const systemPrompt = this.applyContractInstruction(`You are ${this.displayName}, a SkillFoundry autonomous agent. ${this.role}. Run diagnostics and report results. Do NOT modify source files. Use bash for commands, read/glob for inspection.`);
     const result = await this.runLoop(systemPrompt, task, context);
 
     if (result.aborted) {
@@ -654,7 +685,7 @@ export class AdvisorAgent extends Agent {
   }
 
   protected async run(task: string, context: AgentContext): Promise<AgentResult> {
-    const systemPrompt = `You are ${this.displayName}, a SkillFoundry autonomous agent. ${this.role}. Answer questions about ${this.domain}. You have no file access in this mode. Be concise and reference project standards when relevant.`;
+    const systemPrompt = this.applyContractInstruction(`You are ${this.displayName}, a SkillFoundry autonomous agent. ${this.role}. Answer questions about ${this.domain}. You have no file access in this mode. Be concise and reference project standards when relevant.`);
     const result = await this.runLoop(systemPrompt, task, context);
 
     if (result.aborted) {

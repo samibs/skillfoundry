@@ -1,4 +1,5 @@
 import { type AgentArchetype } from './agent-registry.js';
+import { type ContractMode } from './message-schemas.js';
 import type { MessageContractRegistry } from './message-contracts.js';
 /** Implementer agents write code: they report an outcome and the files they touched. */
 export declare const IMPLEMENTER_OUTPUT_SCHEMA: {
@@ -201,6 +202,35 @@ export interface AgentResultValidation {
  * are never penalized. This is the extraction step the runtime hook uses.
  */
 export declare function validateAgentResultText(agentName: string, text: string): AgentResultValidation;
+/**
+ * An ADDITIVE prompt instruction (used only in `enforce` mode) asking the agent to end
+ * its message with a fenced ```json block matching its output contract. It is additive:
+ * the agent keeps producing its normal prose/code, then appends the structured block —
+ * so existing text consumers are unaffected while the contract becomes checkable.
+ */
+export declare function structuredOutputInstruction(agentName: string): string;
+/** The decision made about an agent result under the active contract mode. */
+export interface ContractEnforcementDecision {
+    /** Final status: 'failed' only when a violation is hard-enforced. */
+    status: 'completed' | 'failed';
+    /** True when the agent emitted structured output that the contract could check. */
+    enforced: boolean;
+    valid: boolean;
+    /** enforced && !valid — a real contract violation occurred. */
+    violation: boolean;
+    /** violation && mode === 'enforce' — the violation fails the task. */
+    hardFailed: boolean;
+    archetype: AgentArchetype;
+    errors: string[];
+}
+/**
+ * Pure decision function for the runtime output-contract hook. Given an agent's result
+ * text and the active mode, decide whether the result stands or is downgraded to
+ * `failed`. In `off` nothing happens; in `permissive`/`strict` a violation is reported
+ * but the result stands (warn stage); in `enforce` a violation downgrades to `failed`.
+ * Prose results (no structured output) are never a violation.
+ */
+export declare function enforceOutputContract(agentName: string, text: string, mode: ContractMode): ContractEnforcementDecision;
 /** Every distinct agent name that has a declared contract (via the archetype map). */
 export declare function contractedAgentNames(): string[];
 /**

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   Agent,
   ImplementerAgent,
@@ -425,5 +425,60 @@ describe('AgentResult Contract', () => {
     expect(result.childResults).toBeInstanceOf(Map);
     expect(Array.isArray(result.decisions)).toBe(true);
     expect(Array.isArray(result.artifacts)).toBe(true);
+  });
+});
+
+describe('AgentOS output-contract enforcement (hard, end-to-end)', () => {
+  async function setMode(mode: 'off' | 'permissive' | 'strict' | 'enforce') {
+    const { setActiveContractMode } = await import('../core/message-schemas.js');
+    setActiveContractMode(mode);
+  }
+  async function mockNextResult(content: string) {
+    const { runAgentLoop } = await import('../core/ai-runner.js');
+    (runAgentLoop as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      content,
+      turnCount: 1,
+      totalInputTokens: 10,
+      totalOutputTokens: 10,
+      totalCostUsd: 0.001,
+      aborted: false,
+    });
+  }
+
+  afterEach(async () => {
+    await setMode('off'); // never leak enforcement into other tests
+  });
+
+  it('enforce: a completed reviewer result with invalid structured output is downgraded to failed', async () => {
+    await mockNextResult('```json\n{"notes":"lgtm"}\n```'); // reviewer contract needs `findings`
+    await setMode('enforce');
+    const agent = new ReviewerAgent('security', 'Security', 'Attacker mindset');
+    const result = await agent.execute('review the code', createTestContext());
+    expect(result.status).toBe('failed');
+    expect(result.output).toMatch(/output-contract violation/);
+  });
+
+  it('enforce: a valid structured result stays completed', async () => {
+    await mockNextResult('Findings below:\n```json\n{"findings":[{"severity":"HIGH","file":"a.ts"}]}\n```');
+    await setMode('enforce');
+    const agent = new ReviewerAgent('security', 'Security', 'Attacker mindset');
+    const result = await agent.execute('review', createTestContext());
+    expect(result.status).toBe('completed');
+  });
+
+  it('off: an invalid structured result is left completed (no enforcement)', async () => {
+    await mockNextResult('```json\n{"notes":"lgtm"}\n```');
+    await setMode('off');
+    const agent = new ReviewerAgent('security', 'Security', 'Attacker mindset');
+    const result = await agent.execute('review', createTestContext());
+    expect(result.status).toBe('completed');
+  });
+
+  it('enforce: a prose-only result is not penalized', async () => {
+    await mockNextResult('I reviewed the code; no issues found.');
+    await setMode('enforce');
+    const agent = new ReviewerAgent('security', 'Security', 'Attacker mindset');
+    const result = await agent.execute('review', createTestContext());
+    expect(result.status).toBe('completed');
   });
 });
