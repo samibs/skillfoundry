@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.29.0-blue)
+![Version](https://img.shields.io/badge/version-5.30.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,16 +25,15 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.29.0
+### What's New in v5.30.0
 
-**AgentOS — a shared, inspectable memory for your agents**
+**AgentOS follow-ups — the state layer, now live in every run**
 
-- **One state file per run.** Every forge run now writes a human-readable `state.json` you can open to see exactly what the run believes — files changed, tests, coverage, gate results — instead of piecing it together from logs.
-- **Agents can't fake a pass.** A run is only marked passing when the real quality gates say so. If an agent claims success but the build fails, the state records the failure and forces a retry.
-- **Cleaner handoffs.** Agents pass each other validated, structured data — not free-form prose that silently drifts — so what one agent produces is what the next one expects.
-- **Quiet on success, clear on failure.** Successful runs show a compact summary; failures produce a readable post-mortem, not a wall of agent chatter.
+- **Progress you can watch.** The per-run state file now updates as each story finishes, not just at the end — open it mid-run to see exactly where things stand.
+- **Opt-in contract enforcement.** Turn on validation of agent handoffs when you want it (`off` / `permissive` / `strict`) — off by default, so nothing changes until you flip the switch.
+- **Every agent has a contract.** Each agent now has a declared output shape (a reviewer must produce findings, a gate-keeper a verdict, and so on), checked and reported when enabled.
 
-Full breakdown in the CHANGELOG under `[5.29.0]`.
+Full breakdown in the CHANGELOG under `[5.30.0]`.
 
 #### Previous: Skill Rationalization & `/prune` (v5.27.0)
 
