@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — AgentOS follow-ups
+## [5.30.0] - 2026-07-17 — AgentOS Follow-ups: Streaming, Flag-Gated Contracts & Per-Agent Enforcement
 
 Completes the three deliberate follow-ups flagged in v5.29.0. All additive; the bus
 enforcement is off by default.
