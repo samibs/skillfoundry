@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.28.0-blue)
+![Version](https://img.shields.io/badge/version-5.29.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,14 +25,16 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.28.0
+### What's New in v5.29.0
 
-**Rationalization tail — de-theater & a unified gate-keeper**
+**AgentOS — a shared, inspectable memory for your agents**
 
-- **Persona de-theater.** The "ruthless / merciless / cold-blooded / reptilian" weak-model coercion language is gone framework-wide — replaced with plain, professional tone that keeps every bit of the rigor. A capable model gives honest, exacting assessments without being told it's a reptile.
-- **One gate-keeper.** Retired the duplicate `reptilian-gate-keeper` (its capability-gate function was already in `/gate-keeper`) → **96 skills**.
+- **One state file per run.** Every forge run now writes a human-readable `state.json` you can open to see exactly what the run believes — files changed, tests, coverage, gate results — instead of piecing it together from logs.
+- **Agents can't fake a pass.** A run is only marked passing when the real quality gates say so. If an agent claims success but the build fails, the state records the failure and forces a retry.
+- **Cleaner handoffs.** Agents pass each other validated, structured data — not free-form prose that silently drifts — so what one agent produces is what the next one expects.
+- **Quiet on success, clear on failure.** Successful runs show a compact summary; failures produce a readable post-mortem, not a wall of agent chatter.
 
-Full breakdown in the CHANGELOG under `[5.28.0]`.
+Full breakdown in the CHANGELOG under `[5.29.0]`.
 
 #### Previous: Skill Rationalization & `/prune` (v5.27.0)
 

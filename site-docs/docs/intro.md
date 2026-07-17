@@ -35,6 +35,7 @@ This installs the `skillfoundry` CLI globally and initializes a new project with
 - **Skill Scoping** — Each skill (security, testing, deployment) activates only when invoked and deactivates when done. No instruction creep.
 - **Offline Search** — Full-text documentation search works without external services.
 - **Pipeline Resilience** — Git pre-flight checks, batch execution, and delivery audits ensure nothing ships broken.
+- **Inspectable Run State** *(v5.29.0)* — Every run writes one human-readable state file. Agents pass validated, structured data — not free-form prose — and a run is only marked passing when the real quality gates say so.
 
 ## How It Works
 
