@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0",
+  "project": "skillfoundry",
+  "authoritative_branch": "main",
+  "updated_at_utc": "2026-09-03T22:39:08.069Z",
+  "missions": {
+    "MISSION-GOV-001": {
+      "title": "Governed Development Mission Protocol",
+      "implementation_status": "IN_PROGRESS",
+      "acceptance_status": "EVIDENCE_PARTIAL",
+      "integration_status": "NOT_STARTED",
+      "publication_status": "NOT_STARTED",
+      "external_validation_status": "NOT_APPLICABLE",
+      "evidence": [
+        ".ai/evidence/MISSION-GOV-001/tests.json",
+        ".ai/evidence/MISSION-GOV-001/baseline.json"
+      ],
+      "attestations": [
+        ".ai/attestations/MISSION-GOV-001-claude-coder-GOV-001.json"
+      ],
+      "acceptance_criteria": [
+        {
+          "id": "AC1",
+          "requirement": "Durable .ai/ ledger with independent implementation/acceptance/integration/publication/external-validation dimensions",
+          "disposition": "PASS",
+          "evidence": [
+            ".ai/evidence/MISSION-GOV-001/tests.json"
+          ]
+        },
+        {
+          "id": "AC2",
+          "requirement": "Worker attestation blocks source writes until the native worktree, clean product tree and commit capability are proven",
+          "disposition": "PASS",
+          "evidence": [
+            ".ai/attestations/MISSION-GOV-001-claude-coder-GOV-001.json"
+          ]
+        },
+        {
+          "id": "AC3",
+          "requirement": "Stable patch identity and provenance; LOST/UNKNOWN contribution blocks acceptance",
+          "disposition": "PASS",
+          "evidence": [
+            ".ai/evidence/MISSION-GOV-001/tests.json"
+          ]
+        },
+        {
+          "id": "AC4",
+          "requirement": "Normal termination and orphan detection are acceptance criteria, not advisory",
+          "disposition": "PASS",
+          "evidence": [
+            ".ai/evidence/MISSION-GOV-001/tests.json"
+          ]
+        },
+        {
+          "id": "AC5",
+          "requirement": "Collision-aware wave planning with one git-native worktree per writer",
+          "disposition": "PASS",
+          "evidence": [
+            ".ai/evidence/MISSION-GOV-001/tests.json"
+          ]
+        },
+        {
+          "id": "AC6",
+          "requirement": "Ownership-verified process cleanup; broad machine-wide killing impossible",
+          "disposition": "PASS",
+          "evidence": [
+            ".ai/evidence/MISSION-GOV-001/tests.json"
+          ]
+        },
+        {
+          "id": "AC7",
+          "requirement": "Protocol shipped to every scaffolded project via install.sh with .ai/ control plane",
+          "disposition": "PASS",
+          "evidence": [
+            "MULTI_AGENT_PROTOCOL.md"
+          ]
+        },
+        {
+          "id": "AC8",
+          "requirement": "Worker commit recorded with stable patch ID",
+          "disposition": "BLOCKED_BY_AUTHORIZATION",
+          "evidence": [],
+          "note": "No commit made — the user has not authorized committing this work."
+        }
+      ],
+      "remaining_gaps": [
+        "GAP-001"
+      ],
+      "execution": {
+        "dependencies": [],
+        "write_manifest": [],
+        "status": "PLANNED",
+        "blockers": []
+      },
+      "created_at_utc": "2026-09-03T22:28:31.675Z",
+      "updated_at_utc": "2026-09-03T22:39:08.069Z",
+      "patch_guide": ".ai/patches/MISSION-GOV-001.md"
+    }
+  },
+  "waves": {},
+  "integrations": []
+}

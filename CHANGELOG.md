@@ -7,12 +7,138 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — AgentOS hard output enforcement
+## [5.31.0] - 2026-09-04 — Governed Development Mission Protocol
+
+Two changes ship together: the **Governed Development Mission Protocol** (Part 1), and the
+final **`enforce` stage of the AgentOS output-contract rollout** (Part 2). Both are additive
+and opt-in — nothing changes for an existing project until it starts a mission or flips the
+contract mode.
+
+### Part 1 — Governed Development Mission Protocol
+
+Adds the durable half of SkillFoundry's engineering record. Run state in
+`.skillfoundry/runs/` describes one execution and dies with it; `.ai/` lives in the
+repository and survives the agent. A replacement worker with zero chat history
+reconstructs project state from **git + ledger + attestations + patches + evidence**
+rather than trusting the previous agent's conversation.
+
+Enforcement is code, not prose — agents never hand-write `.ai/*.json`.
+
+### Added
+
+- **`MULTI_AGENT_PROTOCOL.md`** — the portable protocol, installed into every scaffolded
+  project by `install.sh` alongside a `.ai/` control plane. Platform adapters
+  (`CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md`,
+  `.cursor/rules/multi-agent-protocol.md`) stay thin and point at it.
+- **`agents/_governed-mission-protocol.md`** — operational module: activation conditions,
+  worker sequence, hard stops, and how it relates to the existing worktree, state-machine,
+  audit, gate-verification and parallel-dispatch modules. Deliberately does not restate
+  the protocol.
+- **`/mission` skill** and `sf` command with 25 subcommands (`/mission help`).
+- **`.ai/ledger.json` with two planes per work item.** `execution.*` answers *"is this
+  scheduled, running, integrated?"*; the five `*_status` dimensions answer *"is this claim
+  proven?"*. One entry, cross-checked — never two files that can drift.
+  Implementation, acceptance, integration, publication and external validation advance
+  **independently**; the lifecycle is never collapsed into one vague `status`.
+- **Evidence-gated promotion** — a terminal status is refused until the artifact that
+  would prove it exists on disk: `implementation_status=COMPLETE` needs a worker SHA and a
+  patch guide; `acceptance_status=PASS` needs present evidence, a fully dispositioned AC
+  matrix and no blocking gaps; `INTEGRATION_VALIDATED` needs provenance that is not
+  `LOST`/`UNKNOWN`; `PUBLISHED` needs a remote-verified SHA and tree.
+- **Worker attestation** (`mission-attestation.ts`) — machine-collected proof of native
+  worktree registration (`git worktree list --porcelain`), clean product tree, commit
+  capability, required assets and a bounded environment fingerprint. `/mission gate`
+  fails closed: **no source writes before a PASS attestation.** A copied repository folder
+  is never accepted as a worktree.
+- **Provenance** (`mission-provenance.ts`) — `git patch-id --stable` identity, so a
+  cherry-pick onto a moved baseline is provably the same contribution. Final-tree
+  contribution is classified `PRESERVED` / `SUPERSEDED_BY_AUTHORIZED_CHANGE` / `LOST` /
+  `UNKNOWN`; the last two **block acceptance**, catching an integration that reports
+  success while silently dropping a worker's change.
+- **Publication verification** — `git push` succeeding is not proof. `/mission
+  publish-check` re-fetches and confirms the remote SHA, tree and contribution content, or
+  reports `PUBLICATION_FAILED`.
+- **Collision-aware wave planning** (`mission-orchestration.ts`) — one global dependency
+  graph across all PRDs with `HARD`/`SOFT`/`INTEGRATION` edges and cycle detection.
+  `/mission wave plan` admits items one at a time and **defers** any that would collide,
+  escalating shared architectural primitives (routing, DI, migrations, lockfiles, auth) to
+  `HARD_COLLISION`. Integration order follows dependencies, never completion time.
+- **Agent registry** — named workers (`<platform>-<role>-<work-item>`); anonymous
+  subagents are prohibited during orchestrated execution. Registration is **refused** when
+  a worktree already has an ACTIVE write agent: parallel writers never share a directory.
+- **Process ownership** (`mission-processes.ts`) — `.ai/app-catalog.json` reserves service
+  ports (`PORT_CONFLICT` detection), and every started process is recorded with an
+  **identity fingerprint** of its live command line. Cleanup re-verifies the PID before
+  signalling, so a recycled PID belonging to someone else is refused, not killed. Broad
+  `pkill node`-style cleanup is impossible by construction. `/mission agent release`
+  refuses while owned processes are still running.
+- **Clean-validation semantics** (`mission-evidence.ts`) — assertions passing is not
+  sufficient. A run that timed out, was signalled, or left processes alive in its process
+  group is reported **NOT A CLEAN VALIDATION**. `RUNNING_QUIET` is distinguished from
+  `STALLED` so an expensive suite is not killed for being quiet.
+- **False-green guard** — a `--kind tests` run that exits 0 with no detectable test
+  results, or reports zero tests executed, is not clean. Found by dogfooding: a mistyped
+  command exited 0 and was initially recorded as a PASS that proved nothing.
+- **Defect-origin classification** — `PRODUCT_DEFECT` vs `ENVIRONMENT_DEFECT`,
+  `WORKTREE_DEFECT`, `REPOSITORY_SNAPSHOT_INCOMPLETE`, `INFRASTRUCTURE_DEFECT`,
+  `EXTERNAL_DEPENDENCY`, `AUTHORIZATION_FAILURE`, so an agent stops "fixing" working code
+  to compensate for a broken environment. An assertion failure is only MEDIUM confidence.
+- **Baseline evidence for "pre-existing" claims** — `adjudicatePreExisting()` requires the
+  same test, same environment, at the accepted baseline SHA. Without it the claim is *not
+  substantiated* and the failure is attributed to the current mission.
+- **Bounded retries** — `RetryTracker` stops at `NO_PROGRESS` when two consecutive
+  attempts produce an identical failure signature with no state change.
+- **`/mission reconcile`** — reports every ledger claim the repository cannot substantiate,
+  across both planes. Truth order: the repository tree and immutable evidence outrank the
+  ledger. The ledger is corrected; reality is never rewritten to match it.
+- **Skill patches** — `$go` (wave orchestration), `$forge` (parallel execution),
+  `$context` (multi-agent context economy), `$cost` (per-wave/agent/work-item accounting),
+  `$tester` (cheapest-sufficient test ladder, green-is-not-a-pass rules).
+
+### Changed
+
+- Working-tree cleanliness now separates **product** from **governance** changes.
+  Uncommitted files under `.ai/` and `.skillfoundry/` are the protocol's own output and
+  are reported as a warning rather than blocking attestation — otherwise `/mission init`
+  dirtied the tree and the next `/mission attest` failed on the artifacts it had created.
+- `/mission` resolves the `.ai/` control plane to the **git top level**, so it behaves
+  identically from a monorepo package and from the repository root. `--cwd` runs a
+  validation command inside a package while evidence still lands in the root ledger.
+- Test-count parsing is line-wise and skips vitest's `Test Files` line, which previously
+  under-reported a 295-test run as 8. Evidence that misstates what was validated is worse
+  than evidence that reports nothing.
+- `.gitignore`: `.ai/` is versioned (it *is* the durable record); only `.ai/logs/` is
+  ignored. Raw command logs live outside git in `.skillfoundry/mission-logs/` and are
+  **referenced** by evidence, never inlined.
+
+### Safety
+
+- Additive and opt-in: no existing command, gate, or pipeline changes behavior. Projects
+  without a `.ai/` ledger are unaffected.
+- Evidence payloads are redacted (`redactText`) and size-bounded at 256 KiB before they
+  are written — no secret value and no megabyte log ever reaches `.ai/`.
+- All git invocations use `execFileSync` with argument arrays; mission IDs, agent names,
+  worker names and evidence paths are validated so none can escape the artifact tree.
+- `--force` exists for human override and records the bypassed claims, which then surface
+  in `/mission reconcile` as discrepancies rather than disappearing.
+- Ledger, gaps, catalog, attestation, agent, process and evidence writes are atomic
+  (temp + rename), so a crash mid-write leaves the last valid document intact.
+
+### Tests
+
+- 296 new tests across 8 files, all passing: `mission-ledger`, `mission-attestation`,
+  `mission-provenance`, `mission-evidence`, `mission-orchestration`, `mission-processes`,
+  `mission-command`, `mission-command-orchestration`.
+- Integration-style rather than mocked: tests create real git repositories, real linked
+  worktrees, real bare remotes, real cherry-picks, and spawn real child processes to
+  exercise orphan detection, ownership verification and PID-recycling refusal.
+
+### Part 2 — AgentOS hard output enforcement (`enforce` mode)
 
 Completes the AgentOS graduated rollout: the final observe → warn → **enforce** stage.
 Opt-in and off by default.
 
-### Added
+#### Added
 
 - **`enforce` contract mode** — a fourth, hardest tier for `message_contracts`
   (`off | permissive | strict | enforce`) and `SF_BUS_CONTRACTS`. In `enforce`, agent
@@ -30,13 +156,13 @@ Opt-in and off by default.
   of the runner. `structuredOutputInstruction()` builds the prompt suffix from the
   agent's required contract fields.
 
-### Safety
+#### Safety
 
 - Off by default; `enforce` is the opt-in top tier. Prose-only results (no structured
   output) are never a violation, so free-text agents are never failed. The elicited JSON
   block is additive, not a replacement — no existing output consumer changes behavior.
 
-### Tests
+#### Tests
 
 - +11 unit tests (7 pure-decision/instruction in agent-contracts, 4 end-to-end in
   Agent.execute). Full AgentOS + pipeline/bus/config suites green (197); `tsc` clean.

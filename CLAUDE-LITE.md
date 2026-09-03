@@ -30,5 +30,9 @@
 | `/layer-check` | Validate DB→Backend→Frontend |
 | `/forge` | Full 6-phase pipeline |
 
+## Multi-Agent Work
+Running parallel agents, or publishing to a shared branch? Read `MULTI_AGENT_PROTOCOL.md` first.
+Two writers never share a worktree. No writes before `/mission attest` passes. A commit is not acceptance.
+
 ## Full Context
 For complete rules, deviation catalog (171 patterns), and production standards: reference `CLAUDE.md`.

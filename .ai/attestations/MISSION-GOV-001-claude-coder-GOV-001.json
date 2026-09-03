@@ -1,0 +1,22 @@
+{
+  "mission_id": "MISSION-GOV-001",
+  "worker": "claude-coder-GOV-001",
+  "agent": "claude",
+  "timestamp_utc": "2026-09-03T22:28:35.244Z",
+  "repository_top_level": "/home/n00b73/dev_tools_20260120_latest/skillfoundry",
+  "worktree_path": "/home/n00b73/dev_tools_20260120_latest/skillfoundry",
+  "native_worktree_registered": true,
+  "branch": "main",
+  "head_sha": "c15596c2752f8227791537260250a4929e21fd1e",
+  "base_sha": null,
+  "tree_sha": "5f6cd65500cf69a8e4cadac0a9b26fa868cfc1cd",
+  "working_tree_clean": false,
+  "commit_capability_verified": true,
+  "required_assets_present": true,
+  "environment_fingerprint": "linux-x64-node24-local-7fe0ab7909c4d037",
+  "status": "PASS",
+  "blockers": [],
+  "warnings": [
+    "1 uncommitted governance artifact(s) under .ai/ or .skillfoundry/ — commit them so the ledger survives this worktree"
+  ]
+}

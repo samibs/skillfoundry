@@ -872,6 +872,61 @@ if [ ! -f "$TARGET_DIR/memory_bank/knowledge/bootstrap.jsonl" ]; then
     fi
 fi
 
+# Governed Mission Protocol — portable, platform-independent (MULTI_AGENT_PROTOCOL.md + .ai/)
+step "Installing Governed Mission Protocol..."
+
+if [ -f "$TARGET_DIR/MULTI_AGENT_PROTOCOL.md" ]; then
+    if [ "$YES_MODE" = true ]; then
+        cp "$SCRIPT_DIR/MULTI_AGENT_PROTOCOL.md" "$TARGET_DIR/MULTI_AGENT_PROTOCOL.md"
+        echo -e "${GREEN}  ✓ MULTI_AGENT_PROTOCOL.md updated (--yes)${NC}"
+    else
+        echo -e "${YELLOW}  MULTI_AGENT_PROTOCOL.md already exists.${NC}"
+        read -p "  Overwrite? (y/N): " -n 1 -r
+        echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            cp "$SCRIPT_DIR/MULTI_AGENT_PROTOCOL.md" "$TARGET_DIR/MULTI_AGENT_PROTOCOL.md"
+            echo -e "${GREEN}  ✓ MULTI_AGENT_PROTOCOL.md updated${NC}"
+        else
+            echo -e "${YELLOW}  → Keeping existing MULTI_AGENT_PROTOCOL.md${NC}"
+        fi
+    fi
+else
+    cp "$SCRIPT_DIR/MULTI_AGENT_PROTOCOL.md" "$TARGET_DIR/MULTI_AGENT_PROTOCOL.md"
+    echo -e "${GREEN}  ✓ MULTI_AGENT_PROTOCOL.md installed${NC}"
+fi
+
+# The .ai/ control plane. Directories only — the ledger and every artifact are written by
+# `sf` (/mission) with real content. Empty placeholder files are never created.
+mkdir -p "$TARGET_DIR/.ai/attestations" \
+         "$TARGET_DIR/.ai/patches" \
+         "$TARGET_DIR/.ai/evidence" \
+         "$TARGET_DIR/.ai/decisions" \
+         "$TARGET_DIR/.ai/design" \
+         "$TARGET_DIR/.ai/agents" \
+         "$TARGET_DIR/.ai/processes" \
+         "$TARGET_DIR/.ai/logs/frontend" \
+         "$TARGET_DIR/.ai/logs/backend" \
+         "$TARGET_DIR/.ai/logs/tests" \
+         "$TARGET_DIR/.ai/logs/orchestration" \
+         "$TARGET_DIR/.ai/logs/agents"
+echo -e "${GREEN}  ✓ .ai/ control plane initialized${NC}"
+
+# Runtime logs are volatile; the durable governance record is versioned.
+if [ ! -f "$TARGET_DIR/.ai/.gitignore" ]; then
+    cat > "$TARGET_DIR/.ai/.gitignore" <<'AIGITIGNORE'
+# Runtime logs are volatile — regenerate freely, do not version.
+logs/
+
+# Everything else in .ai/ is durable engineering truth and MUST be committed:
+#   ledger.json, gaps.json, app-catalog.json,
+#   attestations/, patches/, evidence/, decisions/, design/, agents/, processes/
+#
+# A replacement worker with no chat history reconstructs project state from
+# git + ledger + attestations + patches + evidence. Do not gitignore that record.
+AIGITIGNORE
+    echo -e "${GREEN}  ✓ .ai/.gitignore created (logs volatile, ledger versioned)${NC}"
+fi
+
 # ═══════════════════════════════════════════════════════════════
 # PHASE 2: Per-platform installation (loop over each platform)
 # ═══════════════════════════════════════════════════════════════

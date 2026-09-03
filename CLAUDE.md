@@ -6,6 +6,7 @@
 > For environment pre-flight discipline (interpreter pinning, .env safety, diagnostic mode): see `agents/_env-preflight-protocol.md`
 > For codebase comprehension pre-flight (Code Map: contract surface, import graph, DB/layer map — runs before implementing): see `agents/_codemap-preflight-protocol.md`
 > For coding discipline (think-before-code, simplicity, surgical changes, goal-driven execution): see `agents/_coding-discipline.md`
+> For parallel/multi-agent execution, dependency waves, git worktree isolation, process ownership, evidence, provenance, and the machine-readable `.ai/` ledger: see `MULTI_AGENT_PROTOCOL.md` (operational module: `agents/_governed-mission-protocol.md`)
 
 This file contains **framework-specific** rules only. General agent behavior is inherited from the global CLAUDE.md.
 
@@ -386,6 +387,51 @@ SESSION END:
 
 ---
 
+## Governed Missions & Multi-Agent Execution
+
+When work must be **provably** done — not merely finished — it runs as a governed mission.
+Full protocol: `MULTI_AGENT_PROTOCOL.md`. Enforcement: `/mission` (see `.claude/commands/mission.md`).
+
+### When it applies
+
+Two or more write-capable agents running concurrently · `/go` dispatching multiple stories ·
+`/forge` delegating a phase to a parallel worker · autonomous parallel execution · the user
+asking for parallel agents · multiple PRDs with cross-dependencies · work destined for
+publication to a shared branch.
+
+It does **not** apply to a trivial single-agent edit. See **Skill Scope Boundaries** below —
+the overhead must not exceed the value.
+
+### Non-negotiable
+
+- **Claude MUST NOT allow two writers to share a worktree.** One worker = one bounded mission =
+  one git-native worktree = one branch. A copied repository folder is not a worktree; only
+  `git worktree list --porcelain` proves it.
+- **No source writes before a PASS attestation** (`/mission attest` → `/mission gate`).
+- **Never modify product code to compensate for a broken environment.** Classify the defect
+  origin first — an `ENVIRONMENT_DEFECT` is never fixed by editing product source.
+- **Never broadly kill** `all node` / `all dotnet` / `all python` / `all docker`. Verify process
+  ownership; PIDs are recycled.
+- **Never claim "probably pre-existing"** without a baseline run at the accepted baseline SHA.
+- **Do not hand-write `.ai/*.json`.** The CLI writes and validates it; direct edits are flagged
+  by `/mission reconcile`.
+
+### The durable record
+
+`.ai/` survives the agent. A replacement worker with zero chat history reconstructs project
+state from **git + ledger + attestations + patches + evidence** rather than trusting the
+previous agent's conversation.
+
+```text
+IMPLEMENTED is not VERIFIED.
+A commit is not acceptance.
+An integration is not a publication.
+A publication without remote verification is not proven.
+Parallel implementation is not parallel merging.
+```
+
+---
+
 ## Skill Scope Boundaries
 
 Skills are scoped tools, not global policies. When a skill is invoked, ONLY that skill's rules are active. When it finishes, its rules deactivate. Violating this causes instruction creep — heavyweight rules applied to trivial tasks.
@@ -422,6 +468,7 @@ If a pipeline skill (e.g., `/forge`) calls sub-skills internally, those sub-skil
 | `/tester` | 14 test categories, 80% coverage, coverage matrix | README examples, config files, documentation |
 | `/auto` | Intent classification, pipeline routing | Direct questions, read-only exploration |
 | `/layer-check` | Three-layer DB→Backend→Frontend validation | Changes that don't touch all three layers |
+| `/mission` | Governed missions: `.ai/` ledger, attestation, evidence gating, wave planning, process ownership | Single-file edits, trivial fixes, questions, config tweaks |
 
 ### Rule 3: Complexity-Based Scope
 
@@ -433,6 +480,7 @@ Not every task needs every skill. Match the tool to the task size.
 | **Small** (1-3 files, <100 lines) | Bug fix, minor feature, doc update | Targeted skill only. Skip orchestration overhead. |
 | **Medium** (3-10 files) | New endpoint, component, module | Core pipeline. Optional security/test phases. |
 | **Large** (10+ files, multi-story) | Full feature, new service | Full `/forge` or `/go` pipeline with all phases. |
+| **Parallel** (2+ concurrent writers) | Multi-agent wave, cross-PRD work | `/mission` governed protocol on top of the pipeline. Worktree isolation is mandatory. |
 
 **The test**: Would invoking this skill produce *useful, proportionate* output for this task? If the overhead exceeds the value, the skill is out of scope.
 

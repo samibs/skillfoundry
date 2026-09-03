@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.30.0-blue)
+![Version](https://img.shields.io/badge/version-5.31.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,15 +25,54 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.30.0
+### What's New in v5.31.0
 
-**AgentOS follow-ups — the state layer, now live in every run**
+**Governed Missions — proof that the work is actually done**
 
-- **Progress you can watch.** The per-run state file now updates as each story finishes, not just at the end — open it mid-run to see exactly where things stand.
-- **Opt-in contract enforcement.** Turn on validation of agent handoffs when you want it (`off` / `permissive` / `strict`) — off by default, so nothing changes until you flip the switch.
-- **Every agent has a contract.** Each agent now has a declared output shape (a reviewer must produce findings, a gate-keeper a verdict, and so on), checked and reported when enabled.
+Your AI says "done" and the tests are green. But did the test runner actually finish, or did it
+hang after the assertions passed? Is that dev server still running? Did your change survive the
+merge, or did something quietly overwrite it? Did the push really land?
 
-Full breakdown in the CHANGELOG under `[5.30.0]`.
+`/mission` answers those questions with evidence instead of assurances.
+
+- **A record that outlives the session.** Everything goes into `.ai/` in your repo — what was
+  claimed, what proves it, what's still open. Close the laptop, come back next week, switch to a
+  different AI tool: the next agent reads the record instead of guessing.
+- **Status you can trust.** The ledger refuses to mark something "accepted" while a test is
+  unaccounted for or a known gap is still open. It will tell you exactly what's missing.
+- **Green isn't automatically a pass.** A suite that timed out, got killed, left a server
+  running, or quietly ran zero tests is reported as *not a clean validation*.
+- **Your processes stay yours.** Every dev server or container an agent starts is tracked, so
+  cleanup can never turn into "kill all node" and take out your other projects.
+- **"Pushed" is checked, not assumed.** After a push, the remote is re-read to confirm your
+  change is really there.
+- **Running several agents at once?** They each get their own git worktree — sharing one is
+  refused — and work that would collide on the same file is scheduled for a later pass instead
+  of racing.
+
+```
+/mission verify STORY-042
+
+  ✓ AC matrix complete               8 AC(s), all dispositioned
+  ✓ Worker attestation recorded      claude-coder-042 — native worktree verified
+  ✗ Worker commit created            No worker commit — NOT_INTEGRATION_READY
+  ✓ Normal termination proven        Exited normally in 10.32s
+  ✓ No owned orphan processes        Orphan check: CLEAN
+  ✗ Unresolved gaps explicit         Blocking gaps: GAP-001
+
+  Disposition: EVIDENCE_PARTIAL — VALIDATION_REQUIRED
+```
+
+Also in this release: **AgentOS `enforce` mode** — the strictest tier of agent output-contract
+validation, off by default, for teams that want handoffs to fail closed.
+
+Full breakdown in the CHANGELOG under `[5.31.0]`, or read
+[`MULTI_AGENT_PROTOCOL.md`](MULTI_AGENT_PROTOCOL.md).
+
+#### Previous: AgentOS Follow-ups (v5.30.0)
+
+Per-story state streaming (watch progress mid-run), opt-in agent-handoff contract validation,
+and a declared output shape for every agent. Details in the CHANGELOG under `[5.30.0]`.
 
 #### Previous: Skill Rationalization & `/prune` (v5.27.0)
 
@@ -239,12 +278,12 @@ Or use autonomous mode — just type what you want in plain English:
 
 SkillFoundry has two independent systems. They share the same agents and philosophy, but work differently:
 
-| | **Standalone CLI** (`sf`) | **IDE Skills** (96 skills) |
+| | **Standalone CLI** (`sf`) | **IDE Skills** (97 skills) |
 |---|---|---|
 | **What it is** | Terminal app with its own AI connection | Markdown instruction files your AI reads |
 | **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build |
 | **Setup** | `sf setup` — interactive wizard, paste API key | `skillfoundry init` — copies skills into your project |
-| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (23 commands) | `/forge`, `/go`, `/goma` (all 96 skills) |
+| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (24 commands) | `/forge`, `/go`, `/goma` (all 97 skills) |
 | **Autonomous mode** | Not available | `/goma` — full autonomous with safety gates |
 | **Provider switching** | Built-in: 6 providers, switch at runtime | Uses your IDE's provider |
 | **Budget controls** | Per-run and monthly cost caps | Not available |
@@ -255,7 +294,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 1. Inside Your IDE (Recommended)
 
-96 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
+97 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
 
 | Platform | Invocation | Example |
 |----------|-----------|---------|
@@ -280,7 +319,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 2. The Standalone CLI (`sf`)
 
-A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 23 native commands (not all 96 skills).
+A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 24 native commands (not all 97 skills).
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -321,6 +360,45 @@ Summon a team once, and messages auto-route to the best agent for the job. No ma
 ```
 
 Routing is keyword-based with weighted patterns — no extra LLM calls, deterministic and fast.
+
+### Governed Missions (`/mission`)
+
+When work has to be **provably** done — not just finished — run it as a governed mission.
+SkillFoundry writes a durable record into `.ai/` that outlives the session:
+
+```
+/mission init STORY-042 --title "JWT refresh rotation"
+/mission attest STORY-042 --worker claude-coder-042 --agent claude
+/mission gate STORY-042                      → WRITES AUTHORIZED / BLOCKED
+
+  ... implement ...
+
+/mission evidence STORY-042 --kind tests --run "npm test"
+/mission commit STORY-042
+/mission verify STORY-042                    → Definition of Done
+```
+
+What it catches that a green test run does not:
+
+- **"Tests passed" while the runner hung** — normal termination and leftover processes are
+  acceptance criteria, not footnotes.
+- **A dev server orphaned after the run** — every process has a recorded owner and an identity
+  fingerprint, so cleanup can never turn into `pkill node`.
+- **A change silently dropped during a merge** — provenance uses `git patch-id` and verifies the
+  contribution is actually in the final tree.
+- **"Pushed" mistaken for "published"** — the remote SHA, tree and content are re-read after the push.
+- **"It was probably already broken"** — that claim needs a baseline run, or it isn't accepted.
+
+The ledger refuses to record a status the repository can't back up: `acceptance_status=PASS` is
+rejected while an acceptance criterion is unmet or a blocking gap is open.
+
+**Running several agents at once?** `/mission wave plan` builds one dependency graph across all
+your PRDs and defers work that would collide, so two agents never rewrite the same routing file
+or migration. Each writer gets its own git worktree — sharing one is refused outright.
+
+Close the laptop, lose the session, come back tomorrow: the next agent reads
+`git + .ai/ledger.json + attestations + patches + evidence` instead of guessing.
+Full details in [`MULTI_AGENT_PROTOCOL.md`](MULTI_AGENT_PROTOCOL.md).
 
 ### Quality Gates (The Anvil + Micro-Gates)
 
@@ -755,6 +833,7 @@ These work inside your AI coding tool, not in the `sf` CLI:
 | `/architect` | System design and architecture |
 | `/debug` | Interactive debugger (breakpoints, scope, evaluate) |
 | `/layer-check` | Three-layer validation (DB → Backend → Frontend) |
+| `/mission` | Governed mission: durable `.ai/` ledger, attestation, evidence, provenance, multi-agent waves |
 | `/memory` | Knowledge management |
 | `/gohm` | Harvest lessons from current session |
 | `/autonomous` | Toggle autonomous developer loop |

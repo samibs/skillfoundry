@@ -117,3 +117,28 @@ Session state is shared at `.claude/scratchpad.md` — read it at the start of a
 5. Knowledge from the session is harvested to `memory_bank/` via `@gohm`
 
 **Never start coding without a PRD. Never mark a story DONE without running the verification.**
+
+---
+
+## SkillFoundry Multi-Agent Execution
+
+For parallel implementation or delegated coding agents, read `MULTI_AGENT_PROTOCOL.md`
+(operational module: `agents/_governed-mission-protocol.md`).
+
+**Before any source write:**
+
+- resolve the assigned story or task — every write maps to a requirement artifact;
+- verify the current directory is a **git-registered** worktree (`git worktree list --porcelain`);
+  a copied repository folder is not a worktree;
+- record or confirm the exact base SHA, never a moving branch name;
+- follow the work item's patch guide at `.ai/patches/<work-item>.md`;
+- respect `.ai/ledger.json` as the execution-state authority — not chat history;
+- own and clean up any process you start (`.ai/processes/<agent>.json`).
+
+Do not modify files outside the declared write scope without recording the reason.
+
+**Never:** share a worktree with another writer · write before attestation passes · modify product
+code to compensate for a broken environment · broadly kill `all node`/`all dotnet`/`all python` ·
+claim "probably pre-existing" without a baseline run at the accepted baseline SHA.
+
+`IMPLEMENTED` is not `VERIFIED`. A commit is not acceptance. An integration is not a publication.

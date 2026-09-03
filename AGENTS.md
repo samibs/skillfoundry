@@ -1,6 +1,6 @@
 # SkillFoundry Framework — Agent Instructions for OpenAI Codex
 
-**Version 5.30.0** | **Hexa-Platform: Claude Code · Cursor · Copilot · Codex · Gemini · Grok Build** | **96 Skills** | **20 MCP Tool Agents**
+**Version 5.31.0** | **Hexa-Platform: Claude Code · Cursor · Copilot · Codex · Gemini · Grok Build** | **97 Skills** | **20 MCP Tool Agents**
 
 ---
 
@@ -32,6 +32,34 @@ $architect                   # System design
 
 **Implicit activation:** Codex auto-selects the right skill when your prompt matches a skill's description.
 
+## Multi-Agent Execution
+
+When Codex runs parallel agents, subagents, or parallel implementation work, read and follow
+`MULTI_AGENT_PROTOCOL.md` (operational module: `agents/_governed-mission-protocol.md`).
+
+The protocol is authoritative for: dependency-aware waves · agent naming · git worktree isolation ·
+worktree legitimacy checks · the `.ai/` JSON execution ledger · process ownership · source patch
+guides · evidence and provenance · test-cost coordination · publication verification.
+
+Existing SkillFoundry quality and implementation rules remain active.
+
+**Before any source write, a Codex worker must:**
+
+```bash
+git worktree list --porcelain          # the current directory MUST be listed
+$mission attest <ID> --worker codex-<role>-<ID> --agent codex
+$mission gate <ID>                     # WRITES AUTHORIZED / WRITES BLOCKED
+```
+
+A copied repository folder is **not** a worktree. Two writers **never** share a working directory.
+
+**Non-negotiable:** no writes before a PASS attestation · never modify product code to compensate
+for a broken environment · never broadly kill `all node`/`all dotnet`/`all python` · never claim
+"probably pre-existing" without a baseline run · a commit is not acceptance · an integration is
+not a publication.
+
+---
+
 ## Available Skills by Category
 
 ### Core Workflow
@@ -44,6 +72,7 @@ $architect                   # System design
 | `$gate-keeper` | Quality gate validation before story completion |
 | `$forge` | Full pipeline: smelt → forge → temper → quench |
 | `$anvil` | 6-tier quality gate between agent handoffs |
+| `$mission` | Governed mission: `.ai/` ledger, attestation, evidence, provenance, waves, process ownership |
 
 ### Architecture & Design
 | Skill | Purpose |
@@ -127,6 +156,7 @@ agents/               # Agent source definitions
 memory_bank/          # Agent knowledge and lessons
 .agents/skills/       # Codex skills (auto-generated)
 scripts/              # Automation scripts
+.ai/                  # Governed mission control plane (ledger, evidence, patches)
 ```
 
 ## Quick Start
@@ -139,4 +169,4 @@ scripts/              # Automation scripts
 
 ---
 
-*SkillFoundry Framework v5.30.0 — Hexa-Platform Support*
+*SkillFoundry Framework v5.31.0 — Hexa-Platform Support*

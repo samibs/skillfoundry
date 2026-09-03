@@ -1,0 +1,9 @@
+# Runtime logs are volatile — regenerate freely, do not version.
+logs/
+
+# Everything else in .ai/ is durable engineering truth and MUST be committed:
+#   ledger.json, gaps.json, app-catalog.json,
+#   attestations/, patches/, evidence/, decisions/, design/, agents/, processes/
+#
+# A replacement worker with no chat history reconstructs project state from
+# git + ledger + attestations + patches + evidence. Do not gitignore that record.

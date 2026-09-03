@@ -529,3 +529,25 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/replay` | Forge state is replayable via `/replay` |
 | `/metrics` | Forge execution metrics tracked automatically |
 | `/context` | Budget monitored throughout; compaction triggered as needed |
+
+---
+
+## Parallel Forge Execution
+
+When Forge delegates two or more write-capable phases or work items, apply
+`MULTI_AGENT_PROTOCOL.md` (operational module: `agents/_governed-mission-protocol.md`).
+
+- Parallelize only **independent** work; serialize dependent or colliding work.
+- Assign named workers and register them: `/mission agent register <name> --item <ID> --mode WRITE`.
+- Use isolated **git-native** worktrees — one per writer, never shared.
+- Record the resolved base SHA, never a moving branch name.
+- Require `.ai/patches/<work-item>.md` before material writes.
+- Attest before the first product write: `/mission attest <ID>` then `/mission gate <ID>`.
+- Treat **Anvil** as the handoff gate between worker and integration state.
+- Never let parallel workers modify overlapping source scopes — `/mission wave plan` defers collisions.
+- Stop all worker-owned processes before phase completion: `/mission proc stop <agent>`.
+
+Forge may parallelize implementation, testing, and review, but **dependency ordering and write
+isolation take precedence over speed.**
+
+Do not duplicate the protocol inside Forge — reference it.
