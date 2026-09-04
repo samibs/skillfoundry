@@ -25,7 +25,7 @@ the repository cannot substantiate.
 | A "worktree" that is really a copied folder | Verified against `git worktree list --porcelain`. |
 | "Tests pass" while the runner hung | `normal_termination` and orphan detection; reported NOT CLEAN. |
 | A dev server orphaned after the run | Ownership registry + identity-verified targeted cleanup. |
-| A contribution silently dropped in a merge | Provenance: `LOST`/`UNKNOWN` block acceptance. |
+| A contribution silently dropped in a merge | Provenance: `LOST`/`UNKNOWN` block acceptance. Pass `--base` so a multi-commit contribution is verified as one range. |
 | "Pushed" ≠ published | `publish-check` re-reads the remote SHA, tree and content. |
 | "Probably pre-existing" | Requires a baseline run at the accepted SHA, or it is not substantiated. |
 | Retry loops burning budget | `NO_PROGRESS` after two identical failures with no state change. |
@@ -45,7 +45,7 @@ the repository cannot substantiate.
 /mission evidence STORY-042 --kind tests --run "npm test"
 /mission ac STORY-042 --file criteria.json
 git commit -m "feat(auth): refresh rotation [STORY-042]"
-/mission commit STORY-042
+/mission commit STORY-042 --base <base-sha>   # a contribution is usually >1 commit
 /mission set STORY-042 implementation_status COMPLETE
 /mission set STORY-042 acceptance_status PASS
 /mission verify STORY-042
