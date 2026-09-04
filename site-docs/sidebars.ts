@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
     'architecture',
     'configuration',
     'governed-missions',
+    'delivery-efficiency',
     {
       type: 'category',
       label: 'Recipes',

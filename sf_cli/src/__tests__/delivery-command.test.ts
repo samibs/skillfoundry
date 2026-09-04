@@ -384,7 +384,7 @@ describe('adapter consumption of the shared policy (§17, §22)', () => {
     expect(content).toMatch(/high/);
   });
 
-  it.each(['go', 'forge', 'context', 'cost', 'tester'])(
+  it.each(['go', 'forge', 'context', 'cost', 'tester', 'delivery'])(
     'the $%s skill references the canonical policy',
     (skill) => {
       const content = readFileSync(join(root, '.claude', 'commands', `${skill}.md`), 'utf-8');

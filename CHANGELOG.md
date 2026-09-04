@@ -118,6 +118,9 @@ This layer makes effort proportional to risk, without weakening any correctness 
   provider call still reports `null`, never zero.
 - **`/gate all` wired**, with `--force` to bypass, so `$forge` is no longer the only runtime
   path that consults evidence. Single-tier runs are untouched — they are already cheap.
+- **`/delivery` skill** (`.claude/commands/delivery.md`) so the command is reachable as an IDE
+  skill, not only from the CLI — 97 → 98 skills. The `$go`/`$force`/`$context`/`$cost`/`$tester`
+  patches reference it, so without this they pointed at something Claude Code could not invoke.
 
 ### Fixed
 

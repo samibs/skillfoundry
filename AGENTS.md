@@ -93,6 +93,7 @@ compliance logic always classify HIGH and their checks are never skipped.
 | `$forge` | Full pipeline: smelt → forge → temper → quench |
 | `$anvil` | 6-tier quality gate between agent handoffs |
 | `$mission` | Governed mission: `.ai/` ledger, attestation, evidence, provenance, waves, process ownership |
+| `$delivery` | Delivery budgets, evidence reuse, scoped tests, stop conditions — size effort to risk |
 | `$delivery` | Delivery budgets, scoped validation, evidence reuse, stop conditions |
 
 ### Architecture & Design
