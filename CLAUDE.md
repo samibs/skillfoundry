@@ -6,6 +6,7 @@
 > For environment pre-flight discipline (interpreter pinning, .env safety, diagnostic mode): see `agents/_env-preflight-protocol.md`
 > For codebase comprehension pre-flight (Code Map: contract surface, import graph, DB/layer map — runs before implementing): see `agents/_codemap-preflight-protocol.md`
 > For coding discipline (think-before-code, simplicity, surgical changes, goal-driven execution): see `agents/_coding-discipline.md`
+> For delivery efficiency (delivery budgets, risk-based validation, evidence reuse, test scopes, stop conditions): see `agents/_delivery-efficiency.md`
 > For parallel/multi-agent execution, dependency waves, git worktree isolation, process ownership, evidence, provenance, and the machine-readable `.ai/` ledger: see `MULTI_AGENT_PROTOCOL.md` (operational module: `agents/_governed-mission-protocol.md`)
 
 This file contains **framework-specific** rules only. General agent behavior is inherited from the global CLAUDE.md.
@@ -432,6 +433,35 @@ Parallel implementation is not parallel merging.
 
 ---
 
+## Delivery Efficiency
+
+> Canonical policy: `agents/_delivery-efficiency.md`. Enforcement: `/delivery`.
+
+**Do not perform more engineering activity than is necessary to prove the requested change
+correct.** A shorter execution is not automatically better; a longer one is not
+automatically safer.
+
+Before implementing, classify the task's **delivery budget** (LOW / MEDIUM / HIGH) and
+follow the execution policy it selects. Then:
+
+- **Consume shared context first.** Prefer facts the mission already established — base
+  commit, architecture, changed files, acceptance criteria — over rediscovering them.
+- **Reuse valid evidence.** Already proven against this exact repository state means do
+  not prove it again. Already *failed* against it means fix the cause, not re-run.
+- **Scope tests to the change.** `full` is never chosen from the budget alone. A LOW task
+  does not trigger the repository-wide suite.
+- **Escalate only with evidence.** Targeted tests failing → diagnose → fix → targeted
+  tests pass → stop. A successful fix is not grounds for a full-suite run.
+- **Stop when proven.** Once implementation, acceptance, required validation, diff review
+  and evidence are all satisfied, stop. Do not re-read the same unchanged diff or perform
+  unrequested cleanup.
+
+**Never optimized away:** authentication, authorization, secrets, cryptography, destructive
+database changes, schema migrations, production deployment, financial integrity,
+compliance controls. These classify HIGH; a downgrade override is refused.
+
+---
+
 ## Skill Scope Boundaries
 
 Skills are scoped tools, not global policies. When a skill is invoked, ONLY that skill's rules are active. When it finishes, its rules deactivate. Violating this causes instruction creep — heavyweight rules applied to trivial tasks.
@@ -469,6 +499,7 @@ If a pipeline skill (e.g., `/forge`) calls sub-skills internally, those sub-skil
 | `/auto` | Intent classification, pipeline routing | Direct questions, read-only exploration |
 | `/layer-check` | Three-layer DB→Backend→Frontend validation | Changes that don't touch all three layers |
 | `/mission` | Governed missions: `.ai/` ledger, attestation, evidence gating, wave planning, process ownership | Single-file edits, trivial fixes, questions, config tweaks |
+| `/delivery` | Delivery budgets, scoped validation, evidence reuse, stop conditions | Deciding *what* to build; it decides how much validation the change warrants |
 
 ### Rule 3: Complexity-Based Scope
 

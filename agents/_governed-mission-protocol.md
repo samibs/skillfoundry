@@ -159,6 +159,7 @@ dismissing a self-inflicted regression as pre-existing — is a recorded, repeat
 | `_scope-validation.md` | Anvil T4, expected vs. actual files. Feeds `execution.write_manifest`. |
 | `_parallel-dispatch.md` | Concurrency mechanics. This module adds **collision-aware wave planning** and worktree exclusivity. |
 | `_anvil-protocol.md` | T1–T6 remain the handoff gate between worker and integration state. |
+| `_delivery-efficiency.md` | Decides how much validation a change warrants. This module proves what ran; that one decides what *should* run. |
 | `_rollback-protocol.md` | Rollback mechanics. Patch guides record the per-contribution rollback path. |
 
 **Do not duplicate any of the above.** Extend the existing primitive; if one is insufficient,

@@ -7,6 +7,111 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — AI Delivery Efficiency
+
+Agents are rarely wrong. They are usually **expensive**: re-reading the same repository,
+re-running the same suite, re-reviewing the same unchanged diff, and continuing long after
+the change was already proven. Across a wave of parallel workers, most of the compute goes
+into rediscovery.
+
+This layer makes effort proportional to risk, without weakening any correctness guarantee.
+
+> Do not perform more engineering activity than is necessary to prove the requested change
+> correct. A shorter execution is not automatically better; a longer one is not
+> automatically safer.
+
+### Added
+
+- **Delivery budgets** (`core/delivery-budget.ts`) — every task is classified LOW / MEDIUM /
+  HIGH before implementation, **deterministically** from path patterns and keyword sets (no
+  model call), so the same task always lands in the same budget with an auditable reason and
+  the matched signals recorded.
+- **Risk-based execution policy** (`core/delivery-policy.ts`) — each budget selects its
+  steps, base test scope, and whether repository-wide validation is permitted at worker
+  level. A LOW task cannot trigger the repository-wide suite; a MEDIUM task cannot trigger
+  all-project validation without evidence.
+- **Evidence reuse** (`core/delivery-evidence.ts`) — *already proven + unchanged = do not
+  prove again*. A validation is recorded with the content hash of every file it depended on,
+  plus base commit, tree hash, command, scope, result, duration and producer. Scoped
+  evidence survives an unrelated edit and dies precisely when one of its own files changes;
+  repository-wide evidence is bound to the tree hash, deliberately conservative.
+- **Validation deduplication** — three workers changing three unrelated features no longer
+  each run the full suite. Claims are exclusive file creations (atomic on POSIX), so a race
+  cannot produce two winners, and a claim past its TTL is reclaimed so a crashed worker
+  cannot deadlock a wave. `decideValidation()` returns one of `REUSE` / `RUN` / `WAIT` /
+  `FIX_FIRST`, so reuse and dedup cannot be implemented independently by accident.
+- **Test scopes** — `smoke` / `targeted` / `affected` / `integration` / `full`, derived from
+  budget, changed files, acceptance criteria, explicit override and dependency fan-out, with
+  the reasoning recorded. **`full` is never reachable from the budget alone.** Escalation
+  requires evidence: a targeted failure that is diagnosed and fixed does *not* justify a
+  full-suite run.
+- **Reasoning budget / shared context** (`core/delivery-context.ts`) — mission facts are
+  established once and shared, each carrying `AUTHORITATIVE` / `INFERRED` / `ASSUMPTION`
+  confidence. `shouldRediscover()` re-derives only when state changed, the fact lapsed, it is
+  an assumption, or safety requires independent verification. Facts record the files they
+  depend on, so invalidation is precise rather than wholesale.
+- **Worker handoffs and the integration gate** (`core/delivery-integration.ts`) — a worker
+  reports what it proved, not how it got there. The gate verifies handoffs (base ancestry,
+  declared vs. actual changed files), aggregates the blast radius, invalidates only what
+  integration itself disturbed, reuses what survives, computes the required scope from the
+  riskiest contribution, and runs only what is genuinely missing.
+- **Efficiency metrics** (`core/delivery-metrics.ts`) — validation commands, **repeated
+  commands**, evidence reused vs regenerated, reuse rate, seconds saved by reuse, and
+  repository-wide runs avoided. Unmeasurable values are reported as `unknown`, never
+  estimated; token usage stays `null` unless the provider reports it.
+- **Stop conditions** — `DeliveryComplete` is derived from evidence, not from an agent's
+  sense of thoroughness, and returns explicit guidance not to re-read an unchanged diff,
+  broaden scope without evidence, or perform unrequested cleanup.
+- **`/delivery` command** with 11 subcommands, and **`/cost --efficiency`** exposing the
+  efficiency view alongside spend.
+- **Canonical policy** at `agents/_delivery-efficiency.md`, referenced (not duplicated) by
+  all six platform adapters — Claude, Codex, Copilot, Cursor, Gemini, Grok — and by the
+  `$go` / `$forge` / `$context` / `$cost` / `$tester` skills.
+
+### Safety
+
+- Authentication, authorization, secrets, cryptography, destructive database changes, schema
+  migrations, production deployment, financial integrity and compliance controls classify
+  **HIGH** on path *or* keyword — a change described as "a tiny tweak" that touches
+  `src/auth/` is still HIGH.
+- A downgrade override on safety-critical work is **refused** and logged. The deliberate
+  escape hatch records that required checks are no longer guaranteed.
+- Security checks are a mandatory, non-skippable completion criterion at HIGH.
+- A test-scope override that would under-test a HIGH change is refused.
+- A budget is never lowered mid-task, and escalation without evidence is refused.
+
+### Changed
+
+- `SfConfig` gains a nested `[delivery_efficiency]` table, parsed with the same
+  partial-merge pattern as `routing.rules` — an unknown value is ignored rather than
+  adopted, and a config written before this layer keeps working.
+- `$tester`, `$go`, `$forge`, `$context` and `$cost` gained delivery-efficiency sections
+  that reference the canonical policy rather than restating it.
+
+### Backward compatibility
+
+Additive throughout. With `delivery_efficiency.enabled = false`, every task is treated as
+HIGH, every scope is `full`, no evidence is reused, and completion is reported but never
+enforced — i.e. the behavior the framework had before this layer. The two sub-switches are
+independent: reuse can be off while deduplication stays on, and vice versa. No schema
+migration; the evidence store and shared context are regenerable caches under
+`.skillfoundry/`, so deleting them costs time, never correctness.
+
+### Tests
+
+- 176 new tests across 3 files, all passing: budget classification (LOW/MEDIUM/HIGH,
+  path-only, keyword-only), explicit override including the refused downgrade, escalation
+  with and without evidence, execution policies, scope selection and escalation, stop
+  conditions, evidence reuse, invalidation after a relevant change, **preservation after an
+  unrelated change**, duplicate-validation prevention across three workers, integration-gate
+  evidence reuse, the config toggles, and adapter consumption of the shared policy.
+- Two real defects were found by these tests and fixed: the `allowUnsafeOverride` opt-in had
+  no effect because `maxBudget` raised the level straight back to HIGH; and with evidence
+  reuse disabled, deduplication silently stopped working because the reuse short-circuit
+  returned before a claim was taken.
+
+---
+
 ## [5.31.0] - 2026-09-04 — Governed Development Mission Protocol
 
 Two changes ship together: the **Governed Development Mission Protocol** (Part 1), and the

@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import TOML from '@iarna/toml';
-import type { SfConfig, SfPolicy, EmbeddingServiceOptions } from '../types.js';
+import type { SfConfig, SfPolicy, EmbeddingServiceOptions, DeliveryEfficiencyConfig } from '../types.js';
 import { AVAILABLE_PROVIDERS, detectAvailableProviders } from './provider.js';
 
 /**
@@ -28,6 +28,21 @@ const WORK_DIR = '.skillfoundry';
 const CONFIG_FILE = join(WORK_DIR, 'config.toml');
 const POLICY_FILE = join(WORK_DIR, 'policy.toml');
 
+/**
+ * Delivery Efficiency defaults.
+ *
+ * Enabled by default: the layer only ever narrows work that risk analysis shows to be
+ * unnecessary, and safety-critical changes still classify HIGH and validate fully.
+ */
+export const DEFAULT_DELIVERY_EFFICIENCY: DeliveryEfficiencyConfig = {
+  enabled: true,
+  default_budget: 'MEDIUM',
+  evidence_reuse: true,
+  validation_deduplication: true,
+  test_scope_policy: 'risk-based',
+  stop_when_proven: true,
+};
+
 const DEFAULT_CONFIG: SfConfig = {
   provider: 'anthropic',
   engine: 'api',
@@ -47,6 +62,7 @@ const DEFAULT_CONFIG: SfConfig = {
   quality_fallback: false,
   routing_rules: {},
   message_contracts: 'off',
+  delivery_efficiency: { ...DEFAULT_DELIVERY_EFFICIENCY },
 };
 
 const DEFAULT_POLICY: SfPolicy = {
@@ -84,9 +100,34 @@ export function loadConfig(workDir: string): SfConfig {
         }
       }
     }
+    // Extract the nested [delivery_efficiency] table before the flat merge, so a partial
+    // table keeps the defaults for the keys it does not set.
+    const deRaw = parsed.delivery_efficiency as Record<string, unknown> | undefined;
+    const deliveryEfficiency: DeliveryEfficiencyConfig = { ...DEFAULT_DELIVERY_EFFICIENCY };
+    if (deRaw && typeof deRaw === 'object') {
+      if (typeof deRaw.enabled === 'boolean') deliveryEfficiency.enabled = deRaw.enabled;
+      if (deRaw.default_budget === 'LOW' || deRaw.default_budget === 'MEDIUM' || deRaw.default_budget === 'HIGH') {
+        deliveryEfficiency.default_budget = deRaw.default_budget;
+      }
+      if (typeof deRaw.evidence_reuse === 'boolean') deliveryEfficiency.evidence_reuse = deRaw.evidence_reuse;
+      if (typeof deRaw.validation_deduplication === 'boolean') {
+        deliveryEfficiency.validation_deduplication = deRaw.validation_deduplication;
+      }
+      if (deRaw.test_scope_policy === 'risk-based' || deRaw.test_scope_policy === 'always-full') {
+        deliveryEfficiency.test_scope_policy = deRaw.test_scope_policy;
+      }
+      if (typeof deRaw.stop_when_proven === 'boolean') deliveryEfficiency.stop_when_proven = deRaw.stop_when_proven;
+    }
+    delete parsed.delivery_efficiency;
+
     // Remove nested routing to avoid overwriting flat fields
     delete parsed.routing;
-    config = { ...DEFAULT_CONFIG, ...parsed, routing_rules: routingRules } as unknown as SfConfig;
+    config = {
+      ...DEFAULT_CONFIG,
+      ...parsed,
+      routing_rules: routingRules,
+      delivery_efficiency: deliveryEfficiency,
+    } as unknown as SfConfig;
   }
 
   // Auto-select provider: if configured provider has no credentials, pick the first available one

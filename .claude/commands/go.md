@@ -1375,3 +1375,29 @@ A dependency cycle schedules nothing — report it for a human to break.
 
 `/go` orchestrates selected Genesis PRDs through dependency-aware stories, tasks, execution
 waves, validation, and integration. Parallel implementation is **not** parallel merging.
+
+---
+
+## Delivery Efficiency at Task Startup
+
+> Canonical policy: `agents/_delivery-efficiency.md`. Enforcement: `/delivery`.
+
+`/go` must not open with expensive discovery. **First determine what is already known**,
+then decide how much work the task actually warrants.
+
+Startup sequence:
+
+1. **Interpret the task** — read the PRD/story; do not infer requirements it does not state.
+2. **Classify the delivery budget** — `/delivery budget "<task>" --files a,b` → LOW / MEDIUM / HIGH.
+3. **Load available context** — `/delivery context`. Prefer established facts over rediscovery.
+4. **Look up evidence** — `/delivery check --kind build --command "<cmd>"`. Already proven
+   against this exact state means skip it.
+5. **Select the execution policy** — `/delivery policy <BUDGET>` gives the steps, the base
+   test scope, and whether repository-wide validation is permitted at worker level.
+6. **Verify worker isolation** — one git-native worktree per writer (`MULTI_AGENT_PROTOCOL.md`).
+
+Only then begin implementation.
+
+**Do not** run a repository-wide scan, build or test suite at startup to "get oriented".
+That is the single largest source of wasted execution in a multi-agent wave: the same scan,
+repeated once per worker, proving nothing that the shared context did not already hold.

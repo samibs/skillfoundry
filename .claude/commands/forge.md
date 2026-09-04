@@ -551,3 +551,24 @@ Forge may parallelize implementation, testing, and review, but **dependency orde
 isolation take precedence over speed.**
 
 Do not duplicate the protocol inside Forge — reference it.
+
+---
+
+## Implementation Within the Delivery Budget
+
+> Canonical policy: `agents/_delivery-efficiency.md`.
+
+Forge respects the delivery budget assigned at task startup:
+
+- **Limit file inspection to the relevant scope.** LOW inspects only the files it touches;
+  MEDIUM stays inside the affected module; HIGH analyses the blast radius first and writes
+  an explicit plan before touching code.
+- **Use existing mission context.** Do not re-derive the architecture, the changed-file set
+  or the service map when `/delivery context` already holds them.
+- **No unrelated refactoring.** No opportunistic cleanup, renaming or reformatting that the
+  task did not ask for. It expands the diff, invalidates evidence, and enlarges the review.
+- **Escalate only when justified** — cross-module impact, a compile failure outside the
+  touched area, a discovered auth or migration dependency. Record the reason and evidence:
+  `/delivery escalate --budget LOW --to MEDIUM --reason "..." --evidence "..."`.
+- **Stop once acceptance criteria are met.** `/delivery complete …` gives the objective
+  verdict. After it says complete, further inspection is rework, not diligence.

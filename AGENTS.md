@@ -60,6 +60,26 @@ not a publication.
 
 ---
 
+## Delivery Efficiency
+
+Canonical policy: `agents/_delivery-efficiency.md`. Read it rather than inferring the rules.
+
+Codex must minimize redundant reasoning and repeated validation:
+
+- classify a **delivery budget** (LOW / MEDIUM / HIGH) before implementing, and follow its
+  execution policy;
+- consume shared mission context before re-deriving architecture or changed files;
+- reuse validation evidence that is still valid for this exact repository state;
+- scope tests to the change — `$tester` chooses smoke / targeted / affected / integration,
+  never `full` from the budget alone;
+- escalate only on evidence; a fixed targeted failure does not justify the full suite;
+- stop once the change is proven.
+
+Authentication, authorization, secrets, cryptography, migrations, deployment, financial and
+compliance logic always classify HIGH and their checks are never skipped.
+
+---
+
 ## Available Skills by Category
 
 ### Core Workflow
@@ -73,6 +93,7 @@ not a publication.
 | `$forge` | Full pipeline: smelt → forge → temper → quench |
 | `$anvil` | 6-tier quality gate between agent handoffs |
 | `$mission` | Governed mission: `.ai/` ledger, attestation, evidence, provenance, waves, process ownership |
+| `$delivery` | Delivery budgets, scoped validation, evidence reuse, stop conditions |
 
 ### Architecture & Design
 | Skill | Purpose |

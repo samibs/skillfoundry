@@ -1,9 +1,21 @@
 import { getUsageSummary } from '../core/budget.js';
+import { buildEfficiencyReport, formatEfficiencyReport } from '../core/delivery-metrics.js';
+import { topLevel } from '../core/mission-git.js';
 export const costCommand = {
     name: 'cost',
-    description: 'Show token usage and cost breakdown',
-    usage: '/cost',
-    execute: async (_args, session) => {
+    description: 'Show token usage, cost breakdown, and delivery efficiency',
+    usage: '/cost [--efficiency] [--json]',
+    execute: async (args, session) => {
+        // Delivery efficiency answers a different question from spend: not "what did this
+        // cost" but "how much of that cost was necessary". Token count alone rewards an agent
+        // that thinks less and ships worse, so the two views are kept distinct.
+        if (/--efficiency\b/.test(args)) {
+            const workDir = topLevel(session.workDir) ?? session.workDir;
+            const report = buildEfficiencyReport(workDir);
+            if (/--json\b/.test(args))
+                return JSON.stringify(report, null, 2);
+            return ['**Delivery Efficiency**', '', ...formatEfficiencyReport(report).map((l) => `  ${l}`), ''].join('\n');
+        }
         const summary = getUsageSummary(session.workDir);
         const sessionCost = session.messages
             .filter((m) => m.metadata?.costUsd)
@@ -63,6 +75,9 @@ export const costCommand = {
                 }
             }
         }
+        lines.push('');
+        lines.push('  Run `/cost --efficiency` for delivery efficiency: evidence reuse,');
+        lines.push('  repeated commands, and repository-wide runs avoided.');
         return lines.join('\n');
     },
 };

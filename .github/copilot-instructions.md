@@ -142,3 +142,23 @@ code to compensate for a broken environment · broadly kill `all node`/`all dotn
 claim "probably pre-existing" without a baseline run at the accepted baseline SHA.
 
 `IMPLEMENTED` is not `VERIFIED`. A commit is not acceptance. An integration is not a publication.
+
+## SkillFoundry Delivery Efficiency
+
+Canonical policy: `agents/_delivery-efficiency.md`.
+
+Before implementing, classify the delivery budget (LOW / MEDIUM / HIGH) and follow the
+execution policy it selects. Minimize redundant reasoning and repeated validation:
+
+- consume shared mission context first — do not rediscover the architecture each time;
+- reuse validation evidence that is still valid for this exact repository state;
+- respect the delivery budget: a LOW change does not trigger the repository-wide suite;
+- use scoped tests (smoke / targeted / affected / integration); `full` is never the default;
+- escalate only with evidence — a fixed targeted failure is not grounds for a full run;
+- stop once implementation, acceptance, validation, diff review and evidence are satisfied.
+
+Authentication, authorization, secrets, cryptography, migrations, deployment, financial and
+compliance logic always classify HIGH and their required checks are never skipped.
+
+For parallel/multi-agent work this composes with `MULTI_AGENT_PROTOCOL.md`: scope worker
+validation, deduplicate it, and let the integration gate pay the repository-wide cost once.
