@@ -83,7 +83,7 @@ change. See **Skill Scope Boundaries** in `CLAUDE.md`; the overhead must not exc
 7. /mission proc register …                   for every process started
 8. /mission evidence <ID> --kind tests --run "<targeted test command>"
 9. /mission ac <ID> --file criteria.json
-10. git commit && /mission commit <ID>
+10. git commit && /mission commit <ID> --base <base-sha>
 11. /mission proc stop <agent>                before claiming completion
 12. /mission exec <ID> INTEGRATION_READY
 13. /mission verify <ID>
@@ -104,7 +104,7 @@ An agent must stop and report — never work around — when any of these occur:
 | Shared-worktree violation | Two ACTIVE writers, one directory | Stop immediately. One worker releases. |
 | `NOT A CLEAN VALIDATION` | Host hung, killed, or left orphans | Not a PASS. Investigate termination before reporting. |
 | `ORPHANS_DETECTED` | Owned processes outlived the run | `/mission proc stop <agent>` before completion. |
-| `LOST` / `UNKNOWN` provenance | Contribution absent or unexplained | Blocks acceptance. Do **not** force. |
+| `LOST` / `UNKNOWN` provenance | Contribution absent or unexplained | Blocks acceptance. Do **not** force. If the work spans several commits, pass `--base` before concluding anything is lost. |
 | `NO_PROGRESS` | Two identical failures, no state change | Stop retrying. Report the blocker. |
 | Dependency cycle | Nothing is schedulable | Report for a human to break. |
 | `PUBLICATION_FAILED` | Remote lacks the contribution | Do not claim published. Reconcile. |

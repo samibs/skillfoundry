@@ -108,6 +108,18 @@ export declare function stablePatchId(workDir: string, sha: string): string | nu
  * @returns Repo-relative paths, sorted. Empty for a commit that changes nothing.
  */
 export declare function changedFiles(workDir: string, sha: string): string[];
+/**
+ * Stable patch identity for a whole contribution range (§21).
+ *
+ * A contribution that spans several commits has no single commit patch-id. Hashing the
+ * squashed `base..tip` diff gives one identity for the net change, so a contribution
+ * replayed as one squashed commit still proves equivalent to the original series.
+ *
+ * @returns The patch ID, or null when the range is empty or git cannot produce one.
+ */
+export declare function rangePatchId(workDir: string, base: string, tip: string): string | null;
+/** Commit SHAs in `base..tip`, oldest first. */
+export declare function commitsBetween(workDir: string, base: string, tip: string): string[];
 /** Files changed between two revisions. */
 export declare function changedFilesBetween(workDir: string, from: string, to: string): string[];
 /** True when `ancestor` is reachable from `descendant` (direct ancestry, §21). */

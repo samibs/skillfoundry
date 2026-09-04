@@ -180,6 +180,56 @@ migration; the evidence store and shared context are regenerable caches under
   reuse disabled, deduplication silently stopped working because the reuse short-circuit
   returned before a claim was taken.
 
+### Also in this release — provenance contribution ranges
+
+_Merged as PR #50 while 5.32.0 was in preparation; it ships here rather than as its own
+version._
+
+#### Fixed
+
+- **Provenance verified only the first commit of a contribution.** A contribution is usually a
+  series — implement, then refine, then reconcile — but `verifyProvenance` compared a single
+  worker SHA against the integration tree, so every later commit on the same branch made its
+  files read as `LOST`. `verifyProvenance` now accepts a contribution range, either as
+  `opts.base` or as a `base..tip` worker ref, and verifies the **net** change across the series.
+  `/mission provenance --base <ref>` and `/mission commit --base <ref>` expose it; `--base`
+  defaults to `execution.base_sha` when an agent registered one.
+- **The ledger verified itself and always failed.** `.ai/ledger.json`, `.ai/gaps.json` and
+  generated `.ai/design/*-report.md` are rewritten *after* the commit that carries them —
+  recording a worker SHA updates the ledger, and `/mission report` updates it again — so a
+  record could never contain its own future and reported a spurious `LOST`. Those three paths
+  are now excluded from verification and listed in `excluded_artifacts`, so the exclusion is
+  visible rather than silent. Write-once artifacts (attestations, patch guides, evidence) are
+  **not** excluded: a missing one remains a real finding. `--include-governance-state` audits
+  the record itself.
+
+  Found by running the protocol on its own v5.31.0 release, which required a manual
+  `--authorized-supersedes` for three files that were never actually lost.
+
+#### Added
+
+- **`rangePatchId()`** — one `git patch-id --stable` identity over a squashed `base..tip` diff,
+  so a contribution replayed as a single squashed commit proves equivalent to the original
+  series. **`commitsBetween()`** enumerates a range, oldest first.
+- **`ProvenanceRecord.base_sha` / `.contribution_range` / `.excluded_artifacts`** — the verified
+  range and any skipped control-plane files are recorded rather than implied.
+- A contribution consisting only of control-plane state is classified `PRESERVED` via ancestry
+  rather than `UNKNOWN`: a governed bookkeeping commit carries no product content to verify, but
+  its path into the tree is not unexplained.
+- Every commit in a range must be accounted for in the target. Unreplayed commits are reported
+  with a count instead of passing silently.
+
+#### Tests
+
+- +12 tests (307 total across the mission suite), covering: the single-commit `LOST` regression
+  and its range-based fix, `base..tip` as a worker ref, squash-equivalent patch identity,
+  partially-replayed ranges, an unresolvable base, ledger rewrites no longer reporting `LOST`,
+  product code in the same commit still being verified, write-once artifacts still failing when
+  deleted, `--include-governance-state`, and control-plane-only commits.
+
+---
+
+
 ---
 
 ## [5.31.0] - 2026-09-04 — Governed Development Mission Protocol

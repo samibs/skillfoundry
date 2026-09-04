@@ -459,9 +459,33 @@ publish?"* — a cherry-pick changes the SHA, and a later change can silently ov
 contribution whose SHA is still in the history.
 
 ```bash
-/mission commit AF-302                                  # worker SHA + stable patch ID
+/mission commit AF-302 --base <base-sha>                # worker SHA + stable patch ID
 /mission provenance AF-302 --integration main
 ```
+
+### A contribution is usually more than one commit
+
+Verifying only the first commit reports every later refinement on the same branch as `LOST`.
+Pass the baseline the worker branched from and the whole series is verified as one net change:
+
+```bash
+/mission provenance AF-302 --base <base-sha> --integration main
+/mission provenance AF-302 --worker <base>..<tip> --integration main   # equivalent
+```
+
+`--base` defaults to `execution.base_sha` when the agent registered one, so this is usually
+automatic. A range also gets one `stable_patch_id` over its squashed diff, so a contribution
+replayed as a single squashed commit still proves equivalent to the original series.
+
+### The record does not verify itself
+
+`.ai/ledger.json`, `.ai/gaps.json` and generated `.ai/design/*-report.md` are **excluded** from
+verification. They are rewritten *after* the commit that carries them — recording a worker SHA
+updates the ledger, and `/mission report` updates it again — so a record can never contain its
+own future. Excluded paths are listed in the provenance record, never dropped silently.
+
+Write-once artifacts — attestations, patch guides, evidence — are **not** excluded. A missing
+one is a real finding. Use `--include-governance-state` to audit the record itself.
 
 Provenance is established by `DIRECT_ANCESTRY` or `PROVEN_PATCH_EQUIVALENT_CHERRY_PICK`
 (`git patch-id --stable`), then confirmed against the final tree:
@@ -624,7 +648,8 @@ Evidence         /mission evidence <ID> --kind tests --run "npm test"
                  /mission ac <ID> --file criteria.json
                  /mission gap open --mission <ID> --type EVIDENCE --desc "..." [--blocks]
 
-Integration      /mission commit <ID> | provenance <ID> --integration <ref>
+Integration      /mission commit <ID> [--base <ref>]
+                 /mission provenance <ID> --integration <ref> [--base <ref>]
                  /mission integrate <ID> | publish-check <ID> --branch main --sha <sha>
 
 Ledger           /mission set <ID> <dimension> <STATUS> [--force]
