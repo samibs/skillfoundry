@@ -62,11 +62,22 @@ export type IntegrationMethod = 'DIRECT_ANCESTRY' | 'PROVEN_PATCH_EQUIVALENT_CHE
 export type FinalTreeContribution = 'PRESERVED' | 'SUPERSEDED_BY_AUTHORIZED_CHANGE' | 'LOST' | 'UNKNOWN';
 /** The provenance chain recorded for an integrated contribution. */
 export interface ProvenanceRecord {
+    /** Tip of the contribution — the worker's final commit. */
     original_sha: string;
+    /** Base of a multi-commit contribution, when one was verified as a range. */
+    base_sha?: string;
+    /** `base..tip`, when the contribution spans more than one commit. */
+    contribution_range?: string;
     integration_sha?: string;
     integration_method: IntegrationMethod;
     stable_patch_id?: string;
     changed_file_manifest: string[];
+    /**
+     * Control-plane files skipped during verification because the mission tooling
+     * rewrites them after the commit that carries them (the ledger cannot contain its
+     * own future). Recorded so the exclusion is visible rather than silent.
+     */
+    excluded_artifacts?: string[];
     final_tree_contribution: FinalTreeContribution;
     verified_at_utc: string;
     notes?: string;

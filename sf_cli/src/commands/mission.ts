@@ -62,7 +62,10 @@ import {
   runValidatedCommand, writeEvidence, readEvidence, isCleanValidation, classifyFailure,
   isEvidenceKind, type EvidenceKind, type CommandEvidence,
 } from '../core/mission-evidence.js';
-import { stablePatchId, changedFiles, revParse, treeSha, currentBranch, isGitRepo, topLevel } from '../core/mission-git.js';
+import {
+  stablePatchId, changedFiles, changedFilesBetween, revParse, treeSha, currentBranch,
+  isGitRepo, topLevel, commitsBetween, rangePatchId,
+} from '../core/mission-git.js';
 
 // ── Arg parsing ───────────────────────────────────────────────────────────────
 
@@ -621,16 +624,27 @@ function handleCommit(workDir: string, args: ParsedArgs): string {
   const sha = revParse(workDir, shaArg);
   if (!sha) throw new Error(`Could not resolve "${shaArg}" to a commit.`);
 
-  const patchId = stablePatchId(workDir, sha);
-  const files = changedFiles(workDir, sha);
+  // Recording the base makes the contribution a range, so re-running `/mission commit`
+  // after further work verifies the whole series rather than just the latest commit.
+  const baseArg = flagString(args.flags, 'base');
+  const base = baseArg ? revParse(workDir, baseArg) : getMission(workDir, missionId)?.execution.base_sha;
+  if (baseArg && !base) throw new Error(`Could not resolve base ref "${baseArg}" to a commit.`);
+
+  const patchId = base ? rangePatchId(workDir, base, sha) : stablePatchId(workDir, sha);
+  const files = base ? changedFilesBetween(workDir, base, sha) : changedFiles(workDir, sha);
 
   updateMission(workDir, missionId, (m) => {
     m.worker_sha = sha;
+    if (base) m.execution.base_sha = base;
     if (patchId) m.stable_patch_id = patchId;
   });
 
   const lines = [head(`Worker commit — ${missionId}`)];
   lines.push(`  SHA:              ${sha}`);
+  if (base) {
+    lines.push(`  Base:             ${base}`);
+    lines.push(`  Contribution:     ${commitsBetween(workDir, base, sha).length} commit(s)`);
+  }
   lines.push(`  Stable patch ID:  ${patchId ?? warn('not computable (merge or root commit)')}`);
   lines.push(`  Changed files:    ${files.length}`);
   for (const f of files.slice(0, 20)) lines.push(`    ${DIM}·${RESET} ${f}`);
@@ -650,10 +664,25 @@ function handleProvenance(workDir: string, args: ParsedArgs): string {
   const integration = flagString(args.flags, 'integration') ?? 'HEAD';
   if (!workerSha) throw new Error('No worker SHA. Run `/mission commit <ID>` first, or pass --worker <sha>.');
 
-  const staleness = classifyWorkerStaleness(workDir, workerSha, integration);
+  // A contribution is usually more than one commit. Default the range base to the
+  // baseline the worker branched from, so later refinements in the same branch are
+  // verified as part of the contribution instead of reading as LOST.
+  const base = flagString(args.flags, 'base') ?? mission.execution.base_sha;
+
+  // Staleness compares the tip; strip any range prefix the caller passed in --worker.
+  const tip = workerSha.includes('..') ? workerSha.slice(workerSha.indexOf('..') + 2) : workerSha;
+  const staleness = classifyWorkerStaleness(workDir, tip, integration);
   const verification = verifyProvenance(workDir, workerSha, integration, {
+    base: workerSha.includes('..') ? undefined : base,
     authorizedSupersedes: flagList(args.flags, 'authorized-supersedes'),
+    includeGovernanceState:
+      args.flags['include-governance-state'] === true ||
+      args.flags['include-governance-state'] === 'true',
   });
+
+  const commitCount = verification.record.base_sha
+    ? commitsBetween(workDir, verification.record.base_sha, verification.record.original_sha).length
+    : 1;
 
   setProvenance(workDir, missionId, verification.record);
   const rel = writeEvidence(workDir, missionId, 'provenance', {
@@ -664,14 +693,23 @@ function handleProvenance(workDir: string, args: ParsedArgs): string {
   });
   attachEvidence(workDir, missionId, rel);
 
+  const rec = verification.record;
   const lines = [head(`Provenance — ${missionId}`)];
-  lines.push(`  Worker SHA:       ${verification.record.original_sha.slice(0, 12)}`);
-  lines.push(`  Integration SHA:  ${verification.record.integration_sha?.slice(0, 12) ?? 'unknown'}`);
-  lines.push(`  Method:           ${verification.record.integration_method}`);
-  lines.push(`  Stable patch ID:  ${verification.record.stable_patch_id ?? DIM + 'n/a' + RESET}`);
+  if (rec.contribution_range) {
+    lines.push(`  Contribution:     ${rec.base_sha?.slice(0, 12)}..${rec.original_sha.slice(0, 12)} (${commitCount} commit(s))`);
+  } else {
+    lines.push(`  Worker SHA:       ${rec.original_sha.slice(0, 12)}`);
+  }
+  lines.push(`  Integration SHA:  ${rec.integration_sha?.slice(0, 12) ?? 'unknown'}`);
+  lines.push(`  Method:           ${rec.integration_method}`);
+  lines.push(`  Stable patch ID:  ${rec.stable_patch_id ?? DIM + 'n/a' + RESET}`);
   lines.push(`  Staleness:        ${statusColor(staleness.classification)} — ${staleness.reason}`);
-  lines.push(`  Final tree:       ${statusColor(verification.record.final_tree_contribution)}`);
-  lines.push(`  Manifest:         ${verification.record.changed_file_manifest.length} file(s)`);
+  lines.push(`  Final tree:       ${statusColor(rec.final_tree_contribution)}`);
+  lines.push(`  Manifest:         ${rec.changed_file_manifest.length} file(s)`);
+  if (rec.excluded_artifacts?.length) {
+    lines.push(`  Excluded:         ${rec.excluded_artifacts.length} self-referential control-plane file(s)`);
+    for (const f of rec.excluded_artifacts) lines.push(`    ${DIM}·${RESET} ${f}`);
+  }
   lines.push(`  Evidence:         ${rel}`);
   lines.push('');
 
@@ -1688,8 +1726,8 @@ function usage(): string {
     `  ${BOLD}Baseline & integration${RESET}`,
     '    /mission baseline [--fetch] [--expect sha]',
     '    /mission collide --a "w1:f1,f2" --b "w2:f2"',
-    '    /mission commit <ID> [--sha HEAD]         Record worker SHA + stable patch ID',
-    '    /mission provenance <ID> --integration <ref>',
+    '    /mission commit <ID> [--sha HEAD] [--base <ref>]   Worker SHA + patch ID',
+    '    /mission provenance <ID> --integration <ref> [--base <ref>]',
     '    /mission publish-check <ID> --branch main --sha <sha>',
     '',
     `  ${BOLD}Evidence & acceptance${RESET}`,

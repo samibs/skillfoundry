@@ -69,6 +69,24 @@ export interface ProvenanceVerification {
     proven: boolean;
     blockers: string[];
 }
+/** Options for {@link verifyProvenance}. */
+export interface VerifyProvenanceOptions {
+    /**
+     * Base of a multi-commit contribution. When set, the contribution is `base..tip`
+     * and the manifest is its net diff, rather than a single commit's changes.
+     */
+    base?: string;
+    /**
+     * Files a later authorized change was permitted to overwrite. Without this, an
+     * overwritten file counts as LOST.
+     */
+    authorizedSupersedes?: string[];
+    /**
+     * Verify the mission's own mutable control-plane files too. Off by default — see
+     * {@link SELF_REFERENTIAL_ARTIFACTS}. Turn it on only to audit the record itself.
+     */
+    includeGovernanceState?: boolean;
+}
 /**
  * Verify that a worker's contribution survives in the integration tree (§22).
  *
@@ -77,14 +95,14 @@ export interface ProvenanceVerification {
  * that reports success while a contribution was silently dropped by a conflict
  * resolution or a stale merge.
  *
- * @param workerSha - The original worker commit.
+ * A contribution is usually more than one commit. Pass `opts.base` (or a `base..tip`
+ * range as `workerRef`) so the net effect of the whole series is verified; comparing
+ * only the first commit reports every later refinement in the same branch as `LOST`.
+ *
+ * @param workerRef - The contribution tip, or a `base..tip` range.
  * @param integrationRef - The tree the contribution should now be part of.
- * @param opts.authorizedSupersedes - Files a later authorized change was permitted to
- *        overwrite. Without this, an overwritten file counts as LOST.
  */
-export declare function verifyProvenance(workDir: string, workerSha: string, integrationRef: string, opts?: {
-    authorizedSupersedes?: string[];
-}): ProvenanceVerification;
+export declare function verifyProvenance(workDir: string, workerRef: string, integrationRef: string, opts?: VerifyProvenanceOptions): ProvenanceVerification;
 /** The result of verifying that a push actually landed on the remote. */
 export interface PublicationVerification {
     verified: boolean;

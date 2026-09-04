@@ -7,7 +7,7 @@ import {
   classifyBaseline, classifyWorkerStaleness, verifyProvenance, verifyPublication,
   analyzeCollision,
 } from '../core/mission-provenance.js';
-import { stablePatchId, changedFiles, revParse, isAncestor } from '../core/mission-git.js';
+import { stablePatchId, changedFiles, revParse, isAncestor, rangePatchId, commitsBetween } from '../core/mission-git.js';
 
 vi.mock('../utils/logger.js', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn() }),
@@ -247,6 +247,168 @@ describe('verifyProvenance (§22)', () => {
     const v = verifyProvenance(repo, 'nope', 'main');
     expect(v.record.final_tree_contribution).toBe('UNKNOWN');
     expect(v.proven).toBe(false);
+  });
+});
+
+describe('contribution ranges (§22)', () => {
+  it('reports LOST for a later commit in the same branch when only the first is verified', () => {
+    // The original defect: a contribution is usually more than one commit.
+    const first = commit(repo, 'src/a.ts', 'v1\n', 'feat: a');
+    commit(repo, 'src/a.ts', 'v2 refined\n', 'refactor: refine a');
+
+    const single = verifyProvenance(repo, first, 'main');
+    expect(single.record.final_tree_contribution).toBe('LOST');
+  });
+
+  it('verifies the whole series when a base is supplied', () => {
+    const base = revParse(repo, 'HEAD')!;
+    commit(repo, 'src/a.ts', 'v1\n', 'feat: a');
+    const tip = commit(repo, 'src/a.ts', 'v2 refined\n', 'refactor: refine a');
+
+    const ranged = verifyProvenance(repo, tip, 'main', { base });
+    expect(ranged.record.final_tree_contribution).toBe('PRESERVED');
+    expect(ranged.proven).toBe(true);
+    expect(ranged.record.contribution_range).toBe(`${base}..${tip}`);
+    expect(ranged.record.base_sha).toBe(base);
+  });
+
+  it('accepts a base..tip range passed as the worker ref', () => {
+    const base = revParse(repo, 'HEAD')!;
+    commit(repo, 'src/a.ts', 'v1\n', 'feat: a');
+    const tip = commit(repo, 'src/b.ts', 'b\n', 'feat: b');
+
+    const v = verifyProvenance(repo, `${base}..${tip}`, 'main');
+    expect(v.proven).toBe(true);
+    expect(v.record.changed_file_manifest.sort()).toEqual(['src/a.ts', 'src/b.ts']);
+  });
+
+  it('computes one stable patch id for the whole range', () => {
+    const base = revParse(repo, 'HEAD')!;
+    commit(repo, 'src/a.ts', 'v1\n', 'feat: a');
+    const tip = commit(repo, 'src/b.ts', 'b\n', 'feat: b');
+
+    const id = rangePatchId(repo, base, tip);
+    expect(id).toMatch(/^[0-9a-f]{6,64}$/);
+
+    // A squashed replay of the same net change carries the same identity.
+    g(repo, 'checkout', '-q', '-b', 'squashed', base);
+    mkdirSync(join(repo, 'src'), { recursive: true });
+    writeFileSync(join(repo, 'src/a.ts'), 'v1\n', 'utf-8');
+    writeFileSync(join(repo, 'src/b.ts'), 'b\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'feat: a and b squashed');
+    expect(rangePatchId(repo, base, revParse(repo, 'HEAD')!)).toBe(id);
+  });
+
+  it('enumerates the commits in the range, oldest first', () => {
+    const base = revParse(repo, 'HEAD')!;
+    const c1 = commit(repo, 'src/a.ts', 'a\n', 'feat: a');
+    const c2 = commit(repo, 'src/b.ts', 'b\n', 'feat: b');
+    expect(commitsBetween(repo, base, c2)).toEqual([c1, c2]);
+  });
+
+  it('flags a range whose commits are not all present in the target', () => {
+    const base = revParse(repo, 'HEAD')!;
+    g(repo, 'checkout', '-q', '-b', 'feature');
+    commit(repo, 'src/a.ts', 'a\n', 'feat: a');
+    const tip = commit(repo, 'src/b.ts', 'b\n', 'feat: b');
+    g(repo, 'checkout', '-q', 'main');
+
+    const v = verifyProvenance(repo, tip, 'main', { base });
+    expect(v.proven).toBe(false);
+    expect(v.record.final_tree_contribution).toBe('LOST');
+  });
+
+  it('reports an unresolvable base rather than silently ignoring it', () => {
+    const v = verifyProvenance(repo, 'HEAD', 'main', { base: 'no-such-ref' });
+    expect(v.proven).toBe(false);
+    expect(v.blockers.join(' ')).toMatch(/Base ref "no-such-ref" could not be resolved/);
+  });
+});
+
+describe('self-referential control-plane files (§22)', () => {
+  /** Commit a ledger-like control-plane file plus product code. */
+  function seedGovernedCommit(): string {
+    mkdirSync(join(repo, '.ai', 'design'), { recursive: true });
+    mkdirSync(join(repo, 'src'), { recursive: true });
+    writeFileSync(join(repo, '.ai/ledger.json'), '{"missions":{}}\n', 'utf-8');
+    writeFileSync(join(repo, '.ai/gaps.json'), '{"gaps":[]}\n', 'utf-8');
+    writeFileSync(join(repo, '.ai/design/AF-1-report.md'), '# v1\n', 'utf-8');
+    writeFileSync(join(repo, 'src/feature.ts'), 'export const x = 1;\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'feat: work + ledger');
+    return g(repo, 'rev-parse', 'HEAD');
+  }
+
+  it('does not report LOST when a later commit rewrites the ledger', () => {
+    const worker = seedGovernedCommit();
+
+    // Exactly what /mission commit does next: record the SHA, rewriting the ledger.
+    writeFileSync(join(repo, '.ai/ledger.json'), `{"worker_sha":"${worker}"}\n`, 'utf-8');
+    writeFileSync(join(repo, '.ai/design/AF-1-report.md'), '# v2 regenerated\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'chore(mission): reconcile ledger');
+
+    const v = verifyProvenance(repo, worker, 'main');
+    expect(v.record.final_tree_contribution).toBe('PRESERVED');
+    expect(v.proven).toBe(true);
+    expect(v.record.excluded_artifacts).toContain('.ai/ledger.json');
+    expect(v.record.excluded_artifacts).toContain('.ai/design/AF-1-report.md');
+    expect(v.record.notes).toMatch(/rewritten after the commit that carries them/);
+  });
+
+  it('still verifies product code in the same commit', () => {
+    const worker = seedGovernedCommit();
+    writeFileSync(join(repo, 'src/feature.ts'), 'export const x = 999;\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'chore: clobber the product change');
+
+    const v = verifyProvenance(repo, worker, 'main');
+    expect(v.record.final_tree_contribution).toBe('LOST');
+    expect(v.blockers.join(' ')).toMatch(/src\/feature\.ts/);
+  });
+
+  it('does NOT exclude write-once artifacts — a missing attestation is a real finding', () => {
+    mkdirSync(join(repo, '.ai', 'attestations'), { recursive: true });
+    writeFileSync(join(repo, '.ai/attestations/AF-1-w1.json'), '{"status":"PASS"}\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'chore: attestation');
+    const worker = g(repo, 'rev-parse', 'HEAD');
+
+    g(repo, 'rm', '-q', '.ai/attestations/AF-1-w1.json');
+    g(repo, 'commit', '-m', 'chore: delete the attestation');
+
+    const v = verifyProvenance(repo, worker, 'main');
+    expect(v.record.final_tree_contribution).toBe('LOST');
+    expect(v.blockers.join(' ')).toMatch(/attestations/);
+  });
+
+  it('can audit the record itself when explicitly asked', () => {
+    const worker = seedGovernedCommit();
+    writeFileSync(join(repo, '.ai/ledger.json'), '{"changed":true}\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'chore(mission): reconcile ledger');
+
+    const v = verifyProvenance(repo, worker, 'main', { includeGovernanceState: true });
+    expect(v.record.final_tree_contribution).toBe('LOST');
+    expect(v.record.excluded_artifacts).toBeUndefined();
+  });
+
+  it('treats a control-plane-only commit as PRESERVED via ancestry', () => {
+    mkdirSync(join(repo, '.ai'), { recursive: true });
+    writeFileSync(join(repo, '.ai/ledger.json'), '{"a":1}\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'chore(mission): ledger only');
+    const worker = g(repo, 'rev-parse', 'HEAD');
+
+    writeFileSync(join(repo, '.ai/ledger.json'), '{"a":2}\n', 'utf-8');
+    g(repo, 'add', '.');
+    g(repo, 'commit', '-m', 'chore(mission): ledger again');
+
+    const v = verifyProvenance(repo, worker, 'main');
+    expect(v.record.final_tree_contribution).toBe('PRESERVED');
+    expect(v.record.changed_file_manifest).toEqual([]);
+    expect(v.proven).toBe(true);
   });
 });
 

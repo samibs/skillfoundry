@@ -212,6 +212,32 @@ export function changedFiles(workDir, sha) {
         return [];
     return r.stdout.split('\n').map((l) => l.trim()).filter(Boolean).sort();
 }
+/**
+ * Stable patch identity for a whole contribution range (§21).
+ *
+ * A contribution that spans several commits has no single commit patch-id. Hashing the
+ * squashed `base..tip` diff gives one identity for the net change, so a contribution
+ * replayed as one squashed commit still proves equivalent to the original series.
+ *
+ * @returns The patch ID, or null when the range is empty or git cannot produce one.
+ */
+export function rangePatchId(workDir, base, tip) {
+    const diff = git(workDir, ['diff', '--no-color', `${base}..${tip}`]);
+    if (!diff.ok || !diff.stdout)
+        return null;
+    const id = git(workDir, ['patch-id', '--stable'], diff.stdout + '\n');
+    if (!id.ok || !id.stdout)
+        return null;
+    const patchId = (id.stdout.split('\n')[0] ?? '').trim().split(/\s+/)[0];
+    return /^[0-9a-f]{6,64}$/.test(patchId) ? patchId : null;
+}
+/** Commit SHAs in `base..tip`, oldest first. */
+export function commitsBetween(workDir, base, tip) {
+    const r = git(workDir, ['rev-list', '--reverse', `${base}..${tip}`]);
+    if (!r.ok || !r.stdout)
+        return [];
+    return r.stdout.split('\n').map((l) => l.trim()).filter((l) => /^[0-9a-f]{40}$/.test(l));
+}
 /** Files changed between two revisions. */
 export function changedFilesBetween(workDir, from, to) {
     const r = git(workDir, ['diff', '--name-only', `${from}..${to}`]);

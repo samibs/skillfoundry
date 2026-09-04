@@ -8,7 +8,7 @@
 // overwrite a contribution whose SHA is still in the history. So provenance is proven
 // two ways — direct ancestry, or `git patch-id --stable` equivalence — and then
 // confirmed against the actual final tree.
-import { git, revParse, treeSha, currentBranch, stablePatchId, changedFiles, changedFilesBetween, isAncestor, remoteUrl, } from './mission-git.js';
+import { git, revParse, treeSha, currentBranch, stablePatchId, changedFiles, changedFilesBetween, isAncestor, remoteUrl, rangePatchId, commitsBetween, } from './mission-git.js';
 import { getLogger } from '../utils/logger.js';
 /**
  * Classify the local baseline against the authoritative remote branch.
@@ -200,6 +200,28 @@ export function classifyWorkerStaleness(workDir, workerSha, targetRef) {
     };
 }
 /**
+ * Control-plane files the mission tooling rewrites on every state change.
+ *
+ * These describe a contribution rather than constitute it, and they are necessarily
+ * written *after* the commit that carries them: recording a worker SHA updates the
+ * ledger, which the next `/mission report` updates again. Verifying them against the
+ * final tree therefore always fails — the record can never contain its own future.
+ *
+ * Excluding them removes that recursion. Write-once artifacts (attestations, patch
+ * guides, evidence) are NOT excluded: those must survive, and a missing one is a real
+ * finding.
+ */
+const SELF_REFERENTIAL_ARTIFACTS = [
+    /^\.ai\/ledger\.json$/,
+    /^\.ai\/gaps\.json$/,
+    // Generated reports are regenerated on demand from the ledger.
+    /^\.ai\/design\/.*-report\.md$/,
+];
+/** True when a path is a mission control-plane file that rewrites itself. */
+function isSelfReferential(path) {
+    return SELF_REFERENTIAL_ARTIFACTS.some((re) => re.test(path));
+}
+/**
  * Verify that a worker's contribution survives in the integration tree (§22).
  *
  * `LOST` and `UNKNOWN` block acceptance — the ledger refuses `INTEGRATION_VALIDATED`
@@ -207,25 +229,40 @@ export function classifyWorkerStaleness(workDir, workerSha, targetRef) {
  * that reports success while a contribution was silently dropped by a conflict
  * resolution or a stale merge.
  *
- * @param workerSha - The original worker commit.
+ * A contribution is usually more than one commit. Pass `opts.base` (or a `base..tip`
+ * range as `workerRef`) so the net effect of the whole series is verified; comparing
+ * only the first commit reports every later refinement in the same branch as `LOST`.
+ *
+ * @param workerRef - The contribution tip, or a `base..tip` range.
  * @param integrationRef - The tree the contribution should now be part of.
- * @param opts.authorizedSupersedes - Files a later authorized change was permitted to
- *        overwrite. Without this, an overwritten file counts as LOST.
  */
-export function verifyProvenance(workDir, workerSha, integrationRef, opts = {}) {
+export function verifyProvenance(workDir, workerRef, integrationRef, opts = {}) {
     const blockers = [];
-    const resolvedWorker = revParse(workDir, workerSha);
+    // Accept `base..tip` in the ref itself, so a range survives round-tripping through
+    // a CLI flag or a ledger field without a second parameter.
+    let tipRef = workerRef;
+    let baseRef = opts.base;
+    const rangeSplit = workerRef.indexOf('..');
+    if (rangeSplit !== -1) {
+        baseRef = workerRef.slice(0, rangeSplit);
+        tipRef = workerRef.slice(rangeSplit + 2);
+    }
+    const resolvedWorker = revParse(workDir, tipRef);
     const resolvedIntegration = revParse(workDir, integrationRef);
+    const resolvedBase = baseRef ? revParse(workDir, baseRef) : null;
     if (!resolvedWorker) {
-        blockers.push(`Worker ref "${workerSha}" could not be resolved`);
+        blockers.push(`Worker ref "${tipRef}" could not be resolved`);
     }
     if (!resolvedIntegration) {
         blockers.push(`Integration ref "${integrationRef}" could not be resolved`);
     }
-    if (!resolvedWorker || !resolvedIntegration) {
+    if (baseRef && !resolvedBase) {
+        blockers.push(`Base ref "${baseRef}" could not be resolved`);
+    }
+    if (!resolvedWorker || !resolvedIntegration || (baseRef && !resolvedBase)) {
         return {
             record: {
-                original_sha: workerSha,
+                original_sha: resolvedWorker ?? tipRef,
                 integration_method: 'UNKNOWN',
                 changed_file_manifest: [],
                 final_tree_contribution: 'UNKNOWN',
@@ -236,8 +273,19 @@ export function verifyProvenance(workDir, workerSha, integrationRef, opts = {}) 
             blockers,
         };
     }
-    const manifest = changedFiles(workDir, resolvedWorker);
-    const patchId = stablePatchId(workDir, resolvedWorker) ?? undefined;
+    // Manifest: the net diff across the range, or a single commit's changes.
+    const rawManifest = resolvedBase
+        ? changedFilesBetween(workDir, resolvedBase, resolvedWorker)
+        : changedFiles(workDir, resolvedWorker);
+    const excluded = opts.includeGovernanceState
+        ? []
+        : rawManifest.filter(isSelfReferential);
+    const manifest = opts.includeGovernanceState
+        ? rawManifest
+        : rawManifest.filter((f) => !isSelfReferential(f));
+    const patchId = (resolvedBase
+        ? rangePatchId(workDir, resolvedBase, resolvedWorker)
+        : stablePatchId(workDir, resolvedWorker)) ?? undefined;
     // Establish HOW the contribution reached the tree.
     let method = 'UNKNOWN';
     if (isAncestor(workDir, resolvedWorker, resolvedIntegration)) {
@@ -246,9 +294,26 @@ export function verifyProvenance(workDir, workerSha, integrationRef, opts = {}) 
     else {
         const mergeBase = git(workDir, ['merge-base', resolvedWorker, resolvedIntegration]);
         if (mergeBase.ok && mergeBase.stdout) {
-            const cherry = git(workDir, ['cherry', resolvedIntegration, resolvedWorker, mergeBase.stdout]);
-            if (cherry.ok && cherry.stdout.split('\n').some((l) => l.trim().startsWith('-'))) {
-                method = 'PROVEN_PATCH_EQUIVALENT_CHERRY_PICK';
+            if (resolvedBase) {
+                // Every commit in the range must be accounted for in the target. `git cherry`
+                // marks a replayed commit '-' and an unreplayed one '+'.
+                const cherry = git(workDir, ['cherry', resolvedIntegration, resolvedWorker, resolvedBase]);
+                const lines = cherry.ok
+                    ? cherry.stdout.split('\n').map((l) => l.trim()).filter(Boolean)
+                    : [];
+                const unreplayed = lines.filter((l) => l.startsWith('+'));
+                if (lines.length > 0 && unreplayed.length === 0) {
+                    method = 'PROVEN_PATCH_EQUIVALENT_CHERRY_PICK';
+                }
+                else if (unreplayed.length > 0) {
+                    blockers.push(`${unreplayed.length} of ${lines.length} commit(s) in the contribution range are not present in the integration tree`);
+                }
+            }
+            else {
+                const cherry = git(workDir, ['cherry', resolvedIntegration, resolvedWorker, mergeBase.stdout]);
+                if (cherry.ok && cherry.stdout.split('\n').some((l) => l.trim().startsWith('-'))) {
+                    method = 'PROVEN_PATCH_EQUIVALENT_CHERRY_PICK';
+                }
             }
         }
     }
@@ -290,26 +355,47 @@ export function verifyProvenance(workDir, workerSha, integrationRef, opts = {}) 
         contribution = 'SUPERSEDED_BY_AUTHORIZED_CHANGE';
     }
     else if (manifest.length === 0) {
-        contribution = 'UNKNOWN';
-        blockers.push('Worker commit has an empty changed-file manifest — nothing to verify');
+        // A contribution consisting only of control-plane state is a governed bookkeeping
+        // commit. It carries no product content to verify, but it is not unexplained —
+        // ancestry still proves how it reached the tree.
+        if (excluded.length > 0 && method !== 'UNKNOWN') {
+            contribution = 'PRESERVED';
+        }
+        else {
+            contribution = 'UNKNOWN';
+            blockers.push(excluded.length > 0
+                ? 'Contribution contains only mission control-plane state, and its path into the tree is unexplained'
+                : 'Contribution has an empty changed-file manifest — nothing to verify');
+        }
     }
     else {
         contribution = 'PRESERVED';
     }
+    const notes = [];
+    if (superseded.length > 0)
+        notes.push(`Authorized supersede: ${superseded.join(', ')}`);
+    if (excluded.length > 0) {
+        notes.push(`Excluded self-referential control-plane files (they are rewritten after the commit that carries them): ${excluded.join(', ')}`);
+    }
     const record = {
         original_sha: resolvedWorker,
+        base_sha: resolvedBase ?? undefined,
+        contribution_range: resolvedBase ? `${resolvedBase}..${resolvedWorker}` : undefined,
         integration_sha: resolvedIntegration,
         integration_method: method,
         stable_patch_id: patchId,
         changed_file_manifest: manifest,
+        excluded_artifacts: excluded.length > 0 ? excluded : undefined,
         final_tree_contribution: contribution,
         verified_at_utc: new Date().toISOString(),
-        notes: superseded.length > 0 ? `Authorized supersede: ${superseded.join(', ')}` : undefined,
+        notes: notes.length > 0 ? notes.join(' | ') : undefined,
     };
     const proven = blockers.length === 0 && (contribution === 'PRESERVED' || contribution === 'SUPERSEDED_BY_AUTHORIZED_CHANGE');
     getLogger().info('mission', 'provenance_verified', {
         worker: resolvedWorker.slice(0, 8),
+        base: resolvedBase?.slice(0, 8),
         integration: resolvedIntegration.slice(0, 8),
+        commits: resolvedBase ? commitsBetween(workDir, resolvedBase, resolvedWorker).length : 1,
         method,
         contribution,
     });
