@@ -275,6 +275,43 @@ cannot be trusted, integration touched the same files, or the policy demands a b
 
 ---
 
+## Runtime integration
+
+The layer is not advice — it fires during execution.
+
+```ts
+const plan = planTask(workDir, { taskId: 'AF-302', text: story, baseRef: 'origin/main' });
+//   → detects changed files, classifies the budget, MEASURES dependency fan-out,
+//     and derives the test scope from all three
+
+const exec = executeTask(workDir, plan, validations);
+//   → runs only validations at or below the selected scope
+//   → reuses anything already proven against this state
+//   → stops at the first genuine failure
+//   → escalates budget/scope only on evidence from that failure
+
+completeTask(workDir, exec);        // records the worker handoff
+taskIsComplete(workDir, exec, …);   // objective stop verdict
+```
+
+`runValidation()` wraps a subprocess; `runOrReuse()` wraps **in-process** work such as
+`runAllGates`, storing the compact result so a reuse genuinely returns it rather than
+re-running to reconstruct the detail.
+
+`$forge` uses this for its gate suite: a dry run against a tree that has not changed since
+the gates last passed reuses the recorded summary instead of re-running eight tiers.
+
+### Measured impact, not supplied guesses
+
+`delivery-impact.ts` builds a reverse import graph (TS/JS/Python) cached against the tree
+hash, so the fan-out that widens `targeted` → `affected` is measured. It is deliberately a
+static regex-level scan — resolving a full module graph would cost more than the validation
+it avoids — and it is honest about its limits: a bare package specifier is counted as an
+**unresolved import** rather than silently dropped, so a high unresolved count means the
+fan-out is a lower bound and callers should widen rather than narrow.
+
+---
+
 ## Measurement
 
 ```bash
@@ -282,8 +319,12 @@ cannot be trusted, integration touched the same files, or the policy demands a b
 ```
 
 Reports per task and in aggregate: delivery budget, validation scope, validation commands,
-repeated commands, evidence reused vs regenerated, evidence reuse rate, seconds saved by
-reuse, and repository-wide runs avoided at worker level.
+repeated commands, evidence reused vs regenerated, evidence reuse rate, **validation seconds
+actually spent**, seconds saved by reuse, and repository-wide runs avoided at worker level.
+
+Durations are measured by the runner and carried on the worker handoff, so
+`validationSeconds` is a real number rather than `unknown` for any task that went through
+`executeTask`.
 
 **Unmeasurable values are reported as `unknown`, never estimated.** A fabricated token count
 poisons every ratio computed from it. Token usage is `null` unless the provider reports it.

@@ -46,6 +46,13 @@ export interface EvidenceEntry {
     createdAt: string;
     /** Path to a full log, referenced rather than inlined. */
     artifact?: string;
+    /**
+     * The result an in-process validation produced, so reuse can return it rather than
+     * re-running the work to reconstruct it. Bounded — see `MAX_PAYLOAD_BYTES`. Absent when
+     * the result was too large, in which case reuse can confirm the verdict but not replay
+     * the detail, and the caller must decide whether that is enough.
+     */
+    payload?: unknown;
 }
 /** The on-disk evidence store. */
 export interface EvidenceStore {
@@ -91,6 +98,8 @@ export interface RecordEvidenceInput {
     producedByAgent?: string;
     budget?: DeliveryBudgetLevel;
     artifact?: string;
+    /** Compact structured result to inline, so reuse can return it. Dropped if oversized. */
+    payload?: unknown;
 }
 /**
  * Record a validation result so a later task can reuse it.

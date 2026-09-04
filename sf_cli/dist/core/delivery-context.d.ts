@@ -35,6 +35,11 @@ export interface WorkerHandoff {
     evidenceGenerated: string[];
     /** Evidence keys this worker reused instead of regenerating. */
     evidenceReused: string[];
+    /**
+     * Wall-clock seconds actually spent on validation. Reused evidence contributes zero,
+     * which is precisely the saving. Absent when the worker did not measure it.
+     */
+    validationSeconds?: number;
     unresolvedGaps: string[];
     at: string;
 }

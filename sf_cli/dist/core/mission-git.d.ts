@@ -10,10 +10,16 @@ export interface GitResult {
  * @param workDir - Directory to run git in. Resolved to an absolute path.
  * @param args - Git arguments, passed verbatim without shell interpretation.
  * @param input - Optional stdin payload (used for `git patch-id`).
+ * @param opts.preserveOutput - Return stdout verbatim instead of trimmed. Required for
+ *        fixed-column formats: `git status --porcelain` encodes state in columns 1-2, so
+ *        trimming eats the leading space of an unstaged entry (` M path` → `M path`) and
+ *        every subsequent column offset is wrong by one.
  * @returns `{ ok, stdout, stderr }`. Never throws — a missing git binary or a
  *          non-zero exit is reported as `ok: false`.
  */
-export declare function git(workDir: string, args: string[], input?: string): GitResult;
+export declare function git(workDir: string, args: string[], input?: string, opts?: {
+    preserveOutput?: boolean;
+}): GitResult;
 /** True when `workDir` is inside a git working tree. */
 export declare function isGitRepo(workDir: string): boolean;
 /** Absolute path of the working tree root, or null when not in a repo. */
@@ -37,14 +43,27 @@ export interface WorkingTreeStatus {
     productEntries: string[];
     /** Porcelain lines touching `.ai/` or `.skillfoundry/` — reported, not blocking. */
     governanceEntries: string[];
+    /**
+     * Repo-relative paths, already parsed out of the porcelain columns.
+     *
+     * Callers need this rather than re-parsing `entries`: those are trimmed for display, so
+     * a fixed-column `slice(3)` over them silently eats the first character of the path.
+     */
+    paths: string[];
 }
 /**
  * Read the working-tree status.
  *
+ * @param opts.untrackedFiles - `'normal'` (default) collapses an untracked directory to a
+ *        single entry, which is cheaper and enough for a cleanliness check. `'all'` lists
+ *        every untracked file individually — required when the caller needs the actual
+ *        file set, since `src/` tells you nothing about which files changed.
  * @returns Product and governance changes, separated. A repo that cannot be read
  *          reports `clean: false` — the protocol fails closed (§10).
  */
-export declare function workingTreeStatus(workDir: string): WorkingTreeStatus;
+export declare function workingTreeStatus(workDir: string, opts?: {
+    untrackedFiles?: 'normal' | 'all';
+}): WorkingTreeStatus;
 /** One registered worktree as reported by `git worktree list --porcelain`. */
 export interface WorktreeRecord {
     path: string;

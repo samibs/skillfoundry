@@ -2,6 +2,8 @@ import type { SlashCommand, SessionContext, PipelineCallbacks, PipelineResult } 
 import { runPipeline, scanPRDs, scanStories } from '../core/pipeline.js';
 import { runAllGates } from '../core/gates.js';
 import { runFinisher } from '../core/finisher.js';
+import { planTask, runOrReuse, deliveryRunnerEnabled } from '../core/delivery-runner.js';
+import type { GateRunSummary } from '../core/gates.js';
 
 // ── Dry-run: read-only scan (backward-compatible with pre-2.0.10) ──
 
@@ -55,10 +57,50 @@ async function runDryScan(session: SessionContext): Promise<string> {
   lines.push('Phase 3 (Temper): Quality Gates');
   lines.push('------------------------------');
 
-  const gateSummary = await runAllGates({
-    workDir: session.workDir,
-    target: '.',
-  });
+  // Delivery efficiency: the eight-tier gate suite is the most expensive thing a dry run
+  // does. Re-running it against a tree that has not changed since it last passed proves
+  // nothing, so consult the evidence store first. When the layer is disabled, or the tree
+  // moved, this falls straight through to the real run.
+  let gateSummary: GateRunSummary;
+  let gateReuseNote = '';
+
+  if (deliveryRunnerEnabled(session.workDir)) {
+    const plan = planTask(session.workDir, { taskId: 'forge-dry-run', text: 'forge dry run quality gates' });
+    const outcome = await runOrReuse<GateRunSummary>(
+      session.workDir,
+      {
+        kind: 'static-analysis',
+        // A stable identity for this work — a label, never executed.
+        command: 'gates:T0-T7:.',
+        scope: plan.scope,
+        changedFiles: plan.changedFiles,
+        owner: 'forge',
+        taskId: 'forge-dry-run',
+        budget: plan.budget.level,
+      },
+      () => runAllGates({ workDir: session.workDir, target: '.' }),
+      (summary) => summary.verdict !== 'FAIL',
+    );
+
+    if (outcome.value) {
+      // Either freshly executed, or reused with the full recorded summary handed back —
+      // a real skip, not a re-run wearing a reuse label.
+      gateSummary = outcome.value;
+      if (outcome.action === 'REUSED') {
+        gateReuseNote =
+          `  (reused: already proven against this tree` +
+          `${outcome.secondsSaved !== null ? `, saving ${outcome.secondsSaved}s` : ''})`;
+      }
+    } else {
+      // No reusable result — another worker holds the claim, or the recorded result was
+      // too large to inline. Run it.
+      gateSummary = await runAllGates({ workDir: session.workDir, target: '.' });
+    }
+  } else {
+    gateSummary = await runAllGates({ workDir: session.workDir, target: '.' });
+  }
+
+  if (gateReuseNote) lines.push(gateReuseNote);
 
   for (const gate of gateSummary.gates) {
     const icon = gate.status === 'pass' ? 'v' : gate.status === 'fail' ? 'x' : gate.status === 'warn' ? '!' : '-';

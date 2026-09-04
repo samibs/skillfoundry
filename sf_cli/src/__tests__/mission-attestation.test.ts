@@ -8,7 +8,7 @@ import {
   attestationDrift, environmentFingerprint, isAgentKind,
 } from '../core/mission-attestation.js';
 import { initLedger, upsertMission } from '../core/mission-ledger.js';
-import { isNativeWorktree, listWorktrees, hasCommitIdentity } from '../core/mission-git.js';
+import { isNativeWorktree, listWorktrees, hasCommitIdentity, workingTreeStatus } from '../core/mission-git.js';
 
 vi.mock('../utils/logger.js', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn() }),
@@ -79,6 +79,38 @@ describe('native worktree detection (§3)', () => {
     writeFileSync(join(copied, 'README.md'), '# copy\n', 'utf-8');
     // A directory that merely looks like a repo is not a worktree.
     expect(isNativeWorktree(copied).registered).toBe(false);
+  });
+});
+
+describe('porcelain status parsing', () => {
+  it('preserves the full path of an unstaged modification', () => {
+    // Regression: `git()` trimmed stdout, which strips the leading space of the first
+    // porcelain line (` M src/x.ts` → `M src/x.ts`). A fixed-column slice(3) then ate the
+    // first character of the path, yielding "rc/x.ts".
+    writeFileSync(join(repo, 'README.md'), '# modified\n', 'utf-8');
+    const status = workingTreeStatus(repo);
+    expect(status.paths).toContain('README.md');
+    expect(status.paths.every((p) => !p.startsWith('EADME'))).toBe(true);
+  });
+
+  it('lists untracked files individually when asked', () => {
+    mkdirSync(join(repo, 'src'), { recursive: true });
+    writeFileSync(join(repo, 'src', 'new.ts'), 'export const x = 1;\n', 'utf-8');
+
+    // Default collapses the directory; `all` names the file.
+    expect(workingTreeStatus(repo).paths).toContain('src/');
+    expect(workingTreeStatus(repo, { untrackedFiles: 'all' }).paths).toContain('src/new.ts');
+  });
+
+  it('classifies governance paths correctly despite the leading status column', () => {
+    mkdirSync(join(repo, '.ai'), { recursive: true });
+    writeFileSync(join(repo, '.ai', 'ledger.json'), '{}\n', 'utf-8');
+    writeFileSync(join(repo, 'README.md'), '# changed\n', 'utf-8');
+
+    const status = workingTreeStatus(repo, { untrackedFiles: 'all' });
+    expect(status.governanceEntries.join(' ')).toMatch(/\.ai\/ledger\.json/);
+    expect(status.productEntries.join(' ')).toMatch(/README\.md/);
+    expect(status.clean).toBe(false);
   });
 });
 

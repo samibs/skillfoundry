@@ -68,6 +68,45 @@ This layer makes effort proportional to risk, without weakening any correctness 
   all six platform adapters — Claude, Codex, Copilot, Cursor, Gemini, Grok — and by the
   `$go` / `$forge` / `$context` / `$cost` / `$tester` skills.
 
+### Added — runtime integration
+
+- **`core/delivery-runner.ts`** — the layer now fires during execution rather than only
+  advising. `planTask()` detects changed files, classifies the budget, measures impact and
+  derives the scope; `executeTask()` runs only validations at or below that scope, stops at
+  the first genuine failure, and escalates budget or scope only on evidence from it;
+  `completeTask()` records the handoff and `taskIsComplete()` gives the stop verdict.
+- **`runOrReuse()`** for in-process work. `runAllGates` is a function call, not a
+  subprocess, and re-running eight tiers against an unchanged tree costs the same as any
+  re-run. The compact result is inlined into the evidence entry (bounded at 64 KiB, dropped
+  rather than truncated when oversized) so a reuse genuinely returns it — the first draft
+  re-ran the gates "to render the detail", which would have made the reuse a relabelled
+  re-run.
+- **`$forge` wired** to reuse its gate-suite result. Composes with `gate-cache.ts` rather
+  than duplicating it: the gate cache makes an invoked run cheaper per file; this decides
+  whether to invoke the run at all. (`gates.ts` does not currently consult the gate cache.)
+- **`core/delivery-impact.ts`** — reverse import graph for TS/JS/Python, cached against the
+  tree hash, so the dependency fan-out that widens `targeted` → `affected` is **measured**
+  instead of supplied. Deliberately a static regex-level scan; a bare package specifier is
+  counted as an unresolved import rather than silently dropped, so fan-out is reported as a
+  lower bound.
+- **Measured validation seconds** carried on `WorkerHandoff` and aggregated by `$cost`, so
+  `validationSeconds` is a real number for any task that ran through `executeTask` instead
+  of always `unknown`.
+
+### Fixed
+
+- **`git()` trimmed stdout, corrupting every porcelain path.** `git status --porcelain`
+  encodes state in columns 1-2, so trimming strips the leading space of an unstaged entry
+  (` M src/x.ts` → `M src/x.ts`) and a fixed-column parse then eats the first character of
+  the path, yielding `rc/x.ts`. Added `preserveOutput` and used it in `workingTreeStatus`.
+  This was a latent defect in the v5.31.0 mission code, where it could misclassify a
+  governance path as product; regression tests added to the mission suite.
+- **`workingTreeStatus` now exposes parsed `paths`**, so callers stop re-parsing the trimmed
+  display strings — the duplicate parser was how the bug above reached this layer.
+- **Untracked files were invisible.** Porcelain collapses an untracked directory to `src/`,
+  so a brand-new auth module classified as an unknown path with no measurable impact.
+  `workingTreeStatus` gained `untrackedFiles: 'all'`, which the runner uses.
+
 ### Safety
 
 - Authentication, authorization, secrets, cryptography, destructive database changes, schema
@@ -99,7 +138,8 @@ migration; the evidence store and shared context are regenerable caches under
 
 ### Tests
 
-- 176 new tests across 3 files, all passing: budget classification (LOW/MEDIUM/HIGH,
+- 225 new tests across 4 files, all passing (566 including the mission and command suites
+  this change touches): budget classification (LOW/MEDIUM/HIGH,
   path-only, keyword-only), explicit override including the refused downgrade, escalation
   with and without evidence, execution policies, scope selection and escalation, stop
   conditions, evidence reuse, invalidation after a relevant change, **preservation after an

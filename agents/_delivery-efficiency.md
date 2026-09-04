@@ -212,6 +212,24 @@ The integrator consumes these instead of repeating the investigation.
 
 ---
 
+## 10b. Runtime
+
+The policy is enforced in code, not left to interpretation:
+
+| Function | Role |
+|---|---|
+| `planTask()` | changed files → budget → measured impact → test scope |
+| `runValidation()` | a subprocess check, with reuse and deduplication |
+| `runOrReuse()` | in-process work (e.g. the gate suite), result inlined so reuse truly skips |
+| `executeTask()` | runs only what the scope requires; escalates only on failure evidence |
+| `completeTask()` | records the worker handoff |
+| `taskIsComplete()` | the objective stop verdict |
+
+Dependency fan-out is **measured** from a cached reverse import graph, not supplied by the
+caller. Unresolved imports are counted and reported, so fan-out is treated as a lower bound.
+
+---
+
 ## 11. Configuration
 
 ```toml

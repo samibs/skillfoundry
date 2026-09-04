@@ -85,7 +85,20 @@ export interface EvidenceEntry {
   createdAt: string;
   /** Path to a full log, referenced rather than inlined. */
   artifact?: string;
+  /**
+   * The result an in-process validation produced, so reuse can return it rather than
+   * re-running the work to reconstruct it. Bounded — see `MAX_PAYLOAD_BYTES`. Absent when
+   * the result was too large, in which case reuse can confirm the verdict but not replay
+   * the detail, and the caller must decide whether that is enough.
+   */
+  payload?: unknown;
 }
+
+/**
+ * Ceiling on an inlined in-process result. Evidence references large artifacts by path;
+ * this is only for compact structured results such as a gate summary.
+ */
+const MAX_PAYLOAD_BYTES = 64 * 1024;
 
 /** The on-disk evidence store. */
 export interface EvidenceStore {
@@ -200,6 +213,8 @@ export interface RecordEvidenceInput {
   producedByAgent?: string;
   budget?: DeliveryBudgetLevel;
   artifact?: string;
+  /** Compact structured result to inline, so reuse can return it. Dropped if oversized. */
+  payload?: unknown;
 }
 
 /**
@@ -228,6 +243,7 @@ export function recordEvidence(workDir: string, input: RecordEvidenceInput): Evi
     budget: input.budget,
     createdAt: new Date().toISOString(),
     artifact: input.artifact,
+    payload: boundedPayload(input.payload),
   };
 
   const store = loadEvidenceStore(workDir);
@@ -238,6 +254,27 @@ export function recordEvidence(workDir: string, input: RecordEvidenceInput): Evi
     kind: input.kind, scope: input.scope, result: input.result, key,
   });
   return entry;
+}
+
+/**
+ * Keep a payload only when it is small enough to belong in the store.
+ *
+ * An oversized result is dropped rather than truncated: half a gate summary would be worse
+ * than none, because a caller could act on it as though it were complete.
+ */
+function boundedPayload(payload: unknown): unknown {
+  if (payload === undefined) return undefined;
+  try {
+    const size = Buffer.byteLength(JSON.stringify(payload), 'utf-8');
+    if (size > MAX_PAYLOAD_BYTES) {
+      getLogger().info('delivery', 'evidence_payload_dropped', { bytes: size });
+      return undefined;
+    }
+    return payload;
+  } catch {
+    // Non-serialisable results (cycles, functions) simply are not reusable as values.
+    return undefined;
+  }
 }
 
 // ── Lookup and reuse ──────────────────────────────────────────────────────────

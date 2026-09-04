@@ -35,6 +35,11 @@ export const VALIDATION_KINDS = [
 export function isValidationKind(value) {
     return typeof value === 'string' && VALIDATION_KINDS.includes(value);
 }
+/**
+ * Ceiling on an inlined in-process result. Evidence references large artifacts by path;
+ * this is only for compact structured results such as a gate summary.
+ */
+const MAX_PAYLOAD_BYTES = 64 * 1024;
 function storePath(workDir) {
     return join(resolve(workDir), STORE_DIR, STORE_FILE);
 }
@@ -146,6 +151,7 @@ export function recordEvidence(workDir, input) {
         budget: input.budget,
         createdAt: new Date().toISOString(),
         artifact: input.artifact,
+        payload: boundedPayload(input.payload),
     };
     const store = loadEvidenceStore(workDir);
     store.entries[key] = entry;
@@ -154,6 +160,28 @@ export function recordEvidence(workDir, input) {
         kind: input.kind, scope: input.scope, result: input.result, key,
     });
     return entry;
+}
+/**
+ * Keep a payload only when it is small enough to belong in the store.
+ *
+ * An oversized result is dropped rather than truncated: half a gate summary would be worse
+ * than none, because a caller could act on it as though it were complete.
+ */
+function boundedPayload(payload) {
+    if (payload === undefined)
+        return undefined;
+    try {
+        const size = Buffer.byteLength(JSON.stringify(payload), 'utf-8');
+        if (size > MAX_PAYLOAD_BYTES) {
+            getLogger().info('delivery', 'evidence_payload_dropped', { bytes: size });
+            return undefined;
+        }
+        return payload;
+    }
+    catch {
+        // Non-serialisable results (cycles, functions) simply are not reusable as values.
+        return undefined;
+    }
 }
 /**
  * Decide whether an existing validation still proves what the caller needs (§3).

@@ -55,6 +55,8 @@ export interface DeliveryEfficiencyReport {
     evidenceGenerated: number;
     /** reused / (reused + generated); null when nothing has been recorded yet. */
     evidenceReuseRate: number | null;
+    /** Total measured validation seconds; null when any worker did not measure. */
+    validationSeconds: number | null;
     secondsSavedByReuse: number | null;
     repoWideRunsAvoided: number;
   };
@@ -94,7 +96,7 @@ export function taskEfficiency(
     taskId: handoff.taskId,
     budget: handoff.budget,
     validationScope: handoff.validationScope,
-    validationSeconds: null,
+    validationSeconds: handoff.validationSeconds ?? null,
     validationCommands: commands.size,
     repeatedCommands: repeated,
     evidenceReused: handoff.evidenceReused.length,
@@ -122,6 +124,13 @@ export function buildEfficiencyReport(workDir: string, mission: string = 'defaul
   const evidenceReused = tasks.reduce((n, t) => n + t.evidenceReused, 0);
   const evidenceGenerated = tasks.reduce((n, t) => n + t.evidenceGenerated, 0);
   const repoWideRunsAvoided = tasks.reduce((n, t) => n + t.repoWideRunsAvoided, 0);
+
+  const measured = tasks.map((t) => t.validationSeconds);
+  const validationSeconds = tasks.length === 0
+    ? 0
+    : measured.some((v) => v === null)
+      ? null
+      : Number(measured.reduce((a, b) => (a ?? 0) + (b ?? 0), 0)!.toFixed(2));
 
   const denominator = evidenceReused + evidenceGenerated;
   const evidenceReuseRate = denominator > 0 ? Number((evidenceReused / denominator).toFixed(3)) : null;
@@ -170,6 +179,7 @@ export function buildEfficiencyReport(workDir: string, mission: string = 'defaul
       evidenceReused,
       evidenceGenerated,
       evidenceReuseRate,
+      validationSeconds,
       secondsSavedByReuse,
       repoWideRunsAvoided,
     },
@@ -190,6 +200,9 @@ export function formatEfficiencyReport(report: DeliveryEfficiencyReport): string
   lines.push(`Evidence reused / generated: ${t.evidenceReused} / ${t.evidenceGenerated}`);
   lines.push(
     `Evidence reuse rate: ${t.evidenceReuseRate === null ? 'unknown' : `${(t.evidenceReuseRate * 100).toFixed(0)}%`}`,
+  );
+  lines.push(
+    `Validation seconds spent: ${t.validationSeconds === null ? 'unknown (not measured by every worker)' : t.validationSeconds}`,
   );
   lines.push(
     `Validation seconds saved by reuse: ${t.secondsSavedByReuse === null ? 'unknown (durations not recorded for every reused entry)' : t.secondsSavedByReuse}`,

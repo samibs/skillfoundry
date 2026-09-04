@@ -39,6 +39,8 @@ export interface DeliveryEfficiencyReport {
         evidenceGenerated: number;
         /** reused / (reused + generated); null when nothing has been recorded yet. */
         evidenceReuseRate: number | null;
+        /** Total measured validation seconds; null when any worker did not measure. */
+        validationSeconds: number | null;
         secondsSavedByReuse: number | null;
         repoWideRunsAvoided: number;
     };

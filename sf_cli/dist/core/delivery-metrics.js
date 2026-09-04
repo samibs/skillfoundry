@@ -37,7 +37,7 @@ export function taskEfficiency(handoff, entries) {
         taskId: handoff.taskId,
         budget: handoff.budget,
         validationScope: handoff.validationScope,
-        validationSeconds: null,
+        validationSeconds: handoff.validationSeconds ?? null,
         validationCommands: commands.size,
         repeatedCommands: repeated,
         evidenceReused: handoff.evidenceReused.length,
@@ -63,6 +63,12 @@ export function buildEfficiencyReport(workDir, mission = 'default') {
     const evidenceReused = tasks.reduce((n, t) => n + t.evidenceReused, 0);
     const evidenceGenerated = tasks.reduce((n, t) => n + t.evidenceGenerated, 0);
     const repoWideRunsAvoided = tasks.reduce((n, t) => n + t.repoWideRunsAvoided, 0);
+    const measured = tasks.map((t) => t.validationSeconds);
+    const validationSeconds = tasks.length === 0
+        ? 0
+        : measured.some((v) => v === null)
+            ? null
+            : Number(measured.reduce((a, b) => (a ?? 0) + (b ?? 0), 0).toFixed(2));
     const denominator = evidenceReused + evidenceGenerated;
     const evidenceReuseRate = denominator > 0 ? Number((evidenceReused / denominator).toFixed(3)) : null;
     const savedValues = tasks.map((t) => t.secondsSavedByReuse);
@@ -97,6 +103,7 @@ export function buildEfficiencyReport(workDir, mission = 'default') {
             evidenceReused,
             evidenceGenerated,
             evidenceReuseRate,
+            validationSeconds,
             secondsSavedByReuse,
             repoWideRunsAvoided,
         },
@@ -114,6 +121,7 @@ export function formatEfficiencyReport(report) {
     lines.push(`Repeated commands: ${t.repeatedCommands}`);
     lines.push(`Evidence reused / generated: ${t.evidenceReused} / ${t.evidenceGenerated}`);
     lines.push(`Evidence reuse rate: ${t.evidenceReuseRate === null ? 'unknown' : `${(t.evidenceReuseRate * 100).toFixed(0)}%`}`);
+    lines.push(`Validation seconds spent: ${t.validationSeconds === null ? 'unknown (not measured by every worker)' : t.validationSeconds}`);
     lines.push(`Validation seconds saved by reuse: ${t.secondsSavedByReuse === null ? 'unknown (durations not recorded for every reused entry)' : t.secondsSavedByReuse}`);
     lines.push(`Repository-wide runs avoided at worker level: ${t.repoWideRunsAvoided}`);
     lines.push(`Validations currently claimed by a worker: ${report.activeClaims}`);
