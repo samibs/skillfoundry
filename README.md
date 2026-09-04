@@ -4,7 +4,7 @@
 
 ![CI](https://github.com/samibs/skillfoundry/actions/workflows/ci.yml/badge.svg)
 [![npm downloads](https://img.shields.io/npm/dw/skillfoundry)](https://www.npmjs.com/package/skillfoundry)
-![Version](https://img.shields.io/badge/version-5.31.0-blue)
+![Version](https://img.shields.io/badge/version-5.32.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platforms](https://img.shields.io/badge/platforms-6-purple)
 ![Providers](https://img.shields.io/badge/providers-6-orange)
@@ -25,49 +25,56 @@ SkillFoundry is an AI engineering framework that works two ways: as a **standalo
 - **Persistent memory across sessions** — Decisions, errors, and patterns stored in `memory_bank/` with semantic vector search. Your AI doesn't repeat the same mistakes.
 - **6 AI providers, budget controls** — Anthropic, OpenAI, xAI, Google, Ollama, LM Studio. Per-run and monthly cost caps built in. Switch providers without changing how you work.
 
-### What's New in v5.31.0
+### What's New in v5.32.0
 
-**Governed Missions — proof that the work is actually done**
+**Delivery Efficiency — your AI stops doing more work than the change needs**
 
-Your AI says "done" and the tests are green. But did the test runner actually finish, or did it
-hang after the assertions passed? Is that dev server still running? Did your change survive the
-merge, or did something quietly overwrite it? Did the push really land?
+The problem isn't that AI agents get things wrong. It's that they're *expensive*: re-reading
+the same code, re-running the same test suite, re-reviewing the same unchanged diff, and
+carrying on long after the change was already proven. Run several agents at once and most of
+the compute goes into rediscovery.
 
-`/mission` answers those questions with evidence instead of assurances.
+SkillFoundry now sizes the effort to the risk.
 
-- **A record that outlives the session.** Everything goes into `.ai/` in your repo — what was
-  claimed, what proves it, what's still open. Close the laptop, come back next week, switch to a
-  different AI tool: the next agent reads the record instead of guessing.
-- **Status you can trust.** The ledger refuses to mark something "accepted" while a test is
-  unaccounted for or a known gap is still open. It will tell you exactly what's missing.
-- **Green isn't automatically a pass.** A suite that timed out, got killed, left a server
-  running, or quietly ran zero tests is reported as *not a clean validation*.
-- **Your processes stay yours.** Every dev server or container an agent starts is tracked, so
-  cleanup can never turn into "kill all node" and take out your other projects.
-- **"Pushed" is checked, not assumed.** After a push, the remote is re-read to confirm your
-  change is really there.
-- **Running several agents at once?** They each get their own git worktree — sharing one is
-  refused — and work that would collide on the same file is scheduled for a later pass instead
-  of racing.
+- **A typo fix doesn't trigger your full test suite.** Every task gets a delivery budget —
+  LOW, MEDIUM or HIGH — decided from what it touches, and that picks how much analysis,
+  testing and review it warrants.
+- **Anything already proven isn't proven twice.** If a check passed and none of the files it
+  depended on have changed, it's skipped. Change one of those files and it runs again.
+- **Three agents don't run the same suite three times.** The first one runs it, the others
+  use the result. The one repository-wide pass happens at the end, over the combined change.
+- **Agents stop when the work is done.** No re-reading the same diff, no unrequested
+  "while I'm here" refactoring.
+- **Security work is never optimised.** Anything touching authentication, secrets,
+  cryptography, migrations, payments or deployment is HIGH automatically — even a one-line
+  change — and asking for a lower budget is refused.
 
 ```
-/mission verify STORY-042
+/delivery plan STORY-042
 
-  ✓ AC matrix complete               8 AC(s), all dispositioned
-  ✓ Worker attestation recorded      claude-coder-042 — native worktree verified
-  ✗ Worker commit created            No worker commit — NOT_INTEGRATION_READY
-  ✓ Normal termination proven        Exited normally in 10.32s
-  ✓ No owned orphan processes        Orphan check: CLEAN
-  ✗ Unresolved gaps explicit         Blocking gaps: GAP-001
+  Budget:      MEDIUM
+  Test scope:  affected
+  Impact:      3 changed files reach 22 dependents within 3 hops
 
-  Disposition: EVIDENCE_PARTIAL — VALIDATION_REQUIRED
+  Why this scope
+    · MEDIUM budget starts at "targeted"
+    · 22 dependent files exceed the 15-file fan-out bound — widened to "affected"
 ```
 
-Also in this release: **AgentOS `enforce` mode** — the strictest tier of agent output-contract
-validation, off by default, for teams that want handoffs to fail closed.
+It tells you *why*, every time — and reports what it couldn't measure as unknown rather
+than guessing.
 
-Full breakdown in the CHANGELOG under `[5.31.0]`, or read
-[`MULTI_AGENT_PROTOCOL.md`](MULTI_AGENT_PROTOCOL.md).
+On by default, and a single setting turns it off if you'd rather keep validating everything.
+
+Full breakdown in the CHANGELOG under `[5.32.0]`, or read
+[`docs/DELIVERY-EFFICIENCY.md`](docs/DELIVERY-EFFICIENCY.md).
+
+#### Previous: Governed Missions (v5.31.0)
+
+`/mission` records what was actually proven — in `.ai/`, in your repo, surviving the session.
+Catches a test runner that hung after its assertions passed, a dev server left running, a
+change dropped in a merge, and a push mistaken for a publication. Details in the CHANGELOG
+under `[5.31.0]`.
 
 #### Previous: AgentOS Follow-ups (v5.30.0)
 
@@ -278,12 +285,12 @@ Or use autonomous mode — just type what you want in plain English:
 
 SkillFoundry has two independent systems. They share the same agents and philosophy, but work differently:
 
-| | **Standalone CLI** (`sf`) | **IDE Skills** (97 skills) |
+| | **Standalone CLI** (`sf`) | **IDE Skills** (98 skills) |
 |---|---|---|
 | **What it is** | Terminal app with its own AI connection | Markdown instruction files your AI reads |
 | **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build |
 | **Setup** | `sf setup` — interactive wizard, paste API key | `skillfoundry init` — copies skills into your project |
-| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (24 commands) | `/forge`, `/go`, `/goma` (all 97 skills) |
+| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (25 commands) | `/forge`, `/go`, `/goma` (all 98 skills) |
 | **Autonomous mode** | Not available | `/goma` — full autonomous with safety gates |
 | **Provider switching** | Built-in: 6 providers, switch at runtime | Uses your IDE's provider |
 | **Budget controls** | Per-run and monthly cost caps | Not available |
@@ -294,7 +301,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 1. Inside Your IDE (Recommended)
 
-97 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
+98 skills install directly into your AI coding tool. This is the full SkillFoundry experience — all agents, all orchestration, autonomous mode, everything.
 
 | Platform | Invocation | Example |
 |----------|-----------|---------|
@@ -319,7 +326,7 @@ SkillFoundry has two independent systems. They share the same agents and philoso
 
 ### 2. The Standalone CLI (`sf`)
 
-A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 24 native commands (not all 97 skills).
+A separate terminal app with its own AI connection. Useful for provider switching, budget controls, and working outside an IDE. Has 25 native commands (not all 98 skills).
 
 ```
  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -834,6 +841,7 @@ These work inside your AI coding tool, not in the `sf` CLI:
 | `/debug` | Interactive debugger (breakpoints, scope, evaluate) |
 | `/layer-check` | Three-layer validation (DB → Backend → Frontend) |
 | `/mission` | Governed mission: durable `.ai/` ledger, attestation, evidence, provenance, multi-agent waves |
+| `/delivery` | Delivery budgets, scoped tests, evidence reuse — stop over-validating small changes |
 | `/memory` | Knowledge management |
 | `/gohm` | Harvest lessons from current session |
 | `/autonomous` | Toggle autonomous developer loop |

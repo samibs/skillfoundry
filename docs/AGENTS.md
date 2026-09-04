@@ -1,6 +1,6 @@
 # SkillFoundry - Complete Agent Team Reference
 
-**Version 5.31.0** | **The Forge: 61 Core Agents / 97 Skills / 20 MCP Tool Agents** | **Hexa Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, Grok Build) | **62 A2A Cards** | **37 Compliance Checks**
+**Version 5.32.0** | **The Forge: 61 Core Agents / 98 Skills / 20 MCP Tool Agents** | **Hexa Platform** (Claude Code, GitHub Copilot CLI, Cursor, OpenAI Codex, Google Gemini, Grok Build) | **62 A2A Cards** | **37 Compliance Checks**
 
 ---
 
@@ -536,4 +536,4 @@ Quick-access shortcuts for common workflows. Available on all 4 platforms.
 
 ---
 
-*SkillFoundry Framework v5.31.0 - September 2026 - The Forge*
+*SkillFoundry Framework v5.32.0 - September 2026 - The Forge*

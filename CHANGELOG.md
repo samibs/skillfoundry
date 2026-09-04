@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased] — AI Delivery Efficiency
+## [5.32.0] - 2026-09-04 — AI Delivery Efficiency
 
 Agents are rarely wrong. They are usually **expensive**: re-reading the same repository,
 re-running the same suite, re-reviewing the same unchanged diff, and continuing long after
