@@ -16,7 +16,8 @@ import {
 import {
   planIntegrationGate, verifyHandoff, reasonsToRevalidate, describeIntegrationPlan,
 } from '../core/delivery-integration.js';
-import { buildEfficiencyReport } from '../core/delivery-metrics.js';
+import { buildEfficiencyReport, attributeUsage } from '../core/delivery-metrics.js';
+import { recordUsage } from '../core/budget.js';
 
 vi.mock('../utils/logger.js', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn() }),
@@ -532,6 +533,49 @@ describe('efficiency metrics (§7)', () => {
     }
     const report = buildEfficiencyReport(repo, 'm4');
     expect(report.observations.join(' ')).toMatch(/belongs at the integration gate, once/);
+  });
+
+  it('attributes real provider usage to a task window, and nothing otherwise', () => {
+    const base = g('rev-parse', 'HEAD');
+    const started = new Date(Date.now() - 60_000).toISOString();
+
+    recordUsage(repo, {
+      provider: 'anthropic', model: 'claude', inputTokens: 1200, outputTokens: 300, costUsd: 0.045,
+    });
+
+    recordHandoff(repo, 'm5', {
+      taskId: 'AF-1', worktree: repo, baseCommit: base, resultCommit: base,
+      changedFiles: [], budget: 'MEDIUM', validationScope: 'targeted',
+      testsExecuted: ['npm test'], evidenceGenerated: [], evidenceReused: [],
+      validationSeconds: 3, startedAt: started, unresolvedGaps: [], at: new Date().toISOString(),
+    });
+
+    const report = buildEfficiencyReport(repo, 'm5');
+    expect(report.totals.tokensUsed).toBe(1500);
+    expect(report.totals.costUsd).toBeCloseTo(0.045, 4);
+  });
+
+  it('reports unknown tokens rather than zero when the window covers no call', () => {
+    const base = g('rev-parse', 'HEAD');
+    recordHandoff(repo, 'm6', {
+      taskId: 'AF-1', worktree: repo, baseCommit: base, resultCommit: base,
+      changedFiles: [], budget: 'LOW', validationScope: 'smoke',
+      testsExecuted: [], evidenceGenerated: [], evidenceReused: [],
+      unresolvedGaps: [], at: new Date().toISOString(),
+    });
+    const report = buildEfficiencyReport(repo, 'm6');
+    expect(report.totals.tokensUsed).toBeNull();
+    expect(report.tasks[0].tokensUsed).toBeNull();
+  });
+
+  it('excludes usage outside the task window', () => {
+    const entries = [
+      { timestamp: '2026-01-01T00:00:00.000Z', provider: 'a', model: 'm', inputTokens: 10, outputTokens: 5, costUsd: 0.01 },
+      { timestamp: '2026-06-01T00:00:00.000Z', provider: 'a', model: 'm', inputTokens: 99, outputTokens: 1, costUsd: 0.99 },
+    ];
+    const attributed = attributeUsage(entries, '2025-12-31T00:00:00.000Z', '2026-01-02T00:00:00.000Z');
+    expect(attributed.tokens).toBe(15);
+    expect(attributed.costUsd).toBeCloseTo(0.01, 4);
   });
 
   it('says plainly when there is nothing to measure', () => {

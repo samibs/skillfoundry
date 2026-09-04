@@ -100,6 +100,25 @@ This layer makes effort proportional to risk, without weakening any correctness 
   `validationSeconds` is a real number for any task that ran through `executeTask` instead
   of always `unknown`.
 
+### Added — gap closure
+
+- **NFS-safe deduplication.** A claim is now an atomic `mkdir` rather than an exclusive file
+  create: `mkdir` is atomic on NFS as well as local POSIX and Windows filesystems, where
+  `O_CREAT | O_EXCL` on a regular file is not. A lock directory left without readable owner
+  metadata — a crash between creating it and writing the owner — is treated as stale.
+- **Path-alias resolution in the import graph.** `compilerOptions.paths` and `baseUrl` are
+  read from `tsconfig.json` / `jsconfig.json` / `tsconfig.base.json`, comments tolerated. A
+  monorepo importing `@app/core` now produces real dependency edges instead of reporting
+  almost every first-party import as external — which collapsed measured fan-out to near
+  zero and would quietly *narrow* test scope on exactly the codebases needing it widened.
+- **Real token attribution.** `tokensUsed` and `costUsd` are read from the existing usage
+  ledger (`budget.ts`) and attributed to each task's execution window, bounded by the new
+  `startedAt` on `WorkerHandoff`. Attribution is by time and stated as such: overlapping
+  workers share a window rather than being resolved exactly. A window covering no recorded
+  provider call still reports `null`, never zero.
+- **`/gate all` wired**, with `--force` to bypass, so `$forge` is no longer the only runtime
+  path that consults evidence. Single-tier runs are untouched — they are already cheap.
+
 ### Fixed
 
 - **`git()` trimmed stdout, corrupting every porcelain path.** `git status --porcelain`
@@ -148,8 +167,9 @@ migration; the evidence store and shared context are regenerable caches under
 
 ### Tests
 
-- 235 new tests across 4 files, all passing (576 including the mission and command suites
-  this change touches), and the `$forge` gate-reuse path is covered end to end: budget classification (LOW/MEDIUM/HIGH,
+- 264 new tests across 4 files, all passing (619 including the mission, config, command,
+  forge, gates and budget suites this change touches). The `$forge` and `/gate` reuse paths
+  are both covered end to end: budget classification (LOW/MEDIUM/HIGH,
   path-only, keyword-only), explicit override including the refused downgrade, escalation
   with and without evidence, execution policies, scope selection and escalation, stop
   conditions, evidence reuse, invalidation after a relevant change, **preservation after an

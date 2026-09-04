@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import {
   extractImports, resolveImport, buildImportGraph, analyzeImpact, measureImpact, describeImpact,
+  loadAliasTable, resolveAlias,
 } from '../core/delivery-impact.js';
 import {
   detectChangedFiles, planTask, runValidation, runOrReuse, executeTask, completeTask,
@@ -15,6 +16,7 @@ import { listHandoffs } from '../core/delivery-context.js';
 import { buildEfficiencyReport } from '../core/delivery-metrics.js';
 import { deliveryCommand } from '../commands/delivery.js';
 import { forgeCommand } from '../commands/forge.js';
+import { gateCommand } from '../commands/gate.js';
 import type { SessionContext, SfConfig } from '../types.js';
 
 vi.mock('../utils/logger.js', () => ({
@@ -198,6 +200,97 @@ describe('import graph and impact (§5 dependency impact)', () => {
       [],
     );
     expect(impact.dependents).toEqual([]);
+  });
+});
+
+describe('path aliases (monorepo resolution)', () => {
+  function seedAliasProject(): void {
+    writeFileSync(join(repo, 'tsconfig.json'), JSON.stringify({
+      compilerOptions: {
+        baseUrl: '.',
+        paths: {
+          '@app/*': ['src/app/*'],
+          '@shared': ['src/shared/index.ts'],
+        },
+      },
+    }), 'utf-8');
+    write('src/app/core.ts', 'export const core = 1;\n');
+    write('src/shared/index.ts', 'export const shared = 1;\n');
+    write('src/consumer.ts', "import { core } from '@app/core';\nimport { shared } from '@shared';\n");
+    commit('alias project');
+  }
+
+  it('loads wildcard and exact aliases from tsconfig', () => {
+    seedAliasProject();
+    const table = loadAliasTable(repo);
+    expect(table.patterns.map((p) => p.prefix)).toEqual(expect.arrayContaining(['@app', '@shared']));
+    expect(table.baseUrls).toContain('');
+  });
+
+  it('tolerates a tsconfig containing comments', () => {
+    writeFileSync(join(repo, 'tsconfig.json'),
+      '{\n  // the compiler options\n  "compilerOptions": { "paths": { "@x/*": ["src/x/*"] } }\n}\n', 'utf-8');
+    expect(loadAliasTable(repo).patterns.map((p) => p.prefix)).toContain('@x');
+  });
+
+  it('returns an empty table when there is no config', () => {
+    const table = loadAliasTable(repo);
+    expect(table.patterns).toEqual([]);
+  });
+
+  it('resolves a wildcard alias to a real file', () => {
+    seedAliasProject();
+    const table = loadAliasTable(repo);
+    const known = new Set(['src/app/core.ts', 'src/shared/index.ts', 'src/consumer.ts']);
+    expect(resolveAlias('@app/core', table, known)).toBe('src/app/core.ts');
+  });
+
+  it('resolves an exact alias', () => {
+    seedAliasProject();
+    const table = loadAliasTable(repo);
+    const known = new Set(['src/shared/index.ts']);
+    expect(resolveAlias('@shared', table, known)).toBe('src/shared/index.ts');
+  });
+
+  it('still returns null for a genuine third-party package', () => {
+    seedAliasProject();
+    const table = loadAliasTable(repo);
+    expect(resolveAlias('react', table, new Set(['src/app/core.ts']))).toBeNull();
+  });
+
+  it('builds real dependency edges through aliases', () => {
+    seedAliasProject();
+    const graph = buildImportGraph(repo, { force: true });
+    expect(graph.aliasPatterns).toBeGreaterThan(0);
+    expect(graph.dependents['src/app/core.ts']).toEqual(['src/consumer.ts']);
+    expect(graph.dependents['src/shared/index.ts']).toEqual(['src/consumer.ts']);
+  });
+
+  it('counts alias imports as unresolved when there is no config', () => {
+    write('src/app/core.ts', 'export const core = 1;\n');
+    write('src/consumer.ts', "import { core } from '@app/core';\n");
+    commit('no config');
+
+    const graph = buildImportGraph(repo, { force: true });
+    expect(graph.aliasPatterns).toBe(0);
+    expect(graph.unresolvedImports).toBeGreaterThan(0);
+    expect(graph.dependents['src/app/core.ts']).toBeUndefined();
+  });
+
+  it('measures fan-out through aliases, so scope widening actually fires', () => {
+    writeFileSync(join(repo, 'tsconfig.json'), JSON.stringify({
+      compilerOptions: { baseUrl: '.', paths: { '@app/*': ['src/app/*'] } },
+    }), 'utf-8');
+    write('src/app/core.ts', 'export const core = 1;\n');
+    for (let i = 0; i < 20; i++) {
+      write(`src/features/f-${i}.ts`, "import { core } from '@app/core';\n");
+    }
+    commit('aliased fan-out');
+    write('src/app/core.ts', 'export const core = 2;\n');
+
+    const plan = planTask(repo, { taskId: 'T-alias', text: 'change the core value' });
+    expect(plan.impact.dependents.length).toBeGreaterThanOrEqual(20);
+    expect(plan.scope).toBe('affected');
   });
 });
 
@@ -659,5 +752,60 @@ describe('$forge gate reuse (§13 runtime integration)', () => {
     await forgeCommand.execute('--dry-run', session);
     const second = String(await forgeCommand.execute('--dry-run', session));
     expect(second).not.toContain('reused:');
+  }, 60_000);
+});
+
+describe('/gate reuse (§13 runtime integration)', () => {
+  function seedProject(): void {
+    write('src/index.ts', 'export const x = 1;\n');
+    commit('seed project');
+  }
+
+  it('reuses the recorded suite result on an unchanged tree', async () => {
+    seedProject();
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+
+    const first = String(await gateCommand.execute('all', session));
+    expect(first).toContain('Gate Results (All Tiers)');
+    expect(first).not.toContain('Reused:');
+
+    const second = String(await gateCommand.execute('all', session));
+    expect(second).toMatch(/Reused: already (proven|failed) against this tree/);
+    expect(second).toContain('--force');
+  }, 60_000);
+
+  it('--force bypasses reuse', async () => {
+    seedProject();
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+    await gateCommand.execute('all', session);
+
+    const forced = String(await gateCommand.execute('all . --force', session));
+    expect(forced).not.toContain('Reused:');
+  }, 60_000);
+
+  it('re-runs after the tree changes', async () => {
+    seedProject();
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+    await gateCommand.execute('all', session);
+
+    write('src/index.ts', 'export const x = 2;\n');
+    commit('change source');
+
+    expect(String(await gateCommand.execute('all', session))).not.toContain('Reused:');
+  }, 60_000);
+
+  it('does not reuse when the layer is disabled', async () => {
+    seedProject();
+    configure('[delivery_efficiency]\nenabled = false\n');
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+    await gateCommand.execute('all', session);
+    expect(String(await gateCommand.execute('all', session))).not.toContain('Reused:');
+  }, 60_000);
+
+  it('leaves a single-tier run untouched', async () => {
+    seedProject();
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+    const out = String(await gateCommand.execute('t1', session));
+    expect(out).not.toContain('Reused:');
   }, 60_000);
 });

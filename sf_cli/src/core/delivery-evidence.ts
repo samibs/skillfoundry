@@ -11,7 +11,8 @@
 // content of the files it depended on, and anything unclear invalidates.
 
 import {
-  existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, unlinkSync, readdirSync, statSync,
+  existsSync, mkdirSync, readFileSync, writeFileSync, renameSync, unlinkSync, readdirSync,
+  statSync, rmdirSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -462,8 +463,39 @@ export interface ValidationClaim {
   reason: string;
 }
 
+/**
+ * Lock directory for a validation.
+ *
+ * A **directory**, not a file: `mkdir` is atomic even on NFS, where `O_CREAT | O_EXCL` on
+ * a regular file is not. The owner metadata lives in `owner.json` inside it, so the atomic
+ * step (creating the directory) is separate from writing the payload.
+ */
 function lockPath(workDir: string, key: string): string {
   return join(resolve(workDir), LOCK_DIR, `${key}.lock`);
+}
+
+/** Owner metadata inside a lock directory. */
+function lockOwnerPath(workDir: string, key: string): string {
+  return join(lockPath(workDir, key), 'owner.json');
+}
+
+/** Read the holder of a lock, or null when it is unreadable or absent. */
+function readLockOwner(workDir: string, key: string): { owner: string; at: string } | null {
+  try {
+    return JSON.parse(readFileSync(lockOwnerPath(workDir, key), 'utf-8')) as { owner: string; at: string };
+  } catch {
+    return null;
+  }
+}
+
+/** Remove a lock directory and its metadata. */
+function removeLockDir(path: string): void {
+  try {
+    if (existsSync(join(path, 'owner.json'))) unlinkSync(join(path, 'owner.json'));
+  } catch { /* best-effort */ }
+  try {
+    if (existsSync(path)) rmdirSync(path);
+  } catch { /* a lock that cannot be removed expires by TTL */ }
 }
 
 /**
@@ -473,12 +505,14 @@ function lockPath(workDir: string, key: string): string {
  * first to claim a given validation runs it; the others are told who holds it and should
  * wait for the resulting evidence rather than duplicating the work.
  *
- * The claim is an exclusive file creation (`wx` → `O_CREAT | O_EXCL`), which is atomic on
- * local filesystems on both POSIX and Windows, so two processes racing cannot both win.
- * The known exception is older NFS, where `O_EXCL` is not reliably atomic; there, two
- * workers could duplicate one validation — wasteful, never incorrect, since both would
- * still record valid evidence. A stale claim past its TTL is reclaimed, so a crashed
- * worker cannot deadlock the wave.
+ * The claim is an atomic `mkdir`, which fails with EEXIST when the directory already
+ * exists. A directory is used rather than an exclusive file create because `mkdir` is
+ * atomic on NFS as well as on local POSIX and Windows filesystems, where `O_CREAT | O_EXCL`
+ * on a regular file is not. Two processes racing therefore cannot both win on any of them.
+ *
+ * A stale claim past its TTL is reclaimed, so a crashed worker cannot deadlock the wave,
+ * and a directory left without readable owner metadata (a crash between the two steps) is
+ * treated the same way.
  *
  * @param owner - Identifier of the claiming agent or task.
  * @param ttlMs - How long the claim is honored before being treated as abandoned.
@@ -490,55 +524,65 @@ export function claimValidation(
   ttlMs: number = DEFAULT_LOCK_TTL_MS,
 ): ValidationClaim {
   const path = lockPath(workDir, key);
-  const dir = join(path, '..');
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const parent = join(path, '..');
+  if (!existsSync(parent)) mkdirSync(parent, { recursive: true });
 
-  const payload = JSON.stringify({ owner, at: new Date().toISOString(), pid: process.pid });
+  const writeOwner = (): void => {
+    writeFileSync(lockOwnerPath(workDir, key), JSON.stringify({
+      owner, at: new Date().toISOString(), pid: process.pid,
+    }), 'utf-8');
+  };
 
+  // The atomic step. `mkdir` fails with EEXIST if the directory exists, and unlike
+  // `O_CREAT | O_EXCL` on a file it is atomic on NFS too.
   try {
-    writeFileSync(path, payload, { encoding: 'utf-8', flag: 'wx' });
+    mkdirSync(path);
+    writeOwner();
     return { granted: true, key, reason: `Claimed by ${owner}.` };
-  } catch {
-    // Someone holds it — unless the claim is stale.
-    try {
-      const held = JSON.parse(readFileSync(path, 'utf-8')) as { owner: string; at: string };
-      const age = Date.now() - new Date(held.at).getTime();
-
-      // `>=` so a TTL of 0 means "always reclaim", and a claim exactly at its deadline is
-      // treated as abandoned rather than lingering for one more millisecond.
-      if (age >= ttlMs) {
-        writeFileSync(path, payload, 'utf-8');
-        getLogger().warn('delivery', 'stale_validation_claim_reclaimed', { key, previous: held.owner });
-        return { granted: true, key, reason: `Reclaimed a stale claim held by ${held.owner}.` };
-      }
-
-      if (held.owner === owner) {
-        return { granted: true, key, reason: 'Already held by this owner.' };
-      }
-
-      getLogger().info('delivery', 'duplicate_validation_prevented', { key, heldBy: held.owner, requestedBy: owner });
-      return {
-        granted: false,
-        key,
-        heldBy: held.owner,
-        heldSince: held.at,
-        reason: `${held.owner} is already running this validation — wait for its evidence instead of duplicating it.`,
-      };
-    } catch {
-      // Unreadable lock: fail open rather than blocking a legitimate run.
-      return { granted: true, key, reason: 'Existing claim was unreadable; proceeding.' };
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
+      // Anything other than "already held" is an environment problem, not contention.
+      // Fail open: blocking a legitimate run would be worse than a duplicated one.
+      return { granted: true, key, reason: `Claim directory could not be created; proceeding.` };
     }
   }
+
+  const held = readLockOwner(workDir, key);
+
+  if (!held) {
+    // The directory exists but the owner file does not — either a crash between the two
+    // steps, or another process mid-claim. Treat it as stale and take ownership.
+    writeOwner();
+    return { granted: true, key, reason: 'Existing claim had no readable owner; taking it.' };
+  }
+
+  const age = Date.now() - new Date(held.at).getTime();
+
+  // `>=` so a TTL of 0 means "always reclaim", and a claim exactly at its deadline is
+  // treated as abandoned rather than lingering for one more millisecond.
+  if (age >= ttlMs) {
+    writeOwner();
+    getLogger().warn('delivery', 'stale_validation_claim_reclaimed', { key, previous: held.owner });
+    return { granted: true, key, reason: `Reclaimed a stale claim held by ${held.owner}.` };
+  }
+
+  if (held.owner === owner) {
+    return { granted: true, key, reason: 'Already held by this owner.' };
+  }
+
+  getLogger().info('delivery', 'duplicate_validation_prevented', { key, heldBy: held.owner, requestedBy: owner });
+  return {
+    granted: false,
+    key,
+    heldBy: held.owner,
+    heldSince: held.at,
+    reason: `${held.owner} is already running this validation — wait for its evidence instead of duplicating it.`,
+  };
 }
 
 /** Release a claim once the validation has finished and its evidence is recorded. */
 export function releaseValidation(workDir: string, key: string): void {
-  const path = lockPath(workDir, key);
-  try {
-    if (existsSync(path)) unlinkSync(path);
-  } catch {
-    // A lock that cannot be removed expires by TTL.
-  }
+  removeLockDir(lockPath(workDir, key));
 }
 
 /** Claims currently held, for `$cost` reporting and orchestrator diagnostics. */
@@ -547,14 +591,11 @@ export function activeClaims(workDir: string): Array<{ key: string; owner: strin
   if (!existsSync(dir)) return [];
 
   const out: Array<{ key: string; owner: string; at: string }> = [];
-  for (const file of readdirSync(dir)) {
-    if (!file.endsWith('.lock')) continue;
-    try {
-      const held = JSON.parse(readFileSync(join(dir, file), 'utf-8')) as { owner: string; at: string };
-      out.push({ key: file.replace(/\.lock$/, ''), owner: held.owner, at: held.at });
-    } catch {
-      // Skip unreadable claims.
-    }
+  for (const entry of readdirSync(dir)) {
+    if (!entry.endsWith('.lock')) continue;
+    const key = entry.replace(/\.lock$/, '');
+    const held = readLockOwner(workDir, key);
+    if (held) out.push({ key, owner: held.owner, at: held.at });
   }
   return out;
 }

@@ -23,6 +23,8 @@ export interface TaskPlan {
     /** Human-readable summary of the blast radius. */
     impactSummary: string;
     baseCommit: string | null;
+    /** When planning began — the start of the window used to attribute provider usage. */
+    startedAt: string;
 }
 /** Inputs for {@link planTask}. */
 export interface PlanTaskInput {

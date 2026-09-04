@@ -154,9 +154,12 @@ Worker B → decideValidation → WAIT  (worker-a is already running this)
 Worker C → decideValidation → WAIT
 ```
 
-Claims are exclusive file creations, which are atomic on POSIX, so two processes racing
-cannot both win. A claim past its TTL is reclaimed, so a crashed worker cannot deadlock the
-wave.
+A claim is an atomic `mkdir`. A **directory** rather than an exclusive file create, because
+`mkdir` is atomic on NFS as well as on local POSIX and Windows filesystems, where
+`O_CREAT | O_EXCL` on a regular file is not — so two processes racing cannot both win on any
+of them. A claim past its TTL is reclaimed, so a crashed worker cannot deadlock the wave, and
+a lock directory left without readable owner metadata (a crash between the two steps) is
+treated the same way.
 
 ---
 
@@ -304,17 +307,33 @@ taskIsComplete(workDir, exec, …);   // objective stop verdict
 `runAllGates`, storing the compact result so a reuse genuinely returns it rather than
 re-running to reconstruct the detail.
 
-`$forge` uses this for its gate suite: a dry run against a tree that has not changed since
-the gates last passed reuses the recorded summary instead of re-running eight tiers.
+Both expensive CLI validation paths are wired:
+
+| Path | Behavior |
+|---|---|
+| `$forge --dry-run` | Reuses the recorded gate summary against an unchanged tree |
+| `/gate all` | Same, with `--force` to bypass. Single-tier runs (`/gate t1`) are untouched — they are already cheap |
 
 ### Measured impact, not supplied guesses
 
 `delivery-impact.ts` builds a reverse import graph (TS/JS/Python) cached against the tree
-hash, so the fan-out that widens `targeted` → `affected` is measured. It is deliberately a
-static regex-level scan — resolving a full module graph would cost more than the validation
-it avoids — and it is honest about its limits: a bare package specifier is counted as an
-**unresolved import** rather than silently dropped, so a high unresolved count means the
-fan-out is a lower bound and callers should widen rather than narrow.
+hash, so the fan-out that widens `targeted` → `affected` is measured.
+
+**Path aliases are resolved.** `compilerOptions.paths` and `baseUrl` are read from
+`tsconfig.json`, `jsconfig.json` and `tsconfig.base.json` (comments tolerated), so a monorepo
+importing `@app/core` produces real dependency edges instead of a graph that reports almost
+everything as external and collapses the measured fan-out to near zero — which would quietly
+*narrow* test scope on exactly the codebases that need it widened.
+
+It is deliberately a static regex-level scan — resolving a full module graph would cost more
+than the validation it avoids — and it is honest about its limits: a specifier that matches
+no alias and no relative path is counted as an **unresolved import** rather than silently
+dropped, so a high unresolved count means the fan-out is a lower bound and callers should
+widen rather than narrow.
+
+```bash
+/delivery impact --files src/app/core.ts     # measured dependents, with caveats stated
+```
 
 ---
 
@@ -332,8 +351,14 @@ Durations are measured by the runner and carried on the worker handoff, so
 `validationSeconds` is a real number rather than `unknown` for any task that went through
 `executeTask`.
 
+Token usage and cost are read from the **real** usage ledger (`budget.ts`) and attributed to
+each task's execution window — the span between `planTask` and the recorded handoff. That is
+an honest approximation for sequential work, and is stated as such: when two workers overlap
+in one process their windows overlap too, so the figure is shared rather than exact.
+
 **Unmeasurable values are reported as `unknown`, never estimated.** A fabricated token count
-poisons every ratio computed from it. Token usage is `null` unless the provider reports it.
+poisons every ratio computed from it, so a window covering no recorded provider call reports
+`null` rather than zero.
 
 ---
 

@@ -13,8 +13,35 @@
 // absent one, because it silently poisons every ratio computed from it.
 import { loadEvidenceStore, activeClaims } from './delivery-evidence.js';
 import { loadContext } from './delivery-context.js';
+import { loadUsage } from './budget.js';
 /** Scopes that constitute a repository-wide run. */
 const REPO_WIDE_SCOPES = ['integration', 'full'];
+/**
+ * Attribute recorded model usage to a task's execution window.
+ *
+ * The usage ledger timestamps every provider call but does not tag it with a task, so the
+ * attribution is by time: calls between the worker's start and its handoff. That is an
+ * honest approximation for sequential work and is stated as such; when two workers overlap
+ * in one process their windows overlap too, so the figure is shared rather than exact.
+ *
+ * @returns Tokens and cost, or nulls when the window covers no recorded call.
+ */
+export function attributeUsage(entries, windowStart, windowEnd) {
+    const start = new Date(windowStart).getTime();
+    const end = new Date(windowEnd).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(end))
+        return { tokens: null, costUsd: null };
+    const inWindow = entries.filter((e) => {
+        const t = new Date(e.timestamp).getTime();
+        return Number.isFinite(t) && t >= start && t <= end;
+    });
+    if (inWindow.length === 0)
+        return { tokens: null, costUsd: null };
+    return {
+        tokens: inWindow.reduce((n, e) => n + (e.inputTokens ?? 0) + (e.outputTokens ?? 0), 0),
+        costUsd: Number(inWindow.reduce((n, e) => n + (e.costUsd ?? 0), 0).toFixed(6)),
+    };
+}
 /** Sum durations of the evidence entries a handoff reused. */
 function reusedSeconds(reusedKeys, entries) {
     const known = reusedKeys
@@ -28,11 +55,15 @@ function reusedSeconds(reusedKeys, entries) {
     return Number(known.reduce((a, b) => a + b, 0).toFixed(2));
 }
 /** Build the per-task record for one worker handoff. */
-export function taskEfficiency(handoff, entries) {
+export function taskEfficiency(handoff, entries, usage = []) {
     const commands = new Set(handoff.testsExecuted);
     const repeated = handoff.testsExecuted.length - commands.size;
     // A scoped worker run avoids one repository-wide run per worker; the gate pays it once.
     const repoWideAvoided = REPO_WIDE_SCOPES.includes(handoff.validationScope) ? 0 : 1;
+    // Attribute real provider usage to the window this worker was active in. `startedAt`
+    // falls back to the handoff time, which yields an empty window and therefore null —
+    // the correct answer when the span is unknown.
+    const attributed = attributeUsage(usage, handoff.startedAt ?? handoff.at, handoff.at);
     return {
         taskId: handoff.taskId,
         budget: handoff.budget,
@@ -44,7 +75,8 @@ export function taskEfficiency(handoff, entries) {
         evidenceGenerated: handoff.evidenceGenerated.length,
         secondsSavedByReuse: reusedSeconds(handoff.evidenceReused, entries),
         repoWideRunsAvoided: repoWideAvoided,
-        tokensUsed: null,
+        tokensUsed: attributed.tokens,
+        costUsd: attributed.costUsd,
         unresolvedGaps: handoff.unresolvedGaps.length,
     };
 }
@@ -57,7 +89,8 @@ export function taskEfficiency(handoff, entries) {
 export function buildEfficiencyReport(workDir, mission = 'default') {
     const ctx = loadContext(workDir, mission);
     const entries = loadEvidenceStore(workDir).entries;
-    const tasks = ctx.handoffs.map((h) => taskEfficiency(h, entries));
+    const usage = loadUsage(workDir).entries ?? [];
+    const tasks = ctx.handoffs.map((h) => taskEfficiency(h, entries, usage));
     const validationCommands = tasks.reduce((n, t) => n + t.validationCommands, 0);
     const repeatedCommands = tasks.reduce((n, t) => n + t.repeatedCommands, 0);
     const evidenceReused = tasks.reduce((n, t) => n + t.evidenceReused, 0);
@@ -75,6 +108,12 @@ export function buildEfficiencyReport(workDir, mission = 'default') {
     const secondsSavedByReuse = savedValues.some((v) => v === null)
         ? null
         : Number(savedValues.reduce((a, b) => (a ?? 0) + (b ?? 0), 0).toFixed(2));
+    const tokenValues = tasks.map((t) => t.tokensUsed).filter((v) => v !== null);
+    const costValues = tasks.map((t) => t.costUsd).filter((v) => v !== null);
+    const tokensUsed = tokenValues.length > 0 ? tokenValues.reduce((a, b) => a + b, 0) : null;
+    const costUsd = costValues.length > 0
+        ? Number(costValues.reduce((a, b) => a + b, 0).toFixed(6))
+        : null;
     const observations = [];
     if (repeatedCommands > 0) {
         observations.push(`${repeatedCommands} command(s) were executed more than once within a single task — a repeat against unchanged state proves nothing new.`);
@@ -106,6 +145,8 @@ export function buildEfficiencyReport(workDir, mission = 'default') {
             validationSeconds,
             secondsSavedByReuse,
             repoWideRunsAvoided,
+            tokensUsed,
+            costUsd,
         },
         activeClaims: activeClaims(workDir).length,
         observations,
@@ -125,6 +166,8 @@ export function formatEfficiencyReport(report) {
     lines.push(`Validation seconds saved by reuse: ${t.secondsSavedByReuse === null ? 'unknown (durations not recorded for every reused entry)' : t.secondsSavedByReuse}`);
     lines.push(`Repository-wide runs avoided at worker level: ${t.repoWideRunsAvoided}`);
     lines.push(`Validations currently claimed by a worker: ${report.activeClaims}`);
+    lines.push(`Model tokens attributed: ${t.tokensUsed === null ? 'unknown (provider reported none)' : t.tokensUsed}`);
+    lines.push(`Model cost attributed: ${t.costUsd === null ? 'unknown' : `$${t.costUsd.toFixed(4)}`}`);
     if (report.tasks.length > 0) {
         lines.push('');
         lines.push('Per task:');

@@ -66,6 +66,11 @@ export interface WorkerHandoff {
    * which is precisely the saving. Absent when the worker did not measure it.
    */
   validationSeconds?: number;
+  /**
+   * When the worker began. Together with `at` this bounds the window used to attribute
+   * real provider token usage. Absent when the worker did not record a start.
+   */
+  startedAt?: string;
   unresolvedGaps: string[];
   at: string;
 }

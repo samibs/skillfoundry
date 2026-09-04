@@ -171,12 +171,14 @@ export interface ValidationClaim {
  * first to claim a given validation runs it; the others are told who holds it and should
  * wait for the resulting evidence rather than duplicating the work.
  *
- * The claim is an exclusive file creation (`wx` → `O_CREAT | O_EXCL`), which is atomic on
- * local filesystems on both POSIX and Windows, so two processes racing cannot both win.
- * The known exception is older NFS, where `O_EXCL` is not reliably atomic; there, two
- * workers could duplicate one validation — wasteful, never incorrect, since both would
- * still record valid evidence. A stale claim past its TTL is reclaimed, so a crashed
- * worker cannot deadlock the wave.
+ * The claim is an atomic `mkdir`, which fails with EEXIST when the directory already
+ * exists. A directory is used rather than an exclusive file create because `mkdir` is
+ * atomic on NFS as well as on local POSIX and Windows filesystems, where `O_CREAT | O_EXCL`
+ * on a regular file is not. Two processes racing therefore cannot both win on any of them.
+ *
+ * A stale claim past its TTL is reclaimed, so a crashed worker cannot deadlock the wave,
+ * and a directory left without readable owner metadata (a crash between the two steps) is
+ * treated the same way.
  *
  * @param owner - Identifier of the claiming agent or task.
  * @param ttlMs - How long the claim is honored before being treated as abandoned.

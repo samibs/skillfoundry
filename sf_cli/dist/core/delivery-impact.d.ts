@@ -9,6 +9,8 @@ export interface ImportGraph {
     dependents: Record<string, string[]>;
     /** Files scanned. */
     fileCount: number;
+    /** Path-alias patterns that were loaded and applied. */
+    aliasPatterns: number;
     /**
      * Import specifiers that could not be resolved to a repository file — bare package
      * specifiers, aliases, generated modules. A high count means the graph understates
@@ -17,18 +19,52 @@ export interface ImportGraph {
     unresolvedImports: number;
     builtAt: string;
 }
+/**
+ * A resolved path-alias table.
+ *
+ * `@app/*` → `src/app/*` style mappings from `tsconfig.json` / `jsconfig.json`, plus the
+ * bare `baseUrl` fallback. Without these an alias-heavy monorepo reports almost every
+ * first-party import as unresolved, and the measured fan-out collapses to near zero —
+ * which would quietly narrow test scope on exactly the codebases that need it widened.
+ */
+export interface AliasTable {
+    /** Prefix (with any trailing `*` stripped) → candidate repo-relative prefixes. */
+    patterns: Array<{
+        prefix: string;
+        wildcard: boolean;
+        targets: string[];
+    }>;
+    /** Repo-relative baseUrl directories, for non-relative specifiers resolved against them. */
+    baseUrls: string[];
+}
+/**
+ * Load path aliases from the repository's TypeScript/JavaScript configs.
+ *
+ * Best-effort: an unreadable or exotic config yields no aliases rather than an error, and
+ * the unresolved count then tells the caller the fan-out is a lower bound.
+ */
+export declare function loadAliasTable(workDir: string): AliasTable;
+/**
+ * Resolve a non-relative specifier through the alias table.
+ *
+ * @returns The repo-relative file, or null when no alias or baseUrl matches — in which
+ *          case it is a genuine third-party package.
+ */
+export declare function resolveAlias(specifier: string, aliases: AliasTable, known: Set<string>): string | null;
 /** Extract raw import specifiers from a source file. */
 export declare function extractImports(content: string, ext: string): string[];
 /**
  * Resolve an import specifier to a repository file.
  *
- * Only relative specifiers can point at first-party source; a bare specifier is a package
- * and is reported unresolved rather than guessed at.
+ * Relative specifiers resolve directly. A non-relative specifier is tried against the
+ * project's path aliases before being written off as a third-party package, so a monorepo
+ * using `@app/*` still produces a real dependency graph.
  *
  * @param fromFile - Repo-relative path of the importing file.
- * @returns The repo-relative path of the imported file, or null.
+ * @param aliases - Alias table from {@link loadAliasTable}. Omit to skip alias resolution.
+ * @returns The repo-relative path of the imported file, or null when it is genuinely external.
  */
-export declare function resolveImport(workDir: string, fromFile: string, specifier: string, known: Set<string>): string | null;
+export declare function resolveImport(workDir: string, fromFile: string, specifier: string, known: Set<string>, aliases?: AliasTable): string | null;
 /**
  * Build the reverse import graph for a repository.
  *

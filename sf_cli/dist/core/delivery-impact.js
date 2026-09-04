@@ -29,6 +29,110 @@ const SKIP_DIRS = new Set([
 ]);
 /** Hard ceiling on files scanned, so a huge monorepo degrades rather than hangs. */
 const MAX_FILES = 20_000;
+/** Config files that can carry `compilerOptions.paths`. */
+const ALIAS_CONFIGS = ['tsconfig.json', 'jsconfig.json', 'tsconfig.base.json'];
+/** Strip `//` and `/* *\/` comments so JSON-with-comments configs parse. */
+function stripJsonComments(text) {
+    return text
+        .replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*$)/gm, (m, comment) => (comment ? '' : m))
+        .replace(/\\"|"(?:\\"|[^"])*"|(\/\*[\s\S]*?\*\/)/g, (m, comment) => (comment ? '' : m));
+}
+/**
+ * Load path aliases from the repository's TypeScript/JavaScript configs.
+ *
+ * Best-effort: an unreadable or exotic config yields no aliases rather than an error, and
+ * the unresolved count then tells the caller the fan-out is a lower bound.
+ */
+export function loadAliasTable(workDir) {
+    const root = resolve(workDir);
+    const table = { patterns: [], baseUrls: [] };
+    for (const name of ALIAS_CONFIGS) {
+        const configPath = join(root, name);
+        if (!existsSync(configPath))
+            continue;
+        let parsed;
+        try {
+            parsed = JSON.parse(stripJsonComments(readFileSync(configPath, 'utf-8')));
+        }
+        catch {
+            continue;
+        }
+        const opts = parsed.compilerOptions;
+        if (!opts)
+            continue;
+        const baseUrl = opts.baseUrl ? normalizeRel(opts.baseUrl.replace(/^\.\//, '')) : '';
+        if (opts.baseUrl) {
+            const b = baseUrl === '.' ? '' : baseUrl;
+            if (!table.baseUrls.includes(b))
+                table.baseUrls.push(b);
+        }
+        for (const [pattern, targets] of Object.entries(opts.paths ?? {})) {
+            const wildcard = pattern.endsWith('/*') || pattern === '*';
+            const prefix = pattern.replace(/\*$/, '').replace(/\/$/, '');
+            const resolvedTargets = targets.map((t) => {
+                const cleaned = t.replace(/\*$/, '').replace(/^\.\//, '').replace(/\/$/, '');
+                const base = baseUrl && baseUrl !== '.' ? `${baseUrl}/` : '';
+                return normalizeRel(cleaned.startsWith(base) ? cleaned : base + cleaned);
+            });
+            table.patterns.push({ prefix, wildcard, targets: resolvedTargets });
+        }
+    }
+    // Longest prefix first, so `@app/core` wins over `@app`.
+    table.patterns.sort((a, b) => b.prefix.length - a.prefix.length);
+    return table;
+}
+/** Try every extension and index form for a candidate path. */
+function matchKnown(candidate, known) {
+    const base = normalizeRel(candidate);
+    if (known.has(base))
+        return base;
+    const ext = extname(base);
+    if (ext === '.js' || ext === '.mjs' || ext === '.cjs') {
+        for (const tsExt of ['.ts', '.tsx', '.mts', '.cts']) {
+            const swapped = base.slice(0, -ext.length) + tsExt;
+            if (known.has(swapped))
+                return swapped;
+        }
+    }
+    for (const e of SOURCE_EXTENSIONS) {
+        if (known.has(base + e))
+            return base + e;
+    }
+    for (const e of SOURCE_EXTENSIONS) {
+        const idx = normalizeRel(join(base, `index${e}`));
+        if (known.has(idx))
+            return idx;
+    }
+    return null;
+}
+/**
+ * Resolve a non-relative specifier through the alias table.
+ *
+ * @returns The repo-relative file, or null when no alias or baseUrl matches — in which
+ *          case it is a genuine third-party package.
+ */
+export function resolveAlias(specifier, aliases, known) {
+    for (const { prefix, wildcard, targets } of aliases.patterns) {
+        const matches = wildcard
+            ? specifier === prefix || specifier.startsWith(`${prefix}/`)
+            : specifier === prefix;
+        if (!matches)
+            continue;
+        const tail = wildcard ? specifier.slice(prefix.length).replace(/^\//, '') : '';
+        for (const target of targets) {
+            const hit = matchKnown(tail ? `${target}/${tail}` : target, known);
+            if (hit)
+                return hit;
+        }
+    }
+    // `baseUrl` makes a bare specifier resolvable as a project-root-relative path.
+    for (const base of aliases.baseUrls) {
+        const hit = matchKnown(base ? `${base}/${specifier}` : specifier, known);
+        if (hit)
+            return hit;
+    }
+    return null;
+}
 // ── Import extraction ─────────────────────────────────────────────────────────
 /** ES/CommonJS import forms: static, re-export, dynamic, and require. */
 const JS_IMPORT_PATTERNS = [
@@ -61,16 +165,19 @@ export function extractImports(content, ext) {
 /**
  * Resolve an import specifier to a repository file.
  *
- * Only relative specifiers can point at first-party source; a bare specifier is a package
- * and is reported unresolved rather than guessed at.
+ * Relative specifiers resolve directly. A non-relative specifier is tried against the
+ * project's path aliases before being written off as a third-party package, so a monorepo
+ * using `@app/*` still produces a real dependency graph.
  *
  * @param fromFile - Repo-relative path of the importing file.
- * @returns The repo-relative path of the imported file, or null.
+ * @param aliases - Alias table from {@link loadAliasTable}. Omit to skip alias resolution.
+ * @returns The repo-relative path of the imported file, or null when it is genuinely external.
  */
-export function resolveImport(workDir, fromFile, specifier, known) {
+export function resolveImport(workDir, fromFile, specifier, known, aliases) {
     const isRelative = specifier.startsWith('./') || specifier.startsWith('../') || specifier.startsWith('.');
-    if (!isRelative)
-        return null;
+    if (!isRelative) {
+        return aliases ? resolveAlias(specifier, aliases, known) : null;
+    }
     const fromDir = dirname(fromFile);
     // Python relative imports use dots for depth: `.mod`, `..pkg.mod`.
     if (specifier.startsWith('.') && !specifier.startsWith('./') && !specifier.startsWith('../')) {
@@ -87,28 +194,8 @@ export function resolveImport(workDir, fromFile, specifier, known) {
         }
         return null;
     }
-    const base = normalizeRel(join(fromDir, specifier));
     // Exact path first, then TypeScript's `.js` → `.ts` convention, then extensions, then index.
-    if (known.has(base))
-        return base;
-    const jsExt = extname(base);
-    if (jsExt === '.js' || jsExt === '.mjs' || jsExt === '.cjs') {
-        for (const tsExt of ['.ts', '.tsx', '.mts', '.cts']) {
-            const swapped = base.slice(0, -jsExt.length) + tsExt;
-            if (known.has(swapped))
-                return swapped;
-        }
-    }
-    for (const ext of SOURCE_EXTENSIONS) {
-        if (known.has(base + ext))
-            return base + ext;
-    }
-    for (const ext of SOURCE_EXTENSIONS) {
-        const idx = normalizeRel(join(base, `index${ext}`));
-        if (known.has(idx))
-            return idx;
-    }
-    return null;
+    return matchKnown(join(fromDir, specifier), known);
 }
 /** Normalise to forward-slash, repo-relative form so keys compare reliably. */
 function normalizeRel(p) {
@@ -204,6 +291,7 @@ export function buildImportGraph(workDir, opts = {}) {
     }
     const files = collectSourceFiles(root);
     const known = new Set(files);
+    const aliases = loadAliasTable(root);
     const dependents = {};
     let unresolved = 0;
     for (const file of files) {
@@ -215,7 +303,7 @@ export function buildImportGraph(workDir, opts = {}) {
             continue;
         }
         for (const spec of extractImports(content, extname(file))) {
-            const target = resolveImport(root, file, spec, known);
+            const target = resolveImport(root, file, spec, known, aliases);
             if (!target) {
                 unresolved++;
                 continue;
@@ -231,6 +319,7 @@ export function buildImportGraph(workDir, opts = {}) {
         treeSha: currentTree,
         dependents,
         fileCount: files.length,
+        aliasPatterns: aliases.patterns.length,
         unresolvedImports: unresolved,
         builtAt: new Date().toISOString(),
     };
@@ -241,7 +330,8 @@ export function buildImportGraph(workDir, opts = {}) {
         // The graph is still usable in memory even if it cannot be cached.
     }
     getLogger().info('delivery', 'import_graph_built', {
-        files: files.length, edges: Object.keys(dependents).length, unresolved,
+        files: files.length, edges: Object.keys(dependents).length,
+        unresolved, aliases: aliases.patterns.length,
     });
     return graph;
 }

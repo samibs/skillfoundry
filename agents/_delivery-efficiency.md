@@ -226,7 +226,9 @@ The policy is enforced in code, not left to interpretation:
 | `taskIsComplete()` | the objective stop verdict |
 
 Dependency fan-out is **measured** from a cached reverse import graph, not supplied by the
-caller. Unresolved imports are counted and reported, so fan-out is treated as a lower bound.
+caller, and path aliases (`tsconfig` `paths` / `baseUrl`) are resolved so a monorepo produces
+real edges. Unresolved imports are counted and reported, so fan-out is treated as a lower
+bound. `$forge --dry-run` and `/gate all` both consult evidence before running the suite.
 
 ---
 

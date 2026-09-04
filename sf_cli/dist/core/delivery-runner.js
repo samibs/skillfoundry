@@ -59,6 +59,7 @@ export function detectChangedFiles(workDir, baseRef) {
  * expensive discovery of its own beyond the cached import graph.
  */
 export function planTask(workDir, input) {
+    const startedAt = new Date().toISOString();
     const changedFiles = detectChangedFiles(workDir, input.baseRef);
     const budget = assignBudget(workDir, {
         text: input.text,
@@ -94,6 +95,7 @@ export function planTask(workDir, input) {
         impact,
         impactSummary: input.skipImpact ? 'impact not measured (skipped)' : describeImpact(impact),
         baseCommit: input.baseRef ? revParse(workDir, input.baseRef) : revParse(workDir, 'HEAD'),
+        startedAt,
     };
 }
 const DEFAULT_TIMEOUT_MS = 15 * 60_000;
@@ -356,6 +358,7 @@ export function completeTask(workDir, execution, opts = {}) {
         evidenceGenerated: execution.outcomes.filter((o) => o.action === 'EXECUTED').map((o) => o.evidenceKey),
         evidenceReused: execution.outcomes.filter((o) => o.action === 'REUSED').map((o) => o.evidenceKey),
         validationSeconds: execution.totalSeconds,
+        startedAt: plan.startedAt,
         unresolvedGaps: opts.unresolvedGaps ?? [],
     });
 }

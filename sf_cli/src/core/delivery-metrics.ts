@@ -14,6 +14,7 @@
 
 import { loadEvidenceStore, activeClaims, type EvidenceEntry } from './delivery-evidence.js';
 import { loadContext, type WorkerHandoff } from './delivery-context.js';
+import { loadUsage, type UsageEntry } from './budget.js';
 import type { DeliveryBudgetLevel } from './delivery-budget.js';
 import type { TestScope } from './delivery-policy.js';
 
@@ -36,10 +37,13 @@ export interface TaskEfficiency {
   /** Repository-wide runs a scoped run made unnecessary. */
   repoWideRunsAvoided: number;
   /**
-   * Model/token usage, when the provider reports it. `null` means unknown — never
-   * estimated. See `budget.ts` for the cost ledger that does track real spend.
+   * Model/token usage attributed to this task's execution window, read from the real
+   * usage ledger (`budget.ts`). `null` means the provider reported nothing — never
+   * estimated, because a fabricated count poisons every ratio computed from it.
    */
   tokensUsed: number | null;
+  /** Real USD cost over the same window, or null when unknown. */
+  costUsd: number | null;
   unresolvedGaps: number;
 }
 
@@ -59,6 +63,10 @@ export interface DeliveryEfficiencyReport {
     validationSeconds: number | null;
     secondsSavedByReuse: number | null;
     repoWideRunsAvoided: number;
+    /** Real tokens attributed across all tasks; null when no provider usage was recorded. */
+    tokensUsed: number | null;
+    /** Real USD across all tasks; null when unknown. */
+    costUsd: number | null;
   };
   /** Validations currently claimed by a worker, i.e. dedup in effect right now. */
   activeClaims: number;
@@ -68,6 +76,37 @@ export interface DeliveryEfficiencyReport {
 
 /** Scopes that constitute a repository-wide run. */
 const REPO_WIDE_SCOPES: readonly TestScope[] = ['integration', 'full'];
+
+/**
+ * Attribute recorded model usage to a task's execution window.
+ *
+ * The usage ledger timestamps every provider call but does not tag it with a task, so the
+ * attribution is by time: calls between the worker's start and its handoff. That is an
+ * honest approximation for sequential work and is stated as such; when two workers overlap
+ * in one process their windows overlap too, so the figure is shared rather than exact.
+ *
+ * @returns Tokens and cost, or nulls when the window covers no recorded call.
+ */
+export function attributeUsage(
+  entries: UsageEntry[],
+  windowStart: string,
+  windowEnd: string,
+): { tokens: number | null; costUsd: number | null } {
+  const start = new Date(windowStart).getTime();
+  const end = new Date(windowEnd).getTime();
+  if (!Number.isFinite(start) || !Number.isFinite(end)) return { tokens: null, costUsd: null };
+
+  const inWindow = entries.filter((e) => {
+    const t = new Date(e.timestamp).getTime();
+    return Number.isFinite(t) && t >= start && t <= end;
+  });
+  if (inWindow.length === 0) return { tokens: null, costUsd: null };
+
+  return {
+    tokens: inWindow.reduce((n, e) => n + (e.inputTokens ?? 0) + (e.outputTokens ?? 0), 0),
+    costUsd: Number(inWindow.reduce((n, e) => n + (e.costUsd ?? 0), 0).toFixed(6)),
+  };
+}
 
 /** Sum durations of the evidence entries a handoff reused. */
 function reusedSeconds(reusedKeys: string[], entries: Record<string, EvidenceEntry>): number | null {
@@ -85,12 +124,18 @@ function reusedSeconds(reusedKeys: string[], entries: Record<string, EvidenceEnt
 export function taskEfficiency(
   handoff: WorkerHandoff,
   entries: Record<string, EvidenceEntry>,
+  usage: UsageEntry[] = [],
 ): TaskEfficiency {
   const commands = new Set(handoff.testsExecuted);
   const repeated = handoff.testsExecuted.length - commands.size;
 
   // A scoped worker run avoids one repository-wide run per worker; the gate pays it once.
   const repoWideAvoided = REPO_WIDE_SCOPES.includes(handoff.validationScope) ? 0 : 1;
+
+  // Attribute real provider usage to the window this worker was active in. `startedAt`
+  // falls back to the handoff time, which yields an empty window and therefore null —
+  // the correct answer when the span is unknown.
+  const attributed = attributeUsage(usage, handoff.startedAt ?? handoff.at, handoff.at);
 
   return {
     taskId: handoff.taskId,
@@ -103,7 +148,8 @@ export function taskEfficiency(
     evidenceGenerated: handoff.evidenceGenerated.length,
     secondsSavedByReuse: reusedSeconds(handoff.evidenceReused, entries),
     repoWideRunsAvoided: repoWideAvoided,
-    tokensUsed: null,
+    tokensUsed: attributed.tokens,
+    costUsd: attributed.costUsd,
     unresolvedGaps: handoff.unresolvedGaps.length,
   };
 }
@@ -117,7 +163,8 @@ export function taskEfficiency(
 export function buildEfficiencyReport(workDir: string, mission: string = 'default'): DeliveryEfficiencyReport {
   const ctx = loadContext(workDir, mission);
   const entries = loadEvidenceStore(workDir).entries;
-  const tasks = ctx.handoffs.map((h) => taskEfficiency(h, entries));
+  const usage = loadUsage(workDir).entries ?? [];
+  const tasks = ctx.handoffs.map((h) => taskEfficiency(h, entries, usage));
 
   const validationCommands = tasks.reduce((n, t) => n + t.validationCommands, 0);
   const repeatedCommands = tasks.reduce((n, t) => n + t.repeatedCommands, 0);
@@ -139,6 +186,13 @@ export function buildEfficiencyReport(workDir: string, mission: string = 'defaul
   const secondsSavedByReuse = savedValues.some((v) => v === null)
     ? null
     : Number(savedValues.reduce((a, b) => (a ?? 0) + (b ?? 0), 0)!.toFixed(2));
+
+  const tokenValues = tasks.map((t) => t.tokensUsed).filter((v): v is number => v !== null);
+  const costValues = tasks.map((t) => t.costUsd).filter((v): v is number => v !== null);
+  const tokensUsed = tokenValues.length > 0 ? tokenValues.reduce((a, b) => a + b, 0) : null;
+  const costUsd = costValues.length > 0
+    ? Number(costValues.reduce((a, b) => a + b, 0).toFixed(6))
+    : null;
 
   const observations: string[] = [];
   if (repeatedCommands > 0) {
@@ -182,6 +236,8 @@ export function buildEfficiencyReport(workDir: string, mission: string = 'defaul
       validationSeconds,
       secondsSavedByReuse,
       repoWideRunsAvoided,
+      tokensUsed,
+      costUsd,
     },
     activeClaims: activeClaims(workDir).length,
     observations,
@@ -209,6 +265,12 @@ export function formatEfficiencyReport(report: DeliveryEfficiencyReport): string
   );
   lines.push(`Repository-wide runs avoided at worker level: ${t.repoWideRunsAvoided}`);
   lines.push(`Validations currently claimed by a worker: ${report.activeClaims}`);
+  lines.push(
+    `Model tokens attributed: ${t.tokensUsed === null ? 'unknown (provider reported none)' : t.tokensUsed}`,
+  );
+  lines.push(
+    `Model cost attributed: ${t.costUsd === null ? 'unknown' : `$${t.costUsd.toFixed(4)}`}`,
+  );
 
   if (report.tasks.length > 0) {
     lines.push('');
