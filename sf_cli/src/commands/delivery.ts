@@ -35,6 +35,8 @@ import {
 import { summarizeContext, listHandoffs } from '../core/delivery-context.js';
 import { planIntegrationGate, describeIntegrationPlan } from '../core/delivery-integration.js';
 import { buildEfficiencyReport, formatEfficiencyReport } from '../core/delivery-metrics.js';
+import { planTask, detectChangedFiles } from '../core/delivery-runner.js';
+import { measureImpact, describeImpact } from '../core/delivery-impact.js';
 import { isGitRepo, topLevel } from '../core/mission-git.js';
 
 // ── Arg parsing ───────────────────────────────────────────────────────────────
@@ -470,6 +472,84 @@ function handleEscalate(workDir: string, args: ParsedArgs): string {
   return lines.join('\n');
 }
 
+function handlePlan(workDir: string, args: ParsedArgs): string {
+  const taskId = args.positional[1] ?? 'task';
+  const overrideRaw = flagString(args.flags, 'override');
+  const override = overrideRaw?.toUpperCase();
+  if (override && !isDeliveryBudgetLevel(override)) {
+    throw new Error(`Unknown budget "${overrideRaw}". One of: ${DELIVERY_BUDGETS.join(', ')}`);
+  }
+  const scopeRaw = flagString(args.flags, 'scope');
+  if (scopeRaw && !isTestScope(scopeRaw)) {
+    throw new Error(`Unknown scope "${scopeRaw}". One of: ${TEST_SCOPES.join(', ')}`);
+  }
+
+  const plan = planTask(workDir, {
+    taskId,
+    text: flagString(args.flags, 'text'),
+    baseRef: flagString(args.flags, 'base'),
+    budgetOverride: override as DeliveryBudgetLevel | undefined,
+    scopeOverride: scopeRaw as TestScope | undefined,
+    acceptanceCriteria: flagList(args.flags, 'ac'),
+    skipImpact: flagBool(args.flags, 'no-impact'),
+  });
+
+  const lines = [head(`Task plan — ${plan.taskId}`)];
+  lines.push(`  Budget:         ${budgetColor(plan.budget.level)}${plan.budget.safetyCritical ? ` ${RED}[safety-critical]${RESET}` : ''}`);
+  lines.push(`  Reason:         ${plan.budget.reason}`);
+  lines.push(`  Test scope:     ${BOLD}${plan.scope}${RESET}`);
+  lines.push(`  Base commit:    ${plan.baseCommit?.slice(0, 12) ?? DIM + 'unknown' + RESET}`);
+  lines.push(`  Changed files:  ${plan.changedFiles.length}`);
+  for (const f of plan.changedFiles.slice(0, 12)) lines.push(`    ${DIM}·${RESET} ${f}`);
+  if (plan.changedFiles.length > 12) lines.push(`    ${DIM}… +${plan.changedFiles.length - 12} more${RESET}`);
+
+  lines.push('');
+  lines.push(`  ${BOLD}Impact${RESET}`);
+  lines.push(`    ${plan.impactSummary}`);
+
+  lines.push('');
+  lines.push(`  ${BOLD}Why this scope${RESET}`);
+  for (const r of plan.scopeReasons) lines.push(`    ${DIM}·${RESET} ${r}`);
+  lines.push('');
+  return lines.join('\n');
+}
+
+function handleImpact(workDir: string, args: ParsedArgs): string {
+  const explicit = flagList(args.flags, 'files');
+  const changed = explicit.length > 0 ? explicit : detectChangedFiles(workDir, flagString(args.flags, 'base'));
+
+  if (changed.length === 0) {
+    return `\n  ${warn('No changed files detected. Pass --files a.ts,b.ts or --base <ref>.')}\n`;
+  }
+
+  const depthRaw = flagString(args.flags, 'depth');
+  const impact = measureImpact(workDir, changed, {
+    depth: depthRaw ? parseInt(depthRaw, 10) : undefined,
+    force: flagBool(args.flags, 'rebuild'),
+  });
+
+  const lines = [head('Change impact')];
+  lines.push(`  ${describeImpact(impact)}`);
+  lines.push('');
+  lines.push(`  ${BOLD}Changed (${impact.changedFiles.length})${RESET}`);
+  for (const f of impact.changedFiles.slice(0, 15)) lines.push(`    ${DIM}·${RESET} ${f}`);
+
+  lines.push('');
+  lines.push(`  ${BOLD}Dependents (${impact.dependents.length})${RESET}`);
+  if (impact.dependents.length === 0) {
+    lines.push(`    ${DIM}none — the change does not reach other modules${RESET}`);
+  }
+  for (const f of impact.dependents.slice(0, 25)) lines.push(`    ${DIM}·${RESET} ${f}`);
+  if (impact.dependents.length > 25) lines.push(`    ${DIM}… +${impact.dependents.length - 25} more${RESET}`);
+
+  if (impact.unresolvedImports > 0) {
+    lines.push('');
+    lines.push(`  ${warn(`${impact.unresolvedImports} unresolved import(s) — fan-out is a lower bound, so widen rather than narrow.`)}`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
 function usage(): string {
   return [
     head('Delivery Efficiency'),
@@ -479,6 +559,8 @@ function usage(): string {
     '    /delivery budget "<task text>" [--files a,b] [--override HIGH]',
     '    /delivery policy <LOW|MEDIUM|HIGH>',
     '    /delivery scope --budget MEDIUM [--files a,b] [--dependents 20] [--gate]',
+    '    /delivery plan <TASK-ID> [--text "..."] [--base <ref>] [--override HIGH]',
+    '    /delivery impact [--files a,b] [--base <ref>] [--depth 3] [--rebuild]',
     '    /delivery escalate --budget LOW --to MEDIUM --reason "..." --evidence "..."',
     '',
     `  ${BOLD}Evidence and deduplication${RESET}`,
@@ -505,7 +587,7 @@ function usage(): string {
 export const deliveryCommand: SlashCommand = {
   name: 'delivery',
   description: 'Delivery efficiency — budgets, scoped validation, evidence reuse, stop conditions',
-  usage: '/delivery <status|budget|policy|scope|check|evidence|context|gate|complete|efficiency|escalate>',
+  usage: '/delivery <status|plan|impact|budget|policy|scope|check|evidence|context|gate|complete|efficiency|escalate>',
 
   execute: async (rawArgs: string, session: SessionContext): Promise<string> => {
     const args = parseArgs(rawArgs);
@@ -523,6 +605,8 @@ export const deliveryCommand: SlashCommand = {
 
       switch (sub) {
         case 'status':     return handleStatus(workDir);
+        case 'plan':       return handlePlan(workDir, args);
+        case 'impact':     return handleImpact(workDir, args);
         case 'budget':     return handleBudget(workDir, args);
         case 'policy':     return handlePolicy(args);
         case 'scope':      return handleScope(workDir, args);

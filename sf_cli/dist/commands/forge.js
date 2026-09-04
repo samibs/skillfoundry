@@ -71,10 +71,13 @@ async function runDryScan(session) {
             // Either freshly executed, or reused with the full recorded summary handed back —
             // a real skip, not a re-run wearing a reuse label.
             gateSummary = outcome.value;
+            const saved = outcome.secondsSaved !== null ? `, saving ${outcome.secondsSaved}s` : '';
             if (outcome.action === 'REUSED') {
-                gateReuseNote =
-                    `  (reused: already proven against this tree` +
-                        `${outcome.secondsSaved !== null ? `, saving ${outcome.secondsSaved}s` : ''})`;
+                gateReuseNote = `  (reused: already proven against this tree${saved})`;
+            }
+            else if (outcome.action === 'BLOCKED_KNOWN_FAILURE') {
+                // Re-deriving an identical failure proves nothing; report the recorded one.
+                gateReuseNote = `  (reused: already failed against this tree — fix the cause${saved})`;
             }
         }
         else {

@@ -473,8 +473,11 @@ function lockPath(workDir: string, key: string): string {
  * first to claim a given validation runs it; the others are told who holds it and should
  * wait for the resulting evidence rather than duplicating the work.
  *
- * The claim is an exclusive file creation (`wx`), which is atomic on POSIX, so two
- * processes racing cannot both win. A stale claim past its TTL is reclaimed, so a crashed
+ * The claim is an exclusive file creation (`wx` → `O_CREAT | O_EXCL`), which is atomic on
+ * local filesystems on both POSIX and Windows, so two processes racing cannot both win.
+ * The known exception is older NFS, where `O_EXCL` is not reliably atomic; there, two
+ * workers could duplicate one validation — wasteful, never incorrect, since both would
+ * still record valid evidence. A stale claim past its TTL is reclaimed, so a crashed
  * worker cannot deadlock the wave.
  *
  * @param owner - Identifier of the claiming agent or task.

@@ -122,6 +122,12 @@ Before any expensive validation:
 | `WAIT` | Another worker is running it. Consume its evidence. |
 | `RUN` | Genuinely needed, and the claim is yours. |
 
+For **in-process** work, `FIX_FIRST` still hands back the recorded result. Re-deriving an
+identical failure proves nothing, so a caller that only needs to *report* the outcome uses
+the value and skips the work — while a caller that needs to *act* on the check still sees
+that the cause must be fixed. Reuse of a failure is always labelled as such, never dressed
+up as proven.
+
 ### Validity
 
 Evidence records the content hash of every file it depended on. It stays valid only while
@@ -385,6 +391,8 @@ worker_handoff_recorded · integration_gate_planned · delivery_complete
 
 ```text
 /delivery status                             Effective settings and mission summary
+/delivery plan <TASK-ID> [--text "..."] [--base <ref>] [--override HIGH]
+/delivery impact [--files a,b] [--base <ref>] [--depth 3] [--rebuild]
 /delivery budget "<task>" [--files a,b] [--override HIGH]
 /delivery policy <LOW|MEDIUM|HIGH>
 /delivery scope --budget MEDIUM [--files a,b] [--dependents 20] [--gate]

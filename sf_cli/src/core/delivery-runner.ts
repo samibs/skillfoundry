@@ -357,8 +357,15 @@ export async function runOrReuse<T>(
     }
   }
   if (decision.action === 'FIX_FIRST') {
+    // The recorded result is still the answer, so hand it back rather than re-deriving an
+    // identical failure. The action stays BLOCKED_KNOWN_FAILURE so a caller that wants to
+    // *act* on the check knows to fix the cause, while a caller that only needs to report
+    // the outcome can use the value and skip the work.
     return {
-      action: 'BLOCKED_KNOWN_FAILURE', passed: false, durationSeconds: 0, secondsSaved: null,
+      action: 'BLOCKED_KNOWN_FAILURE',
+      value: decision.evidence?.payload as T | undefined,
+      passed: false, durationSeconds: 0,
+      secondsSaved: decision.evidence?.durationSeconds ?? null,
       reason: decision.reason, evidenceKey: key, evidence: decision.evidence,
     };
   }

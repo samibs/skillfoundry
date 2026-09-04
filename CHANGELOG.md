@@ -89,6 +89,13 @@ This layer makes effort proportional to risk, without weakening any correctness 
   instead of supplied. Deliberately a static regex-level scan; a bare package specifier is
   counted as an unresolved import rather than silently dropped, so fan-out is reported as a
   lower bound.
+- **`/delivery plan` and `/delivery impact`** surface the runtime from the CLI: a full task
+  plan (budget, scope, changed files, measured impact, and the reasoning) and a standalone
+  blast-radius report.
+- **Reuse on a known failure returns the recorded result** for in-process work. Re-deriving
+  an identical failure proves nothing, so a caller that only reports the outcome skips the
+  work; the action stays `BLOCKED_KNOWN_FAILURE` so a caller that must act still knows to
+  fix the cause. A reused failure is always labelled as one.
 - **Measured validation seconds** carried on `WorkerHandoff` and aggregated by `$cost`, so
   `validationSeconds` is a real number for any task that ran through `executeTask` instead
   of always `unknown`.
@@ -101,6 +108,9 @@ This layer makes effort proportional to risk, without weakening any correctness 
   the path, yielding `rc/x.ts`. Added `preserveOutput` and used it in `workingTreeStatus`.
   This was a latent defect in the v5.31.0 mission code, where it could misclassify a
   governance path as product; regression tests added to the mission suite.
+- **Corrected an inaccurate claim in the deduplication comment.** `O_CREAT | O_EXCL` is
+  atomic on local filesystems on Windows as well as POSIX; the real caveat is older NFS,
+  where two workers could duplicate one validation — wasteful, never incorrect.
 - **`workingTreeStatus` now exposes parsed `paths`**, so callers stop re-parsing the trimmed
   display strings — the duplicate parser was how the bug above reached this layer.
 - **Untracked files were invisible.** Porcelain collapses an untracked directory to `src/`,
@@ -138,8 +148,8 @@ migration; the evidence store and shared context are regenerable caches under
 
 ### Tests
 
-- 225 new tests across 4 files, all passing (566 including the mission and command suites
-  this change touches): budget classification (LOW/MEDIUM/HIGH,
+- 235 new tests across 4 files, all passing (576 including the mission and command suites
+  this change touches), and the `$forge` gate-reuse path is covered end to end: budget classification (LOW/MEDIUM/HIGH,
   path-only, keyword-only), explicit override including the refused downgrade, escalation
   with and without evidence, execution policies, scope selection and escalation, stop
   conditions, evidence reuse, invalidation after a relevant change, **preservation after an

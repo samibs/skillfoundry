@@ -13,6 +13,9 @@ import {
 import { loadEvidenceStore, recordEvidence, claimValidation, evidenceKey } from '../core/delivery-evidence.js';
 import { listHandoffs } from '../core/delivery-context.js';
 import { buildEfficiencyReport } from '../core/delivery-metrics.js';
+import { deliveryCommand } from '../commands/delivery.js';
+import { forgeCommand } from '../commands/forge.js';
+import type { SessionContext, SfConfig } from '../types.js';
 
 vi.mock('../utils/logger.js', () => ({
   getLogger: () => ({ info: vi.fn(), error: vi.fn(), debug: vi.fn(), warn: vi.fn() }),
@@ -546,4 +549,115 @@ describe('backward compatibility at runtime', () => {
     runValidation(repo, spec);
     expect(runValidation(repo, spec).action).toBe('EXECUTED');
   });
+});
+
+describe('/delivery plan and impact subcommands', () => {
+  async function run(args: string): Promise<string> {
+    const out = await deliveryCommand.execute(args, { workDir: repo } as SessionContext);
+    // eslint-disable-next-line no-control-regex
+    return String(out ?? '').replace(/\x1b\[[0-9;]*m/g, '');
+  }
+
+  it('plans a task, showing budget, scope and impact together', async () => {
+    write('src/styles.css', 'body {}\n');
+    const out = await run('plan T-1 --text "tweak the header padding"');
+    expect(out).toContain('Task plan — T-1');
+    expect(out).toContain('LOW');
+    expect(out).toContain('smoke');
+    expect(out).toContain('Why this scope');
+  });
+
+  it('flags safety-critical work in the plan', async () => {
+    write('src/auth/session.ts', 'export const s = 1;\n');
+    const out = await run('plan T-2 --text "small tweak"');
+    expect(out).toContain('HIGH');
+    expect(out).toContain('safety-critical');
+  });
+
+  it('rejects an unknown override', async () => {
+    expect(await run('plan T-1 --override URGENT')).toContain('Unknown budget');
+  });
+
+  it('reports measured dependents', async () => {
+    write('src/leaf.ts', 'export const leaf = 1;\n');
+    write('src/mid.ts', "import { leaf } from './leaf.js';\n");
+    commit('graph');
+
+    const out = await run('impact --files src/leaf.ts');
+    expect(out).toContain('Dependents (1)');
+    expect(out).toContain('src/mid.ts');
+  });
+
+  it('says plainly when a change reaches nothing', async () => {
+    write('src/island.ts', 'export const x = 1;\n');
+    commit('island');
+    const out = await run('impact --files src/island.ts');
+    expect(out).toContain('Dependents (0)');
+    expect(out).toContain('does not reach other modules');
+  });
+
+  it('asks for input when there is nothing to analyse', async () => {
+    expect(await run('impact')).toContain('No changed files detected');
+  });
+});
+
+describe('$forge gate reuse (§13 runtime integration)', () => {
+  /** A minimal project forge can scan without the gates erroring out. */
+  function seedProject(): void {
+    write('genesis/TEMPLATE.md', '# template\n');
+    write('src/index.ts', 'export const x = 1;\n');
+    commit('seed project');
+  }
+
+  it('reuses the gate summary on a second dry run against an unchanged tree', async () => {
+    seedProject();
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+
+    const first = String(await forgeCommand.execute('--dry-run', session));
+    expect(first).toContain('Quality Gates');
+    expect(first).not.toContain('reused:');
+
+    // Nothing changed, so the recorded summary is handed back rather than re-derived.
+    // A bare fixture has no test runner, so the gates legitimately fail. The point stands:
+    // the recorded summary is handed back instead of being re-derived.
+    const second = String(await forgeCommand.execute('--dry-run', session));
+    expect(second).toMatch(/reused: already (proven|failed) against this tree/);
+
+    // And the verdict is identical — reuse returns the real result, not a placeholder.
+    const verdictOf = (s: string) => /VERDICT: (\w+)/.exec(s)?.[1];
+    expect(verdictOf(second)).toBe(verdictOf(first));
+  }, 60_000);
+
+  it('does not reuse a failing result as a pass', async () => {
+    seedProject();
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+    await forgeCommand.execute('--dry-run', session);
+
+    const second = String(await forgeCommand.execute('--dry-run', session));
+    // The reuse is explicit about being a recorded failure, never dressed up as proven.
+    expect(second).toContain('already failed against this tree');
+    expect(second).not.toContain('already proven against this tree');
+  }, 60_000);
+
+  it('re-runs the gates after the tree changes', async () => {
+    seedProject();
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+
+    await forgeCommand.execute('--dry-run', session);
+    write('src/index.ts', 'export const x = 2;\n');
+    commit('change source');
+
+    const after = String(await forgeCommand.execute('--dry-run', session));
+    expect(after).not.toContain('reused:');
+  }, 60_000);
+
+  it('does not reuse when the layer is disabled', async () => {
+    seedProject();
+    configure('[delivery_efficiency]\nenabled = false\n');
+    const session = { workDir: repo, messages: [], config: {} as SfConfig } as SessionContext;
+
+    await forgeCommand.execute('--dry-run', session);
+    const second = String(await forgeCommand.execute('--dry-run', session));
+    expect(second).not.toContain('reused:');
+  }, 60_000);
 });
