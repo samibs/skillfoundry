@@ -30,6 +30,7 @@ import { tokensCommand } from './tokens.js';
 import { certifyCommand } from './certify.js';
 import { domainCommand } from './domain.js';
 import { generateCommand } from './generate.js';
+import { missionCommand } from './mission.js';
 
 const registry = new Map<string, SlashCommand>();
 
@@ -94,4 +95,5 @@ export function initCommands(): void {
   registerCommand(certifyCommand);
   registerCommand(domainCommand);
   registerCommand(generateCommand);
+  registerCommand(missionCommand);
 }

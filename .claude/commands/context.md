@@ -335,3 +335,32 @@ See `agents/_context-discipline.md`.
 ### Recommendation
 [Action to take]
 ```
+
+---
+
+## Multi-Agent Context Economy
+
+When `.ai/ledger.json` exists:
+
+- treat it as the **execution-state authority** — not chat history, not markdown status reports;
+- load only the active work item's requirement, patch guide, diff, and relevant test evidence;
+- do not repeatedly inject complete PRD sets into every worker;
+- do not paste full successful build or test logs into context;
+- reference durable paths instead of re-injecting content:
+
+```text
+LEDGER:       .ai/ledger.json
+PATCH GUIDE:  .ai/patches/<work-item>.md
+EVIDENCE:     .ai/evidence/<work-item>/tests.json
+RAW LOG:      .skillfoundry/mission-logs/<label>-<ts>.log
+```
+
+Report consumption by category: **planning · source/code · tests-and-logs · repeated context ·
+orchestration · recoverable-from-disk.**
+
+Flag duplicated consumption across agents — the same PRD read by ten workers, the same
+repository scan run five times, the same successful log analysed twice.
+
+Prefer targeted reload over full-session reconstruction.
+
+> Token limits may reduce context consumption. They must never reduce required validation.

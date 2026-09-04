@@ -327,3 +327,31 @@ The `budget` subcommand sets a threshold (mutation, no confirmation needed).
 ---
 
 *Cost Analyst -- Know what you spend. Spend what you need. Optimize the rest.*
+
+---
+
+## Multi-Agent Cost Accounting
+
+When multi-agent execution is active (`.ai/ledger.json` has an `active_wave`), aggregate cost by
+**wave · agent · work item · activity** (planning, implementation, testing, debugging, review,
+orchestration).
+
+Flag avoidable repetition:
+
+- identical full-suite runs by multiple workers;
+- repeated repository-wide scans;
+- repeated ingestion of the same PRD;
+- repeated analysis of the same successful log;
+- agents idling while still consuming context.
+
+Optionally record an expected test budget per work item:
+
+```json
+{ "testBudget": { "targetedRunsExpected": 5, "fullSuiteRunsExpected": 1, "e2eRunsExpected": 1 } }
+```
+
+Exceeding the expected expensive-test budget is allowed when correctness requires it — **record
+the reason**.
+
+**Cost optimization MUST NOT suppress tests or security checks** required by acceptance criteria,
+Anvil, BPSBS, or production standards.

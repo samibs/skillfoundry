@@ -1335,3 +1335,43 @@ See `agents/_context-discipline.md`.
 ### Next Step
 [Immediate next action]
 ```
+
+---
+
+## Multi-Agent Wave Orchestration
+
+When more than one implementation unit is executable, read `MULTI_AGENT_PROTOCOL.md` and follow
+`agents/_governed-mission-protocol.md`.
+
+Before implementation:
+
+1. Build **one** dependency graph across ALL selected PRDs and stories — never one graph per PRD.
+2. Decompose oversized stories into bounded tasks/subtasks and register each in the ledger.
+3. Detect cross-PRD dependencies and expected write collisions **before** dispatch.
+4. Calculate the next executable wave.
+5. Assign uniquely named agents (`<platform>-<role>-<work-item>`). Anonymous subagents are prohibited.
+6. Allocate and validate one **git-native** worktree per write agent.
+7. Record assignments in `.ai/ledger.json`.
+
+```bash
+/mission set-baseline --branch main
+/mission plan <ID> --depends "AF-301:HARD" --writes "src/a.ts,src/b.ts"
+/mission wave plan --max 4
+/mission wave dispatch WAVE-01 --items "AF-101,AF-201"
+```
+
+Execute **one wave at a time**. After each wave:
+
+- verify worker commits and required tests;
+- run applicable Anvil handoff and integration gates;
+- integrate serially in dependency order (`/mission wave order`);
+- prove provenance for each contribution (`/mission provenance <ID> --integration <ref>`);
+- update the authoritative baseline SHA;
+- update the ledger (`/mission integrate <ID>`, `/mission wave complete`);
+- recompute the graph and plan the next wave.
+
+**PRD order MUST NOT override dependency order. Do not dispatch all PRDs blindly.**
+A dependency cycle schedules nothing — report it for a human to break.
+
+`/go` orchestrates selected Genesis PRDs through dependency-aware stories, tasks, execution
+waves, validation, and integration. Parallel implementation is **not** parallel merging.

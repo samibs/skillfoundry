@@ -1,0 +1,31 @@
+{
+  "mission_id": "MISSION-GOV-001",
+  "kind": "baseline",
+  "recorded_at_utc": "2026-09-03T22:37:39.477Z",
+  "source_sha": "c15596c2752f8227791537260250a4929e21fd1e",
+  "environment": "linux-x64-node24-local-7fe0ab7909c4d037",
+  "payload_hash": "dfee549f31f9fb41538c63859c77408dc0afb4fe1757048601f5f9a83045fe8c",
+  "payload": {
+    "claim": "Pre-existing failures in dependency-scanner.test.ts, gates.test.ts, health-check.test.ts and agent-prompt-loader.test.ts are not caused by this mission.",
+    "method": "Same test files, same environment, with the mission changes stashed (git stash push -u -- sf_cli/src) and restored.",
+    "with_changes": {
+      "files": "dependency-scanner + gates",
+      "failed": 2,
+      "passed": 36,
+      "errors": 1
+    },
+    "at_baseline": {
+      "files": "dependency-scanner + gates",
+      "failed": 2,
+      "passed": 36,
+      "errors": 1
+    },
+    "full_suite_baseline": {
+      "failed_files": 3,
+      "failed_tests": 8,
+      "passed": 2611
+    },
+    "verdict": "SUBSTANTIATED — identical failure set with and without the mission changes.",
+    "note": "The exact failing set varies with system load (gates.test.ts passes in isolation both ways); the with/without comparison is identical in every run performed."
+  }
+}

@@ -6,6 +6,7 @@ const sidebars: SidebarsConfig = {
     'getting-started',
     'architecture',
     'configuration',
+    'governed-missions',
     {
       type: 'category',
       label: 'Recipes',

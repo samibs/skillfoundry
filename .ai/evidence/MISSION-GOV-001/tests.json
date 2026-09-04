@@ -1,0 +1,37 @@
+{
+  "mission_id": "MISSION-GOV-001",
+  "kind": "tests",
+  "recorded_at_utc": "2026-09-03T22:32:11.513Z",
+  "source_sha": "c15596c2752f8227791537260250a4929e21fd1e",
+  "environment": "linux-x64-node24-local-7fe0ab7909c4d037",
+  "payload_hash": "88bfb6ea41f52a17ac4acfa1aee823b6592e633ecfd510de5b77ec881b6e0e54",
+  "payload": {
+    "command": "npx",
+    "args": [
+      "vitest",
+      "run",
+      "src/__tests__/mission-ledger.test.ts",
+      "src/__tests__/mission-attestation.test.ts",
+      "src/__tests__/mission-provenance.test.ts",
+      "src/__tests__/mission-evidence.test.ts",
+      "src/__tests__/mission-orchestration.test.ts",
+      "src/__tests__/mission-processes.test.ts",
+      "src/__tests__/mission-command.test.ts",
+      "src/__tests__/mission-command-orchestration.test.ts"
+    ],
+    "cwd": "/home/n00b73/dev_tools_20260120_latest/skillfoundry/sf_cli",
+    "exit_code": 0,
+    "signal": null,
+    "normal_termination": true,
+    "timed_out": false,
+    "duration_seconds": 10.32,
+    "passed": 295,
+    "failed": 0,
+    "skipped": 0,
+    "orphan_check": "CLEAN",
+    "raw_artifact": "sf_cli/.skillfoundry/mission-logs/MISSION-GOV-001-tests-1788474720932.log",
+    "output_tail": "Switched to a new branch 'feature'\nSwitched to branch 'main'\nPreparing worktree (new branch 'agent/base')\nSwitched to a new branch 'feature'\nSwitched to branch 'main'\nSwitched to a new branch 'feature'\nSwitched to branch 'main'\nSwitched to a new branch 'feature'\nSwitched to branch 'main'\nSwitched to a new branch 'feature'\nSwitched to branch 'main'\nSwitched to a new branch 'feature'\n ✓ src/__tests__/mission-processes.test.ts (29 tests) 712ms\n   ✓ targeted cleanup (§21) > stops a process the agent genuinely owns  315ms\n   ✓ orphan reporting (§21) > stops reporting it once cleanup succeeded  313ms\nSwitched to branch 'main'\nSwitched to a new branch 'feature'\nSwitched to branch 'main'\n ✓ src/__tests__/mission-orchestration.test.ts (49 tests) 802ms\nSwitched to a new branch 'other'\nTo /tmp/sf-mission-prov-2DnZAT/origin.git\n * [new branch]      main -> main\nPreparing worktree (new branch 'agent/moved')\nTo /tmp/sf-mission-prov-elBXup/origin.git\n * [new branch]      main -> main\n ✓ src/__tests__/mission-attestation.test.ts (28 tests) 953ms\nTo /tmp/sf-mission-prov-XcvcnW/origin.git\n * [new branch]      main -> main\nTo /tmp/sf-mission-prov-XcvcnW/origin.git\n   7fbe36a..e4aba0e  main -> main\n ✓ src/__tests__/mission-provenance.test.ts (28 tests) 1119ms\n ✓ src/__tests__/mission-command-orchestration.test.ts (36 tests) 1866ms\nSwitched to a new branch 'feature'\nSwitched to branch 'main'\n ✓ src/__tests__/mission-command.test.ts (46 tests) 4699ms\n   ✓ /mission evidence > runs a command, records bounded evidence and attaches it  631ms\n   ✓ /mission evidence > reports a failing run as NOT clean and classifies the failure  608ms\n   ✓ /mission evidence > flags a zero-exit test run that ran no tests  617ms\n   ✓ monorepo support > runs a validation command in --cwd while recording evidence at the root  600ms\n   ✓ /mission verify — Definition of Done > reaches COMPLETE — INTEGRATION_READY once every gate is satisfied  696ms\n ✓ src/__tests__/mission-evidence.test.ts (47 tests) 9123ms\n   ✓ runValidatedCommand — normal termination (§17) > records a clean run for a command that exits on its own  592ms\n   ✓ runValidatedCommand — normal termination (§17) > writes the raw log outside .ai/ and references it by path (§15)  594ms\n   ✓ runValidatedCommand — normal termination (§17) > bounds the retained tail while the full log stays on disk  590ms\n   ✓ runValidatedCommand — normal termination (§17) > marks a non-zero exit as not clean  588ms\n   ✓ runValidatedCommand — normal termination (§17) > reports a timed-out run as NOT normal termination even if nothing failed  1277ms\n   ✓ runValidatedCommand — normal termination (§17) > detects processes that outlive the command (§17)  572ms\n   ✓ test count parsing > parses a vitest-style summary  596ms\n   ✓ test count parsing > reports the test count, not the file count, from vitest output  596ms\n   ✓ test count parsing > parses a dotnet-style summary  599ms\n   ✓ false-green guard for test runs > refuses a zero exit with no detectable test results  593ms\n   ✓ false-green guard for test runs > refuses a runner that executed zero tests  594ms\n   ✓ false-green guard for test runs > accepts a run that genuinely executed tests  589ms\n\n Test Files  8 passed (8)\n      Tests  295 passed (295)\n   Start at  00:32:01\n   Duration  9.60s (transform 837ms, setup 0ms, collect 1.45s, tests 19.31s, environment 1ms, prepare 688ms)\n\n",
+    "source_sha": "c15596c2752f8227791537260250a4929e21fd1e",
+    "environment": "linux-x64-node24-local-7fe0ab7909c4d037"
+  }
+}

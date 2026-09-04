@@ -1,4 +1,4 @@
-# Documentation Index - SkillFoundry Framework v5.30.0
+# Documentation Index - SkillFoundry Framework v5.31.0
 
 Complete guide to all documentation in the framework.
 
@@ -24,6 +24,7 @@ Start here for installation and basic usage:
 | **[docs/ESCALATION-CRITERIA.md](docs/ESCALATION-CRITERIA.md)** | 18 KB | **NEW v1.7.0** - Auto-fix vs. escalation decision matrix |
 | **[docs/AUTONOMOUS-EXECUTION.md](docs/AUTONOMOUS-EXECUTION.md)** | 10 KB | **NEW v1.7.0.2** - Autonomous execution setup, permission profiles, safety hooks |
 | **[docs/DOMAIN-EXPERTS.md](docs/DOMAIN-EXPERTS.md)** | - | **NEW v5.26.0** - Review-only domain reviewers for specialized non-IT fields: detection (self-flag / behavioral / declared), synthesis + packs, cross-project promotion |
+| **[V5.31.0-RELEASE-NOTES.md](docs/V5.31.0-RELEASE-NOTES.md)** | - | What's new in v5.31.0 — Governed Development Mission Protocol: durable `.ai/` ledger, worker attestation, provenance, collision-aware wave planning, process ownership; AgentOS `enforce` contract mode |
 | **[V5.30.0-RELEASE-NOTES.md](docs/V5.30.0-RELEASE-NOTES.md)** | - | What's new in v5.30.0 — AgentOS follow-ups: per-story state streaming, flag-gated bus contract enforcement, strict per-agent output contracts |
 | **[V5.29.0-RELEASE-NOTES.md](docs/V5.29.0-RELEASE-NOTES.md)** | - | What's new in v5.29.0 — AgentOS: shared state kernel, gate barrier, schema-validated handoffs, lazy language projection |
 | **[V5.28.0-RELEASE-NOTES.md](docs/V5.28.0-RELEASE-NOTES.md)** | - | What's new in v5.28.0 — Rationalization tail: retired duplicate reptilian-gate-keeper (96 skills), framework-wide persona de-theater |
@@ -546,7 +547,7 @@ Starting points for your work:
 
 ---
 
-**Framework Version**: 5.30.0
+**Framework Version**: 5.31.0
 **Documentation Updated**: March 15, 2026
 **Total Agents**: 61 core agents / 108 skills
 **Compliance Presets**: 3 (HIPAA, SOC2, GDPR)
