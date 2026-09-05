@@ -24,6 +24,20 @@ export function getDefaultEmbeddingOptions() {
 const WORK_DIR = '.skillfoundry';
 const CONFIG_FILE = join(WORK_DIR, 'config.toml');
 const POLICY_FILE = join(WORK_DIR, 'policy.toml');
+/**
+ * Delivery Efficiency defaults.
+ *
+ * Enabled by default: the layer only ever narrows work that risk analysis shows to be
+ * unnecessary, and safety-critical changes still classify HIGH and validate fully.
+ */
+export const DEFAULT_DELIVERY_EFFICIENCY = {
+    enabled: true,
+    default_budget: 'MEDIUM',
+    evidence_reuse: true,
+    validation_deduplication: true,
+    test_scope_policy: 'risk-based',
+    stop_when_proven: true,
+};
 const DEFAULT_CONFIG = {
     provider: 'anthropic',
     engine: 'api',
@@ -43,6 +57,7 @@ const DEFAULT_CONFIG = {
     quality_fallback: false,
     routing_rules: {},
     message_contracts: 'off',
+    delivery_efficiency: { ...DEFAULT_DELIVERY_EFFICIENCY },
 };
 const DEFAULT_POLICY = {
     allow_shell: false,
@@ -78,9 +93,36 @@ export function loadConfig(workDir) {
                 }
             }
         }
+        // Extract the nested [delivery_efficiency] table before the flat merge, so a partial
+        // table keeps the defaults for the keys it does not set.
+        const deRaw = parsed.delivery_efficiency;
+        const deliveryEfficiency = { ...DEFAULT_DELIVERY_EFFICIENCY };
+        if (deRaw && typeof deRaw === 'object') {
+            if (typeof deRaw.enabled === 'boolean')
+                deliveryEfficiency.enabled = deRaw.enabled;
+            if (deRaw.default_budget === 'LOW' || deRaw.default_budget === 'MEDIUM' || deRaw.default_budget === 'HIGH') {
+                deliveryEfficiency.default_budget = deRaw.default_budget;
+            }
+            if (typeof deRaw.evidence_reuse === 'boolean')
+                deliveryEfficiency.evidence_reuse = deRaw.evidence_reuse;
+            if (typeof deRaw.validation_deduplication === 'boolean') {
+                deliveryEfficiency.validation_deduplication = deRaw.validation_deduplication;
+            }
+            if (deRaw.test_scope_policy === 'risk-based' || deRaw.test_scope_policy === 'always-full') {
+                deliveryEfficiency.test_scope_policy = deRaw.test_scope_policy;
+            }
+            if (typeof deRaw.stop_when_proven === 'boolean')
+                deliveryEfficiency.stop_when_proven = deRaw.stop_when_proven;
+        }
+        delete parsed.delivery_efficiency;
         // Remove nested routing to avoid overwriting flat fields
         delete parsed.routing;
-        config = { ...DEFAULT_CONFIG, ...parsed, routing_rules: routingRules };
+        config = {
+            ...DEFAULT_CONFIG,
+            ...parsed,
+            routing_rules: routingRules,
+            delivery_efficiency: deliveryEfficiency,
+        };
     }
     // Auto-select provider: if configured provider has no credentials, pick the first available one
     const available = detectAvailableProviders();

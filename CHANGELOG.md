@@ -7,9 +7,188 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [5.32.0] - 2026-09-04 — AI Delivery Efficiency
+
+Agents are rarely wrong. They are usually **expensive**: re-reading the same repository,
+re-running the same suite, re-reviewing the same unchanged diff, and continuing long after
+the change was already proven. Across a wave of parallel workers, most of the compute goes
+into rediscovery.
+
+This layer makes effort proportional to risk, without weakening any correctness guarantee.
+
+> Do not perform more engineering activity than is necessary to prove the requested change
+> correct. A shorter execution is not automatically better; a longer one is not
+> automatically safer.
+
+### Added
+
+- **Delivery budgets** (`core/delivery-budget.ts`) — every task is classified LOW / MEDIUM /
+  HIGH before implementation, **deterministically** from path patterns and keyword sets (no
+  model call), so the same task always lands in the same budget with an auditable reason and
+  the matched signals recorded.
+- **Risk-based execution policy** (`core/delivery-policy.ts`) — each budget selects its
+  steps, base test scope, and whether repository-wide validation is permitted at worker
+  level. A LOW task cannot trigger the repository-wide suite; a MEDIUM task cannot trigger
+  all-project validation without evidence.
+- **Evidence reuse** (`core/delivery-evidence.ts`) — *already proven + unchanged = do not
+  prove again*. A validation is recorded with the content hash of every file it depended on,
+  plus base commit, tree hash, command, scope, result, duration and producer. Scoped
+  evidence survives an unrelated edit and dies precisely when one of its own files changes;
+  repository-wide evidence is bound to the tree hash, deliberately conservative.
+- **Validation deduplication** — three workers changing three unrelated features no longer
+  each run the full suite. Claims are exclusive file creations (atomic on POSIX), so a race
+  cannot produce two winners, and a claim past its TTL is reclaimed so a crashed worker
+  cannot deadlock a wave. `decideValidation()` returns one of `REUSE` / `RUN` / `WAIT` /
+  `FIX_FIRST`, so reuse and dedup cannot be implemented independently by accident.
+- **Test scopes** — `smoke` / `targeted` / `affected` / `integration` / `full`, derived from
+  budget, changed files, acceptance criteria, explicit override and dependency fan-out, with
+  the reasoning recorded. **`full` is never reachable from the budget alone.** Escalation
+  requires evidence: a targeted failure that is diagnosed and fixed does *not* justify a
+  full-suite run.
+- **Reasoning budget / shared context** (`core/delivery-context.ts`) — mission facts are
+  established once and shared, each carrying `AUTHORITATIVE` / `INFERRED` / `ASSUMPTION`
+  confidence. `shouldRediscover()` re-derives only when state changed, the fact lapsed, it is
+  an assumption, or safety requires independent verification. Facts record the files they
+  depend on, so invalidation is precise rather than wholesale.
+- **Worker handoffs and the integration gate** (`core/delivery-integration.ts`) — a worker
+  reports what it proved, not how it got there. The gate verifies handoffs (base ancestry,
+  declared vs. actual changed files), aggregates the blast radius, invalidates only what
+  integration itself disturbed, reuses what survives, computes the required scope from the
+  riskiest contribution, and runs only what is genuinely missing.
+- **Efficiency metrics** (`core/delivery-metrics.ts`) — validation commands, **repeated
+  commands**, evidence reused vs regenerated, reuse rate, seconds saved by reuse, and
+  repository-wide runs avoided. Unmeasurable values are reported as `unknown`, never
+  estimated; token usage stays `null` unless the provider reports it.
+- **Stop conditions** — `DeliveryComplete` is derived from evidence, not from an agent's
+  sense of thoroughness, and returns explicit guidance not to re-read an unchanged diff,
+  broaden scope without evidence, or perform unrequested cleanup.
+- **`/delivery` command** with 11 subcommands, and **`/cost --efficiency`** exposing the
+  efficiency view alongside spend.
+- **Canonical policy** at `agents/_delivery-efficiency.md`, referenced (not duplicated) by
+  all six platform adapters — Claude, Codex, Copilot, Cursor, Gemini, Grok — and by the
+  `$go` / `$forge` / `$context` / `$cost` / `$tester` skills.
+
+### Added — runtime integration
+
+- **`core/delivery-runner.ts`** — the layer now fires during execution rather than only
+  advising. `planTask()` detects changed files, classifies the budget, measures impact and
+  derives the scope; `executeTask()` runs only validations at or below that scope, stops at
+  the first genuine failure, and escalates budget or scope only on evidence from it;
+  `completeTask()` records the handoff and `taskIsComplete()` gives the stop verdict.
+- **`runOrReuse()`** for in-process work. `runAllGates` is a function call, not a
+  subprocess, and re-running eight tiers against an unchanged tree costs the same as any
+  re-run. The compact result is inlined into the evidence entry (bounded at 64 KiB, dropped
+  rather than truncated when oversized) so a reuse genuinely returns it — the first draft
+  re-ran the gates "to render the detail", which would have made the reuse a relabelled
+  re-run.
+- **`$forge` wired** to reuse its gate-suite result. Composes with `gate-cache.ts` rather
+  than duplicating it: the gate cache makes an invoked run cheaper per file; this decides
+  whether to invoke the run at all. (`gates.ts` does not currently consult the gate cache.)
+- **`core/delivery-impact.ts`** — reverse import graph for TS/JS/Python, cached against the
+  tree hash, so the dependency fan-out that widens `targeted` → `affected` is **measured**
+  instead of supplied. Deliberately a static regex-level scan; a bare package specifier is
+  counted as an unresolved import rather than silently dropped, so fan-out is reported as a
+  lower bound.
+- **`/delivery plan` and `/delivery impact`** surface the runtime from the CLI: a full task
+  plan (budget, scope, changed files, measured impact, and the reasoning) and a standalone
+  blast-radius report.
+- **Reuse on a known failure returns the recorded result** for in-process work. Re-deriving
+  an identical failure proves nothing, so a caller that only reports the outcome skips the
+  work; the action stays `BLOCKED_KNOWN_FAILURE` so a caller that must act still knows to
+  fix the cause. A reused failure is always labelled as one.
+- **Measured validation seconds** carried on `WorkerHandoff` and aggregated by `$cost`, so
+  `validationSeconds` is a real number for any task that ran through `executeTask` instead
+  of always `unknown`.
+
+### Added — gap closure
+
+- **NFS-safe deduplication.** A claim is now an atomic `mkdir` rather than an exclusive file
+  create: `mkdir` is atomic on NFS as well as local POSIX and Windows filesystems, where
+  `O_CREAT | O_EXCL` on a regular file is not. A lock directory left without readable owner
+  metadata — a crash between creating it and writing the owner — is treated as stale.
+- **Path-alias resolution in the import graph.** `compilerOptions.paths` and `baseUrl` are
+  read from `tsconfig.json` / `jsconfig.json` / `tsconfig.base.json`, comments tolerated. A
+  monorepo importing `@app/core` now produces real dependency edges instead of reporting
+  almost every first-party import as external — which collapsed measured fan-out to near
+  zero and would quietly *narrow* test scope on exactly the codebases needing it widened.
+- **Real token attribution.** `tokensUsed` and `costUsd` are read from the existing usage
+  ledger (`budget.ts`) and attributed to each task's execution window, bounded by the new
+  `startedAt` on `WorkerHandoff`. Attribution is by time and stated as such: overlapping
+  workers share a window rather than being resolved exactly. A window covering no recorded
+  provider call still reports `null`, never zero.
+- **`/gate all` wired**, with `--force` to bypass, so `$forge` is no longer the only runtime
+  path that consults evidence. Single-tier runs are untouched — they are already cheap.
+- **`/delivery` skill** (`.claude/commands/delivery.md`) so the command is reachable as an IDE
+  skill, not only from the CLI — 97 → 98 skills. The `$go`/`$force`/`$context`/`$cost`/`$tester`
+  patches reference it, so without this they pointed at something Claude Code could not invoke.
 
 ### Fixed
+
+- **`git()` trimmed stdout, corrupting every porcelain path.** `git status --porcelain`
+  encodes state in columns 1-2, so trimming strips the leading space of an unstaged entry
+  (` M src/x.ts` → `M src/x.ts`) and a fixed-column parse then eats the first character of
+  the path, yielding `rc/x.ts`. Added `preserveOutput` and used it in `workingTreeStatus`.
+  This was a latent defect in the v5.31.0 mission code, where it could misclassify a
+  governance path as product; regression tests added to the mission suite.
+- **Corrected an inaccurate claim in the deduplication comment.** `O_CREAT | O_EXCL` is
+  atomic on local filesystems on Windows as well as POSIX; the real caveat is older NFS,
+  where two workers could duplicate one validation — wasteful, never incorrect.
+- **`workingTreeStatus` now exposes parsed `paths`**, so callers stop re-parsing the trimmed
+  display strings — the duplicate parser was how the bug above reached this layer.
+- **Untracked files were invisible.** Porcelain collapses an untracked directory to `src/`,
+  so a brand-new auth module classified as an unknown path with no measurable impact.
+  `workingTreeStatus` gained `untrackedFiles: 'all'`, which the runner uses.
+
+### Safety
+
+- Authentication, authorization, secrets, cryptography, destructive database changes, schema
+  migrations, production deployment, financial integrity and compliance controls classify
+  **HIGH** on path *or* keyword — a change described as "a tiny tweak" that touches
+  `src/auth/` is still HIGH.
+- A downgrade override on safety-critical work is **refused** and logged. The deliberate
+  escape hatch records that required checks are no longer guaranteed.
+- Security checks are a mandatory, non-skippable completion criterion at HIGH.
+- A test-scope override that would under-test a HIGH change is refused.
+- A budget is never lowered mid-task, and escalation without evidence is refused.
+
+### Changed
+
+- `SfConfig` gains a nested `[delivery_efficiency]` table, parsed with the same
+  partial-merge pattern as `routing.rules` — an unknown value is ignored rather than
+  adopted, and a config written before this layer keeps working.
+- `$tester`, `$go`, `$forge`, `$context` and `$cost` gained delivery-efficiency sections
+  that reference the canonical policy rather than restating it.
+
+### Backward compatibility
+
+Additive throughout. With `delivery_efficiency.enabled = false`, every task is treated as
+HIGH, every scope is `full`, no evidence is reused, and completion is reported but never
+enforced — i.e. the behavior the framework had before this layer. The two sub-switches are
+independent: reuse can be off while deduplication stays on, and vice versa. No schema
+migration; the evidence store and shared context are regenerable caches under
+`.skillfoundry/`, so deleting them costs time, never correctness.
+
+### Tests
+
+- 264 new tests across 4 files, all passing (619 including the mission, config, command,
+  forge, gates and budget suites this change touches). The `$forge` and `/gate` reuse paths
+  are both covered end to end: budget classification (LOW/MEDIUM/HIGH,
+  path-only, keyword-only), explicit override including the refused downgrade, escalation
+  with and without evidence, execution policies, scope selection and escalation, stop
+  conditions, evidence reuse, invalidation after a relevant change, **preservation after an
+  unrelated change**, duplicate-validation prevention across three workers, integration-gate
+  evidence reuse, the config toggles, and adapter consumption of the shared policy.
+- Two real defects were found by these tests and fixed: the `allowUnsafeOverride` opt-in had
+  no effect because `maxBudget` raised the level straight back to HIGH; and with evidence
+  reuse disabled, deduplication silently stopped working because the reuse short-circuit
+  returned before a claim was taken.
+
+### Also in this release — provenance contribution ranges
+
+_Merged as PR #50 while 5.32.0 was in preparation; it ships here rather than as its own
+version._
+
+#### Fixed
 
 - **Provenance verified only the first commit of a contribution.** A contribution is usually a
   series — implement, then refine, then reconcile — but `verifyProvenance` compared a single
@@ -30,7 +209,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Found by running the protocol on its own v5.31.0 release, which required a manual
   `--authorized-supersedes` for three files that were never actually lost.
 
-### Added
+#### Added
 
 - **`rangePatchId()`** — one `git patch-id --stable` identity over a squashed `base..tip` diff,
   so a contribution replayed as a single squashed commit proves equivalent to the original
@@ -43,13 +222,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every commit in a range must be accounted for in the target. Unreplayed commits are reported
   with a count instead of passing silently.
 
-### Tests
+#### Tests
 
 - +12 tests (307 total across the mission suite), covering: the single-commit `LOST` regression
   and its range-based fix, `base..tip` as a worker ref, squash-equivalent patch identity,
   partially-replayed ranges, an unresolvable base, ledger rewrites no longer reporting `LOST`,
   product code in the same commit still being verified, write-once artifacts still failing when
   deleted, `--include-governance-state`, and control-plane-only commits.
+
+---
+
 
 ---
 

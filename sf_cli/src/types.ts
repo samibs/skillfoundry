@@ -142,6 +142,37 @@ export interface SfConfig {
   //   enforce    — as strict, plus HARD agent output contracts: agents are asked to
   //                emit a structured result and a contract violation FAILS the task
   message_contracts?: 'off' | 'permissive' | 'strict' | 'enforce';
+  /**
+   * Delivery Efficiency (v5.32.0). Controls how much reasoning, validation and testing an
+   * agent performs relative to a change's risk. On by default; disabling it restores the
+   * previous always-validate-everything behavior.
+   *
+   * TOML shape (nested, like `routing.rules`):
+   *
+   *   [delivery_efficiency]
+   *   enabled = true
+   *   default_budget = "MEDIUM"
+   */
+  delivery_efficiency?: DeliveryEfficiencyConfig;
+}
+
+/** Delivery Efficiency settings. Deliberately small — safe defaults over knobs. */
+export interface DeliveryEfficiencyConfig {
+  /** Master switch. Default true. */
+  enabled: boolean;
+  /** Budget when nothing decisive is detected. Default 'MEDIUM'. */
+  default_budget: 'LOW' | 'MEDIUM' | 'HIGH';
+  /** Reuse validation results that are still provably valid. Default true. */
+  evidence_reuse: boolean;
+  /** Prevent parallel workers running the same expensive validation. Default true. */
+  validation_deduplication: boolean;
+  /**
+   * How test scope is chosen. 'risk-based' derives it from budget and change impact;
+   * 'always-full' restores unconditional full-suite runs. Default 'risk-based'.
+   */
+  test_scope_policy: 'risk-based' | 'always-full';
+  /** Stop once completion criteria are objectively met. Default true. */
+  stop_when_proven: boolean;
 }
 
 // ── Team Configuration (Epic 9: Team & Cloud Mode) ────────────────────────────

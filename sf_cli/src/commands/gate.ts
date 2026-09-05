@@ -1,12 +1,14 @@
 import type { SlashCommand, SessionContext } from '../types.js';
-import { runSingleGate, runAllGates } from '../core/gates.js';
+import { runSingleGate, runAllGates, type GateRunSummary } from '../core/gates.js';
 import { recordEvent } from '../core/telemetry.js';
 import { randomUUID } from 'node:crypto';
+import { planTask, runOrReuse, deliveryRunnerEnabled } from '../core/delivery-runner.js';
+import { topLevel } from '../core/mission-git.js';
 
 export const gateCommand: SlashCommand = {
   name: 'gate',
   description: 'Run a single quality gate or all gates',
-  usage: '/gate <t0|t1|t2|t3|t4|t5|t6|t7|all> [target]',
+  usage: '/gate <t0|t1|t2|t3|t4|t5|t6|t7|all> [target] [--force]',
   execute: async (args: string, session: SessionContext): Promise<string> => {
     const parts = args.trim().split(/\s+/);
     const tier = parts[0]?.toLowerCase() || 'all';
@@ -20,7 +22,47 @@ export const gateCommand: SlashCommand = {
     const start = Date.now();
 
     if (tier === 'all') {
-      const summary = await runAllGates({ workDir: session.workDir, target });
+      // Delivery efficiency: the full tier suite is the expensive path. Re-running it
+      // against a tree unchanged since it last ran proves nothing, so consult the evidence
+      // store first. `--force` and a disabled layer both fall straight through.
+      const force = /(^|\s)--force(\s|$)/.test(args);
+      const repoRoot = topLevel(session.workDir) ?? session.workDir;
+      let summary: GateRunSummary;
+      let reuseNote = '';
+
+      if (!force && deliveryRunnerEnabled(repoRoot)) {
+        const plan = planTask(repoRoot, { taskId: 'gate-all', text: 'run all quality gates' });
+        const outcome = await runOrReuse<GateRunSummary>(
+          repoRoot,
+          {
+            kind: 'static-analysis',
+            // A stable identity for this work — a label, never executed.
+            command: `gates:all:${target}`,
+            scope: plan.scope,
+            changedFiles: plan.changedFiles,
+            owner: 'gate-command',
+            taskId: 'gate-all',
+            budget: plan.budget.level,
+          },
+          () => runAllGates({ workDir: session.workDir, target }),
+          (s) => s.verdict !== 'FAIL',
+        );
+
+        if (outcome.value) {
+          summary = outcome.value;
+          const saved = outcome.secondsSaved !== null ? `, saving ${outcome.secondsSaved}s` : '';
+          if (outcome.action === 'REUSED') {
+            reuseNote = `_Reused: already proven against this tree${saved}. Use \`--force\` to re-run._`;
+          } else if (outcome.action === 'BLOCKED_KNOWN_FAILURE') {
+            reuseNote = `_Reused: already failed against this tree — fix the cause${saved}. Use \`--force\` to re-run._`;
+          }
+        } else {
+          summary = await runAllGates({ workDir: session.workDir, target });
+        }
+      } else {
+        summary = await runAllGates({ workDir: session.workDir, target });
+      }
+
       const durationMs = Date.now() - start;
 
       recordEvent(session.workDir, 'gate_execution', sessionId, summary.verdict === 'PASS' ? 'pass' : summary.verdict === 'WARN' ? 'warn' : 'fail', durationMs, {
@@ -30,6 +72,10 @@ export const gateCommand: SlashCommand = {
       });
 
       const lines = ['**Gate Results (All Tiers)**', ''];
+      if (reuseNote) {
+        lines.push(reuseNote);
+        lines.push('');
+      }
       for (const g of summary.gates) {
         const icon = g.status === 'pass' ? '✓' : g.status === 'fail' ? '✗' : g.status === 'warn' ? '⚠' : '○';
         lines.push(`  ${icon} ${g.tier} ${g.name}: ${g.status.toUpperCase()} (${g.durationMs}ms)`);

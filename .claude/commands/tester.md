@@ -351,3 +351,41 @@ artifact path — **never inject complete logs into context**.
   product source.
 
 Testing remains ruthless. Execution becomes cost-aware.
+
+---
+
+## Test Scope Selection (Delivery Efficiency)
+
+> Canonical policy: `agents/_delivery-efficiency.md`.
+
+`smoke` · `targeted` · `affected` · `integration` · `full`
+
+Scope is derived from the **delivery budget**, the **changed files**, the **acceptance
+criteria**, an **explicit override**, and **dependency impact**:
+
+```bash
+/delivery scope --budget MEDIUM --files src/a.ts --dependents 20
+```
+
+**`full` is never chosen automatically.** It is reached only by explicit override or at the
+integration gate. Always state *why* a scope was selected — the decision is recorded, not
+assumed.
+
+### Escalate on evidence, not on nerves
+
+```
+targeted tests fail → diagnose → fix → targeted tests pass → STOP
+```
+
+A successful fix is **not** grounds for a full-suite run. Escalate only when a failure names
+files outside the change, or dependency analysis reveals wider impact:
+
+```bash
+/delivery check --kind test --command "npm test -- src/auth" --files src/auth/token.ts
+```
+
+`REUSE` means already proven against this exact state. `FIX_FIRST` means it already failed
+against this state — fix the cause rather than re-running it unchanged. `WAIT` means another
+worker is running it; consume its evidence instead of duplicating the work.
+
+A HIGH-risk change cannot be proven by `smoke` alone — that override is refused.

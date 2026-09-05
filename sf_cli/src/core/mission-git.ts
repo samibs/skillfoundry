@@ -27,10 +27,19 @@ const MAX_BUFFER = 16 * 1024 * 1024;
  * @param workDir - Directory to run git in. Resolved to an absolute path.
  * @param args - Git arguments, passed verbatim without shell interpretation.
  * @param input - Optional stdin payload (used for `git patch-id`).
+ * @param opts.preserveOutput - Return stdout verbatim instead of trimmed. Required for
+ *        fixed-column formats: `git status --porcelain` encodes state in columns 1-2, so
+ *        trimming eats the leading space of an unstaged entry (` M path` → `M path`) and
+ *        every subsequent column offset is wrong by one.
  * @returns `{ ok, stdout, stderr }`. Never throws — a missing git binary or a
  *          non-zero exit is reported as `ok: false`.
  */
-export function git(workDir: string, args: string[], input?: string): GitResult {
+export function git(
+  workDir: string,
+  args: string[],
+  input?: string,
+  opts: { preserveOutput?: boolean } = {},
+): GitResult {
   try {
     const stdout = execFileSync('git', args, {
       cwd: resolve(workDir),
@@ -40,7 +49,7 @@ export function git(workDir: string, args: string[], input?: string): GitResult 
       stdio: input === undefined ? ['ignore', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'],
       input,
     });
-    return { ok: true, stdout: stdout.trim(), stderr: '' };
+    return { ok: true, stdout: opts.preserveOutput ? stdout : stdout.trim(), stderr: '' };
   } catch (err) {
     const e = err as { stdout?: string | Buffer; stderr?: string | Buffer; message?: string };
     return {
@@ -118,27 +127,46 @@ export interface WorkingTreeStatus {
   productEntries: string[];
   /** Porcelain lines touching `.ai/` or `.skillfoundry/` — reported, not blocking. */
   governanceEntries: string[];
+  /**
+   * Repo-relative paths, already parsed out of the porcelain columns.
+   *
+   * Callers need this rather than re-parsing `entries`: those are trimmed for display, so
+   * a fixed-column `slice(3)` over them silently eats the first character of the path.
+   */
+  paths: string[];
 }
 
 /**
  * Read the working-tree status.
  *
+ * @param opts.untrackedFiles - `'normal'` (default) collapses an untracked directory to a
+ *        single entry, which is cheaper and enough for a cleanliness check. `'all'` lists
+ *        every untracked file individually — required when the caller needs the actual
+ *        file set, since `src/` tells you nothing about which files changed.
  * @returns Product and governance changes, separated. A repo that cannot be read
  *          reports `clean: false` — the protocol fails closed (§10).
  */
-export function workingTreeStatus(workDir: string): WorkingTreeStatus {
-  const r = git(workDir, ['status', '--porcelain']);
+export function workingTreeStatus(
+  workDir: string,
+  opts: { untrackedFiles?: 'normal' | 'all' } = {},
+): WorkingTreeStatus {
+  const args = ['status', '--porcelain'];
+  if (opts.untrackedFiles === 'all') args.push('--untracked-files=all');
+  // Verbatim: porcelain state lives in columns 1-2, so a trim corrupts every path.
+  const r = git(workDir, args, undefined, { preserveOutput: true });
   if (!r.ok) {
     const entries = ['<git status unavailable>'];
-    return { clean: false, entries, productEntries: entries, governanceEntries: [] };
+    return { clean: false, entries, productEntries: entries, governanceEntries: [], paths: [] };
   }
 
   const entries = r.stdout.split('\n').filter((l) => l.trim().length > 0);
   const productEntries: string[] = [];
   const governanceEntries: string[] = [];
+  const paths: string[] = [];
 
   for (const line of entries) {
     const path = porcelainPath(line);
+    paths.push(path);
     if (GOVERNANCE_PREFIXES.some((prefix) => path.startsWith(prefix))) {
       governanceEntries.push(line.trim());
     } else {
@@ -146,7 +174,13 @@ export function workingTreeStatus(workDir: string): WorkingTreeStatus {
     }
   }
 
-  return { clean: productEntries.length === 0, entries: entries.map((l) => l.trim()), productEntries, governanceEntries };
+  return {
+    clean: productEntries.length === 0,
+    entries: entries.map((l) => l.trim()),
+    productEntries,
+    governanceEntries,
+    paths,
+  };
 }
 
 /** One registered worktree as reported by `git worktree list --porcelain`. */

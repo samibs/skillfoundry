@@ -355,3 +355,31 @@ the reason**.
 
 **Cost optimization MUST NOT suppress tests or security checks** required by acceptance criteria,
 Anvil, BPSBS, or production standards.
+
+---
+
+## Delivery Efficiency View
+
+> Canonical policy: `agents/_delivery-efficiency.md`.
+
+```bash
+/cost --efficiency          # or /delivery efficiency
+```
+
+Reports, per task and in aggregate: delivery budget, validation scope, validation commands,
+**repeated commands**, evidence reused vs regenerated, **evidence reuse rate**, validation
+seconds saved by reuse, and repository-wide runs avoided at worker level.
+
+The metric being approximated is:
+
+```
+accepted useful change / execution cost
+```
+
+**Not token count.** Optimising tokens alone rewards an agent that thinks less and ships
+worse. What this surfaces instead is wasted engineering: the same suite run by three
+workers, the same repository scan repeated, the same PRD re-read, a LOW change that
+triggered a full-suite run.
+
+Values the system cannot observe are reported as **unknown**, never estimated. A fabricated
+token count poisons every ratio computed from it.

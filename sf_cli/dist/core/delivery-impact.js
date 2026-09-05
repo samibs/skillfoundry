@@ -1,0 +1,405 @@
+// Delivery Efficiency — change impact analysis.
+//
+// Test scope selection needs one number it cannot guess: how far a change actually reaches.
+// Without it, `selectTestScope` falls back to the budget's base scope and a caller has to
+// supply `dependents` by hand — which in practice means nobody does, and the widening rule
+// never fires.
+//
+// This builds a reverse import graph (file → files that import it) so the fan-out of a
+// change is measured rather than assumed. It is deliberately a static, regex-level scan:
+// resolving a full module graph would cost more than the validation it is trying to avoid.
+//
+// The bias is conservative. An import this scanner cannot resolve is a dependent it will
+// not report, so `unresolvedImports` is surfaced and callers treat a high count as a reason
+// to widen rather than narrow.
+import { existsSync, readFileSync, readdirSync, statSync, writeFileSync, mkdirSync, renameSync, unlinkSync } from 'node:fs';
+import { join, resolve, dirname, relative, extname } from 'node:path';
+import { treeSha } from './mission-git.js';
+import { getLogger } from '../utils/logger.js';
+const CACHE_DIR = '.skillfoundry';
+const CACHE_FILE = 'delivery-import-graph.json';
+/** Bump when extraction or resolution changes, so an older graph is rebuilt not trusted. */
+export const IMPORT_GRAPH_VERSION = '1';
+/** Extensions scanned for imports, and the order relative specifiers resolve in. */
+const SOURCE_EXTENSIONS = ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py'];
+/** Directories never worth walking — none of them contain first-party source. */
+const SKIP_DIRS = new Set([
+    'node_modules', '.git', 'dist', 'build', 'out', 'coverage', '.next', '.nuxt',
+    '__pycache__', '.venv', 'venv', 'vendor', '.skillfoundry', '.ai',
+]);
+/** Hard ceiling on files scanned, so a huge monorepo degrades rather than hangs. */
+const MAX_FILES = 20_000;
+/** Config files that can carry `compilerOptions.paths`. */
+const ALIAS_CONFIGS = ['tsconfig.json', 'jsconfig.json', 'tsconfig.base.json'];
+/** Strip `//` and `/* *\/` comments so JSON-with-comments configs parse. */
+function stripJsonComments(text) {
+    return text
+        .replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*$)/gm, (m, comment) => (comment ? '' : m))
+        .replace(/\\"|"(?:\\"|[^"])*"|(\/\*[\s\S]*?\*\/)/g, (m, comment) => (comment ? '' : m));
+}
+/**
+ * Load path aliases from the repository's TypeScript/JavaScript configs.
+ *
+ * Best-effort: an unreadable or exotic config yields no aliases rather than an error, and
+ * the unresolved count then tells the caller the fan-out is a lower bound.
+ */
+export function loadAliasTable(workDir) {
+    const root = resolve(workDir);
+    const table = { patterns: [], baseUrls: [] };
+    for (const name of ALIAS_CONFIGS) {
+        const configPath = join(root, name);
+        if (!existsSync(configPath))
+            continue;
+        let parsed;
+        try {
+            parsed = JSON.parse(stripJsonComments(readFileSync(configPath, 'utf-8')));
+        }
+        catch {
+            continue;
+        }
+        const opts = parsed.compilerOptions;
+        if (!opts)
+            continue;
+        const baseUrl = opts.baseUrl ? normalizeRel(opts.baseUrl.replace(/^\.\//, '')) : '';
+        if (opts.baseUrl) {
+            const b = baseUrl === '.' ? '' : baseUrl;
+            if (!table.baseUrls.includes(b))
+                table.baseUrls.push(b);
+        }
+        for (const [pattern, targets] of Object.entries(opts.paths ?? {})) {
+            const wildcard = pattern.endsWith('/*') || pattern === '*';
+            const prefix = pattern.replace(/\*$/, '').replace(/\/$/, '');
+            const resolvedTargets = targets.map((t) => {
+                const cleaned = t.replace(/\*$/, '').replace(/^\.\//, '').replace(/\/$/, '');
+                const base = baseUrl && baseUrl !== '.' ? `${baseUrl}/` : '';
+                return normalizeRel(cleaned.startsWith(base) ? cleaned : base + cleaned);
+            });
+            table.patterns.push({ prefix, wildcard, targets: resolvedTargets });
+        }
+    }
+    // Longest prefix first, so `@app/core` wins over `@app`.
+    table.patterns.sort((a, b) => b.prefix.length - a.prefix.length);
+    return table;
+}
+/** Try every extension and index form for a candidate path. */
+function matchKnown(candidate, known) {
+    const base = normalizeRel(candidate);
+    if (known.has(base))
+        return base;
+    const ext = extname(base);
+    if (ext === '.js' || ext === '.mjs' || ext === '.cjs') {
+        for (const tsExt of ['.ts', '.tsx', '.mts', '.cts']) {
+            const swapped = base.slice(0, -ext.length) + tsExt;
+            if (known.has(swapped))
+                return swapped;
+        }
+    }
+    for (const e of SOURCE_EXTENSIONS) {
+        if (known.has(base + e))
+            return base + e;
+    }
+    for (const e of SOURCE_EXTENSIONS) {
+        const idx = normalizeRel(join(base, `index${e}`));
+        if (known.has(idx))
+            return idx;
+    }
+    return null;
+}
+/**
+ * Resolve a non-relative specifier through the alias table.
+ *
+ * @returns The repo-relative file, or null when no alias or baseUrl matches — in which
+ *          case it is a genuine third-party package.
+ */
+export function resolveAlias(specifier, aliases, known) {
+    for (const { prefix, wildcard, targets } of aliases.patterns) {
+        const matches = wildcard
+            ? specifier === prefix || specifier.startsWith(`${prefix}/`)
+            : specifier === prefix;
+        if (!matches)
+            continue;
+        const tail = wildcard ? specifier.slice(prefix.length).replace(/^\//, '') : '';
+        for (const target of targets) {
+            const hit = matchKnown(tail ? `${target}/${tail}` : target, known);
+            if (hit)
+                return hit;
+        }
+    }
+    // `baseUrl` makes a bare specifier resolvable as a project-root-relative path.
+    for (const base of aliases.baseUrls) {
+        const hit = matchKnown(base ? `${base}/${specifier}` : specifier, known);
+        if (hit)
+            return hit;
+    }
+    return null;
+}
+// ── Import extraction ─────────────────────────────────────────────────────────
+/** ES/CommonJS import forms: static, re-export, dynamic, and require. */
+const JS_IMPORT_PATTERNS = [
+    /\bimport\s+[^'"]*?from\s*['"]([^'"]+)['"]/g,
+    /\bimport\s*['"]([^'"]+)['"]/g,
+    /\bexport\s+[^'"]*?from\s*['"]([^'"]+)['"]/g,
+    /\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)/g,
+];
+/** Python import forms. Only relative imports can resolve inside the repository. */
+const PY_IMPORT_PATTERNS = [
+    /^\s*from\s+(\.[.\w]*)\s+import\s+/gm,
+    /^\s*import\s+([.\w]+)/gm,
+];
+/** Extract raw import specifiers from a source file. */
+export function extractImports(content, ext) {
+    const patterns = ext === '.py' ? PY_IMPORT_PATTERNS : JS_IMPORT_PATTERNS;
+    const found = new Set();
+    for (const re of patterns) {
+        // Patterns are module-level with /g, so reset lastIndex before each file.
+        re.lastIndex = 0;
+        let m;
+        while ((m = re.exec(content)) !== null) {
+            if (m[1])
+                found.add(m[1]);
+        }
+    }
+    return [...found];
+}
+/**
+ * Resolve an import specifier to a repository file.
+ *
+ * Relative specifiers resolve directly. A non-relative specifier is tried against the
+ * project's path aliases before being written off as a third-party package, so a monorepo
+ * using `@app/*` still produces a real dependency graph.
+ *
+ * @param fromFile - Repo-relative path of the importing file.
+ * @param aliases - Alias table from {@link loadAliasTable}. Omit to skip alias resolution.
+ * @returns The repo-relative path of the imported file, or null when it is genuinely external.
+ */
+export function resolveImport(workDir, fromFile, specifier, known, aliases) {
+    const isRelative = specifier.startsWith('./') || specifier.startsWith('../') || specifier.startsWith('.');
+    if (!isRelative) {
+        return aliases ? resolveAlias(specifier, aliases, known) : null;
+    }
+    const fromDir = dirname(fromFile);
+    // Python relative imports use dots for depth: `.mod`, `..pkg.mod`.
+    if (specifier.startsWith('.') && !specifier.startsWith('./') && !specifier.startsWith('../')) {
+        const leadingDots = /^\.+/.exec(specifier)?.[0].length ?? 1;
+        const tail = specifier.slice(leadingDots).replace(/\./g, '/');
+        let base = fromDir;
+        for (let i = 1; i < leadingDots; i++)
+            base = dirname(base);
+        const candidate = tail ? join(base, tail) : base;
+        for (const suffix of ['.py', '/__init__.py']) {
+            const p = normalizeRel(candidate + suffix);
+            if (known.has(p))
+                return p;
+        }
+        return null;
+    }
+    // Exact path first, then TypeScript's `.js` → `.ts` convention, then extensions, then index.
+    return matchKnown(join(fromDir, specifier), known);
+}
+/** Normalise to forward-slash, repo-relative form so keys compare reliably. */
+function normalizeRel(p) {
+    return p.split('\\').join('/').replace(/^\.\//, '');
+}
+// ── Graph construction ────────────────────────────────────────────────────────
+/** Walk the repository collecting source files, bounded by MAX_FILES. */
+function collectSourceFiles(workDir) {
+    const root = resolve(workDir);
+    const out = [];
+    const walk = (dir) => {
+        if (out.length >= MAX_FILES)
+            return;
+        let entries;
+        try {
+            entries = readdirSync(dir);
+        }
+        catch {
+            return;
+        }
+        for (const name of entries) {
+            if (out.length >= MAX_FILES)
+                return;
+            if (name.startsWith('.') && SKIP_DIRS.has(name))
+                continue;
+            if (SKIP_DIRS.has(name))
+                continue;
+            const abs = join(dir, name);
+            let st;
+            try {
+                st = statSync(abs);
+            }
+            catch {
+                continue;
+            }
+            if (st.isDirectory())
+                walk(abs);
+            else if (st.isFile() && SOURCE_EXTENSIONS.includes(extname(name))) {
+                out.push(normalizeRel(relative(root, abs)));
+            }
+        }
+    };
+    walk(root);
+    return out;
+}
+function writeJsonAtomic(filePath, value) {
+    const dir = dirname(filePath);
+    if (!existsSync(dir))
+        mkdirSync(dir, { recursive: true });
+    const tmp = `${filePath}.tmp-${process.pid}`;
+    try {
+        writeFileSync(tmp, JSON.stringify(value), 'utf-8');
+        renameSync(tmp, filePath);
+    }
+    catch (err) {
+        if (existsSync(tmp)) {
+            try {
+                unlinkSync(tmp);
+            }
+            catch { /* best-effort */ }
+        }
+        throw err;
+    }
+}
+/**
+ * Build the reverse import graph for a repository.
+ *
+ * The graph is cached under `.skillfoundry/` keyed by tree hash: an unchanged tree reuses
+ * it, which is the same "already proven + unchanged" rule the evidence store applies to
+ * validations. This scan is itself the kind of repeated repository analysis the delivery
+ * layer exists to eliminate.
+ *
+ * @param opts.force - Rebuild even when a cached graph matches the tree.
+ */
+export function buildImportGraph(workDir, opts = {}) {
+    const root = resolve(workDir);
+    const cachePath = join(root, CACHE_DIR, CACHE_FILE);
+    const currentTree = treeSha(workDir, 'HEAD');
+    if (!opts.force && existsSync(cachePath)) {
+        try {
+            const cached = JSON.parse(readFileSync(cachePath, 'utf-8'));
+            if (cached.version === IMPORT_GRAPH_VERSION &&
+                cached.treeSha &&
+                currentTree &&
+                cached.treeSha === currentTree) {
+                getLogger().info('delivery', 'import_graph_reused', { files: cached.fileCount });
+                return cached;
+            }
+        }
+        catch {
+            // A corrupt cache proves nothing; rebuild.
+        }
+    }
+    const files = collectSourceFiles(root);
+    const known = new Set(files);
+    const aliases = loadAliasTable(root);
+    const dependents = {};
+    let unresolved = 0;
+    for (const file of files) {
+        let content;
+        try {
+            content = readFileSync(join(root, file), 'utf-8');
+        }
+        catch {
+            continue;
+        }
+        for (const spec of extractImports(content, extname(file))) {
+            const target = resolveImport(root, file, spec, known, aliases);
+            if (!target) {
+                unresolved++;
+                continue;
+            }
+            (dependents[target] ??= []).push(file);
+        }
+    }
+    for (const key of Object.keys(dependents)) {
+        dependents[key] = [...new Set(dependents[key])].sort();
+    }
+    const graph = {
+        version: IMPORT_GRAPH_VERSION,
+        treeSha: currentTree,
+        dependents,
+        fileCount: files.length,
+        aliasPatterns: aliases.patterns.length,
+        unresolvedImports: unresolved,
+        builtAt: new Date().toISOString(),
+    };
+    try {
+        writeJsonAtomic(cachePath, graph);
+    }
+    catch {
+        // The graph is still usable in memory even if it cannot be cached.
+    }
+    getLogger().info('delivery', 'import_graph_built', {
+        files: files.length, edges: Object.keys(dependents).length,
+        unresolved, aliases: aliases.patterns.length,
+    });
+    return graph;
+}
+/** Default traversal depth. Beyond this, "wide" is established and the number stops mattering. */
+const DEFAULT_DEPTH = 3;
+/**
+ * Measure how far a change reaches (§5, dependency impact).
+ *
+ * Walks the reverse import graph transitively from the changed files.
+ *
+ * @param opts.depth - Maximum hops. Defaults to 3.
+ * @returns The dependent set and the caveats that qualify it.
+ */
+export function analyzeImpact(graph, changedFiles, opts = {}) {
+    const maxDepth = opts.depth ?? DEFAULT_DEPTH;
+    const changed = new Set(changedFiles.map(normalizeRel));
+    const seen = new Set(changed);
+    let frontier = [...changed];
+    let depth = 0;
+    let truncated = false;
+    while (frontier.length > 0 && depth < maxDepth) {
+        const next = [];
+        for (const file of frontier) {
+            for (const dep of graph.dependents[file] ?? []) {
+                if (seen.has(dep))
+                    continue;
+                seen.add(dep);
+                next.push(dep);
+            }
+        }
+        frontier = next;
+        depth++;
+        if (frontier.length > 0 && depth === maxDepth)
+            truncated = true;
+    }
+    const known = new Set(Object.keys(graph.dependents));
+    const unknownFiles = [...changed].filter((f) => !known.has(f) && !(graph.dependents[f]?.length));
+    return {
+        changedFiles: [...changed].sort(),
+        dependents: [...seen].filter((f) => !changed.has(f)).sort(),
+        depthReached: depth,
+        truncated,
+        unresolvedImports: graph.unresolvedImports,
+        unknownFiles: unknownFiles.sort(),
+    };
+}
+/**
+ * Measure impact directly from a repository, building or reusing the graph as needed.
+ *
+ * This is the call `$tester` and the delivery runner make when they need a real fan-out
+ * number instead of a supplied guess.
+ */
+export function measureImpact(workDir, changedFiles, opts = {}) {
+    return analyzeImpact(buildImportGraph(workDir, { force: opts.force }), changedFiles, opts);
+}
+/** A readable explanation of the measured impact, for scope decisions and reports. */
+export function describeImpact(impact) {
+    const parts = [
+        `${impact.changedFiles.length} changed file(s) reach ${impact.dependents.length} dependent(s) within ${impact.depthReached} hop(s)`,
+    ];
+    if (impact.truncated)
+        parts.push('traversal hit its depth limit, so the true fan-out may be larger');
+    if (impact.unresolvedImports > 0) {
+        parts.push(`${impact.unresolvedImports} unresolved import(s) in the graph, so fan-out is a lower bound`);
+    }
+    if (impact.unknownFiles.length > 0) {
+        parts.push(`${impact.unknownFiles.length} changed file(s) are not in the import graph (new or non-source)`);
+    }
+    return parts.join('; ');
+}
+//# sourceMappingURL=delivery-impact.js.map

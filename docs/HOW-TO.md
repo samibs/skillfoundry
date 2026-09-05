@@ -1,6 +1,6 @@
 # SkillFoundry - Comprehensive How-To Guide
 
-> **Version 5.31.0** | Last Updated: 2026-09-04
+> **Version 5.32.0** | Last Updated: 2026-09-04
 
 This guide covers everything you need to know to use the SkillFoundry framework effectively.
 
@@ -2061,4 +2061,4 @@ Full reference: [DOMAIN-EXPERTS.md](DOMAIN-EXPERTS.md).
 ---
 
 *Created by SBS with Claude Code*
-*Framework Version: 5.31.0*
+*Framework Version: 5.32.0*

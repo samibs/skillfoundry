@@ -385,6 +385,45 @@ missing external dependency. Fix or report the environment.
 
 ---
 
+## 14b. Delivery efficiency
+
+> Canonical policy: `agents/_delivery-efficiency.md`. Command: `/delivery`.
+
+Scoping *what* gets validated is as important as scoping *who* writes. Each work item
+carries a **delivery budget** (LOW / MEDIUM / HIGH), classified deterministically from its
+paths and text, which selects how much analysis, testing and review it warrants.
+
+```
+Worker A → targeted validation ┐
+Worker B → targeted validation ├→ integration gate → repository-wide validation ONCE
+Worker C → targeted validation ┘
+```
+
+- **Workers validate at the narrowest sufficient scope.** A LOW change never triggers the
+  repository-wide suite; `full` is not reachable from the budget alone.
+- **Evidence is reused, not repeated.** A validation already proven against this exact
+  repository state is skipped; one that already *failed* against it is fixed, not re-run.
+- **Validation is deduplicated.** Two workers never run the same expensive check
+  concurrently — the first claims it, the others consume its evidence.
+- **The gate pays the repository-wide cost once**, over the aggregate change, invalidating
+  only the evidence that integration itself disturbed.
+- **Stop when proven.** Once implementation, acceptance, required validation, diff review
+  and evidence are satisfied, the task is done. Re-reading an unchanged diff is not
+  diligence.
+
+Safety-critical work — authentication, authorization, secrets, cryptography, migrations,
+deployment, financial and compliance logic — always classifies HIGH, and its required checks
+are never skipped or downgraded.
+
+```bash
+/delivery budget "<task>" --files a,b     # classify before implementing
+/delivery check --kind test --command "…"  # REUSE / RUN / WAIT / FIX_FIRST
+/delivery gate                             # what the integration gate must actually run
+/cost --efficiency                         # what the wave actually cost
+```
+
+---
+
 ## 15. Process ownership
 
 Every process an agent starts is owned by that agent until explicitly transferred — dev servers,
