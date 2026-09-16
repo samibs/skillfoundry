@@ -1,0 +1,16 @@
+<!-- Paste this block into the CLAUDE.md at the root of any app repo. -->
+
+## UI rule — plain-language screens (non-negotiable)
+
+Before writing or changing ANY screen, form, field, button or page, read
+`.claude/skills/plain-language-ui/SKILL.md` and follow it.
+
+- No UI code until a `SCREEN_BRIEF` (WHO / GOAL / AFTER) is written in the page file and shown to me.
+- No field ships with a bare domain term as its label. Plain wording first, one visible helper
+  sentence, official term in parentheses. See `references/label-rules.md`.
+- Buttons say what will happen. "Submit", "Validate", "Process" alone are banned.
+- Never render an enum/status code; map it to words.
+- Before you tell me a screen is done, run:
+  `python .claude/skills/plain-language-ui/scripts/audit_labels.py . --out ui-audit --min-severity medium`
+  and paste the summary line. Non-zero exit = not done.
+- If I ask you to keep a term bare, add `@plain-language-exception <reason>` on the line above it.
