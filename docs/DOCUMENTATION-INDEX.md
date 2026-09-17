@@ -14,7 +14,9 @@ Start here for installation and basic usage:
 
 | Document | Size | Purpose |
 |----------|------|---------|
-| **[README.md](README.md)** | 30 KB | **START HERE** - Overview, installation, quick start |
+| **[README.md](README.md)** | 32 KB | **START HERE** - User-facing: overview, installation, quick start, usage, command reference |
+| **[docs/RELEASE-NOTES.md](docs/RELEASE-NOTES.md)** | - | **WHAT CHANGED** - Summary of every release, newest first, with links to the deep notes |
+| **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** | - | **INTERNALS** - Repo layout, pipeline, gate tiers, tool system, logging, memory bank, Code Map |
 | **[docs/AGENTS.md](docs/AGENTS.md)** | 16 KB | **AGENT TEAM** - Core roster and platform skill references |
 | **[docs/AGENT-EVOLUTION.md](docs/AGENT-EVOLUTION.md)** | - | 53-agent debate/iteration hardening engine, perfection gate, and commands |
 | **[docs/QUICK-REFERENCE.md](docs/QUICK-REFERENCE.md)** | 8 KB | Quick reference card |
@@ -237,7 +239,7 @@ Phase summaries and implementation reports have been archived to `docs/archive/`
 - **[scripts/notify.sh](scripts/notify.sh)** — Multi-channel notification dispatcher. Commands: `send`, `test`, `config`, `history`, `init`
 - **[scripts/preferences.sh](scripts/preferences.sh)** — Developer behavioral memory. Commands: `set`, `get`, `list`, `learn`, `inject`, `init`, `reset`
 - **[agents/_preferences-protocol.md](agents/_preferences-protocol.md)** — Shared module for preference enforcement across all agents
-- **[docs/USER-GUIDE-v1.9.0.16.md](docs/USER-GUIDE-v1.9.0.16.md)** — Comprehensive user guide for v1.9.0.16-17 features
+- **[docs/USER-GUIDE-CLI.md](docs/USER-GUIDE-CLI.md)** — Comprehensive user guide for v1.9.0.16-17 features
 
 ### Competitive Leap: CI/CD + Quality Intelligence + Moonshots (v1.9.0.16)
 - **[.github/workflows/ci.yml](.github/workflows/ci.yml)** — GitHub Actions CI pipeline (multi-OS matrix, syntax validation, platform sync check)

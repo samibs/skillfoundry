@@ -7,6 +7,67 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased] — Documentation Restructure
+
+README, CHANGELOG, and release notes were carrying each other's content. The README had grown
+into a de-facto changelog (a `What's New` block followed by 20 `Previous:` version entries) plus
+internal architecture, log schemas, and tool-system tables. This splits the three documents along
+audience lines, with no information dropped — every relocated fact already existed in, or was
+moved into, a document of the right kind.
+
+### Added
+
+- **`docs/ARCHITECTURE.md`** — internals extracted from the README: the two-system comparison
+  (CLI implementation vs. skill files), repository layout, full pipeline diagram and Anvil tier
+  table, tool system with permission modes, debugger internals (CDP, singleton sessions, SIGTERM
+  -> SIGKILL escalation), output-compression mechanics and savings table, structured-logging JSONL
+  schema and `log_level` configuration, memory-bank layout and weight system, and the Code Map
+  pre-flight contract.
+- **`docs/RELEASE-NOTES.md`** — a rolling summary index: one headline plus 2-5 bullets per
+  release from 5.32.0 back to 5.0.0, with links to the deep per-version notes and the changelog.
+  This replaces the version history that lived in the README and gives the per-version
+  `docs/V5.x.0-RELEASE-NOTES.md` files a single entry point.
+- **`docs/MCP-INTEGRATION.md`** — bearer-token authentication section for the HTTP/SSE transport
+  (token location, override env var, rotation), absorbing the orphaned `mcpServers` snippet that
+  sat in the README without surrounding context.
+
+### Changed
+
+- **README is user-facing only.** Version history, repository layout, pipeline internals, the
+  tool/permission tables, and the logging schema are gone from it; what remains is positioning,
+  install, quick start, feature usage, command reference, platform support, updating, and a
+  documentation index split into *getting started* / *using the framework* / *going deeper*.
+  1,018 -> 747 lines.
+- **`sf` CLI command table corrected against the registry.** `sf_cli/src/commands/index.ts`
+  registers 35 commands; the README documented 23 in one place and claimed 25 in another, and
+  omitted `/mission`, `/delivery`, `/route`, `/tokens`, `/audit`, `/dashboard`, `/certify`,
+  `/domain`, `/generate`, `/boost`, `/optimize`, `/publish`, and `/upgrade`. Descriptions now
+  match the `description` field of each command definition.
+- **Skill counts reconciled to the installed tree.** The README claimed `130+`, `108`, `98`, and
+  `96` skills in four different places. It now states 98 (the count in `.claude/commands/`)
+  consistently, and no longer prints a per-platform count that drifts between installs.
+- **Gate references corrected** from `T1-T7` / `T0-T7` to the actual `T0`-`T6` tiers.
+- **Install one-liner split into download-then-run.** The piped download-and-execute form is
+  replaced with `curl -fsSL ... -o install-global.sh` followed by `bash install-global.sh`, so the
+  script can be inspected before it executes.
+- **Removed the unverifiable lede claims** (`23 real tool agents`, `130+ skills`, `2,792
+  artifacts across 49 projects`) from the README's opening paragraph. The harvest figures remain
+  in the `[5.0.0]` entry, where they describe the release that was actually derived from them.
+- **`docs/DOCUMENTATION-INDEX.md`** — indexes the two new documents and points the user-guide
+  link at `USER-GUIDE-CLI.md` rather than the version-pinned `USER-GUIDE-v1.9.0.16.md`.
+
+### Documentation contract
+
+| Document | Audience | Contains |
+|----------|----------|----------|
+| `README.md` | Users | Install, quick start, usage, command reference, platform support |
+| `docs/RELEASE-NOTES.md` | Everyone | Per-release change summaries with links |
+| `CHANGELOG.md` | Engineers | Full technical record, Keep a Changelog format |
+| `docs/ARCHITECTURE.md` | Contributors | Internals, layout, pipeline, runtime behavior |
+
+New material goes to exactly one of these. A feature's technical detail belongs in the changelog,
+its summary in the release notes, and its usage in the README.
+
 ## [5.32.0] - 2026-09-04 — AI Delivery Efficiency
 
 Agents are rarely wrong. They are usually **expensive**: re-reading the same repository,
