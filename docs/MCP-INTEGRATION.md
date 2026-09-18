@@ -318,6 +318,25 @@ Add MCP server configuration to project:
 }
 ```
 
+### Authentication (HTTP / SSE transport)
+
+The MCP server generates an `sf_*` bearer token on first boot, prints it to the console, and
+saves it to `data/.api-token` (mode `0600`). It is enforced on `/mcp` and `/api/v1`; `/health`
+and `/ready` stay public for monitoring.
+
+```jsonc
+// Token printed to console on first boot — also at data/.api-token
+"mcpServers": {
+  "skillfoundry": {
+    "url": "http://localhost:9877/mcp/sse",
+    "headers": { "Authorization": "Bearer <token>" }
+  }
+}
+```
+
+The token is stable across restarts. Override it with the `SKILLFOUNDRY_API_TOKEN` environment
+variable, or rotate it by deleting `data/.api-token` and restarting.
+
 ### Agent Usage
 
 Agents can use MCP tools through standard tool calls:
