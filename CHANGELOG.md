@@ -56,6 +56,13 @@ moved into, a document of the right kind.
 - **`docs/DOCUMENTATION-INDEX.md`** — indexes the two new documents and points the user-guide
   link at `USER-GUIDE-CLI.md` rather than the version-pinned `USER-GUIDE-v1.9.0.16.md`.
 
+### Fixed
+
+- **`sf_cli/bin/sf.js`** — when startup fails with `ERR_MODULE_NOT_FOUND` (typically a new
+  dependency such as `ajv` after a plain `git pull` that left `node_modules` stale), the CLI now
+  prints the recovery command (`npm ci && npm run build` in `sf_cli/`, or `./update.sh`) instead
+  of only `Cannot find package '<name>'`.
+
 ### Documentation contract
 
 | Document | Audience | Contains |
