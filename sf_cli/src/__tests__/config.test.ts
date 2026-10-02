@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
@@ -57,5 +57,26 @@ describe('Config', () => {
     createDefaultFiles(tempDir, false);
     const config2 = loadConfig(tempDir);
     expect(config2.provider).toBe('anthropic');
+  });
+
+  // Regression: install.ps1 wrote `source = "C:\tools\skillfoundry"`, where `\s` is an
+  // invalid TOML escape, and sf crashed with no indication of which file was wrong.
+  it('names the file and suggests single quotes when a Windows path breaks the TOML', () => {
+    mkdirSync(join(tempDir, '.skillfoundry'), { recursive: true });
+    writeFileSync(
+      join(tempDir, '.skillfoundry', 'config.toml'),
+      '[framework]\nsource = "C:\\tools\\skillfoundry"\n',
+    );
+    expect(() => loadConfig(tempDir)).toThrow(/Invalid TOML in .*config\.toml: Unknown escape character: 115/);
+    expect(() => loadConfig(tempDir)).toThrow(/use single quotes/);
+  });
+
+  it('accepts a Windows path written as a TOML literal string', () => {
+    mkdirSync(join(tempDir, '.skillfoundry'), { recursive: true });
+    writeFileSync(
+      join(tempDir, '.skillfoundry', 'config.toml'),
+      "[framework]\nsource = 'C:\\tools\\skillfoundry'\n",
+    );
+    expect(() => loadConfig(tempDir)).not.toThrow();
   });
 });

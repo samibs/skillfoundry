@@ -2,7 +2,7 @@ import { jsx as _jsx } from "react/jsx-runtime";
 import { render } from 'ink';
 import { Command } from 'commander';
 import { App } from './app.js';
-import { createDefaultFiles, ensureWorkspace } from './core/config.js';
+import { createDefaultFiles, ensureWorkspace, loadConfig, loadPolicy } from './core/config.js';
 import { ensureRenderer } from './utils/markdown.js';
 import { getFrameworkVersion } from './core/framework.js';
 import { injectCredentials, hasAnyCredentials } from './core/credentials.js';
@@ -46,6 +46,16 @@ program.action(async () => {
     printBanner();
     const workDir = process.cwd();
     ensureWorkspace(workDir);
+    // Validate workspace TOML before Ink renders: a parse error thrown inside the React
+    // tree crashes the REPL with Ink's stack overview instead of a readable message.
+    try {
+        loadConfig(workDir);
+        loadPolicy(workDir);
+    }
+    catch (err) {
+        console.error('[sf]', err instanceof Error ? err.message : String(err));
+        process.exit(1);
+    }
     // First-run: if no credentials detected, launch interactive setup
     if (!hasAnyCredentials()) {
         const result = await runInteractiveSetup();

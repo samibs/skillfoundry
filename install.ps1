@@ -600,7 +600,7 @@ if (-not (Test-Path $configToml)) {
 [framework]
 version = "$Version"
 installed_at = "$(Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')"
-source = "$ScriptDir"
+source = '$ScriptDir'
 
 [platforms]
 installed = [$platformsList]

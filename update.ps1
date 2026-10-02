@@ -1044,7 +1044,7 @@ function Update-Project {
 [framework]
 version = "$FrameworkVersion"
 installed_at = "$(Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')"
-source = "$ScriptDir"
+source = '$ScriptDir'
 
 [platforms]
 installed = [$platformsList]

@@ -29,6 +29,27 @@ const CONFIG_FILE = join(WORK_DIR, 'config.toml');
 const POLICY_FILE = join(WORK_DIR, 'policy.toml');
 
 /**
+ * Read and parse a workspace TOML file, rethrowing parse failures with the file path
+ * and a fix hint. Without this, a bad file surfaces as a bare "Unknown escape character
+ * 115 at row 7, col 20" inside the Ink render, with no indication of which file is wrong.
+ * The usual cause is a Windows path in a double-quoted string, where `\s`, `\U` etc.
+ * are read as escape sequences.
+ */
+function parseTomlFile(path: string): TOML.JsonMap {
+  const raw = readFileSync(path, 'utf-8');
+  try {
+    return TOML.parse(raw);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message.split('\n')[0] : String(err);
+    throw new Error(
+      `Invalid TOML in ${path}: ${detail}\n` +
+        `  If that line holds a Windows path in double quotes, use single quotes instead ` +
+        `(e.g. source = 'C:\\tools\\skillfoundry') or double each backslash.`,
+    );
+  }
+}
+
+/**
  * Delivery Efficiency defaults.
  *
  * Enabled by default: the layer only ever narrows work that risk analysis shows to be
@@ -88,8 +109,7 @@ export function loadConfig(workDir: string): SfConfig {
   if (!existsSync(path)) {
     config = { ...DEFAULT_CONFIG };
   } else {
-    const raw = readFileSync(path, 'utf-8');
-    const parsed = TOML.parse(raw);
+    const parsed = parseTomlFile(path);
     // Extract nested routing.rules before flat merge
     const routingRules: Record<string, string> = {};
     const routing = parsed.routing as Record<string, unknown> | undefined;
@@ -153,8 +173,7 @@ export function loadPolicy(workDir: string): SfPolicy {
   if (!existsSync(path)) {
     return { ...DEFAULT_POLICY };
   }
-  const raw = readFileSync(path, 'utf-8');
-  const parsed = TOML.parse(raw);
+  const parsed = parseTomlFile(path);
   return { ...DEFAULT_POLICY, ...parsed } as unknown as SfPolicy;
 }
 

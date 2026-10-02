@@ -96,7 +96,7 @@ everything.
 # Standalone CLI — no IDE needed
 npm install -g skillfoundry
 sf setup                           # interactive: choose provider, paste API key
-sf forge                           # run the full pipeline from your terminal
+cd my-project && sf                # start the CLI in your project, then type /forge
 
 # Or add skills to your existing IDE
 npx skillfoundry init              # installs skills into Claude Code / Cursor / Copilot
@@ -121,17 +121,38 @@ npm install -g skillfoundry
 sf setup                           # pick a provider, paste your API key
 ```
 
-**2. Describe what you want to build**
+**2. Start the CLI in your project folder**
 
 ```bash
-/prd "add user authentication"     # writes a requirements document to genesis/
+cd my-project
+sf                                 # opens the SkillFoundry terminal app
 ```
 
-**3. Forge production code**
+`sf` on its own opens an interactive session. Everything from here on is typed **inside** that
+session, not in your shell — `sf forge` or `sf prd` will not work. The only commands you run
+directly from the shell are `sf setup` and `sf init`.
 
-```bash
+**3. Describe what you want to build**
+
+Inside `sf`, just type a request in plain language:
+
+```text
+Write a PRD in genesis/ for user authentication with email and password
+```
+
+The AI drafts a requirements document in `genesis/`. To check its quality, type
+`/prd review genesis/<file>.md`.
+
+**4. Forge production code**
+
+```text
 /forge                             # validate, implement, test, and audit automatically
 ```
+
+Type `/help` at any time for the full command list, and `/exit` to quit.
+
+> **In an IDE instead?** In Claude Code, Cursor, Copilot and the other supported tools, step 3 is
+> the `/prd "add user authentication"` skill, and `/forge` works the same way.
 
 > **Using an IDE?** Run `npx skillfoundry init` in your project to add these skills directly to
 > Claude Code, Cursor, Copilot, Codex, Gemini, or Grok Build.
@@ -206,15 +227,15 @@ Two independent systems that share the same agents, gates, and philosophy:
 | **What it is** | Terminal app with its own AI connection | Skill files your AI coding tool reads |
 | **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build |
 | **Setup** | `sf setup` — interactive wizard, paste API key | `skillfoundry init` — copies skills into your project |
-| **Full pipeline** | `sf forge`, `sf plan`, `sf gates` (35 commands) | `/forge`, `/go`, `/goma` (98 skills) |
+| **Full pipeline** | `/forge`, `/plan`, `/gates` typed inside `sf` (35 commands) | `/forge`, `/go`, `/goma` (98 skills) |
 | **Autonomous mode** | Not available | `/goma` — full autonomous with safety gates |
 | **Provider switching** | Built-in: 6 providers, switch at runtime | Uses your IDE's provider |
 | **Budget controls** | Per-run and monthly cost caps | Not available |
 | **Persistent memory** | `/memory`, `/lessons` | `/memory`, `/gohm` |
 | **Requires** | Node.js v20+ | An AI coding tool |
 
-**No IDE? Start with `sf`.** `npm install -g skillfoundry && sf setup` and you're running the
-full pipeline in under a minute. Already using Cursor or Claude Code? Install the skills on top
+**No IDE? Start with `sf`.** Run `npm install -g skillfoundry && sf setup`, then `sf` in your
+project folder, and you're running the full pipeline in under a minute. Already using Cursor or Claude Code? Install the skills on top
 and get autonomous mode and full orchestration as well.
 
 ### 1. Inside your IDE (recommended)
@@ -697,6 +718,31 @@ Update every registered project at once:
 ./update.sh --all                      # Linux/macOS
 .\update.ps1 -All                      # Windows
 ```
+
+> Updated with `git pull` alone? The CLI also needs its dependencies refreshed — run the update
+> script above, or `npm ci && npm run build` inside the `sf_cli` folder.
+
+---
+
+## Troubleshooting
+
+**`sf` exits with `Cannot find package '…'`** — the CLI's dependencies are out of date, usually
+after a `git pull`. Run the update script (see [Updating](#updating)), or `npm ci && npm run build`
+inside the framework's `sf_cli` folder.
+
+**`sf` exits with `Invalid TOML in …\.skillfoundry\config.toml: Unknown escape character`** —
+on Windows, older installers wrote the framework path in double quotes, where TOML treats `\` as
+an escape. Open that file and change the quotes on the `source = ...` line to single quotes:
+
+```toml
+source = 'C:\tools\skillfoundry'
+```
+
+**`sf forge` says `too many arguments`** — slash commands run *inside* the CLI. Type `sf` to open
+it, then `/forge`.
+
+**The AI does not answer** — check that a key is stored with `sf setup --list`. If your provider
+shows `not configured`, run `sf setup` again.
 
 ---
 
