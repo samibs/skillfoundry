@@ -339,6 +339,62 @@ The `budget` subcommand sets a threshold (mutation, no confirmation needed).
 
 ---
 
+## Multi-Agent Cost Accounting
+
+When multi-agent execution is active (`.ai/ledger.json` has an `active_wave`), aggregate cost by
+**wave · agent · work item · activity** (planning, implementation, testing, debugging, review,
+orchestration).
+
+Flag avoidable repetition:
+
+- identical full-suite runs by multiple workers;
+- repeated repository-wide scans;
+- repeated ingestion of the same PRD;
+- repeated analysis of the same successful log;
+- agents idling while still consuming context.
+
+Optionally record an expected test budget per work item:
+
+```json
+{ "testBudget": { "targetedRunsExpected": 5, "fullSuiteRunsExpected": 1, "e2eRunsExpected": 1 } }
+```
+
+Exceeding the expected expensive-test budget is allowed when correctness requires it — **record
+the reason**.
+
+**Cost optimization MUST NOT suppress tests or security checks** required by acceptance criteria,
+Anvil, BPSBS, or production standards.
+
+---
+
+## Delivery Efficiency View
+
+> Canonical policy: `agents/_delivery-efficiency.md`.
+
+```bash
+/cost --efficiency          # or /delivery efficiency
+```
+
+Reports, per task and in aggregate: delivery budget, validation scope, validation commands,
+**repeated commands**, evidence reused vs regenerated, **evidence reuse rate**, validation
+seconds saved by reuse, and repository-wide runs avoided at worker level.
+
+The metric being approximated is:
+
+```
+accepted useful change / execution cost
+```
+
+**Not token count.** Optimising tokens alone rewards an agent that thinks less and ships
+worse. What this surfaces instead is wasted engineering: the same suite run by three
+workers, the same repository scan repeated, the same PRD re-read, a LOW change that
+triggered a full-suite run.
+
+Values the system cannot observe are reported as **unknown**, never estimated. A fabricated
+token count poisons every ratio computed from it.
+
+---
+
 ## Usage in GitHub Copilot CLI
 
 To use this agent, invoke it via the task tool:

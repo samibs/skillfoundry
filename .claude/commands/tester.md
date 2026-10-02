@@ -312,7 +312,6 @@ Suggested next steps: [for user or coder]
 
 See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 
----
 
 ## Multi-Agent Test Execution Policy
 
@@ -352,7 +351,6 @@ artifact path — **never inject complete logs into context**.
 
 Testing remains ruthless. Execution becomes cost-aware.
 
----
 
 ## Test Scope Selection (Delivery Efficiency)
 

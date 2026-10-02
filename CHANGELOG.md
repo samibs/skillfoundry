@@ -124,6 +124,24 @@ moved into, a document of the right kind.
   and are excluded from `summary`, `apps` and the distributions. `freshness.latestHarvestAt` is
   added. With no completed run recorded, all rows count as before. Test added.
 
+### Fixed — platform skill parity
+
+- **`/delivery` and `/mission` existed only for Claude Code.** Both were added in 5.31/5.32 as
+  standalone commands, but `scripts/sync-platforms.sh sync --all` was not run afterwards, so Codex
+  (`.agents/skills/`), Gemini, Cursor and Copilot had 97 of the 99 skills. Generated mirrors now
+  exist on all five platforms. (`delivery-efficiency` and Cursor's always-on
+  `multi-agent-protocol` rule are intentional policy pointers, not mirrors, and are kept.)
+- **Stale mirrors refreshed.** The same sync brought the Codex/Gemini/Cursor/Copilot copies of
+  `/context`, `/cost`, `/domain`, `/evolve`, `/forge`, `/go` and `/onboard` up to their Claude
+  sources — they lacked the 5.31/5.32 additions (e.g. *Parallel Forge Execution*, mission and
+  delivery-budget sections). Additions only.
+- **`/tester` source drift.** The *Multi-Agent Test Execution Policy* and *Test Scope Selection*
+  sections had been hand-added to `.claude/commands/tester.md` only, so a sync would have deleted
+  them and no other platform had them. They now live in `agents/ruthless-tester.md` and are
+  generated to all platforms. `sync-platforms.sh check`: 41/41 in sync, 0 drifted (was 1).
+  `parity-check.sh`: 0 missing (was 8); its title-only "drift" count is unchanged in kind.
+- Skill count corrected to 99 in the README comparison table and `docs/QUICK-REFERENCE.md`.
+
 ### Documentation — MCP server
 
 - **README** — new *MCP server* section (start, connect Claude Code at user scope, usage) and a

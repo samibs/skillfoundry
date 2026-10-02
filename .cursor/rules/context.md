@@ -349,6 +349,64 @@ See `agents/_context-discipline.md`.
 
 ---
 
+## Multi-Agent Context Economy
+
+When `.ai/ledger.json` exists:
+
+- treat it as the **execution-state authority** — not chat history, not markdown status reports;
+- load only the active work item's requirement, patch guide, diff, and relevant test evidence;
+- do not repeatedly inject complete PRD sets into every worker;
+- do not paste full successful build or test logs into context;
+- reference durable paths instead of re-injecting content:
+
+```text
+LEDGER:       .ai/ledger.json
+PATCH GUIDE:  .ai/patches/<work-item>.md
+EVIDENCE:     .ai/evidence/<work-item>/tests.json
+RAW LOG:      .skillfoundry/mission-logs/<label>-<ts>.log
+```
+
+Report consumption by category: **planning · source/code · tests-and-logs · repeated context ·
+orchestration · recoverable-from-disk.**
+
+Flag duplicated consumption across agents — the same PRD read by ten workers, the same
+repository scan run five times, the same successful log analysed twice.
+
+Prefer targeted reload over full-session reconstruction.
+
+> Token limits may reduce context consumption. They must never reduce required validation.
+
+---
+
+## Shared Mission Facts (Delivery Efficiency)
+
+> Canonical policy: `agents/_delivery-efficiency.md`.
+
+`/context` is the shared source of mission facts, so parallel workers stop rediscovering
+the same things. Facts are held with an explicit confidence, because treating a guess like
+a specification is how an assumption silently becomes a premise:
+
+| Confidence | Meaning | Reuse |
+|---|---|---|
+| `AUTHORITATIVE` | From the specification or a verified source | Yes |
+| `INFERRED` | Derived by an agent from the code | Yes, unless the change is safety-critical |
+| `ASSUMPTION` | Unverified | No — verify first |
+
+Also tracked: **reusable evidence**, **invalidated evidence**, changed-file impact, prior
+worker handoffs, and integration state.
+
+```bash
+/delivery context            # facts by confidence, handoffs, reuse counters
+```
+
+**Re-derive a fact only when** the repository state changed, the fact lapsed, the fact is
+an assumption, or safety requires independent verification. Otherwise use what is there.
+
+A fact records the files it depends on, so a change to those files invalidates it
+precisely — rather than discarding the whole context and forcing a full rediscovery.
+
+---
+
 ## How to Use in Cursor
 
 This rule activates when you reference it in chat. Examples:

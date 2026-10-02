@@ -232,7 +232,7 @@ Two independent systems that share the same agents, gates, and philosophy:
 | **What it is** | Terminal app with its own AI connection | Skill files your AI coding tool reads |
 | **Runs inside** | Your terminal (any OS, no IDE needed) | Claude Code, Copilot, Cursor, Codex, Gemini, Grok Build |
 | **Setup** | `sf setup` — interactive wizard, paste API key | `skillfoundry init` — copies skills into your project |
-| **Full pipeline** | `/forge`, `/plan`, `/gates` typed inside `sf` (35 commands) | `/forge`, `/go`, `/goma` (98 skills) |
+| **Full pipeline** | `/forge`, `/plan`, `/gates` typed inside `sf` (35 commands) | `/forge`, `/go`, `/goma` (99 skills) |
 | **Autonomous mode** | Not available | `/goma` — full autonomous with safety gates |
 | **Provider switching** | Built-in: 6 providers, switch at runtime | Uses your IDE's provider |
 | **Budget controls** | Per-run and monthly cost caps | Not available |

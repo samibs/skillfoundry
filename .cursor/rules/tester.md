@@ -323,6 +323,82 @@ Suggested next steps: [for user or coder]
 
 See `agents/_reflection-protocol.md`. Before and after each task, self-score **quality**, **correctness**, **completeness** (0-10); if overall < 7.0, revise before handoff.
 
+
+## Multi-Agent Test Execution Policy
+
+Read the active work item from `.ai/ledger.json`. Use the **cheapest sufficient** test level first:
+
+```text
+1. static / syntax validation
+2. targeted unit
+3. targeted component / service
+4. targeted API / integration
+5. affected-module regression
+6. full regression / E2E — only at defined gates
+```
+
+Do not run a full suite because a worker changed one bounded unit. Full and expensive suites are
+expected at: feature completion · wave integration · high-risk shared-component changes · release
+gates · explicit acceptance criteria.
+
+Record results as bounded, machine-readable evidence:
+
+```bash
+/mission evidence <work-item> --kind tests --run "npm test -- src/auth"
+```
+
+This captures exit code, pass/fail/skip counts, duration, **normal termination**, **orphan check**,
+source SHA, and a path to the full log. Return counts, exit codes, failure excerpts and the
+artifact path — **never inject complete logs into context**.
+
+### A green suite is not automatically a pass
+
+- If the test host did not terminate normally, the result is **NOT A CLEAN VALIDATION**.
+- If owned processes survived the run, cleanup is incomplete — `/mission proc stop <agent>`.
+- Before calling a failure "pre-existing", produce a baseline run at the accepted baseline SHA.
+  Without it the claim is not substantiated.
+- Classify the defect before changing code: an `ENVIRONMENT_DEFECT` is never fixed by editing
+  product source.
+
+Testing remains ruthless. Execution becomes cost-aware.
+
+
+## Test Scope Selection (Delivery Efficiency)
+
+> Canonical policy: `agents/_delivery-efficiency.md`.
+
+`smoke` · `targeted` · `affected` · `integration` · `full`
+
+Scope is derived from the **delivery budget**, the **changed files**, the **acceptance
+criteria**, an **explicit override**, and **dependency impact**:
+
+```bash
+/delivery scope --budget MEDIUM --files src/a.ts --dependents 20
+```
+
+**`full` is never chosen automatically.** It is reached only by explicit override or at the
+integration gate. Always state *why* a scope was selected — the decision is recorded, not
+assumed.
+
+### Escalate on evidence, not on nerves
+
+```
+targeted tests fail → diagnose → fix → targeted tests pass → STOP
+```
+
+A successful fix is **not** grounds for a full-suite run. Escalate only when a failure names
+files outside the change, or dependency analysis reveals wider impact:
+
+```bash
+/delivery check --kind test --command "npm test -- src/auth" --files src/auth/token.ts
+```
+
+`REUSE` means already proven against this exact state. `FIX_FIRST` means it already failed
+against this state — fix the cause rather than re-running it unchanged. `WAIT` means another
+worker is running it; consume its evidence instead of duplicating the work.
+
+A HIGH-risk change cannot be proven by `smoke` alone — that override is refused.
+
 ---
 
 ## How to Use in Cursor

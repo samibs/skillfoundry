@@ -535,3 +535,46 @@ See `agents/_reflection-protocol.md`. Before and after each task, self-score **q
 | `/replay` | Forge state is replayable via `/replay` |
 | `/metrics` | Forge execution metrics tracked automatically |
 | `/context` | Budget monitored throughout; compaction triggered as needed |
+
+---
+
+## Parallel Forge Execution
+
+When Forge delegates two or more write-capable phases or work items, apply
+`MULTI_AGENT_PROTOCOL.md` (operational module: `agents/_governed-mission-protocol.md`).
+
+- Parallelize only **independent** work; serialize dependent or colliding work.
+- Assign named workers and register them: `/mission agent register <name> --item <ID> --mode WRITE`.
+- Use isolated **git-native** worktrees — one per writer, never shared.
+- Record the resolved base SHA, never a moving branch name.
+- Require `.ai/patches/<work-item>.md` before material writes.
+- Attest before the first product write: `/mission attest <ID>` then `/mission gate <ID>`.
+- Treat **Anvil** as the handoff gate between worker and integration state.
+- Never let parallel workers modify overlapping source scopes — `/mission wave plan` defers collisions.
+- Stop all worker-owned processes before phase completion: `/mission proc stop <agent>`.
+
+Forge may parallelize implementation, testing, and review, but **dependency ordering and write
+isolation take precedence over speed.**
+
+Do not duplicate the protocol inside Forge — reference it.
+
+---
+
+## Implementation Within the Delivery Budget
+
+> Canonical policy: `agents/_delivery-efficiency.md`.
+
+Forge respects the delivery budget assigned at task startup:
+
+- **Limit file inspection to the relevant scope.** LOW inspects only the files it touches;
+  MEDIUM stays inside the affected module; HIGH analyses the blast radius first and writes
+  an explicit plan before touching code.
+- **Use existing mission context.** Do not re-derive the architecture, the changed-file set
+  or the service map when `/delivery context` already holds them.
+- **No unrelated refactoring.** No opportunistic cleanup, renaming or reformatting that the
+  task did not ask for. It expands the diff, invalidates evidence, and enlarges the review.
+- **Escalate only when justified** — cross-module impact, a compile failure outside the
+  touched area, a discovered auth or migration dependency. Record the reason and evidence:
+  `/delivery escalate --budget LOW --to MEDIUM --reason "..." --evidence "..."`.
+- **Stop once acceptance criteria are met.** `/delivery complete …` gives the objective
+  verdict. After it says complete, further inspection is rework, not diligence.
