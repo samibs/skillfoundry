@@ -82,7 +82,7 @@ export function useStream(
   );
 
   const sendMessage = useCallback(
-    async (userMessage: string, history: Message[], permissionMode?: PermissionMode, activeAgent?: string | null, activeTeam?: TeamDefinitionRef | null) => {
+    async (userMessage: string, history: Message[], permissionMode?: PermissionMode, activeAgent?: string | null, activeTeam?: TeamDefinitionRef | null, displayText?: string) => {
       setIsStreaming(true);
       setStreamContent('');
       setThinkingContent('');
@@ -95,7 +95,11 @@ export function useStream(
         permissionModeRef.current = permissionMode;
       }
 
-      addMessage({ role: 'user', content: userMessage });
+      addMessage({
+        role: 'user',
+        content: userMessage,
+        ...(displayText ? { metadata: { displayContent: displayText } } : {}),
+      });
 
       // Build Anthropic messages from history for tool-enabled conversation
       const anthropicMessages: AnthropicMessage[] = [

@@ -134,14 +134,13 @@ directly from the shell are `sf setup` and `sf init`.
 
 **3. Describe what you want to build**
 
-Inside `sf`, just type a request in plain language:
-
 ```text
-Write a PRD in genesis/ for user authentication with email and password
+/prd create user authentication with email and password
 ```
 
-The AI drafts a requirements document in `genesis/`. To check its quality, type
-`/prd review genesis/<file>.md`.
+The AI may ask a few questions first (who the users are, what success looks like), then saves
+a requirements document to `genesis/` (in the default permission mode it asks before writing the file). To check
+its quality, type `/prd review genesis/<file>.md`.
 
 **4. Forge production code**
 
@@ -213,9 +212,8 @@ Or use autonomous mode and just say what you want in plain English:
 > "the login is broken"               → classified as BUG → debugger + fixer dispatched
 ```
 
-> **These are IDE skills** (Claude Code, Cursor, Copilot, …). In the standalone `sf` CLI,
-> `/prd` only reviews an existing PRD and there is no `/autonomous`: write the PRD by asking in
-> plain language (*"Write a PRD in genesis/ for …"*), then run `/forge`. See
+> **In the standalone `sf` CLI** the first step is `/prd create "feature"`, and there is no
+> `/autonomous` — type requests in plain language instead. See
 > [Quick Start](#quick-start-5-minutes).
 
 A step-by-step walkthrough of the pipeline internals lives in
@@ -337,9 +335,8 @@ against any diff — including code your IDE's AI wrote on its own — with `/ve
 /forge --dry-run                           → read-only scan, no AI execution
 ```
 
-In the `sf` CLI, replace the first line with a plain-language request — *"Write a PRD in
-genesis/ for user authentication with OAuth2"* — and check it with `/prd review <file>`. `/go` is
-an IDE skill; in the CLI, `/forge` runs the pipeline.
+In the `sf` CLI the first line is `/prd create user authentication with OAuth2`; check the result
+with `/prd review <file>`. `/go` is an IDE skill — in the CLI, `/forge` runs the pipeline.
 
 ### Multi-agent teams
 
@@ -665,6 +662,7 @@ These run inside the `sf` terminal app:
 | `/generate` | Generate JWT tokens, API keys, passwords, certificates, `.env` files locally |
 | `/boost` | Fast code transforms without an LLM (var→const, add types, …) |
 | `/optimize` | Mutation-based skill prompt optimization |
+| `/prd create <idea>` | Draft a PRD with the AI and save it to `genesis/` |
 | `/prd review <path>` | Score a PRD on four dimensions with actionable feedback |
 | `/runtime` | Runtime status: agent pool, message bus, vector store |
 | `/hook install\|uninstall\|status` | Manage git hook integration for quality gates |

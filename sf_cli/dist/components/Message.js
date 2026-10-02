@@ -21,7 +21,7 @@ export function Message({ message }) {
         : (ROLE_LABELS[message.role] || message.role);
     const content = message.role === 'assistant'
         ? renderMarkdown(message.content)
-        : message.content;
+        : (message.metadata?.displayContent ?? message.content);
     return (_jsx(Box, { flexDirection: "column", marginBottom: 1, children: _jsx(Box, { borderStyle: borders.card, borderLeft: true, borderRight: false, borderTop: false, borderBottom: false, borderLeftColor: color, paddingLeft: 1, children: _jsxs(Box, { flexDirection: "column", children: [_jsxs(Box, { children: [_jsxs(Text, { bold: true, color: color, children: [symbols.prompt, " ", label, ' '] }), _jsx(Box, { flexDirection: "column", flexShrink: 1, children: _jsx(Text, { wrap: "wrap", children: content }) })] }), message.metadata?.costUsd !== undefined && (_jsxs(Text, { color: colors.textMuted, children: ['  ', symbols.bullet, " ", message.metadata.inputTokens, " in / ", message.metadata.outputTokens, " out", ' ', symbols.bullet, ' ', _jsxs(Text, { color: colors.warning, children: ["$", message.metadata.costUsd.toFixed(4)] }), message.metadata.mode ? _jsxs(Text, { color: colors.textMuted, children: [" ", symbols.bullet, " ", message.metadata.mode] }) : '', message.metadata.routedAgent ? (_jsxs(Text, { color: colors.secondary, children: [" ", symbols.bullet, " ", symbols.arrow, message.metadata.routedAgent, ":", message.metadata.routingConfidence] })) : ''] }))] }) }) }));
 }
 //# sourceMappingURL=Message.js.map

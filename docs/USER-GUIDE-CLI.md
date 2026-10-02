@@ -539,6 +539,18 @@ Each micro-gate uses read-only tools (read, glob, grep) with a maximum of 3 turn
 
 ## 9. The Forge Pipeline
 
+`/forge` builds what the PRDs in `genesis/` describe, so start by writing one:
+
+```
+  you> /prd create invoice export to CSV with date filters
+```
+
+The AI follows the same PRD Architect instructions as the IDE `/prd` skill: it asks for anything
+the idea leaves open (users, success criteria, scope), then writes
+`genesis/<date>-<slug>.md`; in the default `ask` permission mode you approve the write first. Check it with
+`/prd review genesis/<file>.md`, which scores completeness, specificity, consistency and scope.
+`/prd <idea>` without `create` does the same.
+
 `/forge` runs the complete pipeline in one command:
 
 ```

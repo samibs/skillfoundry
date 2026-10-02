@@ -28,7 +28,10 @@ export function App({ workDir }) {
             }
             const cmd = getCommand(parsed.name);
             if (cmd) {
-                const result = await cmd.execute(parsed.args, sessionContext);
+                const result = await cmd.execute(parsed.args, {
+                    ...sessionContext,
+                    sendToAI: (prompt, displayText) => sendMessage(prompt, messages, permissionMode, activeAgent, activeTeam, displayText),
+                });
                 if (result) {
                     addMessage({ role: 'system', content: result });
                 }

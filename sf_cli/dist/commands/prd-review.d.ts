@@ -57,4 +57,20 @@ export declare function parsePrdReviewArgs(args: string): {
     verbose: boolean;
     noCache: boolean;
 };
+/**
+ * Turn a feature idea into a filename slug: lowercase ASCII words joined by
+ * hyphens, at most 50 characters, never empty.
+ */
+export declare function slugifyIdea(idea: string): string;
+/** Strip a leading `create` keyword and surrounding quotes from `/prd` arguments. */
+export declare function parsePrdIdea(args: string): string;
+/**
+ * Build the prompt for `/prd create`: the same PRD Architect instructions the IDE
+ * `/prd` skill uses (`.claude/commands/prd.md`), plus where to save the result.
+ * Throws if the framework's skill file cannot be found.
+ */
+export declare function buildPrdCreatePrompt(idea: string, frameworkRoot: string, today?: Date): {
+    prompt: string;
+    targetPath: string;
+};
 export declare const prdReviewCommand: SlashCommand;

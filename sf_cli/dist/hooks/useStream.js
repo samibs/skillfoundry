@@ -42,7 +42,7 @@ export function useStream(config, policy, addMessage, workDir = process.cwd()) {
             setPendingPermission({ toolCall, reason, resolve });
         });
     }, []);
-    const sendMessage = useCallback(async (userMessage, history, permissionMode, activeAgent, activeTeam) => {
+    const sendMessage = useCallback(async (userMessage, history, permissionMode, activeAgent, activeTeam, displayText) => {
         setIsStreaming(true);
         setStreamContent('');
         setThinkingContent('');
@@ -53,7 +53,11 @@ export function useStream(config, policy, addMessage, workDir = process.cwd()) {
         if (permissionMode) {
             permissionModeRef.current = permissionMode;
         }
-        addMessage({ role: 'user', content: userMessage });
+        addMessage({
+            role: 'user',
+            content: userMessage,
+            ...(displayText ? { metadata: { displayContent: displayText } } : {}),
+        });
         // Build Anthropic messages from history for tool-enabled conversation
         const anthropicMessages = [
             ...history

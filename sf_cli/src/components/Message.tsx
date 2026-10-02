@@ -31,7 +31,7 @@ export function Message({ message }: MessageProps) {
   const content =
     message.role === 'assistant'
       ? renderMarkdown(message.content)
-      : message.content;
+      : (message.metadata?.displayContent ?? message.content);
 
   return (
     <Box flexDirection="column" marginBottom={1}>

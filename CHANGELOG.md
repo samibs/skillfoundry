@@ -142,6 +142,27 @@ moved into, a document of the right kind.
   `parity-check.sh`: 0 missing (was 8); its title-only "drift" count is unchanged in kind.
 - Skill count corrected to 99 in the README comparison table and `docs/QUICK-REFERENCE.md`.
 
+### Added — `/prd create` in the `sf` CLI
+
+- **`/prd create <idea>`** (and `/prd <idea>`) drafts a PRD from the REPL. Previously the CLI's
+  `/prd` only supported `review`, and any other argument printed usage — although the README told
+  users to run `/prd "idea"`. The command sends the AI the same PRD Architect instructions as the
+  IDE skill (`.claude/commands/prd.md`, read from the framework root) plus a target of
+  `genesis/<YYYY-MM-DD>-<slug>.md`; the AI asks intake questions if needed and writes the file
+  with its write tool (approval required in the default `ask` mode). `/prd` with no arguments
+  prints usage for both subcommands.
+- **Commands can now start an AI turn.** `SessionContext` gains an optional
+  `sendToAI(prompt, displayText?)`, provided by the REPL (`app.tsx`) and backed by
+  `useStream.sendMessage`, which takes a new optional `displayText`. The full prompt is what the
+  model receives and what stays in history for follow-up turns; `Message.metadata.displayContent`
+  shows the short form in the transcript instead of the 11k-character skill text.
+- New exports in `commands/prd-review.ts`: `slugifyIdea`, `parsePrdIdea`, `buildPrdCreatePrompt`.
+  Tests: 8 new cases in `prd-review.test.ts`; the old "unknown subcommand prints usage" case now
+  covers the no-argument usage, since free text is treated as an idea.
+- Docs: README Quick Start step 3, *How It Works*, *PRD-first development* and the `sf` command
+  table use `/prd create`; `QUICKSTART.md` and `docs/USER-GUIDE-CLI.md` (Forge Pipeline section)
+  updated to match.
+
 ### Documentation — MCP server
 
 - **README** — new *MCP server* section (start, connect Claude Code at user scope, usage) and a

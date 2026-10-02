@@ -79,6 +79,8 @@ export interface Message {
         routedAgent?: string;
         routingConfidence?: string;
         activeTeam?: string;
+        /** Shown in the transcript instead of `content` (which is what the model receives). */
+        displayContent?: string;
     };
     toolCalls?: ToolCall[];
     toolResults?: ToolResult[];
@@ -271,6 +273,12 @@ export interface SessionContext {
     setState: (state: Partial<SfState>) => void;
     setActiveAgent: (name: string | null) => void;
     setActiveTeam: (team: TeamDefinitionRef | null) => void;
+    /**
+     * Send a prompt to the AI as a user turn, as if typed at the prompt. `displayText`
+     * replaces the prompt in the transcript (e.g. to hide long skill instructions).
+     * Only present in the interactive REPL.
+     */
+    sendToAI?: (prompt: string, displayText?: string) => Promise<void>;
 }
 export type StreamCallback = (chunk: string, done: boolean) => void;
 export type ToolUseCallback = (toolCalls: ToolCall[]) => void;

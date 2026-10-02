@@ -80,6 +80,9 @@ import {
   formatReviewOutput,
   getDimensionsBelow,
   prdReviewCommand,
+  slugifyIdea,
+  parsePrdIdea,
+  buildPrdCreatePrompt,
 } from '../commands/prd-review.js';
 import { scorePrd, clearScoreCache, isPrdContent } from '../core/prd-scorer.js';
 import { existsSync, readFileSync } from 'node:fs';
@@ -398,11 +401,12 @@ describe('prdReviewCommand — error handling', () => {
     expect(result).toContain('path is required');
   });
 
-  it('returns error message for unknown subcommand', async () => {
+  it('shows usage for both subcommands when called with no arguments', async () => {
     const session = makeSession();
-    const result = await prdReviewCommand.execute('unknown genesis/feature.md', session);
+    const result = await prdReviewCommand.execute('', session);
     expect(result).toContain('Usage');
-    expect(result).toContain('review');
+    expect(result).toContain('/prd create <idea>');
+    expect(result).toContain('/prd review <path>');
   });
 
   it('returns error when file does not exist', async () => {
@@ -605,5 +609,75 @@ describe('PrdQualityBlockError', () => {
     expect(err.message).toContain('completeness: 4/10');
     expect(err.message).toContain('specificity: 3/10');
     expect(err.message).toContain('minimum 6/10');
+  });
+});
+
+// ── /prd create ───────────────────────────────────────────────────────────────
+
+describe('slugifyIdea / parsePrdIdea', () => {
+  it('builds a filename-safe slug', () => {
+    expect(slugifyIdea('Banana ripeness tracker — with Alerts!')).toBe('banana-ripeness-tracker-with-alerts');
+    expect(slugifyIdea('Électricité & café')).toBe('electricite-cafe');
+    expect(slugifyIdea('!!!')).toBe('feature');
+    expect(slugifyIdea('a'.repeat(80)).length).toBeLessThanOrEqual(50);
+  });
+
+  it('strips the create keyword and surrounding quotes', () => {
+    expect(parsePrdIdea('create "a banana tracker"')).toBe('a banana tracker');
+    expect(parsePrdIdea("create 'x'")).toBe('x');
+    expect(parsePrdIdea('a banana tracker')).toBe('a banana tracker');
+    expect(parsePrdIdea('create')).toBe('');
+  });
+});
+
+describe('buildPrdCreatePrompt', () => {
+  it('embeds the PRD skill and the dated genesis/ target path', () => {
+    const { prompt, targetPath } = buildPrdCreatePrompt('banana tracker', '/fw', new Date('2026-10-02T09:00:00Z'));
+    expect(targetPath).toBe('genesis/2026-10-02-banana-tracker.md');
+    expect(prompt).toContain(GOOD_PRD_CONTENT.trim().slice(0, 40));
+    expect(prompt).toContain('Feature idea: banana tracker');
+    expect(prompt).toContain('`genesis/2026-10-02-banana-tracker.md`');
+    expect(prompt).toContain('/prd review genesis/2026-10-02-banana-tracker.md');
+  });
+
+  it('throws when the PRD skill file is missing', () => {
+    vi.mocked(existsSync).mockReturnValueOnce(false);
+    expect(() => buildPrdCreatePrompt('x', '/fw')).toThrow(/PRD skill not found/);
+  });
+});
+
+describe('prdReviewCommand — create', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('sends the PRD prompt to the AI with a short transcript line', async () => {
+    const sendToAI = vi.fn().mockResolvedValue(undefined);
+    const session = makeSession({ sendToAI });
+    const result = await prdReviewCommand.execute('create "a banana tracker"', session);
+
+    expect(result).toBeUndefined();
+    expect(sendToAI).toHaveBeenCalledTimes(1);
+    const [prompt, display] = sendToAI.mock.calls[0];
+    expect(prompt).toContain('Feature idea: a banana tracker');
+    expect(display).toMatch(/^\/prd create a banana tracker {2}→ {2}genesis\/\d{4}-\d{2}-\d{2}-a-banana-tracker\.md$/);
+  });
+
+  it('treats /prd <idea> without "create" as a create request', async () => {
+    const sendToAI = vi.fn().mockResolvedValue(undefined);
+    await prdReviewCommand.execute('banana tracker', makeSession({ sendToAI }));
+    expect(sendToAI.mock.calls[0][0]).toContain('Feature idea: banana tracker');
+  });
+
+  it('asks for an idea when create has none', async () => {
+    const sendToAI = vi.fn();
+    const result = await prdReviewCommand.execute('create', makeSession({ sendToAI }));
+    expect(result).toContain('describe the feature');
+    expect(sendToAI).not.toHaveBeenCalled();
+  });
+
+  it('explains that create needs the interactive session when no AI channel exists', async () => {
+    const result = await prdReviewCommand.execute('create banana', makeSession());
+    expect(result).toContain('interactive sf session');
   });
 });

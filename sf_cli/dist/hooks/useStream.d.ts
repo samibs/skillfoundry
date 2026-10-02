@@ -11,7 +11,7 @@ export declare function useStream(config: SfConfig, policy: SfPolicy, addMessage
         reason: string;
         resolve: (response: PermissionResponse) => void;
     } | null;
-    sendMessage: (userMessage: string, history: Message[], permissionMode?: PermissionMode, activeAgent?: string | null, activeTeam?: TeamDefinitionRef | null) => Promise<void>;
+    sendMessage: (userMessage: string, history: Message[], permissionMode?: PermissionMode, activeAgent?: string | null, activeTeam?: TeamDefinitionRef | null, displayText?: string) => Promise<void>;
     abort: () => void;
     handlePermissionResponse: (response: PermissionResponse) => void;
     setPermissionMode: (mode: PermissionMode) => void;

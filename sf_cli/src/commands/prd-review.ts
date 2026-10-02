@@ -15,11 +15,12 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve, basename } from 'node:path';
+import { resolve, basename, join } from 'node:path';
 import type { SlashCommand, SessionContext, PrdScore, PrdDimensionScore } from '../types.js';
 import { scorePrd, isPrdContent, clearScoreCache, PrdNotDetectedError, PrdScoringError } from '../core/prd-scorer.js';
 import { AnthropicAdapter } from '../core/provider.js';
 import { getLogger } from '../utils/logger.js';
+import { getFrameworkRoot } from '../core/framework.js';
 
 // ── ANSI color helpers (chalk-free to avoid extra deps) ──────────────────────
 
@@ -191,29 +192,124 @@ export function parsePrdReviewArgs(args: string): {
   return { filePath, json, threshold, verbose, noCache };
 }
 
+// ── PRD creation ─────────────────────────────────────────────────────────────
+
+/**
+ * Turn a feature idea into a filename slug: lowercase ASCII words joined by
+ * hyphens, at most 50 characters, never empty.
+ */
+export function slugifyIdea(idea: string): string {
+  const slug = idea
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 50)
+    .replace(/-+$/, '');
+  return slug || 'feature';
+}
+
+/** Strip a leading `create` keyword and surrounding quotes from `/prd` arguments. */
+export function parsePrdIdea(args: string): string {
+  return args
+    .trim()
+    .replace(/^create\b\s*/i, '')
+    .trim()
+    .replace(/^(["'])([\s\S]*)\1$/, '$2')
+    .trim();
+}
+
+/**
+ * Build the prompt for `/prd create`: the same PRD Architect instructions the IDE
+ * `/prd` skill uses (`.claude/commands/prd.md`), plus where to save the result.
+ * Throws if the framework's skill file cannot be found.
+ */
+export function buildPrdCreatePrompt(idea: string, frameworkRoot: string, today: Date = new Date()): {
+  prompt: string;
+  targetPath: string;
+} {
+  const skillPath = join(frameworkRoot, '.claude', 'commands', 'prd.md');
+  if (!existsSync(skillPath)) {
+    throw new Error(`PRD skill not found at ${skillPath}`);
+  }
+  const skill = readFileSync(skillPath, 'utf-8');
+  const date = today.toISOString().slice(0, 10);
+  const targetPath = `genesis/${date}-${slugifyIdea(idea)}.md`;
+
+  const prompt = [
+    skill.trim(),
+    '',
+    '---',
+    '',
+    '## This request',
+    '',
+    `Feature idea: ${idea}`,
+    '',
+    'Follow the PRD workflow above. Ask the required intake questions first if the idea does not',
+    'already answer them, and wait for the answers. When the PRD is complete, save it with the',
+    `file-write tool to \`${targetPath}\` in the current project (create \`genesis/\` if needed;`,
+    "if the project has its own `genesis/TEMPLATE.md`, follow that template's sections). Then tell",
+    `the user to check it with \`/prd review ${targetPath}\` and build it with \`/forge\`.`,
+  ].join('\n');
+
+  return { prompt, targetPath };
+}
+
+function prdUsage(): string {
+  return [
+    '',
+    `  PRD Tools`,
+    `  Usage: /prd create <idea>`,
+    `         /prd review <path> [--json] [--threshold N] [--verbose] [--no-cache]`,
+    ``,
+    `  Subcommands:`,
+    `    create <idea>  Draft a PRD with the AI and save it to genesis/`,
+    `    review <path>  Score a PRD file on completeness, specificity, consistency, scope`,
+    ``,
+    `  /prd <idea> (without "create") also drafts a PRD.`,
+    '',
+  ].join('\n');
+}
+
+async function createPrd(args: string, session: SessionContext): Promise<string | void> {
+  const idea = parsePrdIdea(args);
+  if (!idea) {
+    return ['', `  ${RED}Error: describe the feature${RESET}`, `  Usage: /prd create <idea>`, ''].join('\n');
+  }
+  if (!session.sendToAI) {
+    return ['', `  ${RED}Error: /prd create needs the interactive sf session${RESET}`, ''].join('\n');
+  }
+
+  let built: { prompt: string; targetPath: string };
+  try {
+    built = buildPrdCreatePrompt(idea, getFrameworkRoot());
+  } catch (err) {
+    getLogger().error('prd-review', 'create_skill_unavailable', { error: err instanceof Error ? err.message : String(err) });
+    return ['', `  ${RED}Error: ${err instanceof Error ? err.message : String(err)}${RESET}`, ''].join('\n');
+  }
+
+  await session.sendToAI(built.prompt, `/prd create ${idea}  →  ${built.targetPath}`);
+}
+
 // ── Command implementation ───────────────────────────────────────────────────
 
 export const prdReviewCommand: SlashCommand = {
   name: 'prd',
-  description: 'PRD quality tools — review <path> scores a PRD on four dimensions',
-  usage: '/prd review <path> [--json] [--threshold N] [--verbose] [--no-cache]',
+  description: 'PRDs — create <idea> drafts one with the AI; review <path> scores one on four dimensions',
+  usage: '/prd create <idea> | /prd review <path> [--json] [--threshold N] [--verbose] [--no-cache]',
 
-  execute: async (args: string, session: SessionContext): Promise<string> => {
+  execute: async (args: string, session: SessionContext): Promise<string | void> => {
     const log = getLogger();
     const { filePath, json, threshold, verbose: _verbose, noCache } = parsePrdReviewArgs(args);
 
-    // Sub-command routing: only 'review' is implemented here
+    // Sub-command routing: 'review' scores a file; anything else is a feature idea to draft
     const subcommand = args.trim().split(/\s+/)[0];
+    if (!subcommand || subcommand === 'help' || subcommand === '--help') {
+      return prdUsage();
+    }
     if (subcommand !== 'review') {
-      return [
-        '',
-        `  PRD Tools`,
-        `  Usage: /prd review <path> [--json] [--threshold N] [--verbose] [--no-cache]`,
-        ``,
-        `  Subcommands:`,
-        `    review <path>  Score a PRD file on completeness, specificity, consistency, scope`,
-        '',
-      ].join('\n');
+      return createPrd(args, session);
     }
 
     if (!filePath) {
