@@ -213,6 +213,11 @@ Or use autonomous mode and just say what you want in plain English:
 > "the login is broken"               → classified as BUG → debugger + fixer dispatched
 ```
 
+> **These are IDE skills** (Claude Code, Cursor, Copilot, …). In the standalone `sf` CLI,
+> `/prd` only reviews an existing PRD and there is no `/autonomous`: write the PRD by asking in
+> plain language (*"Write a PRD in genesis/ for …"*), then run `/forge`. See
+> [Quick Start](#quick-start-5-minutes).
+
 A step-by-step walkthrough of the pipeline internals lives in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -331,6 +336,10 @@ against any diff — including code your IDE's AI wrote on its own — with `/ve
 /forge                                     → full AI pipeline with gates and audit
 /forge --dry-run                           → read-only scan, no AI execution
 ```
+
+In the `sf` CLI, replace the first line with a plain-language request — *"Write a PRD in
+genesis/ for user authentication with OAuth2"* — and check it with `/prd review <file>`. `/go` is
+an IDE skill; in the CLI, `/forge` runs the pipeline.
 
 ### Multi-agent teams
 

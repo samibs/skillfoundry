@@ -2,6 +2,10 @@
 
 Get from zero to a working feature in under 15 minutes.
 
+> This guide is for **Claude Code** and the other IDE integrations. Using the standalone `sf`
+> terminal app instead? Follow the [README Quick Start](README.md#quick-start-5-minutes) — in
+> `sf`, `/prd "idea"` is not available; you ask for a PRD in plain language.
+
 ---
 
 ## Prerequisites
