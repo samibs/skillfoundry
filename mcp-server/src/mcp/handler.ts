@@ -8,6 +8,7 @@ import { verifyAuthFlow, type AuthTestInput } from "../agents/playwright-agent.j
 import { runSemgrepScan, type SemgrepInput } from "../agents/semgrep-agent.js";
 import { applyGate, canPromote, type EvidenceSource } from "../knowledge/memory-gate.js";
 import { runHarvest, getQuirks } from "../knowledge/harvester.js";
+import { buildFleetHealthReport } from "../knowledge/fleet-health.js";
 import { createSkill } from "../agents/skill-factory.js";
 import { insertDynamicSkill, listDynamicSkills, getCertifiedSkills } from "../state/db.js";
 import { ALL_TOOL_AGENTS } from "./tool-registry.js";
@@ -166,6 +167,23 @@ const TOOL_AGENTS = [
         framework: {
           type: "string",
           description: "Framework to query (e.g., nextauth, prisma, next.js). Omit for all.",
+        },
+      },
+    },
+  },
+  {
+    name: "sf_fleet_health",
+    description:
+      "Health of every project SkillFoundry knows about: framework version drift, apps " +
+      "never assessed by a forge run, memory-bank coverage, platforms, and the latest " +
+      "nightly health grades. Reports how old the data is; if stale, refresh with " +
+      "sf_harvest_knowledge first. Use when starting work on an app or reviewing the fleet.",
+    inputSchema: {
+      type: "object" as const,
+      properties: {
+        app: {
+          type: "string",
+          description: "Optional case-insensitive filter on app name or path (e.g. 'vatwise'). Omit for the whole fleet.",
         },
       },
     },
@@ -538,6 +556,12 @@ export function createMcpServer(
         data: quirks,
         meta: { total: quirks.length, framework: framework || "all" },
       }, false, optimizeOpts));
+    }
+
+    if (name === "sf_fleet_health") {
+      const app = typeof typedArgs.app === "string" ? typedArgs.app : undefined;
+      const report = buildFleetHealthReport({ app });
+      return tracked(optimizeJsonResponse(report, false, optimizeOpts));
     }
 
     // ─── Secret Guard ────────────────────────────────────────

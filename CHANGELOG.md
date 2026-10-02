@@ -95,6 +95,27 @@ moved into, a document of the right kind.
 - Tests: `tests/mcp-connection.test.ts` adds a Streamable HTTP connect/list/call round-trip, an
   unknown-session rejection, and a check that the token never appears in server output. The
   first and last fail on the previous `server.ts`.
+- **MCP server: `getFleetHealthSummary()` returned snake_case rows** (`app_name`,
+  `health_grade`, …) under a camelCase return type, so the nightly report's fleet table printed
+  undefined names and `?` grades. The query now aliases columns to camelCase.
+
+### Added — `sf_fleet_health` MCP tool
+
+- New tool agent `sf_fleet_health` (optional `app` filter on name/path). It was referenced by the
+  global agent instructions but never existed. Reports, from the knowledge store: total apps,
+  forge-assessment coverage, memory-bank coverage, apps on a framework version older than the
+  current `.version` (or with none), platform and version distribution, latest nightly health
+  grades, and a `freshness` block (`dataAsOf`, `ageDays`, `stale` after 7 days, and a
+  `refreshHint` pointing to `sf_harvest_knowledge`).
+- Logic lives in `src/knowledge/fleet-health.ts` (`buildFleetHealthReport`), shared with
+  `GET /api/v1/fleet/health`. **Breaking for that endpoint's response:** it now returns the same
+  report — `summary.staleApps`/`staleApps` are replaced by `summary.outdatedApps`/`outdatedApps`,
+  and `freshness`, `healthScores` and `filter` are added; it accepts `?app=`. The old staleness
+  rule (any version below `2.0.70`) predated the 5.x line and flagged nothing current. No caller
+  in the repository consumed the old shape.
+- Tests: `tests/fleet-health.test.ts` (7 cases: version compare, summary, camelCase health
+  scores, filtering, fresh vs. stale data, empty filter); `mcp-connection.test.ts` asserts the tool
+  is listed and returns a report.
 
 ### Documentation — MCP server
 

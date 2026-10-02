@@ -7,7 +7,8 @@ import { buildCommandGraph, graphSummary } from "../registry/command-graph.js";
 import { runHarvest, getQuirks } from "../knowledge/harvester.js";
 import { getRoutingTable, getTodaySpend } from "../agents/cost-router.js";
 import { getMetricsSummary, getAgentMetrics } from "../state/metrics.js";
-import { getFleetHealth, querySessionRecordings } from "../state/db.js";
+import { querySessionRecordings } from "../state/db.js";
+import { buildFleetHealthReport } from "../knowledge/fleet-health.js";
 import { listSessions, loadSession } from "../session/persistence.js";
 import { createSessionConfig } from "../session/config.js";
 import { SERVER_VERSION } from "../version.js";
@@ -292,73 +293,16 @@ export function createApiRouter(
 
   /**
    * GET /api/v1/fleet/health
-   * Returns health and assessment metrics for the entire fleet of managed apps.
-   * Outputs: Fleet summary, platform distribution, framework versions, and stale/unassessed app lists.
+   * Returns health and assessment metrics for the managed apps — the same report
+   * as the sf_fleet_health MCP tool (see knowledge/fleet-health.ts).
+   * Query Params: app (optional name/path filter).
+   * Outputs: summary, freshness, platform/version distribution, outdated and
+   * unassessed app lists, latest nightly health scores, and the app records.
    */
-  router.get("/api/v1/fleet/health", async (_req, res) => {
+  router.get("/api/v1/fleet/health", async (req, res) => {
     try {
-      const fleet = getFleetHealth();
-      const total = fleet.length;
-      const assessed = fleet.filter((f) => f.hasForgeSession).length;
-      const unassessed = total - assessed;
-      const withMemoryBank = fleet.filter((f) => f.hasMemoryBank).length;
-      const staleApps = fleet.filter((f) => {
-        if (!f.frameworkVersion) return true;
-        const parts = f.frameworkVersion.split(".");
-        const major = parseInt(parts[0], 10);
-        const minor = parseInt(parts[1] || "0", 10);
-        const patch = parseInt(parts[2] || "0", 10);
-        // Version scheme is MAJOR.MINOR.PATCH (e.g., 2.0.73)
-        // Stale = anything below 2.0.70
-        if (major < 2) return true;
-        if (major === 2 && minor === 0 && patch < 70) return true;
-        return false;
-      });
-
-      // Platform distribution
-      const platforms: Record<string, number> = {};
-      for (const app of fleet) {
-        for (const p of app.platforms) {
-          platforms[p] = (platforms[p] || 0) + 1;
-        }
-      }
-
-      // Framework version distribution
-      const versions: Record<string, number> = {};
-      for (const app of fleet) {
-        if (app.frameworkVersion) {
-          versions[app.frameworkVersion] = (versions[app.frameworkVersion] || 0) + 1;
-        }
-      }
-
-      res.json({
-        data: {
-          summary: {
-            totalApps: total,
-            assessedApps: assessed,
-            unassessedApps: unassessed,
-            assessmentCoverage: total > 0 ? Math.round((assessed / total) * 100) : 0,
-            appsWithMemoryBank: withMemoryBank,
-            staleApps: staleApps.length,
-          },
-          platformDistribution: platforms,
-          frameworkVersions: versions,
-          staleApps: staleApps.map((a) => ({
-            name: a.appName,
-            version: a.frameworkVersion,
-            lastHarvest: a.lastHarvestAt,
-          })),
-          unassessedApps: fleet
-            .filter((f) => !f.hasForgeSession)
-            .map((a) => ({
-              name: a.appName,
-              platforms: a.platforms,
-              hasMemoryBank: a.hasMemoryBank,
-              instructionFiles: a.instructionFileCount,
-            })),
-          apps: fleet,
-        },
-      });
+      const app = typeof req.query.app === "string" ? req.query.app : undefined;
+      res.json({ data: buildFleetHealthReport({ app }) });
     } catch (err) {
       handleRouteError(res, err);
     }

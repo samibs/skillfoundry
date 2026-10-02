@@ -1112,8 +1112,12 @@ export function getFleetHealthSummary(): Array<{
   scanDate: string;
 }> {
   const db = getDatabase();
+  // Alias to camelCase: the declared return type is camelCase, and callers (the
+  // nightly report, sf_fleet_health) read appName/healthGrade — unaliased columns
+  // came back as app_name/health_grade, so those fields were always undefined.
   return db.prepare(`
-    SELECT app_name, health_grade, health_score, scan_date
+    SELECT app_name AS appName, health_grade AS healthGrade,
+           health_score AS healthScore, scan_date AS scanDate
     FROM project_health_scores
     WHERE id IN (SELECT MAX(id) FROM project_health_scores GROUP BY app_name)
     ORDER BY health_score ASC

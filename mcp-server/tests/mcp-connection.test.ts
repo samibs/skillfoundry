@@ -101,6 +101,8 @@ describe("MCP Server — MCP protocol", () => {
     const tools = await client.listTools();
     expect(tools.tools.length).toBeGreaterThan(50);
 
+    expect(tools.tools.find((t) => t.name === "sf_fleet_health")).toBeDefined();
+
     const forgeSkill = tools.tools.find((t) => t.name === "sf_forge");
     expect(forgeSkill).toBeDefined();
     expect(forgeSkill?.description).toBeTruthy();
@@ -167,5 +169,23 @@ describe("MCP Server — credential hygiene", () => {
   it("never writes the API token to stdout/stderr", () => {
     expect(serverOutput).toContain("[auth] API token:");
     expect(serverOutput).not.toContain(TEST_TOKEN);
+  });
+});
+
+describe("MCP Server — sf_fleet_health", () => {
+  it("returns a fleet report with summary and freshness", async () => {
+    const transport = new SSEClientTransport(
+      new URL(`http://localhost:${PORT}/mcp/sse`),
+      { requestInit: { headers: AUTH_HEADER } }
+    );
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+    await client.connect(transport);
+
+    const result = await client.callTool({ name: "sf_fleet_health", arguments: {} });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toContain("summary");
+    expect(text).toContain("freshness");
+
+    await client.close();
   });
 });

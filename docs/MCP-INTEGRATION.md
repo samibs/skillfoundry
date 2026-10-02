@@ -21,7 +21,7 @@ Tool agents by area:
 
 | Area | Tools |
 |------|-------|
-| Knowledge | `sf_memory_search`, `sf_query_corrections`, `sf_query_quirks`, `sf_harvest_knowledge`, `sf_session_record`, `sf_memory_gate` |
+| Knowledge | `sf_memory_search`, `sf_query_corrections`, `sf_query_quirks`, `sf_harvest_knowledge`, `sf_session_record`, `sf_memory_gate`, `sf_fleet_health` |
 | Code checks | `sf_secret_guard`, `sf_import_validator`, `sf_deviation_enforcer`, `sf_contract_check`, `sf_codemap`, `sf_security_scan`, `sf_security_scan_lite`, `sf_verify_auth` |
 | Build & test | `sf_build`, `sf_lint`, `sf_typecheck`, `sf_run_tests`, `sf_lighthouse`, `sf_check_deps`, `sf_version_check` |
 | Ops | `sf_git_status`, `sf_git_commit`, `sf_docker_build`, `sf_docker_compose`, `sf_check_port`, `sf_assign_port`, `sf_check_env`, `sf_migrate`, `sf_nginx_config` |
@@ -94,6 +94,18 @@ secrets"* calls `sf_secret_guard`; *"what do we know about SQLite migration quir
 
 ---
 
+### Fleet health
+
+`sf_fleet_health` reports on every project the knowledge harvester has seen: framework version
+drift against the current release, projects never assessed by a forge run, memory-bank coverage,
+platform mix, and the latest nightly health grades. Pass `app` to narrow it to one project.
+
+The report includes a `freshness` block. Fleet data is only as current as the last
+`sf_harvest_knowledge` run (or nightly harvest); when it is more than 7 days old the report marks
+it `stale` and says to refresh — ask *"harvest knowledge from ~/apps, then show fleet health"*.
+
+---
+
 ## Endpoints
 
 | Path | Auth | Purpose |
@@ -104,7 +116,7 @@ secrets"* calls `sf_secret_guard`; *"what do we know about SQLite migration quir
 | `GET/POST/DELETE /mcp/http` | token | MCP over Streamable HTTP |
 | `GET /api/v1/agents`, `/api/v1/agents/:name` | token | List skills / one skill |
 | `GET /api/v1/knowledge/quirks`, `POST /api/v1/knowledge/harvest`, `GET /api/v1/knowledge/recordings` | token | Knowledge store |
-| `GET /api/v1/fleet/health` | token | Health across registered projects |
+| `GET /api/v1/fleet/health?app=` | token | Fleet report (same as `sf_fleet_health`) |
 | `GET /api/v1/metrics`, `/api/v1/metrics/agents/:name`, `/api/v1/routing` | token | Usage metrics and routing data |
 | `GET /api/v1/sessions`, `/api/v1/sessions/:id` | token | Recorded sessions |
 
