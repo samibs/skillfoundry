@@ -77,6 +77,10 @@ moved into, a document of the right kind.
   shell subcommands. The Quick Start now says to launch `sf` in the project folder and type
   slash commands inside it, notes that the CLI's `/prd` only reviews PRDs (drafting is a
   plain-language request), and adds Troubleshooting and post-`git pull` update notes.
+- **`sf_cli/src/core/banner.ts`** — the startup banner hardcoded `56 Agents / 63 Skills / 6 Hooks /
+  5 Platforms`. A new `getBannerStats()` counts agents from `AGENT_REGISTRY` and skills from the
+  framework's `.claude/commands/*.md` at launch (currently 61 and 99), and shows 6 platforms. The
+  hooks figure is dropped: it had no single source (9 Claude Code hooks, 4 git hook scripts).
 
 ### Documentation contract
 
