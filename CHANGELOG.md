@@ -116,6 +116,13 @@ moved into, a document of the right kind.
 - Tests: `tests/fleet-health.test.ts` (7 cases: version compare, summary, camelCase health
   scores, filtering, fresh vs. stale data, empty filter); `mcp-connection.test.ts` asserts the tool
   is listed and returns a report.
+- **Fleet rows the latest harvest did not see are no longer counted.** The harvester upserts every
+  app it finds but never removes ones it stops finding, so deleted or de-instrumented projects kept
+  contributing months-old data. `buildFleetHealthReport` now compares each row's
+  `last_harvest_at` with the start of the latest completed `harvest_runs` entry (new
+  `getLatestCompletedHarvestStart()` in `db.ts`); older rows move to a new `notRefreshedApps` list
+  and are excluded from `summary`, `apps` and the distributions. `freshness.latestHarvestAt` is
+  added. With no completed run recorded, all rows count as before. Test added.
 
 ### Documentation — MCP server
 

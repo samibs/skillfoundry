@@ -8,6 +8,9 @@ import {
   upsertFleetHealth,
   upsertProjectHealthScore,
   getFleetHealthSummary,
+  getDatabase,
+  startHarvestRun,
+  completeHarvestRun,
   type FleetHealthRecord,
 } from "../src/state/db.js";
 import { buildFleetHealthReport, compareVersions } from "../src/knowledge/fleet-health.js";
@@ -106,5 +109,32 @@ describe("buildFleetHealthReport", () => {
     const report = buildFleetHealthReport({ app: "no-such-app", currentVersion: "5.32.0" });
     expect(report.summary.totalApps).toBe(0);
     expect(report.freshness).toMatchObject({ dataAsOf: null, ageDays: null, stale: true });
+  });
+
+  // Must run last: it records a harvest run and ages one row, which changes the
+  // refreshed/not-refreshed split the earlier cases rely on.
+  it("separates apps the latest harvest did not see from the current counts", () => {
+    getDatabase()
+      .prepare("UPDATE fleet_health SET last_harvest_at = '2026-01-01 00:00:00' WHERE app_name = 'legacy'")
+      .run();
+    completeHarvestRun(startHarvestRun(), { appsScanned: 2, appsWithData: 2, totalLogs: 0, newQuirks: 0 });
+    // The run starts after the other rows were written in the same second at most;
+    // pin their harvest time to the run start so the comparison is deterministic.
+    const runStart = (getDatabase()
+      .prepare("SELECT started_at FROM harvest_runs ORDER BY id DESC LIMIT 1")
+      .get() as { started_at: string }).started_at;
+    getDatabase()
+      .prepare("UPDATE fleet_health SET last_harvest_at = ? WHERE app_name != 'legacy'")
+      .run(runStart);
+
+    const report = buildFleetHealthReport({ currentVersion: "5.32.0" });
+    expect(report.apps.map((a) => a.appName).sort()).toEqual(["amudfin", "vatwise"]);
+    expect(report.summary.totalApps).toBe(2);
+    expect(report.summary.outdatedApps).toBe(1);
+    expect(report.notRefreshedApps).toEqual([
+      { name: "legacy", path: "/apps/legacy", lastHarvest: "2026-01-01 00:00:00" },
+    ]);
+    expect(report.freshness.latestHarvestAt).not.toBeNull();
+    expect(report.freshness.stale).toBe(false);
   });
 });

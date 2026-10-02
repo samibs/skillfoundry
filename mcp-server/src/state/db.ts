@@ -395,6 +395,18 @@ export function completeHarvestRun(
   `).run(stats.appsScanned, stats.appsWithData, stats.totalLogs, stats.newQuirks, runId);
 }
 
+/**
+ * Start time of the most recent completed harvest run, as stored by SQLite
+ * ("YYYY-MM-DD HH:MM:SS", UTC), or null if no run has completed.
+ */
+export function getLatestCompletedHarvestStart(): string | null {
+  const db = getDatabase();
+  const row = db.prepare(
+    "SELECT started_at FROM harvest_runs WHERE status = 'completed' ORDER BY id DESC LIMIT 1"
+  ).get() as { started_at: string } | undefined;
+  return row?.started_at ?? null;
+}
+
 export function insertSessionLog(data: {
   appName: string;
   platform: string;

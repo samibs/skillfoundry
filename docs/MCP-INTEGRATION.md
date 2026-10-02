@@ -104,6 +104,12 @@ The report includes a `freshness` block. Fleet data is only as current as the la
 `sf_harvest_knowledge` run (or nightly harvest); when it is more than 7 days old the report marks
 it `stale` and says to refresh — ask *"harvest knowledge from ~/apps, then show fleet health"*.
 
+Projects the most recent harvest did not see — deleted folders, projects that no longer contain
+SkillFoundry files, or folders outside the roots that harvest scanned — are listed under
+`notRefreshedApps` and left out of every count, so old data is never mixed into current numbers.
+Harvest all your project roots in one run (`sf_harvest_knowledge` accepts one root; the REST
+endpoint `POST /api/v1/knowledge/harvest` accepts `appsRoots: [...]`).
+
 ---
 
 ## Endpoints

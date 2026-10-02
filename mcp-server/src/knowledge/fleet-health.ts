@@ -1,6 +1,11 @@
 import { existsSync, readFileSync } from "fs";
 import path from "path";
-import { getFleetHealth, getFleetHealthSummary, type FleetHealthRecord } from "../state/db.js";
+import {
+  getFleetHealth,
+  getFleetHealthSummary,
+  getLatestCompletedHarvestStart,
+  type FleetHealthRecord,
+} from "../state/db.js";
 
 /** Fleet data older than this is flagged as stale in the report. */
 export const FLEET_STALE_AFTER_DAYS = 7;
@@ -29,11 +34,18 @@ export interface FleetHealthReport {
     ageDays: number | null;
     stale: boolean;
     refreshHint: string | null;
+    latestHarvestAt: string | null;
   };
   platformDistribution: Record<string, number>;
   frameworkVersions: Record<string, number>;
   outdatedApps: Array<{ name: string; path: string; version: string | null; lastHarvest: string }>;
   unassessedApps: Array<{ name: string; platforms: string[]; hasMemoryBank: boolean; instructionFiles: number }>;
+  /**
+   * Apps the latest harvest did not see. Excluded from every count above: their
+   * data predates that run. Usually the folder was deleted, no longer contains
+   * SkillFoundry files, or sits outside the roots that run scanned.
+   */
+  notRefreshedApps: Array<{ name: string; path: string; lastHarvest: string }>;
   healthScores: Array<{ appName: string; healthGrade: string | null; healthScore: number | null; scanDate: string }>;
   apps: FleetHealthRecord[];
   filter: string | null;
@@ -87,7 +99,17 @@ export function buildFleetHealthReport(options: FleetHealthOptions = {}): FleetH
   const matches = (name: string, appPath = "") =>
     !filter || name.toLowerCase().includes(filter) || appPath.toLowerCase().includes(filter);
 
-  const apps = getFleetHealth().filter((a) => matches(a.appName, a.appPath));
+  const matched = getFleetHealth().filter((a) => matches(a.appName, a.appPath));
+
+  // Split off rows the latest harvest run did not touch, so stale per-app data is
+  // never mixed into current counts. The harvester upserts every app it finds but
+  // never removes the ones it stops finding.
+  const latestRunStart = getLatestCompletedHarvestStart();
+  const latestRunMs = latestRunStart === null ? null : toEpochMs(latestRunStart);
+  const wasRefreshed = (a: FleetHealthRecord) =>
+    latestRunMs === null || Number.isNaN(latestRunMs) || toEpochMs(a.lastHarvestAt) >= latestRunMs;
+  const apps = matched.filter(wasRefreshed);
+  const notRefreshed = matched.filter((a) => !wasRefreshed(a));
 
   const isOutdated = (a: FleetHealthRecord) =>
     !a.frameworkVersion || (currentVersion !== null && compareVersions(a.frameworkVersion, currentVersion) < 0);
@@ -127,6 +149,8 @@ export function buildFleetHealthReport(options: FleetHealthOptions = {}): FleetH
           `${FLEET_STALE_AFTER_DAYS} days. Refresh it with sf_harvest_knowledge ` +
           "(appsRoot = the folder that contains your projects), then call sf_fleet_health again."
         : null,
+      latestHarvestAt:
+        latestRunMs === null || Number.isNaN(latestRunMs) ? null : new Date(latestRunMs).toISOString(),
     },
     platformDistribution,
     frameworkVersions,
@@ -144,6 +168,11 @@ export function buildFleetHealthReport(options: FleetHealthOptions = {}): FleetH
         hasMemoryBank: a.hasMemoryBank,
         instructionFiles: a.instructionFileCount,
       })),
+    notRefreshedApps: notRefreshed.map((a) => ({
+      name: a.appName,
+      path: a.appPath,
+      lastHarvest: a.lastHarvestAt,
+    })),
     healthScores: getFleetHealthSummary().filter((s) => matches(s.appName)),
     apps,
     filter,
