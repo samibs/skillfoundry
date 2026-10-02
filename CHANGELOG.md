@@ -62,7 +62,7 @@ moved into, a document of the right kind.
   dependency such as `ajv` after a plain `git pull` that left `node_modules` stale), the CLI now
   prints the recovery command (`npm ci && npm run build` in `sf_cli/`, or `./update.sh`) instead
   of only `Cannot find package '<name>'`.
-  The recovery hint now prints one command per line (and names `.\\update.ps1` on Windows):
+  The recovery hint now prints one command per line (and names `.\update.ps1` on Windows):
   the original `cd … && npm ci && npm run build` form fails in Windows PowerShell 5.1, which has
   no `&&`. README, `docs/CONFIGURATION-REFERENCE.md` and `docs/MCP-INTEGRATION.md` build steps
   are split the same way, and README Troubleshooting covers `Missing script: "build"` (running
