@@ -10,6 +10,7 @@ import { getMetricsSummary, getAgentMetrics } from "../state/metrics.js";
 import { getFleetHealth, querySessionRecordings } from "../state/db.js";
 import { listSessions, loadSession } from "../session/persistence.js";
 import { createSessionConfig } from "../session/config.js";
+import { SERVER_VERSION } from "../version.js";
 
 function handleRouteError(res: Response, err: unknown): void {
   const isDev = process.env.NODE_ENV === "development";
@@ -17,7 +18,7 @@ function handleRouteError(res: Response, err: unknown): void {
   res.status(500).json({ error: { code: "INTERNAL_ERROR", message } });
 }
 
-const VERSION = "5.15.0";
+const VERSION = SERVER_VERSION;
 const startTime = Date.now();
 
 let storedBootstrapState: BootstrapState | null = null;

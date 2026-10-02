@@ -48,6 +48,7 @@ import {
 } from "./nl-cron.js";
 import { stat } from "fs/promises";
 import pathMod from "path";
+import { SERVER_VERSION } from "../version.js";
 
 // ─── Input Validation ─────────────────────────────────────────────────────
 
@@ -268,7 +269,7 @@ export function createMcpServer(
   skills: Map<string, SkillDefinition>
 ): Server {
   const server = new Server(
-    { name: "skillfoundry", version: "5.15.0" },
+    { name: "skillfoundry", version: SERVER_VERSION },
     { capabilities: { tools: {} } }
   );
 

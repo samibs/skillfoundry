@@ -81,6 +81,31 @@ moved into, a document of the right kind.
   5 Platforms`. A new `getBannerStats()` counts agents from `AGENT_REGISTRY` and skills from the
   framework's `.claude/commands/*.md` at launch (currently 61 and 99), and shows 6 platforms. The
   hooks figure is dropped: it had no single source (9 Claude Code hooks, 4 git hook scripts).
+- **MCP server: Streamable HTTP (`/mcp/http`) never worked.** `server.ts` stored each new
+  transport under `transport.sessionId` read right after `connect()`, before the initialize
+  request had generated the ID, so every session was keyed `undefined` and all follow-up
+  requests failed with `Unknown session`. Transports are now registered from the SDK's
+  `onsessioninitialized` callback. SSE (`/mcp/sse`) was unaffected.
+- **MCP server: API token leaked into logs.** Startup printed the bearer token (and a config
+  snippet containing it) to stdout, which PM2 persists in `mcp-server/logs/`. It now prints only
+  where the token is stored, plus a `claude mcp add` command that reads it from the file. Tokens
+  already written to old log files stay there; rotate by deleting `data/.api-token` and restarting.
+- **MCP server version** — health, `/ready`, the MCP handshake and the startup log reported a
+  hardcoded `5.15.0`; they now read `mcp-server/package.json` via a new `src/version.ts`.
+- Tests: `tests/mcp-connection.test.ts` adds a Streamable HTTP connect/list/call round-trip, an
+  unknown-session rejection, and a check that the token never appears in server output. The
+  first and last fail on the previous `server.ts`.
+
+### Documentation — MCP server
+
+- **README** — new *MCP server* section (start, connect Claude Code at user scope, usage) and a
+  documentation-index link. The server was previously undocumented in the README.
+- **`docs/MCP-INTEGRATION.md`** — rewritten around the real `mcp-server/`: tool kinds and full
+  tool-agent list, start/connect steps for Claude Code and other clients, endpoint table, rate
+  limits, every `SKILLFOUNDRY_*` variable, token rotation, and troubleshooting (including the
+  `Cannot POST /register` error a wrong URL or missing token produces). The old content described
+  the four unwired `mcp-servers/` stdio prototypes as the integration and a `.claude/mcp-config.json`
+  file no client reads; those prototypes are now listed as legacy.
 
 ### Documentation contract
 

@@ -15,6 +15,7 @@ import { ensureSearchTables } from "./mcp/session-search.js";
 import { createBootstrapPipeline } from "./bootstrap/index.js";
 import { ToolRegistry } from "./tools/registry.js";
 import path from "path";
+import { SERVER_VERSION } from "./version.js";
 
 const PORT = parseInt(process.env.SKILLFOUNDRY_PORT || "9877", 10);
 const FRAMEWORK_ROOT = path.resolve(
@@ -46,7 +47,7 @@ function resolveApiToken(): string {
 }
 
 async function main(): Promise<void> {
-  console.log("SkillFoundry MCP Server v5.15.0");
+  console.log(`SkillFoundry MCP Server v${SERVER_VERSION}`);
   console.log(`Framework root: ${FRAMEWORK_ROOT}`);
   console.log(`Skill directories: ${SKILL_DIRS.join(", ")}`);
 
@@ -185,18 +186,26 @@ async function main(): Promise<void> {
 
     if (!sessionId && req.method === "POST") {
       // New session — per-connection Server instance (see SSE handler note).
-      const transport = new StreamableHTTPServerTransport({
+      // The session ID is only generated while handleRequest() processes the
+      // initialize message, so register the transport from onsessioninitialized.
+      // Reading transport.sessionId right after connect() yields undefined, which
+      // stored every session under "undefined" and failed all follow-up requests.
+      const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
         sessionIdGenerator: () => randomUUID(),
+        onsessioninitialized: (sid) => {
+          streamableTransports.set(sid, transport);
+          console.log(`[MCP/HTTP] New session: ${sid}`);
+        },
       });
+      transport.onclose = () => {
+        const sid = transport.sessionId;
+        if (sid) {
+          console.log(`[MCP/HTTP] Session closed: ${sid}`);
+          streamableTransports.delete(sid);
+        }
+      };
       const sessionServer = createMcpServer(skills);
       await sessionServer.connect(transport);
-      const sid = transport.sessionId!;
-      streamableTransports.set(sid, transport);
-      transport.onclose = () => {
-        console.log(`[MCP/HTTP] Session closed: ${sid}`);
-        streamableTransports.delete(sid);
-      };
-      console.log(`[MCP/HTTP] New session: ${sid}`);
       await transport.handleRequest(req, res, req.body);
       return;
     }
@@ -220,15 +229,18 @@ async function main(): Promise<void> {
     console.log(`  Agents:       http://localhost:${PORT}/api/v1/agents`);
     console.log(`  MCP SSE:      http://localhost:${PORT}/mcp/sse`);
     console.log(`  MCP HTTP:     http://localhost:${PORT}/mcp/http`);
-    console.log(`\n[auth] API token: ${API_TOKEN}`);
-    console.log(`  Token file: ${TOKEN_FILE}`);
-    console.log(`\nTo connect from Claude Code, add to settings.json:`);
-    console.log(`  "mcpServers": {`);
-    console.log(`    "skillfoundry": {`);
-    console.log(`      "url": "http://localhost:${PORT}/mcp/sse",`);
-    console.log(`      "headers": { "Authorization": "Bearer ${API_TOKEN}" }`);
-    console.log(`    }`);
-    console.log(`  }`);
+    // Never print the token itself: stdout is persisted by PM2/systemd log files,
+    // which would leak the credential to anyone who can read the logs.
+    console.log(
+      process.env.SKILLFOUNDRY_API_TOKEN
+        ? `\n[auth] API token: from SKILLFOUNDRY_API_TOKEN`
+        : `\n[auth] API token: stored in ${TOKEN_FILE}`,
+    );
+    console.log(`\nTo connect from Claude Code:`);
+    console.log(
+      `  claude mcp add --scope user --transport sse skillfoundry http://localhost:${PORT}/mcp/sse \\`,
+    );
+    console.log(`    --header "Authorization: Bearer $(cat ${TOKEN_FILE})"`);
   });
 
   // Run bootstrap pipeline and publish state to health/ready endpoints

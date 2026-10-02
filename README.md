@@ -567,6 +567,27 @@ cd skillfoundry-vscode && npm install && npm run build
 code --install-extension skillfoundry-1.3.0.vsix
 ```
 
+### MCP server — one skill server for every project
+
+Run SkillFoundry once on your machine and connect any MCP-capable AI tool to it, instead of
+installing skill files into each project. Every skill becomes an `sf_*` tool (`sf_forge`,
+`sf_security`, …), plus tool agents that do real work: secret scanning, import validation, test
+runs, builds, knowledge search across all your projects.
+
+```bash
+cd ~/dev-tools/skillfoundry/mcp-server
+npm ci && npm run build
+pm2 start ecosystem.config.cjs          # or: npm start
+
+# Connect Claude Code once, for all projects
+claude mcp add --scope user --transport sse skillfoundry http://localhost:9877/mcp/sse \
+  --header "Authorization: Bearer $(cat ~/dev-tools/skillfoundry/data/.api-token)"
+```
+
+Then just ask — *"scan my changes for secrets"* or *"use sf_forge on this project"*. Setup for
+other clients, the full tool list, configuration and troubleshooting:
+[MCP Integration](docs/MCP-INTEGRATION.md).
+
 ### Domain experts
 
 Building for a specialized non-IT field (law, accounting, real estate, medical)? Generic output
@@ -776,6 +797,7 @@ shows `not configured`, run `sf setup` again.
 | [Multi-Agent Protocol](MULTI_AGENT_PROTOCOL.md) | Governed missions, waves, worktree isolation |
 | [Domain Experts](docs/DOMAIN-EXPERTS.md) | Review-only experts for specialized non-IT fields |
 | [Knowledge Sync](docs/PERSISTENT-MEMORY-IMPLEMENTATION.md) | Cross-project knowledge sync |
+| [MCP Server](docs/MCP-INTEGRATION.md) | Serve all skills and tool agents to any MCP client |
 | [Configuration Reference](docs/CONFIGURATION-REFERENCE.md) | Every setting and environment variable |
 
 **Going deeper**

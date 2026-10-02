@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { spawn, type ChildProcess } from "child_process";
 
 let serverProcess: ChildProcess;
+let serverOutput = "";
 const PORT = 9878;
 const TEST_TOKEN = "sf-test-token-abc123";
 const AUTH_HEADER = { Authorization: `Bearer ${TEST_TOKEN}` };
@@ -14,6 +16,8 @@ beforeAll(async () => {
     env: { ...process.env, SKILLFOUNDRY_PORT: String(PORT), SKILLFOUNDRY_API_TOKEN: TEST_TOKEN },
     stdio: ["ignore", "pipe", "pipe"],
   });
+  serverProcess.stdout?.on("data", (chunk) => { serverOutput += String(chunk); });
+  serverProcess.stderr?.on("data", (chunk) => { serverOutput += String(chunk); });
 
   await new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(() => reject(new Error("Server start timeout")), 10000);
@@ -123,5 +127,45 @@ describe("MCP Server — MCP protocol", () => {
     expect(result.content[0]).toHaveProperty("type", "text");
 
     await client.close();
+  });
+});
+
+describe("MCP Server — Streamable HTTP transport", () => {
+  // Regression: sessions were stored under transport.sessionId read before the
+  // initialize request generated it ("undefined"), so every request after the
+  // handshake failed with "Unknown session".
+  it("MCP client can connect, list tools and call a tool over /mcp/http", async () => {
+    const transport = new StreamableHTTPClientTransport(
+      new URL(`http://localhost:${PORT}/mcp/http`),
+      { requestInit: { headers: AUTH_HEADER } }
+    );
+    const client = new Client({ name: "test-client", version: "1.0.0" });
+
+    await client.connect(transport);
+    expect(transport.sessionId).toBeTruthy();
+
+    const tools = await client.listTools();
+    expect(tools.tools.find((t) => t.name === "sf_forge")).toBeDefined();
+
+    const result = await client.callTool({ name: "sf_health", arguments: { projectPath: "/tmp" } });
+    expect(result.content[0]).toHaveProperty("type", "text");
+
+    await client.close();
+  });
+
+  it("rejects an unknown session id", async () => {
+    const res = await fetch(`http://localhost:${PORT}/mcp/http`, {
+      method: "POST",
+      headers: { ...AUTH_HEADER, "Content-Type": "application/json", "mcp-session-id": "no-such-session" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+    });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("MCP Server — credential hygiene", () => {
+  it("never writes the API token to stdout/stderr", () => {
+    expect(serverOutput).toContain("[auth] API token:");
+    expect(serverOutput).not.toContain(TEST_TOKEN);
   });
 });
