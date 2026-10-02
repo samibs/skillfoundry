@@ -18,9 +18,14 @@ import('../dist/index.js').catch((err) => {
   // dependency crashes every command at import time. Tell the user how to recover.
   if (err && err.code === 'ERR_MODULE_NOT_FOUND') {
     const cliDir = join(process.env.SF_FRAMEWORK_ROOT, 'sf_cli');
+    const updateScript = process.platform === 'win32' ? '.\\update.ps1' : './update.sh';
+    // One command per line: `&&` chaining fails in Windows PowerShell 5.1.
     console.error('[sf] A dependency or build file is missing — usually after updating with `git pull`.');
-    console.error(`[sf] Fix: cd "${cliDir}" && npm ci && npm run build`);
-    console.error('[sf] Or update with ./update.sh, which reinstalls and rebuilds automatically.');
+    console.error('[sf] Fix: run these three commands, one at a time:');
+    console.error(`       cd "${cliDir}"`);
+    console.error('       npm ci');
+    console.error('       npm run build');
+    console.error(`[sf] Or update with ${updateScript}, which reinstalls and rebuilds automatically.`);
   }
   process.exit(1);
 });

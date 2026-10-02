@@ -573,7 +573,8 @@ runs, builds, knowledge search across all your projects.
 
 ```bash
 cd ~/dev-tools/skillfoundry/mcp-server
-npm ci && npm run build
+npm ci
+npm run build
 pm2 start ecosystem.config.cjs          # or: npm start
 
 # Connect Claude Code once, for all projects
@@ -748,15 +749,24 @@ Update every registered project at once:
 ```
 
 > Updated with `git pull` alone? The CLI also needs its dependencies refreshed — run the update
-> script above, or `npm ci && npm run build` inside the `sf_cli` folder.
+> script above, or run `npm ci` and then `npm run build` inside the framework's `sf_cli` folder.
 
 ---
 
 ## Troubleshooting
 
 **`sf` exits with `Cannot find package '…'`** — the CLI's dependencies are out of date, usually
-after a `git pull`. Run the update script (see [Updating](#updating)), or `npm ci && npm run build`
-inside the framework's `sf_cli` folder.
+after a `git pull`. Run the update script (see [Updating](#updating)), or run these one at a time:
+
+```bash
+cd ~/dev-tools/skillfoundry/sf_cli     # Windows: cd C:\DevTools\skillfoundry\sf_cli
+npm ci
+npm run build
+```
+
+**`npm error Missing script: "build"`** — `npm run build` ran in the wrong folder. Only the
+framework's `sf_cli` and `mcp-server` folders have a build script; `cd` into one of them first.
+On Windows PowerShell 5.1, run commands one per line — `&&` is not supported there.
 
 **`sf` exits with `Invalid TOML in …\.skillfoundry\config.toml: Unknown escape character`** —
 on Windows, older installers wrote the framework path in double quotes, where TOML treats `\` as

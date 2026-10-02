@@ -97,7 +97,9 @@ The root `package.json` currently exposes a single script:
 Build the CLI:
 
 ```bash
-cd sf_cli && npm ci && npm run build
+cd sf_cli
+npm ci
+npm run build
 ```
 
 ---

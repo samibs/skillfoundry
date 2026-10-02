@@ -53,7 +53,8 @@ curl -s http://localhost:9877/health
 # {"status":"healthy","name":"skillfoundry-mcp-server","version":"…","tools":{"registered":…}}
 ```
 
-After pulling framework updates, rebuild and restart: `npm ci && npm run build && pm2 restart skillfoundry-mcp`.
+After pulling framework updates, rebuild and restart — in `mcp-server/`, run `npm ci`, then
+`npm run build`, then `pm2 restart skillfoundry-mcp`.
 
 ## 2. Connect your AI client
 
